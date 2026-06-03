@@ -17,7 +17,7 @@ import { saveState } from './storage.js';
 // DOM-Refs (werden in initTemplate() gesetzt, nicht beim Modul-Load —
 // damit das HTML existiert wenn wir's brauchen)
 // ────────────────────────────────────────────────────────────────────
-let tplImg, tplFile, tplOpacity, tplOpacityNum, tplScale, tplScaleNum, tplClear, tplCenterBtn, tplTraceBtn, tplTraceRawBtn;
+let tplImg, tplFile, tplOpacity, tplOpacityNum, tplScale, tplScaleNum, tplClear, tplCenterBtn, tplTraceBtn, tplTraceRawBtn, tplQuantRow;
 
 // Pixel-Offset gegenüber Mitte (state der Verschiebung)
 let tplOffsetX = 0, tplOffsetY = 0;
@@ -115,6 +115,7 @@ export function endTplDrag() {
   if (!_tplDragging) return;
   _tplDragging = false;
   document.body.style.cursor = '';
+  saveTplCfg();
 }
 export function getTplOffset() {
   return { x: tplOffsetX, y: tplOffsetY };
@@ -252,6 +253,41 @@ function restoreTpl() {
 }
 
 // ────────────────────────────────────────────────────────────────────
+// Persistenz — Schablone überlebt Browser-Reload (localStorage)
+// Bild als Data-URL unter eigenem Key (separat von den Sprites, damit ein
+// großes Bild nicht den Haupt-Save sprengt). Config (Deckkraft/Größe/Position)
+// klein und separat, damit Slider-Ziehen nicht jedes Mal das Bild neu schreibt.
+// ────────────────────────────────────────────────────────────────────
+const TPL_IMG_KEY = 'wb_sprite_template_img_v1';
+const TPL_CFG_KEY = 'wb_sprite_template_cfg_v1';
+
+function saveTplImg() {
+  try { localStorage.setItem(TPL_IMG_KEY, tplImg.src || ''); }
+  catch (e) { console.warn('Schablone: Bild zu groß für localStorage — wird nicht über Reload behalten', e); }
+}
+function saveTplCfg() {
+  try {
+    localStorage.setItem(TPL_CFG_KEY, JSON.stringify({
+      opacity: tplOpacity.value, scale: tplScale.value,
+      offsetX: tplOffsetX, offsetY: tplOffsetY,
+    }));
+  } catch (e) { /* Config ist klein — Fehler ignorieren */ }
+}
+function clearTplStorage() {
+  try { localStorage.removeItem(TPL_IMG_KEY); localStorage.removeItem(TPL_CFG_KEY); } catch (e) {}
+}
+
+// Schablone-Bedienelemente ein-/ausblenden (Buttons + Quant-Zeile).
+function showTplControls(show) {
+  const d = show ? 'inline-block' : 'none';
+  tplClear.style.display = d;
+  tplCenterBtn.style.display = d;
+  tplTraceBtn.style.display = d;
+  tplTraceRawBtn.style.display = d;
+  tplQuantRow.style.display = show ? 'flex' : 'none';
+}
+
+// ────────────────────────────────────────────────────────────────────
 // Initialisierung — Event-Bindings aufsetzen
 // ────────────────────────────────────────────────────────────────────
 export function initTemplate() {
@@ -265,46 +301,45 @@ export function initTemplate() {
   tplCenterBtn  = document.getElementById('template-center');
   tplTraceBtn    = document.getElementById('template-trace');
   tplTraceRawBtn = document.getElementById('template-trace-raw');
+  tplQuantRow    = document.getElementById('tpl-quant-row');
 
   tplImg.addEventListener('load', buildTplOffscreen);
 
   tplFile.addEventListener('change', e => {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
-    if (tplImg.dataset.objectUrl) URL.revokeObjectURL(tplImg.dataset.objectUrl);
-    const url = URL.createObjectURL(file);
-    tplImg.dataset.objectUrl = url;
-    tplImg.src = url;
-    tplImg.style.display = 'block';
-    centerTpl();
-    applyTplOpacity();
-    applyTplScale();
-    tplClear.style.display = 'inline-block';
-    tplCenterBtn.style.display = 'inline-block';
-    tplTraceBtn.style.display = 'inline-block';
-    tplTraceRawBtn.style.display = 'inline-block';
+    // Als Data-URL einlesen (statt ObjectURL) — überlebt Reload & taintet
+    // den Canvas nicht (getImageData für Pipette/Trace bleibt erlaubt).
+    const reader = new FileReader();
+    reader.onload = ev => {
+      tplImg.src = ev.target.result;
+      tplImg.style.display = 'block';
+      centerTpl();
+      applyTplOpacity();
+      applyTplScale();
+      showTplControls(true);
+      saveTplImg();
+      saveTplCfg();
+    };
+    reader.readAsDataURL(file);
   });
 
-  tplOpacity.addEventListener('input',    () => applyTplOpacity('range'));
-  tplOpacityNum.addEventListener('input', () => applyTplOpacity('num'));
-  tplScale.addEventListener('input',      () => applyTplScale('range'));
-  tplScaleNum.addEventListener('input',   () => applyTplScale('num'));
+  tplOpacity.addEventListener('input',    () => { applyTplOpacity('range'); saveTplCfg(); });
+  tplOpacityNum.addEventListener('input', () => { applyTplOpacity('num');   saveTplCfg(); });
+  tplScale.addEventListener('input',      () => { applyTplScale('range');   saveTplCfg(); });
+  tplScaleNum.addEventListener('input',   () => { applyTplScale('num');     saveTplCfg(); });
 
   tplClear.addEventListener('click', () => {
-    if (tplImg.dataset.objectUrl) URL.revokeObjectURL(tplImg.dataset.objectUrl);
     tplImg.removeAttribute('src');
-    delete tplImg.dataset.objectUrl;
     tplImg.style.display = 'none';
     tplFile.value = '';
-    tplClear.style.display = 'none';
-    tplCenterBtn.style.display = 'none';
-    tplTraceBtn.style.display = 'none';
-    tplTraceRawBtn.style.display = 'none';
+    showTplControls(false);
     tplOffscreen = null;
     centerTpl();
+    clearTplStorage();
   });
 
-  tplCenterBtn.addEventListener('click', centerTpl);
+  tplCenterBtn.addEventListener('click', () => { centerTpl(); saveTplCfg(); });
 
   // Shift-Hold global: bringt Schablone in den Vordergrund
   document.addEventListener('keydown', e => {
@@ -319,4 +354,24 @@ export function initTemplate() {
   });
   // Falls Fokus weg geht während Shift gehalten — Reset
   window.addEventListener('blur', restoreTpl);
+
+  // Gespeicherte Schablone wiederherstellen (überlebt Browser-Reload).
+  try {
+    const src = localStorage.getItem(TPL_IMG_KEY);
+    if (src) {
+      const cfg = JSON.parse(localStorage.getItem(TPL_CFG_KEY) || '{}');
+      if (cfg.opacity != null) { tplOpacity.value = cfg.opacity; tplOpacityNum.value = cfg.opacity; }
+      if (cfg.scale != null)   { tplScale.value = cfg.scale; tplScaleNum.value = cfg.scale; }
+      tplOffsetX = cfg.offsetX || 0;
+      tplOffsetY = cfg.offsetY || 0;
+      tplImg.src = src;                 // löst 'load' → buildTplOffscreen aus
+      tplImg.style.display = 'block';
+      applyTplOpacity();
+      applyTplScale();
+      applyTplPosition();
+      showTplControls(true);
+    }
+  } catch (e) {
+    console.warn('Schablone: Wiederherstellen fehlgeschlagen', e);
+  }
 }

@@ -20,6 +20,10 @@ import {
   startTplDrag, tplDragging, updateTplDrag, endTplDrag, getTplOffset,
   doTemplatePipette, sampleTemplateGrid,
 } from './template.js';
+import {
+  medianCut, nearestColor, rgbToHex,
+  despeckleGrid, outlineGrid, magicWandDelete, autoRemoveBackground,
+} from './spritefx.js';
 import { initExport } from './export.js';
 import {
   beginStroke, commitStroke, recordOp, undo, redo,
@@ -86,11 +90,12 @@ function nearestPaletteIndex(c, pal, maxIdx) {
   return best;
 }
 
-// snap=true  → Farben auf aktuelle Palette einrasten (Export-tauglich)
-// snap=false → freie Hex-Pixel (fotorealistisch, nicht als number[][] exportierbar)
+// mode 'palette'  → Farben auf aktuelle Palette einrasten (Export-tauglich)
+// mode 'raw'      → freie Hex-Pixel (fotorealistisch, sehr viele Farben)
+// mode 'quantize' → Farben per Median-Cut auf n dominante Töne reduzieren
 // Pixel außerhalb der Schablone oder (fast) transparent bleiben unverändert.
 const TRACE_ALPHA_MIN = 32; // Alpha-Schwelle: darunter gilt als transparent
-function applyTemplateTrace(snap) {
+function applyTemplateTrace(mode, n) {
   if (!tplLoaded() || !tplHasOffscreen()) {
     showInfoToast('Erst eine Schablone laden.');
     return;
@@ -102,25 +107,40 @@ function applyTemplateTrace(snap) {
 
   const pal = getPal(state.curType, state.curVariant);
   const maxIdx = getMaxIdx();
-  let painted = 0;
 
+  // Bei Quantisierung zuerst die reduzierte Palette aus allen opaken Pixeln bauen.
+  let qpal = null;
+  if (mode === 'quantize') {
+    const px = [];
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const c = sampled[y][x];
+      if (c && c.a >= TRACE_ALPHA_MIN) px.push(c);
+    }
+    qpal = medianCut(px, Math.max(2, Math.min(64, n || 8)));
+    if (!qpal.length) { showInfoToast('Keine Farben in der Schablone gefunden.'); return; }
+  }
+
+  let painted = 0;
   recordOp(() => {
     for (let y = 0; y < H; y++) {
       for (let x = 0; x < W; x++) {
         const c = sampled[y][x];
         if (!c || c.a < TRACE_ALPHA_MIN) continue; // außerhalb / transparent → unverändert
-        const val = snap
-          ? nearestPaletteIndex(c, pal, maxIdx)
-          : '#' + [c.r, c.g, c.b].map(v => v.toString(16).padStart(2, '0')).join('');
+        let val;
+        if (mode === 'palette')       val = nearestPaletteIndex(c, pal, maxIdx);
+        else if (mode === 'quantize') { const q = nearestColor(c, qpal); val = rgbToHex(q.r, q.g, q.b); }
+        else                          val = rgbToHex(c.r, c.g, c.b); // raw
         if (grid[y][x] !== val) { grid[y][x] = val; painted++; }
       }
     }
   });
 
   renderAll();
+  const lbl = mode === 'palette' ? 'Palette'
+            : mode === 'quantize' ? `${qpal.length} Farben` : 'Rohfarben';
   showInfoToast(
     painted
-      ? `Schablone übernommen — ${painted} Pixel (${snap ? 'Palette' : 'Rohfarben'}).`
+      ? `Schablone übernommen — ${painted} Pixel (${lbl}).`
       : 'Keine Pixel geändert — Schablone über dem Grid positionieren?'
   );
 }
@@ -147,8 +167,11 @@ function updateToolUI() {
 
   const hasSize     = ['brush', 'spray', 'eraser'].includes(state.tool);
   const hasStrength = ['brush', 'spray', 'eraser'].includes(state.tool);
-  document.getElementById('brush-size-wrap').style.display = hasSize     ? '' : 'none';
-  document.getElementById('tool-sliders').style.display    = hasStrength ? '' : 'none';
+  const isWand      = state.tool === 'wand';
+  document.getElementById('brush-size-wrap').style.display = hasSize ? '' : 'none';
+  document.getElementById('tool-sliders').style.display    = (hasStrength || isWand) ? '' : 'none';
+  document.getElementById('strength-row').style.display    = hasStrength ? '' : 'none';
+  document.getElementById('tolerance-row').style.display   = isWand ? '' : 'none';
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -213,6 +236,20 @@ function initCanvasEvents() {
     if (state.tool === 'fill') {
       const c = cellFromEvent(e);
       if (c) recordOp(() => floodFill(c.x, c.y));
+      return;
+    }
+    if (state.tool === 'wand') {
+      const c = cellFromEvent(e);
+      if (c) {
+        let removed = 0;
+        recordOp(() => {
+          removed = magicWandDelete(getGrid(), getPal(state.curType, state.curVariant), c.x, c.y, state.wandTolerance);
+        });
+        if (removed) renderAll();
+        infoBar.textContent = removed
+          ? `Zauberstab: ${removed} Pixel gelöscht`
+          : 'Zauberstab: nichts gelöscht — Toleranz erhöhen?';
+      }
       return;
     }
     state.isDrawing = true;
@@ -290,7 +327,7 @@ function initKeyboardEvents() {
         syncColorActive();
       }
     }
-    const toolKeys = { p: 'pencil', b: 'brush', s: 'spray', f: 'fill', e: 'eraser' };
+    const toolKeys = { p: 'pencil', b: 'brush', s: 'spray', f: 'fill', e: 'eraser', w: 'wand' };
     const lk = e.key.toLowerCase();
     if (toolKeys[lk]) { state.tool = toolKeys[lk]; updateToolUI(); }
   });
@@ -430,8 +467,12 @@ function initTools() {
     saveState();
   });
 
-  document.getElementById('template-trace').addEventListener('click', () => applyTemplateTrace(true));
-  document.getElementById('template-trace-raw').addEventListener('click', () => applyTemplateTrace(false));
+  document.getElementById('template-trace').addEventListener('click', () => applyTemplateTrace('palette'));
+  document.getElementById('template-trace-raw').addEventListener('click', () => applyTemplateTrace('raw'));
+  document.getElementById('template-trace-quant').addEventListener('click', () => {
+    const n = Number(document.getElementById('trace-colors').value) || 8;
+    applyTemplateTrace('quantize', n);
+  });
 
   const scToggle = document.getElementById('shortcuts-toggle');
   const scBar    = document.getElementById('shortcuts-bar');
@@ -478,6 +519,46 @@ function initTools() {
   strengthSlider.addEventListener('input', () => {
     state.brushStrength = Number(strengthSlider.value);
     strengthVal.textContent = strengthSlider.value + '%';
+  });
+
+  const tolSlider = document.getElementById('tolerance-slider');
+  const tolVal    = document.getElementById('tolerance-val');
+  tolSlider.addEventListener('input', () => {
+    state.wandTolerance = Number(tolSlider.value);
+    tolVal.textContent = tolSlider.value + '%';
+  });
+
+  // ── Aufräumen-Sektion: Glätten + Outline ──
+  const cleanupToggle = document.getElementById('cleanup-toggle');
+  const cleanupBody   = document.getElementById('cleanup-body');
+  cleanupToggle.addEventListener('click', () => {
+    const collapsed = cleanupBody.classList.toggle('collapsed');
+    cleanupToggle.textContent = collapsed ? '▼' : '▲';
+    saveState();
+  });
+
+  document.getElementById('bg-remove-btn').addEventListener('click', () => {
+    const tol = Number(document.getElementById('bg-tolerance').value) || 25;
+    let n = 0;
+    recordOp(() => { n = autoRemoveBackground(getGrid(), getPal(state.curType, state.curVariant), tol); });
+    if (n) renderAll();
+    showInfoToast(n ? `Hintergrund entfernt — ${n} Pixel.` : 'Nichts entfernt — Toleranz erhöhen?');
+  });
+
+  document.getElementById('despeckle-btn').addEventListener('click', () => {
+    let n = 0;
+    recordOp(() => { n = despeckleGrid(getGrid()); });
+    if (n) renderAll();
+    showInfoToast(n ? `Geglättet — ${n} Pixel angepasst.` : 'Nichts zu glätten gefunden.');
+  });
+
+  document.getElementById('outline-btn').addEventListener('click', () => {
+    const col = document.getElementById('outline-color').value;
+    const th  = Number(document.getElementById('outline-thickness').value) || 1;
+    let n = 0;
+    recordOp(() => { n = outlineGrid(getGrid(), col, th); });
+    if (n) renderAll();
+    showInfoToast(n ? `Outline gezeichnet — ${n} Pixel.` : 'Keine Outline nötig — Sprite leer?');
   });
 
   // Frei-Farbwähler — öffnet nativen Color-Picker beim Klick auf Current-Color

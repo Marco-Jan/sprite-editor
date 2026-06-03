@@ -184,10 +184,14 @@ body.editor-fullscreen #palette-section { overflow-y: auto; }
 body.editor-fullscreen #output-section { display: none; }
 body.editor-fullscreen #overview { display: none; }
 
+/* Im Vollbild den Wrapper auflösen → Quick-Palette + Zoom/Vollbild fließen
+   wieder direkt in die Editor-Spalte (wie zuvor). */
+body.editor-fullscreen #quick-palette-row { display: contents; }
+
 /* Vertikale Farb-Leiste links im Vollbild */
 body.editor-fullscreen #quick-palette {
   display: flex; flex-direction: column; gap: 3px; align-items: center;
-  width: 52px; flex-shrink: 0; overflow-y: auto;
+  width: 52px; flex: 0 0 auto; overflow-y: auto;
   background: #1e1e1e; border-radius: 8px; border: 1px solid #2a2a2a;
   padding: 8px 6px; align-self: stretch;
 }
@@ -212,7 +216,10 @@ body.editor-fullscreen #quick-palette .qp-hint { display: none; }
 #editor-title { font-size: 13px; font-weight: 600; color: #d0d0d0; }
 #bg-toggle-wrap { display: flex; align-items: center; gap: 5px; }
 #bg-toggle-wrap label { font-size: 11px; color: #999; }
-#cell-size-wrap { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+#editor-top-right {
+  margin-left: auto; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+#cell-size-wrap { display: flex; align-items: center; gap: 6px; }
 #cell-size-wrap label { font-size: 11px; color: #999; }
 #cell-size { width: 70px; }
 #cell-size-val { font-size: 11px; color: #bbb; width: 28px; }
@@ -320,6 +327,44 @@ body.editor-fullscreen #quick-palette .qp-hint { display: none; }
   background: #1f1f1f; color: #aaa; cursor: pointer; font-size: 10px; font-weight: 600;
 }
 #template-trace-raw:hover { background: #282828; }
+
+#tpl-quant-row { display: flex; align-items: center; gap: 5px; margin-top: 4px; flex-wrap: wrap; }
+#template-trace-quant {
+  flex: 1 1 100%; padding: 5px 6px; border-radius: 4px; border: 1px solid #4a3a1a;
+  background: #2a2110; color: #d0b070; cursor: pointer; font-size: 10px; font-weight: 600;
+}
+#template-trace-quant:hover { background: #352a14; }
+
+/* ── Aufräumen-Sektion (Glätten + Outline) ─────────────────── */
+#cleanup-section { margin-top: 12px; padding-top: 10px; border-top: 1px solid #222; }
+#cleanup-header { display: flex; align-items: center; justify-content: space-between; }
+.cleanup-title {
+  font-size: 11px; font-weight: 700; color: #999;
+  text-transform: uppercase; letter-spacing: 1px;
+}
+#cleanup-toggle {
+  background: transparent; border: 1px solid #2a2a2a; border-radius: 4px;
+  color: #888; font-size: 9px; padding: 2px 7px; cursor: pointer;
+  transition: all 0.1s; line-height: 1.4;
+}
+#cleanup-toggle:hover { border-color: #666; color: #ccc; }
+#cleanup-body { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+#cleanup-body.collapsed { display: none; }
+.fx-btn {
+  padding: 5px 8px; border-radius: 4px; border: 1px solid #2a3a4a;
+  background: #16202a; color: #8ab0c8; cursor: pointer; font-size: 10px; font-weight: 600;
+}
+.fx-btn:hover { background: #1c2935; }
+.fx-row { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.fx-row .fx-btn { flex: 1 1 100%; }
+#outline-color {
+  width: 28px; height: 22px; padding: 0; border: 1px solid #333;
+  border-radius: 3px; background: transparent; cursor: pointer; flex-shrink: 0;
+}
+#outline-thickness {
+  background: #252525; color: #d4d4d4; border: 1px solid #333;
+  border-radius: 3px; font-size: 10px; padding: 2px 3px; flex-shrink: 0;
+}
 
 /* ── Palette-Panel (rechts) ────────────────────────────────── */
 #palette-section {
@@ -549,8 +594,11 @@ body.editor-fullscreen #quick-palette .qp-hint { display: none; }
 }
 
 /* ── Quick-Palette Bar ─────────────────────────────────────── */
+#quick-palette-row {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+}
 #quick-palette {
-  display: flex; gap: 4px; align-items: center; margin-bottom: 10px; flex-wrap: wrap;
+  display: flex; gap: 4px; align-items: center; flex-wrap: wrap; flex: 1 1 auto;
 }
 .qp-swatch {
   position: relative; width: 32px; height: 32px; border-radius: 5px;
@@ -623,3 +671,15 @@ body.editor-fullscreen #quick-palette .qp-hint { display: none; }
   background: #3a1414; color: #e07070; font-size: 12px; font-weight: 600; cursor: pointer;
 }
 #confirm-toast-ok:hover { background: #4a1818; }
+
+/* ── Section-Titel deutlicher hervorheben (gingen vorher etwas unter) ── */
+#overview-header h2,
+#palette-header h2,
+.tools-title,
+.template-title,
+.cleanup-title,
+.shortcuts-title {
+  color: #d2d2d2;
+  border-left: 3px solid #3a4470;
+  padding-left: 8px;
+}

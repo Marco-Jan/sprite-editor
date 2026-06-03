@@ -52,15 +52,19 @@
           <button class="btn active" id="bg-dark-btn" title="Dunkles Schachbrett">◩ Dunkel</button>
           <button class="btn"        id="bg-bw-btn"   title="Schwarz/Weiß Schachbrett">◩ Hell</button>
         </div>
-        <div id="cell-size-wrap">
-          <label>Zoom:</label>
-          <input type="range" id="cell-size" min="4" max="32" value="16">
-          <span id="cell-size-val">16px</span>
-        </div>
-        <button class="btn" id="fullscreen-btn" title="Vollbild (Esc zum Schließen)">⛶ Vollbild</button>
       </div>
 
-      <div id="quick-palette"></div>
+      <div id="quick-palette-row">
+        <div id="quick-palette"></div>
+        <div id="editor-top-right">
+          <div id="cell-size-wrap">
+            <label>Zoom:</label>
+            <input type="range" id="cell-size" min="4" max="32" value="16">
+            <span id="cell-size-val">16px</span>
+          </div>
+          <button class="btn" id="fullscreen-btn" title="Vollbild (Esc zum Schließen)">⛶ Vollbild</button>
+        </div>
+      </div>
 
       <div id="editor-canvas-area">
         <div id="editor-canvas-wrap">
@@ -145,6 +149,7 @@
             <button class="tool-btn" data-tool="spray"  title="Spray — Stärke = Pixel/Event (S)">✳ <span>Spray</span></button>
             <button class="tool-btn" data-tool="fill"   title="Fülleimer — Flood-Fill (F)">🪣 <span>Füllen</span></button>
             <button class="tool-btn" data-tool="eraser" title="Radierer — Stärke = Dichte (E)">⬜ <span>Radierer</span></button>
+            <button class="tool-btn" data-tool="wand"   title="Zauberstab — zusammenhängende ähnliche Fläche löschen, z.B. Hintergrund (W)">🪄 <span>Zauberstab</span></button>
           </div>
           <div id="brush-size-wrap">
             <span class="brush-size-label">Größe</span>
@@ -161,10 +166,15 @@
             </div>
           </div>
           <div id="tool-sliders">
-            <div class="tool-slider-row">
+            <div class="tool-slider-row" id="strength-row">
               <span class="tool-slider-lbl">Stärke</span>
               <input type="range" id="strength-slider" min="1" max="100" value="80">
               <span id="strength-val" class="tool-slider-val">80%</span>
+            </div>
+            <div class="tool-slider-row" id="tolerance-row" style="display:none">
+              <span class="tool-slider-lbl">Toleranz</span>
+              <input type="range" id="tolerance-slider" min="0" max="100" value="25">
+              <span id="tolerance-val" class="tool-slider-val">25%</span>
             </div>
           </div>
         </div>
@@ -194,8 +204,40 @@
             <button id="template-clear" style="display:none">✕ Entfernen</button>
           </div>
           <div id="tpl-trace-btns">
-            <button id="template-trace" style="display:none" title="Schablonenfarben auf die aktuelle Palette einrasten und ins Grid übernehmen (Undo-fähig)">🎨 Übernehmen (Palette)</button>
-            <button id="template-trace-raw" style="display:none" title="Schablonenfarben als freie Pixel übernehmen — sieht fotorealistisch aus, lässt sich aber nicht als number[][] exportieren">Rohfarben</button>
+            <button id="template-trace" style="display:none" title="Schablonenfarben auf die aktuelle Palette einrasten und ins Grid übernehmen (Undo-fähig)">🎨 Palette</button>
+            <button id="template-trace-raw" style="display:none" title="Schablonenfarben als freie Pixel übernehmen — fotorealistisch, sehr viele Farben">Rohfarben</button>
+          </div>
+          <div id="tpl-quant-row" style="display:none">
+            <span class="tpl-lbl">Reduzieren</span>
+            <input type="number" id="trace-colors" class="tpl-num" min="2" max="64" value="8" style="width:34px">
+            <span class="tpl-unit">Farben</span>
+            <button id="template-trace-quant" title="Schablone abtasten und Farben automatisch auf N dominante Töne reduzieren (Median-Cut) — flache Flächen statt Foto-Rauschen">🎚 Übernehmen</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="cleanup-section">
+        <div id="cleanup-header">
+          <span class="cleanup-title">🪄 Aufräumen</span>
+          <button id="cleanup-toggle" title="Aufräumen ein-/ausklappen">▼</button>
+        </div>
+        <div id="cleanup-body" class="collapsed">
+          <div class="fx-row">
+            <span class="tpl-lbl">Hintergr.</span>
+            <input type="number" id="bg-tolerance" class="tpl-num" min="0" max="100" value="25" style="width:34px">
+            <span class="tpl-unit">%</span>
+            <button id="bg-remove-btn" class="fx-btn" title="Vom Bildrand her zusammenhängende, ähnlich gefärbte Flächen automatisch löschen — Toleranz höher = mehr wird mitgelöscht (Undo-fähig)">🪄 Auto-Hintergrund weg</button>
+          </div>
+          <button id="despeckle-btn" class="fx-btn" title="Einzelne Streupixel auf die Mehrheitsfarbe der Nachbarn setzen — glättet Flächen und Kanten (Undo-fähig)">▦ Glätten (Streupixel weg)</button>
+          <div class="fx-row">
+            <span class="tpl-lbl">Outline</span>
+            <input type="color" id="outline-color" value="#1a1a1a" title="Outline-Farbe">
+            <select id="outline-thickness" title="Dicke der Kante">
+              <option value="1">1px</option>
+              <option value="2">2px</option>
+              <option value="3">3px</option>
+            </select>
+            <button id="outline-btn" class="fx-btn" title="Dunkle Kante rund um alle nicht-transparenten Pixel ziehen (Undo-fähig)">✏ Anwenden</button>
           </div>
         </div>
       </div>
@@ -213,7 +255,7 @@
           <div class="sc-row"><b>Shift+Links+Drag</b><span>Schablone verschieben</span></div>
           <div class="sc-row"><b>Shift+Rechts</b><span>Schablone-Pipette</span></div>
           <div class="sc-row"><b>0–9</b><span>Farbe wechseln</span></div>
-          <div class="sc-row"><b>P/B/S/F/E</b><span>Stift / Pinsel / Spray / Füllen / Radierer</span></div>
+          <div class="sc-row"><b>P/B/S/F/E/W</b><span>Stift / Pinsel / Spray / Füllen / Radierer / Zauberstab</span></div>
           <div class="sc-row"><b>Ctrl+Z</b><span>Rückgängig</span></div>
           <div class="sc-row"><b>Ctrl+Y / Ctrl+Shift+Z</b><span>Wiederholen</span></div>
         </div>

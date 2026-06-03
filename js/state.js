@@ -13,9 +13,10 @@ export const state = {
   curVariant: 'golden',
   curColor:   1,        // Zahl = Palette-Index | String "#RRGGBB" = freie Pipette-Farbe
   cellSize:   16,
-  tool:         'pencil', // 'pencil' | 'brush' | 'spray' | 'fill' | 'eraser'
+  tool:         'pencil', // 'pencil' | 'brush' | 'spray' | 'fill' | 'eraser' | 'wand'
   brushSize:    1,        // Radius / Breite in Zellen
   brushStrength: 80,      // 1–100 — Brush/Eraser: Dichte, Spray: Pixel/Event
+  wandTolerance: 25,      // 0–100 % — Zauberstab: Farb-Ähnlichkeitsschwelle
   isDrawing:    false,
   isErasing:    false,
   editorBg:     'dark',   // 'dark' | 'bw'
