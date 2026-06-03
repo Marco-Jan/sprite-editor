@@ -1,0 +1,22 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# Lokale Server-Helfer (falls jemand mal node_modules anlegt)
+node_modules/
+package-lock.json
+
+# Build-Artefakte (falls später ein Bundler dazukommt)
+dist/
+build/

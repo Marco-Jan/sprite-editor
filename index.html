@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>🐾 Sprite Editor</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ── Header ── -->
+  <header>
+    <h1>🐾 Sprite Editor</h1>
+    <div class="btn-group" id="type-btns"></div>
+    <div class="btn-group" id="state-btns" style="display:none"></div>
+    <span id="save-indicator"
+          style="font-size:11px;color:#70c090;opacity:0;transition:opacity 0.2s;font-weight:600">
+      💾 gespeichert
+    </span>
+    <button class="btn" id="save-file-btn" title="Alle Sprites als JSON-Datei speichern" style="margin-left:auto">💾 Datei speichern</button>
+    <button class="btn" id="load-file-btn" title="Sprites aus JSON-Datei laden">📂 Datei laden</button>
+    <input type="file" id="load-file-input" accept=".json,application/json" style="display:none">
+    <button class="btn danger" id="clear-storage-btn" title="Allen Fortschritt löschen">🗑 Reset Storage</button>
+  </header>
+
+  <!-- ── Overview (alle Built-in Varianten + Zustände) ── -->
+  <div id="overview">
+    <div id="overview-header">
+      <h2>Übersicht — alle Varianten &amp; Zustände</h2>
+      <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
+        <button class="btn" id="new-sprite-btn" style="background:#1a3a1a;color:#80c080;border-color:#2a5a2a;font-size:11px;padding:3px 10px">+ Neuer Sprite</button>
+        <button id="overview-toggle" title="Übersicht ein-/ausklappen">▼</button>
+      </div>
+    </div>
+    <div id="overview-body" class="collapsed">
+      <div id="overview-grid" class="overview-grid"></div>
+    </div>
+  </div>
+
+  <!-- ── Editor + Palette-Panel ── -->
+  <div id="main-layout">
+
+    <div id="editor-wrap">
+
+      <div id="editor-top">
+        <div id="editor-title">Editor</div>
+        <div class="btn-group" id="history-btns">
+          <button class="btn" id="undo-btn" title="Rückgängig (Ctrl+Z)" disabled>↶ Undo</button>
+          <button class="btn" id="redo-btn" title="Wiederholen (Ctrl+Y / Ctrl+Shift+Z)" disabled>↷ Redo</button>
+        </div>
+        <div id="bg-toggle-wrap">
+          <label>Hintergrund:</label>
+          <button class="btn active" id="bg-dark-btn" title="Dunkles Schachbrett">◩ Dunkel</button>
+          <button class="btn"        id="bg-bw-btn"   title="Schwarz/Weiß Schachbrett">◩ Hell</button>
+        </div>
+        <div id="cell-size-wrap">
+          <label>Zoom:</label>
+          <input type="range" id="cell-size" min="4" max="32" value="16">
+          <span id="cell-size-val">16px</span>
+        </div>
+        <button class="btn" id="fullscreen-btn" title="Vollbild (Esc zum Schließen)">⛶ Vollbild</button>
+      </div>
+
+      <div id="quick-palette"></div>
+
+      <div id="editor-canvas-area">
+        <div id="editor-canvas-wrap">
+          <canvas id="editor-canvas"></canvas>
+          <img id="template-overlay" alt="">
+        </div>
+      </div>
+
+      <div id="info-bar"></div>
+
+      <!-- ── Output (TS-Array + Export-Buttons) ── -->
+      <div id="output-section">
+        <div class="output-header">
+          <h2>TypeScript Array</h2>
+          <button class="copy-btn" id="copy-btn">📋 Kopieren</button>
+          <button class="copy-btn" id="reset-btn" style="background:#4a1a1a">↺ Reset</button>
+          <button class="copy-btn" id="import-array-btn" style="background:#1a2a3a;color:#80a0c0;border-color:#2a4060">📥 Import</button>
+          <span style="flex:1"></span>
+          <label style="font-size:11px;color:#666;font-weight:600">Export-Skalierung:</label>
+          <select id="export-scale"
+                  style="background:#252525;color:#d4d4d4;border:1px solid #333;border-radius:4px;padding:4px 6px;font-size:11px">
+            <option value="1">1×</option>
+            <option value="4">4×</option>
+            <option value="8" selected>8×</option>
+            <option value="16">16×</option>
+            <option value="32">32×</option>
+          </select>
+          <button class="copy-btn" id="export-png-btn"
+                  style="background:#1e3a4a;color:#80b0c0;border-color:#2a5060">🖼 PNG</button>
+          <button class="copy-btn" id="export-pdf-btn"
+                  style="background:#3a2a1e;color:#c0a080;border-color:#5a4030">📄 PDF</button>
+        </div>
+        <textarea id="output-textarea" readonly></textarea>
+        <div class="hint">Kopiere den Array und ersetze die entsprechende Konstante in deinem Code · PNG/PDF Export ohne Hintergrund (transparent)</div>
+      </div>
+
+    </div>
+
+    <div id="palette-section">
+
+      <div id="palette-header">
+        <h2>Farbpaletten</h2>
+        <button id="palette-toggle" title="Palette ein-/ausklappen">▼</button>
+      </div>
+
+      <div id="palette-body" class="collapsed">
+        <div style="font-size:10px;color:#6070a0;margin-bottom:6px" id="variant-label">Variante</div>
+        <div id="variant-btns"></div>
+        <div id="palette-items"></div>
+      </div>
+
+      <div id="tools-section">
+        <div id="tools-header">
+          <span class="tools-title">Tools</span>
+          <button id="tools-toggle" title="Tools ein-/ausklappen">▲</button>
+        </div>
+        <div id="tools-body">
+          <div id="current-color" title="Klicken — Farbwähler öffnen">
+            <div class="cc-swatch transp"></div>
+            <div class="cc-info">
+              <span class="cc-label">Aktuelle Farbe</span>
+              <span class="cc-hex">—</span>
+            </div>
+            <span class="cc-pick-icon">🎨</span>
+            <input type="color" id="free-color-picker" style="position:absolute;width:0;height:0;opacity:0;pointer-events:none">
+          </div>
+          <div id="tool-btns">
+            <button class="tool-btn active" data-tool="pencil" title="Stift — 1 Pixel (P)">🖊 <span>Stift</span></button>
+            <button class="tool-btn" data-tool="brush"  title="Pinsel — Stärke = Dichte (B)">🖌 <span>Pinsel</span></button>
+            <button class="tool-btn" data-tool="spray"  title="Spray — Stärke = Pixel/Event (S)">✳ <span>Spray</span></button>
+            <button class="tool-btn" data-tool="fill"   title="Fülleimer — Flood-Fill (F)">🪣 <span>Füllen</span></button>
+            <button class="tool-btn" data-tool="eraser" title="Radierer — Stärke = Dichte (E)">⬜ <span>Radierer</span></button>
+          </div>
+          <div id="brush-size-wrap">
+            <span class="brush-size-label">Größe</span>
+            <div id="brush-size-btns">
+              <button class="brush-sz active" data-size="1">1</button>
+              <button class="brush-sz" data-size="2">2</button>
+              <button class="brush-sz" data-size="3">3</button>
+              <button class="brush-sz" data-size="4">4</button>
+              <button class="brush-sz" data-size="5">5</button>
+              <button class="brush-sz" data-size="6">6</button>
+              <button class="brush-sz" data-size="7">7</button>
+              <button class="brush-sz" data-size="8">8</button>
+              <button class="brush-sz" data-size="9">9</button>
+            </div>
+          </div>
+          <div id="tool-sliders">
+            <div class="tool-slider-row">
+              <span class="tool-slider-lbl">Stärke</span>
+              <input type="range" id="strength-slider" min="1" max="100" value="80">
+              <span id="strength-val" class="tool-slider-val">80%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="template-section">
+        <div id="template-header">
+          <span class="template-title">📷 Schablone</span>
+          <button id="template-toggle" title="Schablone ein-/ausklappen">▼</button>
+        </div>
+        <div id="template-body" class="collapsed">
+          <input type="file" id="template-file" accept="image/*">
+          <div class="tpl-row">
+            <span class="tpl-lbl">Deckkraft</span>
+            <input type="range" id="template-opacity" min="0" max="100" value="50">
+            <input type="number" id="template-opacity-num" class="tpl-num" min="0" max="100" value="50">
+            <span class="tpl-unit">%</span>
+          </div>
+          <div class="tpl-row">
+            <span class="tpl-lbl">Größe</span>
+            <input type="range" id="template-scale" min="10" max="200" value="100">
+            <input type="number" id="template-scale-num" class="tpl-num" min="10" max="200" value="100">
+            <span class="tpl-unit">%</span>
+          </div>
+          <div id="tpl-action-btns">
+            <button id="template-center" style="display:none">📐 Zentrieren</button>
+            <button id="template-clear" style="display:none">✕ Entfernen</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="shortcuts-section">
+        <div id="shortcuts-header">
+          <span class="shortcuts-title">Shortcuts</span>
+          <button id="shortcuts-toggle" title="Shortcuts ein-/ausklappen">▼</button>
+        </div>
+        <div id="shortcuts-bar" class="collapsed">
+          <div class="sc-row"><b>Klick</b><span>Malen</span></div>
+          <div class="sc-row"><b>Rechtsklick</b><span>Löschen (gedrückt = durchgehend)</span></div>
+          <div class="sc-row"><b>Alt+Klick</b><span>Pixel-Pipette</span></div>
+          <div class="sc-row"><b>Shift halten</b><span>Schablone in Vordergrund</span></div>
+          <div class="sc-row"><b>Shift+Links+Drag</b><span>Schablone verschieben</span></div>
+          <div class="sc-row"><b>Shift+Rechts</b><span>Schablone-Pipette</span></div>
+          <div class="sc-row"><b>0–9</b><span>Farbe wechseln</span></div>
+          <div class="sc-row"><b>P/B/S/F/E</b><span>Stift / Pinsel / Spray / Füllen / Radierer</span></div>
+          <div class="sc-row"><b>Ctrl+Z</b><span>Rückgängig</span></div>
+          <div class="sc-row"><b>Ctrl+Y / Ctrl+Shift+Z</b><span>Wiederholen</span></div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ── Palette-Modal (erstellen + bearbeiten) ── -->
+<div id="pal-modal-overlay"
+     style="position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:100">
+  <div style="background:#1e1e1e;border-radius:8px;padding:22px;width:380px;border:1px solid #333;box-shadow:0 20px 60px rgba(0,0,0,0.6);max-height:90vh;overflow-y:auto">
+    <h2 style="font-size:14px;font-weight:700;color:#d4d4d4;margin-bottom:16px">🎨 Neue Palette erstellen</h2>
+
+    <div class="form-row">
+      <label>Name</label>
+      <input type="text" id="pal-name" placeholder="z.B. neon, pastell, dark" maxlength="30">
+    </div>
+
+    <div class="form-row">
+      <label>Für Tierart</label>
+      <select id="pal-type">
+        <option value="dog">🐕 Hund</option>
+        <option value="cat">🐈 Katze</option>
+      </select>
+    </div>
+
+    <div class="form-row">
+      <label>Basis-Palette (optional — Farben übernehmen)</label>
+      <select id="pal-source">
+        <option value="">— Leer / aktuell —</option>
+      </select>
+    </div>
+
+    <div class="form-row">
+      <label>Farben</label>
+      <div id="pal-color-rows" style="display:flex;flex-direction:column;gap:6px"></div>
+    </div>
+
+    <div id="new-modal-btns">
+      <button id="pal-modal-cancel"
+              style="flex:1;padding:9px;border-radius:5px;border:1px solid #333;background:#252525;color:#999;font-weight:600;font-size:13px;cursor:pointer">Abbrechen</button>
+      <button id="pal-modal-create"
+              style="flex:1;padding:9px;border-radius:5px;border:1px solid #555;background:#3a3a3a;color:#d4d4d4;font-weight:600;font-size:13px;cursor:pointer">Erstellen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── New-Sprite Modal ── -->
+<div id="new-modal-overlay">
+  <div id="new-modal">
+    <h2>✨ Neuen Sprite erstellen</h2>
+    <div class="form-row">
+      <label>Name (z.B. DOG_BLINK, RABBIT_NORMAL)</label>
+      <input type="text" id="new-name" placeholder="z.B. DOG_BLINK" maxlength="40">
+    </div>
+    <div class="form-row">
+      <label>Tierart (für Palette)</label>
+      <select id="new-type">
+        <option value="dog">🐕 Hund (DOG_PALETTES)</option>
+        <option value="cat">🐈 Katze (CAT_PALETTES)</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Größe</label>
+      <select id="new-size">
+        <option value="24">24 × 24 (Standard)</option>
+        <option value="16">16 × 16</option>
+        <option value="32">32 × 32</option>
+        <option value="40">40 × 40</option>
+        <option value="48">48 × 48</option>
+        <option value="56">56 × 56</option>
+        <option value="64">64 × 64</option>
+        <option value="80">80 × 80</option>
+        <option value="96">96 × 96</option>
+        <option value="128">128 × 128</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Vorlage (optional — Kopie eines bestehenden Sprites)</label>
+      <select id="new-template">
+        <option value="">— Leeres Grid —</option>
+        <option value="dog_normal">dog_normal</option>
+        <option value="dog_happy">dog_happy</option>
+        <option value="dog_sad">dog_sad</option>
+        <option value="cat_normal">cat_normal</option>
+        <option value="cat_happy">cat_happy</option>
+        <option value="cat_sad">cat_sad</option>
+      </select>
+    </div>
+    <div id="new-modal-btns">
+      <button id="new-modal-cancel">Abbrechen</button>
+      <button id="new-modal-create">Erstellen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Import-Array-Modal ── -->
+<div id="import-modal-overlay"
+     style="position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:100">
+  <div style="background:#1e1e1e;border-radius:8px;padding:22px;width:480px;border:1px solid #333;box-shadow:0 20px 60px rgba(0,0,0,0.6)">
+    <h2 style="font-size:14px;font-weight:700;color:#d4d4d4;margin-bottom:12px">📥 Array importieren</h2>
+    <p style="font-size:11px;color:#778;margin-bottom:10px">Füge ein <code style="color:#80a0c0">number[][]</code>-Array ein — das Format aus dem Output-Feld oder direkt aus deinem Code.</p>
+    <textarea id="import-textarea"
+              style="width:100%;height:180px;background:#141414;color:#d4d4d4;border:1px solid #333;border-radius:5px;padding:8px;font-family:monospace;font-size:11px;resize:vertical;box-sizing:border-box"
+              placeholder="const MY_SPRITE: number[][] = [&#10;  [0,1,2,...],&#10;  ...&#10;];&#10;&#10;— oder nur den Array-Teil: [[0,1,...], ...]"></textarea>
+    <div id="import-error" style="font-size:11px;color:#e06060;margin-top:6px;display:none"></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button id="import-modal-cancel"
+              style="flex:1;padding:9px;border-radius:5px;border:1px solid #333;background:#252525;color:#999;font-weight:600;font-size:13px;cursor:pointer">Abbrechen</button>
+      <button id="import-modal-load"
+              style="flex:1;padding:9px;border-radius:5px;border:1px solid #2a4060;background:#1a2a3a;color:#80a0c0;font-weight:600;font-size:13px;cursor:pointer">Laden</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Confirm-Toast ── -->
+<div id="confirm-toast">
+  <span id="confirm-toast-msg"></span>
+  <div id="confirm-toast-btns">
+    <button id="confirm-toast-cancel">Abbrechen</button>
+    <button id="confirm-toast-ok">Löschen</button>
+  </div>
+</div>
+
+<!-- ── Externe Library: jsPDF für PDF-Export ── -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<!-- ── App-Entry (ES-Module) ── -->
+<script type="module" src="js/app.js"></script>
+
+</body>
+</html>
