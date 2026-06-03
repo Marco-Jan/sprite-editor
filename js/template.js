@@ -17,7 +17,7 @@ import { saveState } from './storage.js';
 // DOM-Refs (werden in initTemplate() gesetzt, nicht beim Modul-Load —
 // damit das HTML existiert wenn wir's brauchen)
 // ────────────────────────────────────────────────────────────────────
-let tplImg, tplFile, tplOpacity, tplOpacityNum, tplScale, tplScaleNum, tplClear, tplCenterBtn;
+let tplImg, tplFile, tplOpacity, tplOpacityNum, tplScale, tplScaleNum, tplClear, tplCenterBtn, tplTraceBtn, tplTraceRawBtn;
 
 // Pixel-Offset gegenüber Mitte (state der Verschiebung)
 let tplOffsetX = 0, tplOffsetY = 0;
@@ -153,6 +153,72 @@ export function sampleTplAt(clientX, clientY) {
   return { r: data[0], g: data[1], b: data[2], a: data[3] };
 }
 
+// ────────────────────────────────────────────────────────────────────
+// Auto-Trace: tastet die aktuell positionierte Schablone für ein W×H-Grid ab.
+// Liefert eine 2D-Matrix mit { r, g, b, a } pro Zelle (oder null = außerhalb
+// der Schablone). Respektiert Verschiebung, Skalierung und Letterbox genau wie
+// sampleTplAt — arbeitet aber effizient mit EINER getImageData-Abfrage und
+// mittelt alle Original-Pixel, die eine Zelle abdeckt (alpha-gewichtet).
+// ────────────────────────────────────────────────────────────────────
+export function sampleTemplateGrid(W, H) {
+  if (!tplOffscreen) return null;
+  const canvas = document.getElementById('editor-canvas');
+  const cr = canvas.getBoundingClientRect();  // Zeichenfläche am Bildschirm
+  const tr = tplImg.getBoundingClientRect();   // Schablonen-Box am Bildschirm
+  if (!cr.width || !cr.height || !tr.width || !tr.height) return null;
+
+  // Letterbox-Geometrie der Schablone innerhalb ihrer Box (object-fit:contain)
+  const natW = tplImg.naturalWidth, natH = tplImg.naturalHeight;
+  const aspectImg = natW / natH;
+  const aspectBox = tr.width / tr.height;
+  let dispW, dispH, offX, offY;
+  if (aspectImg > aspectBox) {
+    dispW = tr.width;  dispH = tr.width / aspectImg;
+    offX = 0;          offY = (tr.height - dispH) / 2;
+  } else {
+    dispH = tr.height; dispW = tr.height * aspectImg;
+    offY = 0;          offX = (tr.width - dispW) / 2;
+  }
+
+  const src = tplOffscreen.getContext('2d').getImageData(0, 0, natW, natH).data;
+
+  // Bildschirm-Koordinate → Schablonen-Pixel-Koordinate
+  const sx2ix = sx => (sx - tr.left - offX) / dispW * natW;
+  const sy2iy = sy => (sy - tr.top  - offY) / dispH * natH;
+
+  const cw = cr.width / W, ch = cr.height / H;  // Zellgröße am Bildschirm
+  const out = [];
+  for (let gy = 0; gy < H; gy++) {
+    const row = [];
+    for (let gx = 0; gx < W; gx++) {
+      // Pixel-Bereich der Schablone, den diese Zelle abdeckt
+      let ax = sx2ix(cr.left + gx * cw),       bx = sx2ix(cr.left + (gx + 1) * cw);
+      let ay = sy2iy(cr.top  + gy * ch),       by = sy2iy(cr.top  + (gy + 1) * ch);
+      let px0 = Math.floor(Math.min(ax, bx)),  px1 = Math.ceil(Math.max(ax, bx)) - 1;
+      let py0 = Math.floor(Math.min(ay, by)),  py1 = Math.ceil(Math.max(ay, by)) - 1;
+      px0 = Math.max(0, px0); py0 = Math.max(0, py0);
+      px1 = Math.min(natW - 1, px1); py1 = Math.min(natH - 1, py1);
+      if (px1 < px0 || py1 < py0) { row.push(null); continue; } // Zelle außerhalb
+
+      // Alpha-gewichteter Farbmittelwert über den abgedeckten Bereich
+      let sr = 0, sg = 0, sb = 0, sa = 0, n = 0;
+      for (let py = py0; py <= py1; py++) {
+        let o = (py * natW + px0) * 4;
+        for (let px = px0; px <= px1; px++, o += 4) {
+          const a = src[o + 3];
+          sr += src[o] * a; sg += src[o + 1] * a; sb += src[o + 2] * a;
+          sa += a; n++;
+        }
+      }
+      const aAvg = n ? sa / n : 0;
+      if (sa === 0) { row.push({ r: 0, g: 0, b: 0, a: 0 }); continue; }
+      row.push({ r: Math.round(sr / sa), g: Math.round(sg / sa), b: Math.round(sb / sa), a: Math.round(aAvg) });
+    }
+    out.push(row);
+  }
+  return out;
+}
+
 // Schablone-Pipette aufrufen — setzt state.curColor auf exakten Hex.
 // Rückgabe: 'ok' | 'outside' | 'transparent'
 export function doTemplatePipette(e) {
@@ -197,6 +263,8 @@ export function initTemplate() {
   tplScaleNum   = document.getElementById('template-scale-num');
   tplClear      = document.getElementById('template-clear');
   tplCenterBtn  = document.getElementById('template-center');
+  tplTraceBtn    = document.getElementById('template-trace');
+  tplTraceRawBtn = document.getElementById('template-trace-raw');
 
   tplImg.addEventListener('load', buildTplOffscreen);
 
@@ -213,6 +281,8 @@ export function initTemplate() {
     applyTplScale();
     tplClear.style.display = 'inline-block';
     tplCenterBtn.style.display = 'inline-block';
+    tplTraceBtn.style.display = 'inline-block';
+    tplTraceRawBtn.style.display = 'inline-block';
   });
 
   tplOpacity.addEventListener('input',    () => applyTplOpacity('range'));
@@ -228,6 +298,8 @@ export function initTemplate() {
     tplFile.value = '';
     tplClear.style.display = 'none';
     tplCenterBtn.style.display = 'none';
+    tplTraceBtn.style.display = 'none';
+    tplTraceRawBtn.style.display = 'none';
     tplOffscreen = null;
     centerTpl();
   });

@@ -18,7 +18,7 @@ import { openPaletteModal, deleteCustomPalette, initPaletteModal } from './palet
 import {
   initTemplate, tplLoaded, tplHasOffscreen,
   startTplDrag, tplDragging, updateTplDrag, endTplDrag, getTplOffset,
-  doTemplatePipette,
+  doTemplatePipette, sampleTemplateGrid,
 } from './template.js';
 import { initExport } from './export.js';
 import {
@@ -66,6 +66,64 @@ function postHistoryAction() {
 }
 
 historyCallbacks.onChange = syncHistoryButtons;
+
+// ────────────────────────────────────────────────────────────────────
+// SCHABLONE ÜBERNEHMEN — Auto-Trace ins Grid
+// ────────────────────────────────────────────────────────────────────
+// Findet den Palette-Index (1..maxIdx), dessen Farbe der RGB-Farbe c am
+// nächsten liegt (euklidische Distanz im RGB-Raum).
+function nearestPaletteIndex(c, pal, maxIdx) {
+  let best = 1, bestD = Infinity;
+  for (let i = 1; i <= maxIdx; i++) {
+    const hex = pal[i];
+    if (!hex) continue;
+    const pr = parseInt(hex.slice(1, 3), 16);
+    const pg = parseInt(hex.slice(3, 5), 16);
+    const pb = parseInt(hex.slice(5, 7), 16);
+    const d = (c.r - pr) ** 2 + (c.g - pg) ** 2 + (c.b - pb) ** 2;
+    if (d < bestD) { bestD = d; best = i; }
+  }
+  return best;
+}
+
+// snap=true  → Farben auf aktuelle Palette einrasten (Export-tauglich)
+// snap=false → freie Hex-Pixel (fotorealistisch, nicht als number[][] exportierbar)
+// Pixel außerhalb der Schablone oder (fast) transparent bleiben unverändert.
+const TRACE_ALPHA_MIN = 32; // Alpha-Schwelle: darunter gilt als transparent
+function applyTemplateTrace(snap) {
+  if (!tplLoaded() || !tplHasOffscreen()) {
+    showInfoToast('Erst eine Schablone laden.');
+    return;
+  }
+  const grid = getGrid();
+  const H = grid.length, W = grid[0].length;
+  const sampled = sampleTemplateGrid(W, H);
+  if (!sampled) { showInfoToast('Schablone konnte nicht abgetastet werden.'); return; }
+
+  const pal = getPal(state.curType, state.curVariant);
+  const maxIdx = getMaxIdx();
+  let painted = 0;
+
+  recordOp(() => {
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const c = sampled[y][x];
+        if (!c || c.a < TRACE_ALPHA_MIN) continue; // außerhalb / transparent → unverändert
+        const val = snap
+          ? nearestPaletteIndex(c, pal, maxIdx)
+          : '#' + [c.r, c.g, c.b].map(v => v.toString(16).padStart(2, '0')).join('');
+        if (grid[y][x] !== val) { grid[y][x] = val; painted++; }
+      }
+    }
+  });
+
+  renderAll();
+  showInfoToast(
+    painted
+      ? `Schablone übernommen — ${painted} Pixel (${snap ? 'Palette' : 'Rohfarben'}).`
+      : 'Keine Pixel geändert — Schablone über dem Grid positionieren?'
+  );
+}
 
 // ────────────────────────────────────────────────────────────────────
 // Tool-Dispatch + UI-Sync
@@ -346,6 +404,16 @@ function initTools() {
     saveState();
   });
 
+  const outToggle = document.getElementById('output-toggle');
+  const outBody   = document.getElementById('output-body');
+  const outCaret  = outToggle.querySelector('.tab-caret');
+  outToggle.addEventListener('click', () => {
+    const collapsed = outBody.classList.toggle('collapsed');
+    outToggle.classList.toggle('open', !collapsed);
+    if (outCaret) outCaret.textContent = collapsed ? '▾' : '▴';
+    saveState();
+  });
+
   const toolsToggle = document.getElementById('tools-toggle');
   const toolsBody   = document.getElementById('tools-body');
   toolsToggle.addEventListener('click', () => {
@@ -361,6 +429,9 @@ function initTools() {
     tplToggle.textContent = collapsed ? '▼' : '▲';
     saveState();
   });
+
+  document.getElementById('template-trace').addEventListener('click', () => applyTemplateTrace(true));
+  document.getElementById('template-trace-raw').addEventListener('click', () => applyTemplateTrace(false));
 
   const scToggle = document.getElementById('shortcuts-toggle');
   const scBar    = document.getElementById('shortcuts-bar');

@@ -24,22 +24,20 @@
     <button class="btn danger" id="clear-storage-btn" title="Allen Fortschritt löschen">🗑 Reset Storage</button>
   </header>
 
-  <!-- ── Overview (alle Built-in Varianten + Zustände) ── -->
-  <div id="overview">
-    <div id="overview-header">
-      <h2>Übersicht — alle Varianten &amp; Zustände</h2>
-      <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
-        <button class="btn" id="new-sprite-btn" style="background:#1a3a1a;color:#80c080;border-color:#2a5a2a;font-size:11px;padding:3px 10px">+ Neuer Sprite</button>
-        <button id="overview-toggle" title="Übersicht ein-/ausklappen">▼</button>
+  <!-- ── Workspace: Übersicht (links) | Editor | Palette (rechts) ── -->
+  <div id="main-layout">
+
+    <!-- ── Übersicht (linke Spalte, einklappbar) ── -->
+    <div id="overview">
+      <div id="overview-header">
+        <h2>Übersicht</h2>
+        <button id="overview-toggle" title="Übersicht ein-/ausklappen">▲</button>
+      </div>
+      <button class="btn" id="new-sprite-btn" title="Neuen Sprite erstellen" style="background:#1a3a1a;color:#80c080;border-color:#2a5a2a;font-size:11px;width:100%;margin-bottom:8px">+ Neuer Sprite</button>
+      <div id="overview-body">
+        <div id="overview-grid" class="overview-grid"></div>
       </div>
     </div>
-    <div id="overview-body" class="collapsed">
-      <div id="overview-grid" class="overview-grid"></div>
-    </div>
-  </div>
-
-  <!-- ── Editor + Palette-Panel ── -->
-  <div id="main-layout">
 
     <div id="editor-wrap">
 
@@ -73,15 +71,23 @@
 
       <div id="info-bar"></div>
 
-      <!-- ── Output (TS-Array + Export-Buttons) ── -->
+      <!-- ── Output (TS-Array + Export-Buttons) — Reiter, einklappbar ── -->
       <div id="output-section">
+        <div id="output-tabbar">
+          <button id="output-toggle" class="output-tab" title="TypeScript-Array & Export ein-/ausklappen">
+            &lt;/&gt; TypeScript &amp; Export <span class="tab-caret">▾</span>
+          </button>
+        </div>
+        <div id="output-body" class="collapsed">
         <div class="output-header">
-          <h2>TypeScript Array</h2>
           <button class="copy-btn" id="copy-btn">📋 Kopieren</button>
           <button class="copy-btn" id="reset-btn" style="background:#4a1a1a">↺ Reset</button>
           <button class="copy-btn" id="import-array-btn" style="background:#1a2a3a;color:#80a0c0;border-color:#2a4060">📥 Import</button>
           <label style="font-size:11px;color:#999;font-weight:600;display:flex;align-items:center;gap:4px;cursor:pointer">
             <input type="checkbox" id="export-include-palette"> 🎨 Farben mitkopieren
+          </label>
+          <label style="font-size:11px;color:#999;font-weight:600;display:flex;align-items:center;gap:4px;cursor:pointer" title="Bettet eine Farbpalette (Swatches + Hex-Codes) ins PNG/PDF ein, damit die Farb-Infos nicht verloren gehen">
+            <input type="checkbox" id="export-embed-palette" checked> 🎨 Palette ins Bild
           </label>
           <span style="flex:1"></span>
           <label style="font-size:11px;color:#666;font-weight:600">Export-Skalierung:</label>
@@ -100,6 +106,7 @@
         </div>
         <textarea id="output-textarea" readonly></textarea>
         <div class="hint">Kopiere den Array und ersetze die entsprechende Konstante in deinem Code · PNG/PDF Export ohne Hintergrund (transparent)</div>
+        </div>
       </div>
 
     </div>
@@ -185,6 +192,10 @@
           <div id="tpl-action-btns">
             <button id="template-center" style="display:none">📐 Zentrieren</button>
             <button id="template-clear" style="display:none">✕ Entfernen</button>
+          </div>
+          <div id="tpl-trace-btns">
+            <button id="template-trace" style="display:none" title="Schablonenfarben auf die aktuelle Palette einrasten und ins Grid übernehmen (Undo-fähig)">🎨 Übernehmen (Palette)</button>
+            <button id="template-trace-raw" style="display:none" title="Schablonenfarben als freie Pixel übernehmen — sieht fotorealistisch aus, lässt sich aber nicht als number[][] exportieren">Rohfarben</button>
           </div>
         </div>
       </div>

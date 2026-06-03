@@ -420,33 +420,52 @@ export function updateOutput() {
     ? (customMeta[state.curType]?.name || state.curType).replace(/[^a-zA-Z0-9_]/g, '_')
     : `${state.curType.toUpperCase()}_${state.curState.toUpperCase()}`;
 
-  // Hex-Pixel (freie Pipette-Farben) sind temporär und passen nicht ins
-  // `number[][]`-Format → als 0 (transparent) ausgeben + Hinweiszeile.
-  let stripped = 0;
-  const rows = grid.map(row => '  [' + row.map(c => {
-    if (typeof c === 'string') { stripped++; return 0; }
-    return c;
-  }).join(',') + ']').join(',\n');
+  const pal = getPal(state.curType, state.curVariant);
+  const maxIdx = getMaxIdx();
+  const includePalette = document.getElementById('export-include-palette')?.checked;
 
-  const warning = stripped > 0
-    ? `// ⚠ ${stripped} freie Pipette-Pixel wurden als 0 (transparent) exportiert — für echte Sprites Palette nutzen\n`
-    : '';
-
-  // Farben mit exportieren, wenn die Checkbox "Farben mitkopieren" aktiv ist —
-  // dann kommt zusätzlich ein Index→Hex-Palette-Block vor das Array.
-  let palBlock = '';
-  if (document.getElementById('export-include-palette')?.checked) {
-    const pal = getPal(state.curType, state.curVariant);
-    const maxIdx = getMaxIdx();
-    const palRows = [];
-    for (let i = 1; i <= maxIdx; i++) {
-      if (pal[i]) palRows.push(`  ${i}: '${pal[i]}',`);
+  // Raw-Hex-Pixel (freie Pipette-/Schablonen-Farben) erkennen. Sie passen nicht
+  // direkt ins `number[][]`-Format → wir vergeben ihnen fortlaufende Indizes
+  // oberhalb der Palette (maxIdx+1, +2, …) und legen sie im Palette-Block ab.
+  // So bleibt der Export verlustfrei.
+  const rawMap = new Map(); // '#rrggbb' (lowercase) → Index
+  let nextIdx = maxIdx + 1;
+  for (const row of grid) for (const c of row) {
+    if (typeof c === 'string') {
+      const key = c.toLowerCase();
+      if (!rawMap.has(key)) rawMap.set(key, nextIdx++);
     }
-    palBlock = `const ${name}_PALETTE: Record<number, string> = {\n${palRows.join('\n')}\n};\n\n`;
+  }
+  const hasRaw = rawMap.size > 0;
+
+  // Grid-Zeilen: Raw-Hex → zugewiesener Index, sonst Zahl unverändert.
+  const rows = grid.map(row => '  [' + row.map(c =>
+    typeof c === 'string' ? rawMap.get(c.toLowerCase()) : c
+  ).join(',') + ']').join(',\n');
+
+  // Palette-Block: bei Raw-Farben IMMER nötig (sonst sind die Indizes wertlos),
+  // sonst nur wenn "Farben mitkopieren" aktiv ist.
+  let palBlock = '';
+  if (hasRaw || includePalette) {
+    // Benutzte Palette-Indizes (für schlanken Block bei Raw-Sprites).
+    const usedIdx = new Set();
+    for (const row of grid) for (const c of row) {
+      if (typeof c === 'number' && c >= 1) usedIdx.add(c);
+    }
+    const entries = [];
+    for (let i = 1; i <= maxIdx; i++) {
+      if (pal[i] && (hasRaw ? usedIdx.has(i) : true)) entries.push(`  ${i}: '${pal[i]}',`);
+    }
+    for (const [hex, idx] of rawMap) entries.push(`  ${idx}: '${hex}',`);
+    palBlock = `const ${name}_PALETTE: Record<number, string> = {\n${entries.join('\n')}\n};\n\n`;
   }
 
+  const note = hasRaw
+    ? `// ✔ ${rawMap.size} freie Farben als Palette-Indizes ${maxIdx + 1}+ gespeichert (verlustfrei)\n`
+    : '';
+
   document.getElementById('output-textarea').value =
-    `${warning}${palBlock}const ${name}: number[][] = [\n${rows},\n];`;
+    `${note}${palBlock}const ${name}: number[][] = [\n${rows},\n];`;
 }
 
 // Header-Buttons (Typ + State) als aktiv markieren

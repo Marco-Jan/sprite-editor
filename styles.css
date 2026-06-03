@@ -8,7 +8,7 @@ body {
   background: #141414; color: #d4d4d4;
   font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; font-size: 14px;
 }
-#app { max-width: 1200px; margin: 0 auto; padding: 20px; }
+#app { max-width: 1360px; margin: 0 auto; padding: 20px; }
 
 /* ── Header ────────────────────────────────────────────────── */
 header {
@@ -73,10 +73,11 @@ header h1 { font-size: 15px; font-weight: 700; color: #e0e0e0; letter-spacing: -
 .pal-color-row .hex { font-family: monospace; font-size: 10px; color: #999; }
 #palette-add-btn { font-size: 11px; padding: 4px 10px; }
 
-/* ── Overview ──────────────────────────────────────────────── */
+/* ── Overview (linke Spalte) ───────────────────────────────── */
 #overview {
-  background: #1e1e1e; border-radius: 8px; padding: 14px;
-  margin-bottom: 16px; border: 1px solid #2a2a2a;
+  width: 292px; flex-shrink: 0; align-self: flex-start;
+  background: #1e1e1e; border-radius: 8px; padding: 12px;
+  border: 1px solid #2a2a2a;
 }
 #overview-header {
   display: flex; align-items: center; justify-content: space-between;
@@ -176,11 +177,12 @@ body.editor-fullscreen #editor-wrap {
   display: flex; flex-direction: column; overflow: hidden; min-width: 0;
 }
 body.editor-fullscreen #editor-canvas-area {
-  flex: 1; min-height: 0; overflow: auto;
+  flex: 1; min-height: 0; max-height: none; overflow: auto;
   display: flex; align-items: safe center; justify-content: safe center; padding: 8px;
 }
 body.editor-fullscreen #palette-section { overflow-y: auto; }
 body.editor-fullscreen #output-section { display: none; }
+body.editor-fullscreen #overview { display: none; }
 
 /* Vertikale Farb-Leiste links im Vollbild */
 body.editor-fullscreen #quick-palette {
@@ -214,6 +216,16 @@ body.editor-fullscreen #quick-palette .qp-hint { display: none; }
 #cell-size-wrap label { font-size: 11px; color: #999; }
 #cell-size { width: 70px; }
 #cell-size-val { font-size: 11px; color: #bbb; width: 28px; }
+
+/* Canvas-Bereich (Nicht-Vollbild): begrenzte Höhe, große/gezoomte Sprites
+   scrollen INNERHALB der Box statt das Layout rauszuschieben.
+   safe center = zentriert wenn es passt, sonst von oben/links scrollbar. */
+#editor-canvas-area {
+  overflow: auto;
+  max-height: calc(100vh - 240px);
+  min-height: 300px;
+  display: flex; align-items: safe center; justify-content: safe center;
+}
 
 #editor-canvas-wrap {
   cursor: crosshair; user-select: none; display: inline-block; position: relative;
@@ -296,6 +308,18 @@ body.editor-fullscreen #quick-palette .qp-hint { display: none; }
   background: #2a1414; color: #c07070; cursor: pointer; font-size: 10px; font-weight: 600;
 }
 #template-clear:hover { background: #341818; }
+
+#tpl-trace-btns { display: flex; gap: 6px; margin-top: 6px; }
+#template-trace {
+  flex: 2; padding: 5px 6px; border-radius: 4px; border: 1px solid #2a4a6a;
+  background: #14202e; color: #79b0e0; cursor: pointer; font-size: 10px; font-weight: 600;
+}
+#template-trace:hover { background: #182838; }
+#template-trace-raw {
+  flex: 1; padding: 5px 6px; border-radius: 4px; border: 1px solid #3a3a3a;
+  background: #1f1f1f; color: #aaa; cursor: pointer; font-size: 10px; font-weight: 600;
+}
+#template-trace-raw:hover { background: #282828; }
 
 /* ── Palette-Panel (rechts) ────────────────────────────────── */
 #palette-section {
@@ -448,11 +472,27 @@ body.editor-fullscreen #quick-palette .qp-hint { display: none; }
 #new-modal-create { background: #3a3a3a; color: #d4d4d4; border-color: #555; }
 #new-modal-create:hover { background: #444; }
 
-/* ── Output (TS-Array + Export) ────────────────────────────── */
-#output-section {
-  margin-top: 12px; padding-top: 12px;
-  border-top: 1px solid #2a2a2a;
+/* ── Output (TS-Array + Export) — als einklappbarer Reiter ──── */
+#output-section { margin-top: 12px; }
+#output-tabbar {
+  display: flex; gap: 4px;
+  border-bottom: 1px solid #2a2a2a;
 }
+.output-tab {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border: 1px solid #2a2a2a; border-bottom: none;
+  border-radius: 6px 6px 0 0; cursor: pointer;
+  background: #181818; color: #9abfcc;
+  font-size: 11px; font-weight: 700; font-family: monospace;
+  letter-spacing: 0.3px; transition: all 0.1s; margin-bottom: -1px;
+}
+.output-tab:hover { background: #202830; color: #b8d8e4; }
+.output-tab.open {
+  background: #141414; color: #9abfcc; border-color: #2a2a2a;
+}
+.tab-caret { font-size: 9px; opacity: 0.8; }
+#output-body { margin-top: 12px; }
+#output-body.collapsed { display: none; }
 .output-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
 #output-section h2 {
   font-size: 11px; font-weight: 700; color: #999;
