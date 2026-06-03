@@ -70,8 +70,9 @@ export function loadState() {
       Object.assign(customMeta, p.customMeta);
     }
     if (p.customPalettes && typeof p.customPalettes === 'object') {
-      if (p.customPalettes.dog) Object.assign(customPalettes.dog, p.customPalettes.dog);
-      if (p.customPalettes.cat) Object.assign(customPalettes.cat, p.customPalettes.cat);
+      if (p.customPalettes.dog)     Object.assign(customPalettes.dog,     p.customPalettes.dog);
+      if (p.customPalettes.cat)     Object.assign(customPalettes.cat,     p.customPalettes.cat);
+      if (p.customPalettes.neutral) Object.assign(customPalettes.neutral, p.customPalettes.neutral);
     }
 
     // UI-Zustand wiederherstellen (mit Fallbacks)

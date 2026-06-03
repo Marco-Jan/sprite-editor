@@ -2,7 +2,7 @@
 // PALETTES — Custom-Paletten erstellen/bearbeiten/löschen
 // ════════════════════════════════════════════════════════════════════
 import { state, customMeta, customPalettes, getCurrentPalType } from './state.js';
-import { DOG_PALETTES, CAT_PALETTES, DOG_VARIANTS, CAT_VARIANTS, DOG_FIXED, CAT_FIXED, COLOR_LABELS } from './data.js';
+import { PALETTE_SETS, COLOR_LABELS } from './data.js';
 import { renderAll } from './render.js';
 import { saveState } from './storage.js';
 import { showConfirmToast, showInfoToast } from './toast.js';
@@ -54,7 +54,7 @@ function refreshPaletteModalSource() {
   const t = document.getElementById('pal-type').value;
   const src = document.getElementById('pal-source');
   src.innerHTML = '<option value="">— Leer / aktuell —</option>';
-  const builtin = t === 'dog' ? DOG_VARIANTS : CAT_VARIANTS;
+  const builtin = PALETTE_SETS[t].variants;
   builtin.forEach(v => src.innerHTML += `<option value="${v}">${v} (built-in)</option>`);
   Object.keys(customPalettes[t] || {}).forEach(v => {
     src.innerHTML += `<option value="custom:${v}">${v} (custom)</option>`;
@@ -64,11 +64,11 @@ function refreshPaletteModalSource() {
 // Color-Picker-Reihen erzeugen — eine pro Palette-Index (1-8 für Hund, 1-9 für Katze).
 function buildPaletteColorRows(sourcePalette) {
   const t = document.getElementById('pal-type').value;
-  const maxIdx = t === 'cat' ? 9 : 8;
+  const maxIdx = PALETTE_SETS[t].maxIdx;
   const container = document.getElementById('pal-color-rows');
   container.innerHTML = '';
 
-  const defaultFixed = t === 'dog' ? DOG_FIXED : CAT_FIXED;
+  const defaultFixed = PALETTE_SETS[t].fixed;
   const defaultVariable = { 1:'#cccccc', 2:'#888888', 3:'#555555', 4:'#222222', 9:'#888899' };
 
   for (let i = 1; i <= maxIdx; i++) {
@@ -95,7 +95,7 @@ export function deleteCustomPalette(type, variant) {
 
   // Wenn die gelöschte Palette gerade aktiv war: auf erste Built-in zurück
   if (state.curVariant === variant) {
-    state.curVariant = (t === 'dog' ? DOG_VARIANTS : CAT_VARIANTS)[0];
+    state.curVariant = PALETTE_SETS[t].variants[0];
   }
   renderAll(); saveState();
 }
@@ -114,7 +114,7 @@ export function initPaletteModal() {
     if (val.startsWith('custom:')) {
       src = customPalettes[t][val.slice(7)];
     } else if (val) {
-      src = (t === 'dog' ? DOG_PALETTES : CAT_PALETTES)[val];
+      src = PALETTE_SETS[t].palettes[val];
     }
     buildPaletteColorRows(src);
   });
@@ -152,7 +152,7 @@ export function initPaletteModal() {
       const palType = _editMode.type;
 
       if (name !== oldName) {
-        const builtin = palType === 'dog' ? DOG_VARIANTS : CAT_VARIANTS;
+        const builtin = PALETTE_SETS[palType].variants;
         if (builtin.includes(name)) { showInfoToast('Name ist bereits eine Built-in-Palette.'); return; }
         if (customPalettes[palType][name]) {
           showConfirmToast(`Palette "${name}" existiert schon — überschreiben?`, () => {
@@ -170,7 +170,7 @@ export function initPaletteModal() {
         customPalettes[palType][oldName] = pal;
       }
     } else {
-      const builtin = t === 'dog' ? DOG_VARIANTS : CAT_VARIANTS;
+      const builtin = PALETTE_SETS[t].variants;
       if (builtin.includes(name)) { showInfoToast('Name ist bereits eine Built-in-Palette.'); return; }
       if (customPalettes[t][name]) {
         showConfirmToast(`Palette "${name}" existiert schon — überschreiben?`, () => {

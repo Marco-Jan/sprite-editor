@@ -28,6 +28,22 @@ export const CAT_PALETTES = {
 export const DOG_VARIANTS = ['golden', 'brown', 'black', 'cream'];
 export const CAT_VARIANTS = ['grey', 'orange', 'black', 'white'];
 
+// "Leere"/neutrale Palette — nicht an Hund/Katze gebunden. Graustufen-Defaults
+// für alle 9 Indizes, damit man von Null weg eigene Farben setzen kann.
+export const NEUTRAL_FIXED = {};
+export const NEUTRAL_PALETTES = {
+  leer: { 1:'#FFFFFF', 2:'#CCCCCC', 3:'#999999', 4:'#666666', 5:'#000000', 6:'#FF8080', 7:'#FFFFFF', 8:'#808080', 9:'#404040' },
+};
+export const NEUTRAL_VARIANTS = ['leer'];
+
+// Zentrale Registry aller Paletten-Typen — eine Quelle der Wahrheit statt
+// überall dog/cat-Ternaries. Neue Typen hier eintragen, der Rest folgt.
+export const PALETTE_SETS = {
+  dog:     { palettes: DOG_PALETTES,     variants: DOG_VARIANTS,     fixed: DOG_FIXED,     maxIdx: 8 },
+  cat:     { palettes: CAT_PALETTES,     variants: CAT_VARIANTS,     fixed: CAT_FIXED,     maxIdx: 9 },
+  neutral: { palettes: NEUTRAL_PALETTES, variants: NEUTRAL_VARIANTS, fixed: NEUTRAL_FIXED, maxIdx: 9 },
+};
+
 // Semantische Bedeutung der Palette-Indizes (UI-Labels).
 export const COLOR_LABELS = {
   0: 'Transparent',

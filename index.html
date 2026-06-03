@@ -80,6 +80,9 @@
           <button class="copy-btn" id="copy-btn">📋 Kopieren</button>
           <button class="copy-btn" id="reset-btn" style="background:#4a1a1a">↺ Reset</button>
           <button class="copy-btn" id="import-array-btn" style="background:#1a2a3a;color:#80a0c0;border-color:#2a4060">📥 Import</button>
+          <label style="font-size:11px;color:#999;font-weight:600;display:flex;align-items:center;gap:4px;cursor:pointer">
+            <input type="checkbox" id="export-include-palette"> 🎨 Farben mitkopieren
+          </label>
           <span style="flex:1"></span>
           <label style="font-size:11px;color:#666;font-weight:600">Export-Skalierung:</label>
           <select id="export-scale"
@@ -227,6 +230,7 @@
       <select id="pal-type">
         <option value="dog">🐕 Hund</option>
         <option value="cat">🐈 Katze</option>
+        <option value="neutral">⬜ Leer</option>
       </select>
     </div>
 
@@ -264,6 +268,7 @@
       <select id="new-type">
         <option value="dog">🐕 Hund (DOG_PALETTES)</option>
         <option value="cat">🐈 Katze (CAT_PALETTES)</option>
+        <option value="neutral">⬜ Leer (eigene Farben)</option>
       </select>
     </div>
     <div class="form-row">

@@ -7,6 +7,7 @@ import { ORIG, dc, COLOR_LABELS } from './data.js';
 import {
   renderAll, renderEditor, renderOverview, syncColorActive,
   cellFromEvent, paintCell, paintBrush, paintSpray, floodFill, renderCallbacks,
+  updateOutput,
 } from './render.js';
 import {
   saveState, loadState, clearStorage, forceSaveBeforeUnload,
@@ -253,6 +254,9 @@ function initControls() {
     renderEditor();
     saveState();
   });
+
+  // "Farben mitkopieren"-Checkbox → Array-Output neu generieren
+  document.getElementById('export-include-palette').addEventListener('change', updateOutput);
 
   // Copy-Button
   document.getElementById('copy-btn').addEventListener('click', () => {

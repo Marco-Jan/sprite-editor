@@ -431,8 +431,22 @@ export function updateOutput() {
   const warning = stripped > 0
     ? `// ⚠ ${stripped} freie Pipette-Pixel wurden als 0 (transparent) exportiert — für echte Sprites Palette nutzen\n`
     : '';
+
+  // Farben mit exportieren, wenn die Checkbox "Farben mitkopieren" aktiv ist —
+  // dann kommt zusätzlich ein Index→Hex-Palette-Block vor das Array.
+  let palBlock = '';
+  if (document.getElementById('export-include-palette')?.checked) {
+    const pal = getPal(state.curType, state.curVariant);
+    const maxIdx = getMaxIdx();
+    const palRows = [];
+    for (let i = 1; i <= maxIdx; i++) {
+      if (pal[i]) palRows.push(`  ${i}: '${pal[i]}',`);
+    }
+    palBlock = `const ${name}_PALETTE: Record<number, string> = {\n${palRows.join('\n')}\n};\n\n`;
+  }
+
   document.getElementById('output-textarea').value =
-    `${warning}const ${name}: number[][] = [\n${rows},\n];`;
+    `${warning}${palBlock}const ${name}: number[][] = [\n${rows},\n];`;
 }
 
 // Header-Buttons (Typ + State) als aktiv markieren

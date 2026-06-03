@@ -4,10 +4,7 @@
 // Alle anderen Module importieren von hier. Mutationen erfolgen über das
 // `state`-Objekt (z.B. state.curType = 'cat'), NICHT über lokale Re-Assignments
 // — sonst sehen andere Module die Änderung nicht.
-import {
-  DOG_PALETTES, CAT_PALETTES, DOG_VARIANTS, CAT_VARIANTS,
-  ORIG, dc,
-} from './data.js';
+import { PALETTE_SETS, ORIG, dc } from './data.js';
 
 // UI-Zustand (alles veränderlich)
 export const state = {
@@ -32,11 +29,11 @@ export const grids = {
   cat: { normal: dc(ORIG.cat.normal), happy: dc(ORIG.cat.happy), sad: dc(ORIG.cat.sad) },
 };
 
-// Metadaten für Custom-Sprites: key → { palType: 'dog'|'cat', name }
+// Metadaten für Custom-Sprites: key → { palType: 'dog'|'cat'|'neutral', name }
 export const customMeta = {};
 
-// Custom-Paletten pro Tierart: { dog: { name: {1:'#..', ...} }, cat: {...} }
-export const customPalettes = { dog: {}, cat: {} };
+// Custom-Paletten pro Typ: { dog: { name: {1:'#..', ...} }, cat: {...}, neutral: {...} }
+export const customPalettes = { dog: {}, cat: {}, neutral: {} };
 
 // ────────────────────────────────────────────────────────────────────
 // Helpers — gehen davon aus dass state/grids/customMeta/customPalettes
@@ -50,43 +47,43 @@ export function getGrid() {
   return grids[state.curType][state.curState];
 }
 
-// Palette für (type, variant): Custom-Palette hat Vorrang vor Built-in.
-export function getPal(type, variant) {
-  const t = type.startsWith('custom_')
+// Palette-Typ eines Sprites: Custom liest palType aus den Metadaten,
+// Built-in (dog/cat) ist selbst schon der Typ.
+export function palTypeOf(type) {
+  return type.startsWith('custom_')
     ? (customMeta[type]?.palType || 'dog')
     : type;
+}
+
+// Palette für (type, variant): Custom-Palette hat Vorrang vor Built-in.
+export function getPal(type, variant) {
+  const t = palTypeOf(type);
   if (customPalettes[t] && customPalettes[t][variant]) {
     return customPalettes[t][variant];
   }
-  return t === 'dog' ? DOG_PALETTES[variant] : CAT_PALETTES[variant];
+  return PALETTE_SETS[t].palettes[variant];
 }
 
 // Liste aller Varianten für einen Typ: Built-in + Custom-Paletten.
 export function getVariants(type) {
-  const t = type.startsWith('custom_')
-    ? (customMeta[type]?.palType || 'dog')
-    : type;
-  const builtin = t === 'dog' ? DOG_VARIANTS : CAT_VARIANTS;
+  const t = palTypeOf(type);
+  const builtin = PALETTE_SETS[t].variants;
   const custom = customPalettes[t] ? Object.keys(customPalettes[t]) : [];
   return [...builtin, ...custom];
 }
 
 // True wenn variant eine User-erstellte Palette ist (für Edit/Delete-X).
 export function isCustomVariant(type, variant) {
-  const t = type.startsWith('custom_')
-    ? (customMeta[type]?.palType || 'dog')
-    : type;
+  const t = palTypeOf(type);
   return !!(customPalettes[t] && customPalettes[t][variant]);
 }
 
 // Welcher Palette-Typ liegt dem aktuellen Sprite zugrunde?
 export function getCurrentPalType() {
-  return state.curType.startsWith('custom_')
-    ? (customMeta[state.curType]?.palType || 'dog')
-    : state.curType;
+  return palTypeOf(state.curType);
 }
 
-// Höchster gültiger Palette-Index für den aktuellen Typ (Katze=9, Hund=8).
+// Höchster gültiger Palette-Index für den aktuellen Typ (Katze/Neutral=9, Hund=8).
 export function getMaxIdx() {
-  return getCurrentPalType() === 'cat' ? 9 : 8;
+  return PALETTE_SETS[getCurrentPalType()].maxIdx;
 }
