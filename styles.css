@@ -177,7 +177,7 @@ body.editor-fullscreen #editor-wrap {
 }
 body.editor-fullscreen #editor-canvas-area {
   flex: 1; min-height: 0; overflow: auto;
-  display: flex; align-items: center; justify-content: center; padding: 8px;
+  display: flex; align-items: safe center; justify-content: safe center; padding: 8px;
 }
 body.editor-fullscreen #palette-section { overflow-y: auto; }
 body.editor-fullscreen #output-section { display: none; }
