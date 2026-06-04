@@ -3,7 +3,7 @@
 // ════════════════════════════════════════════════════════════════════
 import { state, grids, customMeta, getVariants } from './state.js';
 import { ORIG } from './data.js';
-import { renderAll, syncButtons, ensureGroupExpanded } from './render.js';
+import { renderAll, syncButtons, ensureGroupExpanded, fillPaletteSelect } from './render.js';
 import { saveState } from './storage.js';
 import { showInfoToast } from './toast.js';
 
@@ -37,12 +37,16 @@ export function initNewSpriteModal() {
   const cancel  = document.getElementById('new-modal-cancel');
   const create  = document.getElementById('new-modal-create');
 
+  const varSel  = document.getElementById('new-variant');
+
   openBtn.addEventListener('click', () => {
     overlay.classList.add('open');
     // Reset Form-Felder bei jedem Öffnen — keine hängenden Werte vom letzten Mal
     nameInp.value = '';
     sizeSel.value = '24';
     tplSel.value  = '';
+    // ALLE Paletten (alle Tierarten) zur Auswahl anbieten; Default: Hund/golden
+    fillPaletteSelect(varSel, 'dog', 'golden');
     nameInp.focus();
   });
 
@@ -55,7 +59,8 @@ export function initNewSpriteModal() {
 
   create.addEventListener('click', () => {
     const rawName = nameInp.value.trim();
-    const palType = document.getElementById('new-type').value;
+    // Gewählte Palette bestimmt die Tierart: value ist "type:variant"
+    const [palType, chosenVariant] = (varSel.value || 'dog:golden').split(':');
     const size    = Number(sizeSel.value);
     const tplKey  = tplSel.value;
 
@@ -83,7 +88,9 @@ export function initNewSpriteModal() {
     customMeta[key] = { palType, name: rawName };
 
     state.curType = key;
-    state.curVariant = getVariants(key)[0];
+    // Gewählte Palette übernehmen — Fallback: erste verfügbare Variante.
+    const available = getVariants(key);
+    state.curVariant = available.includes(chosenVariant) ? chosenVariant : available[0];
     state.curState = 'normal';
 
     ensureGroupExpanded(key);

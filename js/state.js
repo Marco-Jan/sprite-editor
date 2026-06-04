@@ -88,3 +88,17 @@ export function getCurrentPalType() {
 export function getMaxIdx() {
   return PALETTE_SETS[getCurrentPalType()].maxIdx;
 }
+
+// Anzeige-Label je Paletten-Tierart (für gruppierte Dropdowns).
+export const PAL_TYPE_LABELS = { dog: '🐕 Hund', cat: '🐈 Katze', neutral: '⬜ Neutral' };
+
+// ALLE verfügbaren Paletten über alle Tierarten hinweg: Built-in + gespeicherte
+// eigene. Reihenfolge: pro Tierart erst Built-in, dann eigene.
+export function getAllPaletteOptions() {
+  const out = [];
+  for (const t of Object.keys(PALETTE_SETS)) {
+    PALETTE_SETS[t].variants.forEach(v => out.push({ type: t, variant: v, isCustom: false }));
+    Object.keys(customPalettes[t] || {}).forEach(v => out.push({ type: t, variant: v, isCustom: true }));
+  }
+  return out;
+}

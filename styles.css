@@ -73,9 +73,14 @@ header h1 { font-size: 15px; font-weight: 700; color: #e0e0e0; letter-spacing: -
 .pal-color-row .hex { font-family: monospace; font-size: 10px; color: #999; }
 #palette-add-btn { font-size: 11px; padding: 4px 10px; }
 
-/* ── Overview (linke Spalte) ───────────────────────────────── */
-#overview {
+/* ── Linke Spalte: Übersicht + TypeScript-Export gestapelt ─────── */
+#left-column {
   width: 292px; flex-shrink: 0; align-self: flex-start;
+  display: flex; flex-direction: column; gap: 12px;
+}
+
+/* ── Overview (oben in der linken Spalte) ───────────────────── */
+#overview {
   background: #1e1e1e; border-radius: 8px; padding: 12px;
   border: 1px solid #2a2a2a;
 }
@@ -95,26 +100,41 @@ header h1 { font-size: 15px; font-weight: 700; color: #e0e0e0; letter-spacing: -
 #overview-toggle:hover { border-color: #666; color: #ccc; }
 #overview-body.collapsed { display: none; }
 
-.overview-grid { display: flex; flex-direction: column; gap: 8px; }
+.overview-grid {
+  display: flex; flex-direction: column; gap: 8px;
+  /* Feste Maximalhöhe: die Liste scrollt in sich, statt die Seite endlos
+     länger werden zu lassen. */
+  /* Halbe Höhe — die Liste ist eh scrollbar, darunter passt der TS-Export. */
+  max-height: 40vh;
+  overflow-y: auto;
+  padding-right: 4px; /* Platz für Scrollbalken, überlappt × nicht */
+}
+/* Dezenter dunkler Scrollbalken passend zum Theme */
+.overview-grid::-webkit-scrollbar { width: 8px; }
+.overview-grid::-webkit-scrollbar-track { background: transparent; }
+.overview-grid::-webkit-scrollbar-thumb {
+  background: #3a3a3a; border-radius: 4px;
+}
+.overview-grid::-webkit-scrollbar-thumb:hover { background: #4a4a4a; }
 
-/* ── Thumbnail-Reihe der Gruppen ── */
+/* ── Namensliste der Gruppen (nur Dateiname, kein Vorschaubild) ── */
 .overview-group-cards {
-  display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start;
+  display: flex; flex-direction: column; gap: 3px; align-items: stretch;
 }
 
 .sprite-group-card {
-  display: flex; flex-direction: column; align-items: center; gap: 5px;
-  width: 80px; padding: 8px 6px;
-  background: #252525; border-radius: 6px; border: 1px solid #2a2a2a;
+  display: flex; align-items: center;
+  width: 100%; padding: 6px 22px 6px 10px;
+  background: #252525; border-radius: 5px; border: 1px solid #2a2a2a;
   cursor: pointer; transition: all 0.1s; user-select: none;
   position: relative;
 }
 .sprite-group-card:hover { border-color: #555; background: #2c2c2c; }
 .group-card-del {
-  position: absolute; top: 3px; right: 3px;
-  width: 14px; height: 14px; border-radius: 50%;
+  position: absolute; top: 50%; right: 5px; transform: translateY(-50%);
+  width: 16px; height: 16px; border-radius: 50%;
   background: transparent; border: none;
-  color: #666; font-size: 11px; line-height: 1; font-weight: 700;
+  color: #666; font-size: 12px; line-height: 1; font-weight: 700;
   cursor: pointer; display: flex; align-items: center; justify-content: center;
   transition: all 0.1s; padding: 0;
 }
@@ -124,32 +144,28 @@ header h1 { font-size: 15px; font-weight: 700; color: #e0e0e0; letter-spacing: -
 .sprite-group-card.group-active .sprite-group-name { color: #ddd; }
 .sprite-group-card.open.group-active { border-color: #999; }
 
-.group-thumb {
-  width: 56px; height: 56px; overflow: hidden;
-  display: flex; align-items: center; justify-content: center;
-}
-
 .sprite-group-name {
-  font-size: 9px; font-weight: 700; color: #bbb;
-  text-align: center; word-break: break-word; line-height: 1.3;
+  flex: 1; font-size: 11px; font-weight: 600; color: #bbb;
+  text-align: left; word-break: break-word; line-height: 1.3;
 }
 
-/* ── Aufgeklapptes Sprites-Panel ── */
+/* ── Aufgeklappte Varianten — ebenfalls reine Namensliste, direkt
+      unter der angeklickten Zeile (leicht eingerückt als Untereintrag) ── */
 .overview-expanded {
-  display: flex; flex-wrap: wrap; gap: 6px; align-items: flex-start;
-  padding: 8px; background: #1c1c1c;
+  display: flex; flex-direction: column; gap: 3px; align-items: stretch;
+  margin: 1px 0 2px 12px; padding: 6px; background: #1c1c1c;
   border: 1px solid #2a2a2a; border-radius: 6px;
 }
 
 .sprite-card {
-  background: #252525; border-radius: 6px; padding: 7px; cursor: pointer;
-  border: 1px solid #333; transition: all 0.1s; text-align: center;
-  display: flex; flex-direction: column; align-items: center; gap: 3px;
-  flex-shrink: 0; flex-grow: 0;
+  background: #252525; border-radius: 5px; padding: 6px 10px; cursor: pointer;
+  border: 1px solid #333; transition: all 0.1s; text-align: left;
+  display: flex; align-items: center;
+  width: 100%;
 }
 .sprite-card:hover { border-color: #666; }
 .sprite-card.selected { border-color: #aaa; background: #2e2e2e; }
-.sprite-card-label { font-size: 9px; color: #999; line-height: 1.3; }
+.sprite-card-label { font-size: 11px; color: #aaa; line-height: 1.3; }
 
 /* Schachbrett-Hintergrund für Transparenz-Visualisierung */
 .chk {
@@ -173,7 +189,7 @@ body.editor-fullscreen #main-layout {
   background: #141414; padding: 10px; box-sizing: border-box;
   height: 100vh; overflow: hidden; align-items: stretch; gap: 10px; flex-wrap: nowrap;
 }
-body.editor-fullscreen #overview { display: none; }
+body.editor-fullscreen #left-column { display: none; }
 body.editor-fullscreen #editor-wrap {
   display: flex; flex-direction: column; overflow: hidden; min-width: 0; flex: 1 1 auto;
 }
@@ -376,7 +392,27 @@ body.editor-fullscreen #output-section { display: none; }
 }
 #palette-toggle:hover { border-color: #666; color: #ccc; }
 #palette-body.collapsed { display: none; }
-#variant-btns { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: 10px; }
+#variant-btns { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+
+/* Varianten-Dropdown + Edit/Delete-Buttons in einer Zeile */
+.variant-row { display: flex; gap: 4px; align-items: stretch; }
+.variant-select {
+  flex: 1; min-width: 0;
+  background: #252525; color: #d4d4d4; border: 1px solid #333;
+  border-radius: 4px; padding: 5px 6px; font-size: 11px; cursor: pointer;
+}
+.variant-select:hover { border-color: #555; }
+.variant-search {
+  width: 100%; box-sizing: border-box;
+  background: #252525; color: #d4d4d4; border: 1px solid #333;
+  border-radius: 4px; padding: 5px 7px; font-size: 11px;
+}
+.variant-search:focus { outline: none; border-color: #555; }
+.btn.variant-act {
+  flex: 0 0 auto; padding: 4px 8px; font-size: 12px; line-height: 1;
+}
+.btn.variant-act:hover { border-color: #666; }
+.variant-actions { display: flex; flex-wrap: wrap; gap: 4px; }
 
 /* ── Tools-Sektion ─────────────────────────────────────────── */
 #tools-section {
@@ -517,7 +553,11 @@ body.editor-fullscreen #output-section { display: none; }
 #new-modal-create:hover { background: #444; }
 
 /* ── Output (TS-Array + Export) — als einklappbarer Reiter ──── */
-#output-section { margin-top: 12px; }
+/* Sitzt in der linken Spalte unter der Übersicht; eigener Karten-Look. */
+#output-section {
+  background: #1e1e1e; border-radius: 8px; padding: 12px;
+  border: 1px solid #2a2a2a;
+}
 #output-tabbar {
   display: flex; gap: 4px;
   border-bottom: 1px solid #2a2a2a;
@@ -730,7 +770,7 @@ body.editor-fullscreen #output-section { display: none; }
 @media (max-width: 1024px) {
   #app { padding: 10px; max-width: 100%; }
   #main-layout { flex-wrap: wrap; align-items: stretch; }
-  #overview { width: 100%; }
+  #left-column { width: 100%; }
   #editor-wrap { flex: 1 1 300px; min-width: 0; }
   #palette-section { width: 200px; flex-shrink: 0; }
   #editor-canvas-area { max-height: 65vh; }

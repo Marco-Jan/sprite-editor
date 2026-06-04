@@ -20,6 +20,7 @@
       💾 gespeichert
     </span>
     <button class="btn" id="help-btn" title="Hilfe & Erklärungen" style="margin-left:auto">ℹ Hilfe</button>
+    <button class="btn" id="save-dir-btn" title="Speicherort für PNG/PDF/Sprite-Dateien wählen — wird gemerkt">📁 Speicherort</button>
     <button class="btn" id="save-file-btn" title="Alle Sprites als JSON-Datei speichern">💾 Datei speichern</button>
     <button class="btn" id="load-file-btn" title="Sprites aus JSON-Datei laden">📂 Datei laden</button>
     <input type="file" id="load-file-input" accept=".json,application/json" style="display:none">
@@ -29,16 +30,62 @@
   <!-- ── Workspace: Übersicht (links) | Editor | Palette (rechts) ── -->
   <div id="main-layout">
 
-    <!-- ── Übersicht (linke Spalte, einklappbar) ── -->
-    <div id="overview">
-      <div id="overview-header">
-        <h2>Übersicht</h2>
-        <button id="overview-toggle" title="Übersicht ein-/ausklappen">▲</button>
+    <!-- ── Linke Spalte: Übersicht (oben) + TypeScript-Export (darunter) ── -->
+    <div id="left-column">
+
+      <!-- ── Übersicht (einklappbar) ── -->
+      <div id="overview">
+        <div id="overview-header">
+          <h2>Übersicht</h2>
+          <button id="overview-toggle" title="Übersicht ein-/ausklappen">▲</button>
+        </div>
+        <button class="btn" id="new-sprite-btn" title="Neuen Sprite erstellen" style="background:#1a3a1a;color:#80c080;border-color:#2a5a2a;font-size:11px;width:100%;margin-bottom:8px">+ Neuer Sprite</button>
+        <div id="overview-body">
+          <input type="text" id="overview-search" placeholder="🔍 Sprite suchen…" autocomplete="off"
+                 style="width:100%;box-sizing:border-box;background:#252525;color:#d4d4d4;border:1px solid #333;border-radius:5px;padding:6px 8px;font-size:11px;margin-bottom:8px">
+          <div id="overview-grid" class="overview-grid"></div>
+        </div>
       </div>
-      <button class="btn" id="new-sprite-btn" title="Neuen Sprite erstellen" style="background:#1a3a1a;color:#80c080;border-color:#2a5a2a;font-size:11px;width:100%;margin-bottom:8px">+ Neuer Sprite</button>
-      <div id="overview-body">
-        <div id="overview-grid" class="overview-grid"></div>
+
+      <!-- ── Output (TS-Array + Export-Buttons) — Reiter, einklappbar ── -->
+      <div id="output-section">
+        <div id="output-tabbar">
+          <button id="output-toggle" class="output-tab" title="TypeScript-Array & Export ein-/ausklappen">
+            &lt;/&gt; TypeScript &amp; Export <span class="tab-caret">▾</span>
+          </button>
+        </div>
+        <div id="output-body" class="collapsed">
+        <div class="output-header">
+          <button class="copy-btn" id="copy-btn">📋 Kopieren</button>
+          <button class="copy-btn" id="save-ts-btn" style="background:#1a3a1a;color:#80c080;border-color:#2a5a2a">💾 .ts speichern</button>
+          <button class="copy-btn" id="reset-btn" style="background:#4a1a1a">↺ Reset</button>
+          <button class="copy-btn" id="import-array-btn" style="background:#1a2a3a;color:#80a0c0;border-color:#2a4060">📥 Import</button>
+          <label style="font-size:11px;color:#999;font-weight:600;display:flex;align-items:center;gap:4px;cursor:pointer">
+            <input type="checkbox" id="export-include-palette"> 🎨 Farben mitkopieren
+          </label>
+          <label style="font-size:11px;color:#999;font-weight:600;display:flex;align-items:center;gap:4px;cursor:pointer" title="Bettet eine Farbpalette (Swatches + Hex-Codes) ins PNG/PDF ein, damit die Farb-Infos nicht verloren gehen">
+            <input type="checkbox" id="export-embed-palette" checked> 🎨 Palette ins Bild
+          </label>
+          <span style="flex:1"></span>
+          <label style="font-size:11px;color:#666;font-weight:600">Export-Skalierung:</label>
+          <select id="export-scale"
+                  style="background:#252525;color:#d4d4d4;border:1px solid #333;border-radius:4px;padding:4px 6px;font-size:11px">
+            <option value="1">1×</option>
+            <option value="4">4×</option>
+            <option value="8" selected>8×</option>
+            <option value="16">16×</option>
+            <option value="32">32×</option>
+          </select>
+          <button class="copy-btn" id="export-png-btn"
+                  style="background:#1e3a4a;color:#80b0c0;border-color:#2a5060">🖼 PNG</button>
+          <button class="copy-btn" id="export-pdf-btn"
+                  style="background:#3a2a1e;color:#c0a080;border-color:#5a4030">📄 PDF</button>
+        </div>
+        <textarea id="output-textarea" readonly></textarea>
+        <div class="hint">Kopiere den Array und ersetze die entsprechende Konstante in deinem Code · PNG/PDF Export ohne Hintergrund (transparent)</div>
+        </div>
       </div>
+
     </div>
 
     <div id="editor-wrap">
@@ -73,44 +120,6 @@
       </div>
 
       <div id="info-bar"></div>
-
-      <!-- ── Output (TS-Array + Export-Buttons) — Reiter, einklappbar ── -->
-      <div id="output-section">
-        <div id="output-tabbar">
-          <button id="output-toggle" class="output-tab" title="TypeScript-Array & Export ein-/ausklappen">
-            &lt;/&gt; TypeScript &amp; Export <span class="tab-caret">▾</span>
-          </button>
-        </div>
-        <div id="output-body" class="collapsed">
-        <div class="output-header">
-          <button class="copy-btn" id="copy-btn">📋 Kopieren</button>
-          <button class="copy-btn" id="reset-btn" style="background:#4a1a1a">↺ Reset</button>
-          <button class="copy-btn" id="import-array-btn" style="background:#1a2a3a;color:#80a0c0;border-color:#2a4060">📥 Import</button>
-          <label style="font-size:11px;color:#999;font-weight:600;display:flex;align-items:center;gap:4px;cursor:pointer">
-            <input type="checkbox" id="export-include-palette"> 🎨 Farben mitkopieren
-          </label>
-          <label style="font-size:11px;color:#999;font-weight:600;display:flex;align-items:center;gap:4px;cursor:pointer" title="Bettet eine Farbpalette (Swatches + Hex-Codes) ins PNG/PDF ein, damit die Farb-Infos nicht verloren gehen">
-            <input type="checkbox" id="export-embed-palette" checked> 🎨 Palette ins Bild
-          </label>
-          <span style="flex:1"></span>
-          <label style="font-size:11px;color:#666;font-weight:600">Export-Skalierung:</label>
-          <select id="export-scale"
-                  style="background:#252525;color:#d4d4d4;border:1px solid #333;border-radius:4px;padding:4px 6px;font-size:11px">
-            <option value="1">1×</option>
-            <option value="4">4×</option>
-            <option value="8" selected>8×</option>
-            <option value="16">16×</option>
-            <option value="32">32×</option>
-          </select>
-          <button class="copy-btn" id="export-png-btn"
-                  style="background:#1e3a4a;color:#80b0c0;border-color:#2a5060">🖼 PNG</button>
-          <button class="copy-btn" id="export-pdf-btn"
-                  style="background:#3a2a1e;color:#c0a080;border-color:#5a4030">📄 PDF</button>
-        </div>
-        <textarea id="output-textarea" readonly></textarea>
-        <div class="hint">Kopiere den Array und ersetze die entsprechende Konstante in deinem Code · PNG/PDF Export ohne Hintergrund (transparent)</div>
-        </div>
-      </div>
 
     </div>
 
@@ -297,12 +306,8 @@
       <input type="text" id="new-name" placeholder="z.B. DOG_BLINK" maxlength="40">
     </div>
     <div class="form-row">
-      <label>Tierart (für Palette)</label>
-      <select id="new-type">
-        <option value="dog">🐕 Hund (DOG_PALETTES)</option>
-        <option value="cat">🐈 Katze (CAT_PALETTES)</option>
-        <option value="neutral">⬜ Leer (eigene Farben)</option>
-      </select>
+      <label>Farbpalette (alle Tierarten — Built-in & gespeicherte eigene)</label>
+      <select id="new-variant"></select>
     </div>
     <div class="form-row">
       <label>Größe</label>

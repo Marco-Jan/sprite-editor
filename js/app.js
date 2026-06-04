@@ -16,6 +16,7 @@ import {
   saveState, loadState, clearStorage, forceSaveBeforeUnload,
   saveToFile, loadFromFile,
 } from './storage.js';
+import { supportsFsAccess, pickSaveDirectory, getStoredDirName, saveBlob } from './filesystem.js';
 import { addCustomTypeButton, initNewSpriteModal, deleteCustomSprite } from './sprites.js';
 import { openPaletteModal, deleteCustomPalette, initPaletteModal } from './palettes.js';
 import {
@@ -448,6 +449,21 @@ function initControls() {
     });
   });
 
+  // TypeScript-Code als .ts-Datei speichern (enthält bei "Farben mitkopieren"
+  // auch den Palette-Block). Geht in den gewählten Speicherort-Ordner.
+  document.getElementById('save-ts-btn').addEventListener('click', async () => {
+    const ta = document.getElementById('output-textarea');
+    const base = state.curType.startsWith('custom_')
+      ? (customMeta[state.curType]?.name || state.curType).replace(/[^a-zA-Z0-9_]/g, '_')
+      : `${state.curType.toUpperCase()}_${state.curState.toUpperCase()}`;
+    const filename = `${base}.ts`;
+    const blob = new Blob([ta.value], { type: 'text/plain' });
+    const result = await saveBlob(blob, filename);
+    showInfoToast(result.fallback
+      ? `„${filename}“ wurde heruntergeladen (Standard-Download-Ordner).`
+      : `✅ „${filename}“ gespeichert${result.dir ? ` in „${result.dir}“` : ''}.`);
+  });
+
   // Reset-Button (nur für Built-in Sprites — Custom haben keine Original-Quelle)
   document.getElementById('reset-btn').addEventListener('click', () => {
     if (state.curType.startsWith('custom_')) {
@@ -466,6 +482,27 @@ function initControls() {
   // Undo / Redo Buttons
   document.getElementById('undo-btn').addEventListener('click', () => { if (undo()) postHistoryAction(); });
   document.getElementById('redo-btn').addEventListener('click', () => { if (redo()) postHistoryAction(); });
+
+  // Speicherort wählen / merken (File System Access API)
+  const saveDirBtn = document.getElementById('save-dir-btn');
+  if (!supportsFsAccess()) {
+    // Browser ohne API → Button ausblenden, es bleibt beim Download-Fallback
+    saveDirBtn.style.display = 'none';
+  } else {
+    const refreshDirBtn = name => {
+      saveDirBtn.title = name
+        ? `Speicherort: ${name} — klicken zum Ändern`
+        : 'Speicherort für PNG/PDF/Sprite-Dateien wählen — wird gemerkt';
+    };
+    getStoredDirName().then(refreshDirBtn);
+    saveDirBtn.addEventListener('click', async () => {
+      const dir = await pickSaveDirectory();
+      if (dir) {
+        refreshDirBtn(dir.name);
+        showInfoToast(`Speicherort gesetzt: „${dir.name}“. PNG, PDF und Sprite-Dateien landen ab jetzt hier.`);
+      }
+    });
+  }
 
   // Datei speichern / laden
   document.getElementById('save-file-btn').addEventListener('click', saveToFile);
@@ -519,6 +556,9 @@ function initTools() {
     ovToggle.textContent = collapsed ? '▼' : '▲';
     saveState();
   });
+
+  // Sprite-Suche: filtert die Übersicht-Liste live nach Namen.
+  document.getElementById('overview-search')?.addEventListener('input', renderOverview);
 
   const outToggle = document.getElementById('output-toggle');
   const outBody   = document.getElementById('output-body');

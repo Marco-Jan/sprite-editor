@@ -8,8 +8,38 @@
 import {
   state, grids, customMeta, customPalettes,
   getGrid, getPal, getVariants, isCustomVariant, getMaxIdx, getCurrentPalType,
+  getAllPaletteOptions, PAL_TYPE_LABELS,
 } from './state.js';
 import { COLOR_LABELS } from './data.js';
+import { showInfoToast } from './toast.js';
+
+// Ein <select> mit ALLEN Paletten füllen, gruppiert nach Tierart (optgroup).
+// selType/selVariant markieren die aktuell gewählte Option. Optionaler `filter`
+// blendet nur Paletten ein, deren Name (oder Tierart) den Suchtext enthält.
+// Wird vom rechten Paletten-Dropdown und vom "Neuer Sprite"-Modal genutzt.
+export function fillPaletteSelect(sel, selType, selVariant, filter = '') {
+  sel.innerHTML = '';
+  const q = filter.trim().toLowerCase();
+  const byType = {};
+  getAllPaletteOptions().forEach(o => {
+    if (q
+      && !o.variant.toLowerCase().includes(q)
+      && !(PAL_TYPE_LABELS[o.type] || '').toLowerCase().includes(q)) return;
+    (byType[o.type] = byType[o.type] || []).push(o);
+  });
+  for (const t of Object.keys(byType)) {
+    const og = document.createElement('optgroup');
+    og.label = PAL_TYPE_LABELS[t] || t;
+    byType[t].forEach(o => {
+      const opt = document.createElement('option');
+      opt.value = `${o.type}:${o.variant}`;
+      opt.textContent = o.isCustom ? `🎨 ${o.variant}` : o.variant;
+      if (o.type === selType && o.variant === selVariant) opt.selected = true;
+      og.appendChild(opt);
+    });
+    sel.appendChild(og);
+  }
+}
 
 // Callbacks die von app.js gesetzt werden, weil renderPalette/Overview/QuickPalette
 // Buttons erzeugen, die Aktionen aus anderen Modulen triggern (z.B. Save, Modal öffnen).
@@ -48,12 +78,39 @@ export function svgSprite(grid, palette, scale) {
 }
 
 // ────────────────────────────────────────────────────────────────────
-// OVERVIEW — Thumbnail-Grid + aufklappbares Sprites-Panel
+// OVERVIEW — Namensliste der Sprites (Klick klappt auf, Doppelklick lädt)
 // ────────────────────────────────────────────────────────────────────
 let overviewInitialized = false;
 
 export function ensureGroupExpanded(key) {
   state.openGroupKey = key;
+}
+
+// Ein konkretes Sprite in den Editor laden (Auswahl setzen + neu rendern).
+function loadSprite({ type, st, variant }) {
+  state.curType = type;
+  if (!type.startsWith('custom_')) state.curState = st;
+  state.curVariant = variant;
+  syncButtons();
+  renderAll();
+}
+
+// Aufgeklapptes Varianten-Panel einer Gruppe (reine Namensliste, Doppelklick lädt).
+function buildExpandedPanel(items) {
+  const panel = document.createElement('div');
+  panel.className = 'overview-expanded';
+  items.forEach(({ type: t, st, variant, label: lbl }) => {
+    const card = document.createElement('div');
+    const isSel = t === state.curType &&
+      (t.startsWith('custom_') || st === state.curState) &&
+      variant === state.curVariant;
+    card.className = 'sprite-card' + (isSel ? ' selected' : '');
+    card.title = 'Doppelklick: laden';
+    card.innerHTML = `<div class="sprite-card-label">${lbl}</div>`;
+    card.ondblclick = () => loadSprite({ type: t, st, variant });
+    panel.appendChild(card);
+  });
+  return panel;
 }
 
 export function renderOverview() {
@@ -98,22 +155,22 @@ export function renderOverview() {
     groups.push({ key: k, label: `✨ ${meta.name || k}`, items });
   });
 
-  // ── Reihe der Thumbnail-Cards ──
+  // ── Namensliste der Gruppen (nur Name, kein Vorschaubild) ──
   const cardsRow = document.createElement('div');
   cardsRow.className = 'overview-group-cards';
 
-  groups.forEach(({ key, label, items }) => {
-    const thumbItem = items.find(it =>
+  // Suchfilter (Suchfeld liegt außerhalb von #overview-grid, bleibt erhalten).
+  const q = (document.getElementById('overview-search')?.value || '').trim().toLowerCase();
+  const visibleGroups = q ? groups.filter(g => g.label.toLowerCase().includes(q)) : groups;
+
+  visibleGroups.forEach(({ key, label, items }) => {
+    // Repräsentatives Sprite der Gruppe (aktuelles, sonst erstes) — wird beim
+    // Doppelklick geladen.
+    const repItem = items.find(it =>
       it.type === state.curType &&
       (it.type.startsWith('custom_') || it.st === state.curState) &&
       it.variant === state.curVariant
     ) || items[0];
-
-    const thumbGrid = thumbItem.type.startsWith('custom_')
-      ? grids[thumbItem.type] : grids[thumbItem.type][thumbItem.st];
-    const thumbPal  = getPal(thumbItem.type, thumbItem.variant);
-    const maxDim    = Math.max(thumbGrid.length, thumbGrid[0].length);
-    const thumbScale = Math.max(1, Math.min(3, Math.floor(56 / maxDim)));
 
     const isOpen   = state.openGroupKey === key;
     const isActive = items.some(it =>
@@ -126,12 +183,25 @@ export function renderOverview() {
     card.className = 'sprite-group-card'
       + (isOpen   ? ' open'   : '')
       + (isActive ? ' group-active' : '');
-    card.innerHTML =
-      `<div class="group-thumb chk">${svgSprite(thumbGrid, thumbPal, thumbScale)}</div>`
-      + `<div class="sprite-group-name">${label}</div>`;
+    card.title = 'Klick: auf-/zuklappen · Doppelklick: laden';
+    // Bewusst nur der Name — kein Vorschaubild.
+    card.innerHTML = `<div class="sprite-group-name">${label}</div>`;
+
+    // Einzelklick = auf-/zuklappen, Doppelklick = Sprite laden. Der Timer
+    // entkoppelt beide: ohne ihn würde der Klick-Handler die Karte sofort neu
+    // rendern und das dblclick-Event auf dem zerstörten Element nie feuern.
+    let clickTimer = null;
     card.addEventListener('click', () => {
-      state.openGroupKey = isOpen ? null : key;
-      renderOverview();
+      if (clickTimer) return;             // 2. Klick eines Doppelklicks
+      clickTimer = setTimeout(() => {
+        clickTimer = null;
+        state.openGroupKey = isOpen ? null : key;
+        renderOverview();
+      }, 220);
+    });
+    card.addEventListener('dblclick', () => {
+      clearTimeout(clickTimer); clickTimer = null;
+      loadSprite(repItem);
     });
 
     // × Löschen-Button nur für Custom-Sprites
@@ -148,41 +218,14 @@ export function renderOverview() {
     }
 
     cardsRow.appendChild(card);
+
+    // Varianten direkt unter dieser Zeile aufklappen (nicht am Listenende).
+    if (state.openGroupKey === key) {
+      cardsRow.appendChild(buildExpandedPanel(items));
+    }
   });
 
   container.appendChild(cardsRow);
-
-  // ── Aufgeklapptes Sprites-Panel ──
-  if (state.openGroupKey) {
-    const openGroup = groups.find(g => g.key === state.openGroupKey);
-    if (openGroup) {
-      const panel = document.createElement('div');
-      panel.className = 'overview-expanded';
-
-      openGroup.items.forEach(({ type: t, st, variant, label: lbl }) => {
-        const g = t.startsWith('custom_') ? grids[t] : grids[t][st];
-        const p = getPal(t, variant);
-        const maxDim   = Math.max(g.length, g[0].length);
-        const cardScale = Math.max(1, Math.min(6, Math.floor(72 / maxDim)));
-
-        const card = document.createElement('div');
-        const isSel = t === state.curType &&
-          (t.startsWith('custom_') || st === state.curState) &&
-          variant === state.curVariant;
-        card.className = 'sprite-card' + (isSel ? ' selected' : '');
-        card.innerHTML = `<div class="chk">${svgSprite(g, p, cardScale)}</div><div class="sprite-card-label">${lbl}</div>`;
-        card.onclick = () => {
-          state.curType = t;
-          if (!t.startsWith('custom_')) state.curState = st;
-          state.curVariant = variant;
-          syncButtons(); renderAll();
-        };
-        panel.appendChild(card);
-      });
-
-      container.appendChild(panel);
-    }
-  }
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -335,59 +378,83 @@ export function syncColorActive() {
 // PALETTE-PANEL (rechts) — Variant-Buttons + ausführliche Farbliste
 // ────────────────────────────────────────────────────────────────────
 export function renderPalette() {
-  const variants = getVariants(state.curType);
   const pal = getPal(state.curType, state.curVariant);
 
-  // Variant-Buttons (Built-in + Custom mit Edit/Delete-X)
+  // Variant-Auswahl als Dropdown (alle Paletten, gruppiert nach Tierart)
   const vbtns = document.getElementById('variant-btns');
   vbtns.innerHTML = '';
-  variants.forEach(v => {
-    const isCustom = isCustomVariant(state.curType, v);
-    const b = document.createElement('button');
-    b.className = 'btn' + (v === state.curVariant ? ' active' : '') + (isCustom ? ' custom-pal' : '');
 
-    const label = document.createElement('span');
-    label.textContent = v;
-    b.appendChild(label);
+  const selRow = document.createElement('div');
+  selRow.className = 'variant-row';
 
-    if (isCustom) {
-      const edit = document.createElement('span');
-      edit.className = 'pal-edit-x';
-      edit.textContent = '✎';
-      edit.title = 'Palette bearbeiten';
-      edit.addEventListener('click', e => {
-        e.stopPropagation();
-        renderCallbacks.onEditPalette(state.curType, v);
-      });
-      b.appendChild(edit);
+  const sel = document.createElement('select');
+  sel.id = 'variant-select';
+  sel.className = 'variant-select';
+  // ALLE Paletten (alle Tierarten), gruppiert — aktuell genutzte ist markiert.
+  fillPaletteSelect(sel, getCurrentPalType(), state.curVariant);
 
-      const x = document.createElement('span');
-      x.className = 'pal-del-x';
-      x.textContent = '×';
-      x.title = 'Palette löschen';
-      x.addEventListener('click', e => {
-        e.stopPropagation();
-        renderCallbacks.onDeletePalette(state.curType, v);
-      });
-      b.appendChild(x);
-    }
-
-    b.onclick = () => {
+  // Suchfeld — nur wenn es viele Paletten gibt (sonst unnötig). Filtert die
+  // Optionen des Dropdowns live, ohne das ganze Panel neu zu rendern.
+  if (getAllPaletteOptions().length > 6) {
+    const search = document.createElement('input');
+    search.type = 'text';
+    search.className = 'variant-search';
+    search.placeholder = '🔍 Palette suchen…';
+    search.autocomplete = 'off';
+    search.oninput = () => fillPaletteSelect(sel, getCurrentPalType(), state.curVariant, search.value);
+    vbtns.appendChild(search);
+  }
+  sel.onchange = () => {
+    const [t, v] = sel.value.split(':');
+    if (state.curType.startsWith('custom_')) {
+      // Custom-Sprite übernimmt die Tierart der gewählten Palette
+      customMeta[state.curType].palType = t;
       state.curVariant = v;
-      renderPalette(); renderQuickPalette(); renderEditor(); renderOverview();
-      renderCallbacks.onSave();
-    };
-    vbtns.appendChild(b);
-  });
+    } else if (t === getCurrentPalType()) {
+      // Eingebautes dog/cat-Sprite: nur eigene Tierart-Paletten möglich
+      state.curVariant = v;
+    } else {
+      showInfoToast('Eingebaute Hund/Katze-Sprites nutzen nur ihre eigene Tierart-Palette. ' +
+        'Für freie Palettenwahl ein Custom-Sprite anlegen.');
+      renderPalette(); // Auswahl zurücksetzen
+      return;
+    }
+    renderPalette(); renderQuickPalette(); renderEditor(); renderOverview();
+    renderCallbacks.onSave();
+  };
+  selRow.appendChild(sel);
 
-  // "+ Palette" Button am Ende
+  // ✎ Bearbeiten / × Löschen — nur für die aktuell gewählte eigene Palette
+  if (isCustomVariant(state.curType, state.curVariant)) {
+    const edit = document.createElement('button');
+    edit.className = 'btn variant-act';
+    edit.textContent = '✎';
+    edit.title = 'Palette bearbeiten';
+    edit.onclick = () => renderCallbacks.onEditPalette(state.curType, state.curVariant);
+    selRow.appendChild(edit);
+
+    const del = document.createElement('button');
+    del.className = 'btn variant-act';
+    del.textContent = '×';
+    del.title = 'Palette löschen';
+    del.onclick = () => renderCallbacks.onDeletePalette(state.curType, state.curVariant);
+    selRow.appendChild(del);
+  }
+
+  vbtns.appendChild(selRow);
+
+  // Aktionen darunter: neue Palette anlegen / Bildfarben übernehmen
+  const actions = document.createElement('div');
+  actions.className = 'variant-actions';
+
   const addBtn = document.createElement('button');
   addBtn.id = 'palette-add-btn';
   addBtn.className = 'btn';
   addBtn.style.cssText = 'background:#1a3a1a;color:#80c080;border-color:#2a5a2a';
   addBtn.textContent = '+ Palette';
+  addBtn.title = 'Neue eigene Farbpalette erstellen und speichern';
   addBtn.onclick = () => renderCallbacks.onOpenPaletteModal();
-  vbtns.appendChild(addBtn);
+  actions.appendChild(addBtn);
 
   // "🎨 Bild → Palette" — aktuelle Bildfarben in eine editierbare Custom-Palette
   // umwandeln (Pixel werden auf Indizes umgeschrieben). Macht reduzierte
@@ -399,7 +466,9 @@ export function renderPalette() {
   img2pal.textContent = '🎨 Bild → Palette';
   img2pal.title = 'Die Farben des aktuellen Bildes als editierbare Palette übernehmen — danach rechts direkt änderbar';
   img2pal.onclick = () => renderCallbacks.onImageToPalette();
-  vbtns.appendChild(img2pal);
+  actions.appendChild(img2pal);
+
+  vbtns.appendChild(actions);
 
   document.getElementById('variant-label').textContent = 'Variante: ' + state.curVariant;
 

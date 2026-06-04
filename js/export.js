@@ -5,6 +5,8 @@
 import { state, customMeta, getGrid, getPal } from './state.js';
 import { cellToColor } from './render.js';
 import { showInfoToast } from './toast.js';
+import { saveBlob } from './filesystem.js';
+import { flashSaved } from './storage.js';
 
 // Sauberer Sprite-Render auf neuen Canvas (ohne Grid-Linien, ohne Schachbrett).
 // Hintergrund bleibt transparent (default-state des Canvas).
@@ -169,13 +171,21 @@ function exportFilename(ext) {
   return `${base}_${state.curVariant}.${ext}`;
 }
 
-function triggerDownload(url, filename) {
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(() => document.body.removeChild(a), 0);
+// Canvas → PNG-Blob (Promise).
+function canvasToPngBlob(canvas) {
+  return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+}
+
+// Nach erfolgreichem Speichern Feedback geben: kurz "gespeichert" aufblitzen,
+// bei Download-Fallback einmalig erklären wohin die Datei ging.
+function reportSaved(result, filename) {
+  flashSaved(); // kurzes "gespeichert"-Aufblitzen oben rechts
+  if (result.fallback) {
+    showInfoToast(`„${filename}“ wurde heruntergeladen (in den Standard-Download-Ordner). ` +
+      `Tipp: Mit „📁 Speicherort“ einen festen Ordner wählen.`);
+  } else {
+    showInfoToast(`✅ „${filename}“ gespeichert${result.dir ? ` in „${result.dir}“` : ''}.`);
+  }
 }
 
 export function initExport() {
@@ -183,14 +193,16 @@ export function initExport() {
 
   const embedPalette = () => document.getElementById('export-embed-palette')?.checked;
 
-  document.getElementById('export-png-btn').addEventListener('click', () => {
+  document.getElementById('export-png-btn').addEventListener('click', async () => {
     const scale = Number(scaleSel.value) || 8;
     const canvas = buildExportCanvas(scale, embedPalette());
-    const url = canvas.toDataURL('image/png');
-    triggerDownload(url, exportFilename('png'));
+    const blob = await canvasToPngBlob(canvas);
+    const filename = exportFilename('png');
+    const result = await saveBlob(blob, filename);
+    reportSaved(result, filename);
   });
 
-  document.getElementById('export-pdf-btn').addEventListener('click', () => {
+  document.getElementById('export-pdf-btn').addEventListener('click', async () => {
     if (!window.jspdf || !window.jspdf.jsPDF) {
       showInfoToast('PDF-Library noch nicht geladen — kurz warten und nochmal versuchen (Internet erforderlich).');
       return;
@@ -209,6 +221,8 @@ export function initExport() {
       hotfixes: ['px_scaling'],
     });
     pdf.addImage(dataUrl, 'PNG', 0, 0, W, H, undefined, 'NONE');
-    pdf.save(exportFilename('pdf'));
+    const filename = exportFilename('pdf');
+    const result = await saveBlob(pdf.output('blob'), filename);
+    reportSaved(result, filename);
   });
 }

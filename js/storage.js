@@ -5,6 +5,8 @@
 // Schema-Änderungen v2 anlegen kann ohne alte Saves zu zerschießen).
 import { state, grids, customMeta, customPalettes, getVariants } from './state.js';
 import { ORIG } from './data.js';
+import { saveBlob } from './filesystem.js';
+import { showInfoToast } from './toast.js';
 
 const STORAGE_KEY = 'wb_sprite_tester_v1';
 let _saveTimer = null;
@@ -131,8 +133,9 @@ export function flashSaved() {
   _flashTimer = setTimeout(() => { el.style.opacity = '0'; }, 800);
 }
 
-// Gesamten Zustand als JSON-Datei herunterladen.
-export function saveToFile() {
+// Das GANZE Projekt (alle Sprites + Paletten + UI) als JSON-Datei in den
+// gewählten Ordner speichern (Fallback: klassischer Download).
+export async function saveToFile() {
   const payload = {
     grids,
     customMeta,
@@ -152,21 +155,20 @@ export function saveToFile() {
       },
     },
   };
-  const filename = state.curType.startsWith('custom_')
+  const filename = (state.curType.startsWith('custom_')
     ? (customMeta[state.curType]?.name || state.curType).replace(/[^a-zA-Z0-9_-]/g, '_')
-    : `${state.curType}_${state.curState}`.toUpperCase();
+    : `${state.curType}_${state.curState}`.toUpperCase()) + '.json';
 
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${filename}.json`;
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 0);
+  const result = await saveBlob(blob, filename);
+  flashSaved();
+  showInfoToast(result.fallback
+    ? `„${filename}“ wurde heruntergeladen (Standard-Download-Ordner). ` +
+      `Tipp: Mit „📁 Speicherort“ einen festen Ordner wählen.`
+    : `✅ Projekt als „${filename}“ gespeichert${result.dir ? ` in „${result.dir}“` : ''}.`);
 }
 
-// JSON-Datei einlesen, in localStorage schreiben, Seite neu laden.
+// JSON-Datei (ganzes Projekt) einlesen, in localStorage schreiben, Seite neu laden.
 export function loadFromFile(file, onError) {
   const reader = new FileReader();
   reader.onload = e => {
