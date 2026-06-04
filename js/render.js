@@ -20,6 +20,7 @@ export const renderCallbacks = {
   onEditPalette: (type, variant) => {},
   onDeletePalette: (type, variant) => {},
   onDeleteSprite: (key) => {},        // Custom-Sprite löschen (mit Toast-Bestätigung)
+  onImageToPalette: () => {},         // aktuelle Bildfarben → editierbare Custom-Palette
 };
 
 // ────────────────────────────────────────────────────────────────────
@@ -388,24 +389,71 @@ export function renderPalette() {
   addBtn.onclick = () => renderCallbacks.onOpenPaletteModal();
   vbtns.appendChild(addBtn);
 
+  // "🎨 Bild → Palette" — aktuelle Bildfarben in eine editierbare Custom-Palette
+  // umwandeln (Pixel werden auf Indizes umgeschrieben). Macht reduzierte
+  // Rohfarben rechts direkt editierbar und speicherbar.
+  const img2pal = document.createElement('button');
+  img2pal.id = 'palette-from-image-btn';
+  img2pal.className = 'btn';
+  img2pal.style.cssText = 'background:#1a2a3a;color:#80a0c0;border-color:#2a4060';
+  img2pal.textContent = '🎨 Bild → Palette';
+  img2pal.title = 'Die Farben des aktuellen Bildes als editierbare Palette übernehmen — danach rechts direkt änderbar';
+  img2pal.onclick = () => renderCallbacks.onImageToPalette();
+  vbtns.appendChild(img2pal);
+
   document.getElementById('variant-label').textContent = 'Variante: ' + state.curVariant;
 
-  // Ausführliche Farbliste mit Labels
+  // Ausführliche Farbliste mit Labels. Bei Custom-Paletten sind die Swatches
+  // editierbar (Color-Picker) — eine Farbänderung färbt das Bild live um, weil
+  // die Pixel die Palette per Index referenzieren.
   const maxIdx = getMaxIdx();
+  const editable = isCustomVariant(state.curType, state.curVariant);
   const items = document.getElementById('palette-items');
   items.innerHTML = '';
   for (let i = 0; i <= maxIdx; i++) {
     const color = pal[i];
     const item = document.createElement('div');
-    item.className = 'color-item' + (i === state.curColor ? ' active' : '');
+    item.className = 'color-item' + (i === state.curColor ? ' active' : '')
+      + (editable && i !== 0 ? ' editable' : '');
     item.dataset.idx = i;
+
     const sw = document.createElement('div');
     sw.className = 'color-swatch' + (i === 0 ? ' transp' : '');
     if (i !== 0 && color) sw.style.background = color;
+
     const lbl = document.createElement('div');
     lbl.style.overflow = 'hidden';
     lbl.innerHTML = `<div style="display:flex;align-items:center;gap:4px"><span class="color-idx">${i}</span><span class="color-name">${COLOR_LABELS[i] || ''}</span></div>${i !== 0 && color ? `<div class="color-hex">${color}</div>` : ''}`;
     item.appendChild(sw); item.appendChild(lbl);
+
+    // Custom-Paletten: Swatch klickbar zum Editieren. Verstecktes Color-Input
+    // (gleiches Muster wie der Haupt-Farbwähler) — eine Änderung färbt das Bild
+    // live um, weil die Pixel die Palette per Index referenzieren.
+    if (editable && i !== 0) {
+      const picker = document.createElement('input');
+      picker.type = 'color';
+      picker.value = color || '#888888';
+      picker.style.cssText = 'position:absolute;width:0;height:0;opacity:0;pointer-events:none';
+      sw.title = 'Klicken zum Ändern — das Bild aktualisiert sich live';
+      sw.style.cursor = 'pointer';
+      sw.addEventListener('click', e => {
+        e.stopPropagation();
+        picker.value = (getPal(state.curType, state.curVariant)[i]) || '#888888';
+        picker.click();
+      });
+      picker.addEventListener('input', () => {
+        const t = getCurrentPalType();
+        if (!customPalettes[t] || !customPalettes[t][state.curVariant]) return;
+        customPalettes[t][state.curVariant][i] = picker.value;
+        sw.style.background = picker.value;
+        const hexEl = item.querySelector('.color-hex');
+        if (hexEl) hexEl.textContent = picker.value;
+        renderEditor(); renderQuickPalette(); renderOverview(); updateCurrentColorIndicator();
+        renderCallbacks.onSave();
+      });
+      item.appendChild(picker);
+    }
+
     item.onclick = () => { state.curColor = i; syncColorActive(); };
     items.appendChild(item);
   }

@@ -2,6 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>🐾 Sprite Editor</title>
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -18,7 +19,8 @@
           style="font-size:11px;color:#70c090;opacity:0;transition:opacity 0.2s;font-weight:600">
       💾 gespeichert
     </span>
-    <button class="btn" id="save-file-btn" title="Alle Sprites als JSON-Datei speichern" style="margin-left:auto">💾 Datei speichern</button>
+    <button class="btn" id="help-btn" title="Hilfe & Erklärungen" style="margin-left:auto">ℹ Hilfe</button>
+    <button class="btn" id="save-file-btn" title="Alle Sprites als JSON-Datei speichern">💾 Datei speichern</button>
     <button class="btn" id="load-file-btn" title="Sprites aus JSON-Datei laden">📂 Datei laden</button>
     <input type="file" id="load-file-input" accept=".json,application/json" style="display:none">
     <button class="btn danger" id="clear-storage-btn" title="Allen Fortschritt löschen">🗑 Reset Storage</button>
@@ -48,23 +50,20 @@
           <button class="btn" id="redo-btn" title="Wiederholen (Ctrl+Y / Ctrl+Shift+Z)" disabled>↷ Redo</button>
         </div>
         <div id="bg-toggle-wrap">
-          <label>Hintergrund:</label>
-          <button class="btn active" id="bg-dark-btn" title="Dunkles Schachbrett">◩ Dunkel</button>
-          <button class="btn"        id="bg-bw-btn"   title="Schwarz/Weiß Schachbrett">◩ Hell</button>
+          <button class="btn active" id="bg-dark-btn" title="Dunkler Schachbrett-Hintergrund">◩ Dunkel</button>
+          <button class="btn"        id="bg-bw-btn"   title="Heller Schachbrett-Hintergrund">◩ Hell</button>
         </div>
-      </div>
-
-      <div id="quick-palette-row">
-        <div id="quick-palette"></div>
         <div id="editor-top-right">
           <div id="cell-size-wrap">
             <label>Zoom:</label>
             <input type="range" id="cell-size" min="4" max="32" value="16">
             <span id="cell-size-val">16px</span>
           </div>
-          <button class="btn" id="fullscreen-btn" title="Vollbild (Esc zum Schließen)">⛶ Vollbild</button>
+          <button class="btn" id="fullscreen-btn" title="Vollbild (Esc zum Schließen)">Vollbild</button>
         </div>
       </div>
+
+      <div id="quick-palette"></div>
 
       <div id="editor-canvas-area">
         <div id="editor-canvas-wrap">
@@ -242,25 +241,6 @@
         </div>
       </div>
 
-      <div id="shortcuts-section">
-        <div id="shortcuts-header">
-          <span class="shortcuts-title">Shortcuts</span>
-          <button id="shortcuts-toggle" title="Shortcuts ein-/ausklappen">▼</button>
-        </div>
-        <div id="shortcuts-bar" class="collapsed">
-          <div class="sc-row"><b>Klick</b><span>Malen</span></div>
-          <div class="sc-row"><b>Rechtsklick</b><span>Löschen (gedrückt = durchgehend)</span></div>
-          <div class="sc-row"><b>Alt+Klick</b><span>Pixel-Pipette</span></div>
-          <div class="sc-row"><b>Shift halten</b><span>Schablone in Vordergrund</span></div>
-          <div class="sc-row"><b>Shift+Links+Drag</b><span>Schablone verschieben</span></div>
-          <div class="sc-row"><b>Shift+Rechts</b><span>Schablone-Pipette</span></div>
-          <div class="sc-row"><b>0–9</b><span>Farbe wechseln</span></div>
-          <div class="sc-row"><b>P/B/S/F/E/W</b><span>Stift / Pinsel / Spray / Füllen / Radierer / Zauberstab</span></div>
-          <div class="sc-row"><b>Ctrl+Z</b><span>Rückgängig</span></div>
-          <div class="sc-row"><b>Ctrl+Y / Ctrl+Shift+Z</b><span>Wiederholen</span></div>
-        </div>
-      </div>
-
     </div>
 
   </div>
@@ -383,6 +363,86 @@
   <div id="confirm-toast-btns">
     <button id="confirm-toast-cancel">Abbrechen</button>
     <button id="confirm-toast-ok">Löschen</button>
+  </div>
+</div>
+
+<!-- ── Hilfe-Modal ── -->
+<div id="help-modal-overlay">
+  <div id="help-modal">
+    <div class="help-top">
+      <h2>ℹ Hilfe &amp; Erklärungen</h2>
+      <button id="help-close" class="help-close" title="Schließen">×</button>
+    </div>
+
+    <p class="help-intro">Pixel-Sprite-Editor mit Foto-Vorlage. Du kannst frei malen — oder ein Foto als <b>Schablone</b> abpausen und automatisch zu einem sauberen Sprite verarbeiten.</p>
+
+    <h3 class="help-h">🖊 Werkzeuge</h3>
+    <div class="help-list">
+      <div><b>Stift</b> – einzelne Pixel malen.</div>
+      <div><b>Pinsel</b> – Fläche; <i>Stärke</i> = Dichte, <i>Größe</i> = Radius.</div>
+      <div><b>Spray</b> – zufällige Pixel; <i>Stärke</i> = Menge pro Klick.</div>
+      <div><b>Füllen</b> – Flood-Fill: zusammenhängende gleiche Fläche.</div>
+      <div><b>Radierer</b> – löscht zu transparent.</div>
+      <div><b>Zauberstab</b> – löscht zusammenhängende <i>ähnliche</i> Fläche (z.B. Hintergrund); <i>Toleranz</i>-Slider = wie viel Farbabweichung mitgeht.</div>
+    </div>
+
+    <h3 class="help-h">📷 Schablone (Foto-Vorlage)</h3>
+    <div class="help-list">
+      <div>Bild laden, mit <span class="kbd">Shift</span>+Linksklick ziehen verschieben, Deckkraft/Größe per Slider.</div>
+      <div><span class="kbd">Shift</span> halten → Schablone voll in den Vordergrund.</div>
+      <div><span class="kbd">Shift</span>+Rechtsklick → Schablonen-Pipette (exakte Farbe aus dem Bild).</div>
+      <div>Bleibt nach Browser-Reload erhalten (lokal gespeichert).</div>
+    </div>
+
+    <h3 class="help-h">🎨 Schablone übernehmen (Trace)</h3>
+    <div class="help-list">
+      <div><b>Palette</b> – Farben auf die aktuelle Palette einrasten (Export-tauglich).</div>
+      <div><b>Rohfarben</b> – echte Bildfarben (fotorealistisch, sehr viele Farben).</div>
+      <div><b>Reduzieren (N Farben)</b> – automatisch auf N dominante Töne quantisieren → flache Flächen statt Foto-Rauschen. <i>Empfohlen.</i></div>
+      <div><b>🎨 Bild → Palette</b> (im Paletten-Panel rechts) – macht aus den Bildfarben eine gespeicherte, editierbare Palette. Danach jeden Farb-Swatch rechts anklicken und ändern → das Bild färbt sich live um.</div>
+    </div>
+
+    <h3 class="help-h">🪄 Aufräumen</h3>
+    <div class="help-list">
+      <div><b>Auto-Hintergrund weg</b> – löscht vom Bildrand her zusammenhängende ähnliche Flächen (Toleranz höher = mehr).</div>
+      <div><b>Glätten</b> – einzelne Streupixel entfernen → saubere Flächen/Kanten.</div>
+      <div><b>Outline</b> – dunkle Kante ums Motiv (Farbe + Dicke wählbar). Macht es sofort „spriteiger".</div>
+    </div>
+
+    <h3 class="help-h">✨ Foto → Sprite (empfohlener Ablauf)</h3>
+    <ol class="help-ol">
+      <li>Foto als Schablone laden, übers Grid legen</li>
+      <li><b>Reduzieren</b> auf ~8 Farben</li>
+      <li><b>🎨 Bild → Palette</b> – Farben als editierbare Palette übernehmen, dann rechts feinjustieren</li>
+      <li><b>Auto-Hintergrund weg</b> (oder Zauberstab)</li>
+      <li><b>Glätten</b></li>
+      <li><b>Outline</b> drüber</li>
+      <li>Reste von Hand mit Stift/Radierer säubern</li>
+    </ol>
+    <p class="help-note">Die Pose kommt vom Foto — etwas Handarbeit am Ende bleibt.</p>
+
+    <h3 class="help-h">💾 Speichern &amp; Export</h3>
+    <div class="help-list">
+      <div><b>Auto-Speicher</b> – alles bleibt im Browser (localStorage).</div>
+      <div><b>Datei speichern/laden</b> – alle Sprites als JSON sichern/zurückholen.</div>
+      <div><b>PNG / PDF</b> – mit „Palette ins Bild" wird eine Farb-Legende eingebettet, damit keine Farb-Info verloren geht.</div>
+      <div><b>TypeScript-Reiter</b> – Array für deinen Code; Rohfarben werden verlustfrei als Palette-Indizes mitgespeichert.</div>
+    </div>
+
+    <h3 class="help-h">⌨ Tastenkürzel</h3>
+    <div class="help-shortcuts">
+      <div class="sc-row"><b>Klick</b><span>Malen</span></div>
+      <div class="sc-row"><b>Rechtsklick</b><span>Löschen (gedrückt = durchgehend)</span></div>
+      <div class="sc-row"><b>Alt+Klick</b><span>Pixel-Pipette</span></div>
+      <div class="sc-row"><b>Shift halten</b><span>Schablone in Vordergrund</span></div>
+      <div class="sc-row"><b>Shift+Links+Drag</b><span>Schablone verschieben</span></div>
+      <div class="sc-row"><b>Shift+Rechts</b><span>Schablone-Pipette</span></div>
+      <div class="sc-row"><b>0–9</b><span>Farbe wechseln</span></div>
+      <div class="sc-row"><b>P/B/S/F/E/W</b><span>Stift / Pinsel / Spray / Füllen / Radierer / Zauberstab</span></div>
+      <div class="sc-row"><b>Ctrl+Z</b><span>Rückgängig</span></div>
+      <div class="sc-row"><b>Ctrl+Y · Ctrl+Shift+Z</b><span>Wiederholen</span></div>
+      <div class="sc-row"><b>Esc</b><span>Vollbild / Hilfe schließen</span></div>
+    </div>
   </div>
 </div>
 

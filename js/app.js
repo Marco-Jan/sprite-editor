@@ -1,12 +1,15 @@
 // ════════════════════════════════════════════════════════════════════
 // APP — Haupt-Entry: Init + Event-Bindings + Wiring zwischen Modulen
 // ════════════════════════════════════════════════════════════════════
-import { state, grids, customMeta, getGrid, getMaxIdx, getPal } from './state.js';
+import {
+  state, grids, customMeta, customPalettes,
+  getGrid, getMaxIdx, getPal, getVariants, getCurrentPalType,
+} from './state.js';
 import { showConfirmToast, showInfoToast } from './toast.js';
 import { ORIG, dc, COLOR_LABELS } from './data.js';
 import {
   renderAll, renderEditor, renderOverview, syncColorActive,
-  cellFromEvent, paintCell, paintBrush, paintSpray, floodFill, renderCallbacks,
+  cellFromEvent, cellToColor, paintCell, paintBrush, paintSpray, floodFill, renderCallbacks,
   updateOutput,
 } from './render.js';
 import {
@@ -21,7 +24,7 @@ import {
   doTemplatePipette, sampleTemplateGrid,
 } from './template.js';
 import {
-  medianCut, nearestColor, rgbToHex,
+  medianCut, nearestColor, rgbToHex, hexToRgb,
   despeckleGrid, outlineGrid, magicWandDelete, autoRemoveBackground,
 } from './spritefx.js';
 import { initExport } from './export.js';
@@ -45,6 +48,8 @@ renderCallbacks.onDeleteSprite = (key) => {
 renderCallbacks.onDeletePalette = (type, variant) => {
   showConfirmToast(`Palette "${variant}" wirklich löschen?`, () => deleteCustomPalette(type, variant));
 };
+
+renderCallbacks.onImageToPalette = imageToPalette;
 
 // ────────────────────────────────────────────────────────────────────
 // History → UI: Button-State + Re-Render nach Undo/Redo
@@ -146,6 +151,80 @@ function applyTemplateTrace(mode, n) {
 }
 
 // ────────────────────────────────────────────────────────────────────
+// BILD → PALETTE — aktuelle Bildfarben in eine editierbare Custom-Palette
+// ────────────────────────────────────────────────────────────────────
+// Eindeutigen Palette-Namen finden (foto, foto2, …) — kollidiert weder mit
+// Built-in- noch mit bestehenden Custom-Varianten des Typs.
+function uniquePaletteName(type, base) {
+  const taken = new Set(getVariants(type));
+  if (!taken.has(base)) return base;
+  let i = 2;
+  while (taken.has(base + i)) i++;
+  return base + i;
+}
+
+// Index (1-basiert) der nächstgelegenen Farbe aus einer {r,g,b}[]-Liste.
+function nearestRgbIndex(rgb, list) {
+  let best = 0, bd = Infinity;
+  for (let i = 0; i < list.length; i++) {
+    const p = list[i];
+    const d = (rgb.r - p.r) ** 2 + (rgb.g - p.g) ** 2 + (rgb.b - p.b) ** 2;
+    if (d < bd) { bd = d; best = i; }
+  }
+  return best + 1;
+}
+
+// Sammelt die Farben des aktuellen Bildes (Index→Hex aufgelöst, freie Hex direkt),
+// legt daraus eine Custom-Palette an und schreibt das Grid auf deren Indizes um.
+// Bei mehr Farben als die Palette fasst (maxIdx) wird per Median-Cut reduziert.
+// Ergebnis: die Bildfarben stehen rechts und sind dort live editierbar.
+function imageToPalette() {
+  const grid = getGrid();
+  const pal  = getPal(state.curType, state.curVariant); // aktuelle (alte) Palette zum Auflösen
+  const cap  = getMaxIdx();
+  const H = grid.length, W = grid[0].length;
+
+  const px = [];
+  const distinct = new Set();
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const hex = cellToColor(grid[y][x], pal);
+    if (!hex) continue;
+    distinct.add(hex.toLowerCase());
+    px.push(hexToRgb(hex));
+  }
+  if (!px.length) {
+    showInfoToast('Das Bild ist leer — erst eine Schablone übernehmen oder malen.');
+    return;
+  }
+
+  // ≤ Kapazität → Farben 1:1 übernehmen, sonst auf dominante Töne reduzieren.
+  let colors = distinct.size <= cap ? [...distinct].map(hexToRgb) : medianCut(px, cap);
+  // Hell → dunkel sortieren, damit Index 1 der hellste Ton ist (wie bei den Fell-Tönen).
+  const lum = c => 0.299 * c.r + 0.587 * c.g + 0.114 * c.b;
+  colors.sort((a, b) => lum(b) - lum(a));
+
+  // Custom-Palette anlegen (Indizes 1..N) — wird beim saveState mitgespeichert.
+  const t = getCurrentPalType();
+  const name = uniquePaletteName(state.curType, 'foto');
+  const palObj = {};
+  colors.forEach((c, i) => { palObj[i + 1] = rgbToHex(c.r, c.g, c.b); });
+  customPalettes[t][name] = palObj;
+
+  // Grid auf die neuen Indizes umschreiben (alte Farbe je Pixel → nächster Index).
+  recordOp(() => {
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const hex = cellToColor(grid[y][x], pal);
+      grid[y][x] = hex ? nearestRgbIndex(hexToRgb(hex), colors) : 0;
+    }
+  });
+
+  state.curVariant = name;
+  renderAll();
+  saveState();
+  showInfoToast(`Palette „${name}" erstellt — ${colors.length} Farben. Rechts direkt editierbar; das Bild aktualisiert sich live.`);
+}
+
+// ────────────────────────────────────────────────────────────────────
 // Tool-Dispatch + UI-Sync
 // ────────────────────────────────────────────────────────────────────
 function applyTool(x, y) {
@@ -192,7 +271,10 @@ function initCanvasEvents() {
   const canvas = document.getElementById('editor-canvas');
   const infoBar = document.getElementById('info-bar');
 
-  canvas.addEventListener('mousedown', e => {
+  canvas.addEventListener('pointerdown', e => {
+    // Pointer einfangen → move/up feuern weiter, auch wenn der Finger den
+    // Canvas verlässt (wichtig für Touch).
+    try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
     // ── Rechtsklick ───────────────────────────────────────────
     if (e.button === 2) {
       e.preventDefault();
@@ -258,7 +340,7 @@ function initCanvasEvents() {
     if (c) applyTool(c.x, c.y);
   });
 
-  canvas.addEventListener('mousemove', e => {
+  canvas.addEventListener('pointermove', e => {
     // Schablone-Drag hat Vorrang
     if (tplDragging()) {
       updateTplDrag(e);
@@ -280,14 +362,16 @@ function initCanvasEvents() {
     }
   });
 
-  window.addEventListener('mouseup', () => {
+  const endPointer = () => {
     if (tplDragging()) endTplDrag();
     if (state.isDrawing || state.isErasing) commitStroke();
     state.isDrawing = false;
     state.isErasing = false;
-  });
+  };
+  window.addEventListener('pointerup', endPointer);
+  window.addEventListener('pointercancel', endPointer);
 
-  // Browser-Kontextmenü unterdrücken — Rechtsklick-Logik läuft via mousedown
+  // Browser-Kontextmenü unterdrücken — Rechtsklick-Logik läuft via pointerdown
   canvas.addEventListener('contextmenu', e => e.preventDefault());
 }
 
@@ -296,9 +380,10 @@ function initCanvasEvents() {
 // ────────────────────────────────────────────────────────────────────
 function initKeyboardEvents() {
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && document.body.classList.contains('editor-fullscreen')) {
-      exitFullscreen();
-      return;
+    if (e.key === 'Escape') {
+      const help = document.getElementById('help-modal-overlay');
+      if (help && help.classList.contains('open')) { help.classList.remove('open'); return; }
+      if (document.body.classList.contains('editor-fullscreen')) { exitFullscreen(); return; }
     }
     if (e.key === 'Alt') {
       document.getElementById('editor-canvas-wrap').classList.add('eyedrop');
@@ -413,17 +498,11 @@ function initControls() {
 function enterFullscreen() {
   document.body.classList.add('editor-fullscreen');
   document.getElementById('fullscreen-btn').textContent = '✕ Vollbild';
-  // quick-palette als erste Spalte in #main-layout verschieben
-  const ml = document.getElementById('main-layout');
-  ml.insertBefore(document.getElementById('quick-palette'), ml.firstChild);
 }
 
 function exitFullscreen() {
   document.body.classList.remove('editor-fullscreen');
-  document.getElementById('fullscreen-btn').textContent = '⛶ Vollbild';
-  // quick-palette zurück in #editor-wrap vor den Canvas-Bereich
-  const canvasArea = document.getElementById('editor-canvas-area');
-  canvasArea.parentElement.insertBefore(document.getElementById('quick-palette'), canvasArea);
+  document.getElementById('fullscreen-btn').textContent = 'Vollbild';
 }
 
 function initTools() {
@@ -474,12 +553,12 @@ function initTools() {
     applyTemplateTrace('quantize', n);
   });
 
-  const scToggle = document.getElementById('shortcuts-toggle');
-  const scBar    = document.getElementById('shortcuts-bar');
-  scToggle.addEventListener('click', () => {
-    const collapsed = scBar.classList.toggle('collapsed');
-    scToggle.textContent = collapsed ? '▼' : '▲';
-    saveState();
+  // Hilfe-Modal öffnen/schließen
+  const helpOverlay = document.getElementById('help-modal-overlay');
+  document.getElementById('help-btn').addEventListener('click', () => helpOverlay.classList.add('open'));
+  document.getElementById('help-close').addEventListener('click', () => helpOverlay.classList.remove('open'));
+  helpOverlay.addEventListener('click', e => {
+    if (e.target === helpOverlay) helpOverlay.classList.remove('open');
   });
 
   document.getElementById('bg-dark-btn').addEventListener('click', () => {
