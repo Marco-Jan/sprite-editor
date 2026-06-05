@@ -424,20 +424,24 @@ export function renderPalette() {
   };
   selRow.appendChild(sel);
 
-  // ✎ Bearbeiten / × Löschen — nur für die aktuell gewählte eigene Palette
-  if (isCustomVariant(state.curType, state.curVariant)) {
+  // ✎ Bearbeiten / × Löschen — beziehen sich auf die im Dropdown gewählte
+  // Palette (Typ:Variante), nicht auf das Sprite. So funktioniert Löschen
+  // zuverlässig, auch wenn die Palette zu einer anderen Tierart gehört.
+  const [selPalType, selVariant] = (sel.value || '').split(':');
+  const selIsCustom = !!(customPalettes[selPalType] && customPalettes[selPalType][selVariant]);
+  if (selIsCustom) {
     const edit = document.createElement('button');
     edit.className = 'btn variant-act';
     edit.textContent = '✎';
-    edit.title = 'Palette bearbeiten';
-    edit.onclick = () => renderCallbacks.onEditPalette(state.curType, state.curVariant);
+    edit.title = `Palette „${selVariant}“ bearbeiten`;
+    edit.onclick = () => renderCallbacks.onEditPalette(selPalType, selVariant);
     selRow.appendChild(edit);
 
     const del = document.createElement('button');
     del.className = 'btn variant-act';
     del.textContent = '×';
-    del.title = 'Palette löschen';
-    del.onclick = () => renderCallbacks.onDeletePalette(state.curType, state.curVariant);
+    del.title = `Palette „${selVariant}“ löschen`;
+    del.onclick = () => renderCallbacks.onDeletePalette(selPalType, selVariant);
     selRow.appendChild(del);
   }
 

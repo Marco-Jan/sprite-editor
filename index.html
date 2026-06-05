@@ -100,6 +100,45 @@
           <button class="btn active" id="bg-dark-btn" title="Dunkler Schachbrett-Hintergrund">◩ Dunkel</button>
           <button class="btn"        id="bg-bw-btn"   title="Heller Schachbrett-Hintergrund">◩ Hell</button>
         </div>
+
+        <!-- Tool-Schnellleiste — nur im Vollbild sichtbar (zwischen Hell/Dunkel und Zoom) -->
+        <div id="fullscreen-toolbar">
+          <button class="tool-btn" data-tool="pencil" title="Stift — 1 Pixel (P)">🖊 <span>Stift</span></button>
+          <button class="tool-btn" data-tool="brush"  title="Pinsel — Stärke = Dichte (B)">🖌 <span>Pinsel</span></button>
+          <button class="tool-btn" data-tool="spray"  title="Spray — Stärke = Pixel/Event (S)">✳ <span>Spray</span></button>
+          <button class="tool-btn" data-tool="fill"   title="Fülleimer — Flood-Fill (F)">🪣 <span>Füllen</span></button>
+          <button class="tool-btn" data-tool="eraser" title="Radierer — Stärke = Dichte (E)">⬜ <span>Radierer</span></button>
+          <button class="tool-btn" data-tool="wand"   title="Zauberstab — zusammenhängende Fläche löschen (W)">🪄 <span>Zauberstab</span></button>
+
+          <!-- Größe (1–9) — nur für Pinsel/Spray/Radierer sichtbar -->
+          <div id="fullscreen-size">
+            <span class="fs-size-label">Größe</span>
+            <button class="brush-sz active" data-size="1">1</button>
+            <button class="brush-sz" data-size="2">2</button>
+            <button class="brush-sz" data-size="3">3</button>
+            <button class="brush-sz" data-size="4">4</button>
+            <button class="brush-sz" data-size="5">5</button>
+            <button class="brush-sz" data-size="6">6</button>
+            <button class="brush-sz" data-size="7">7</button>
+            <button class="brush-sz" data-size="8">8</button>
+            <button class="brush-sz" data-size="9">9</button>
+          </div>
+
+          <!-- Stärke — nur für Pinsel/Spray/Radierer -->
+          <div id="fullscreen-strength" class="fs-slider-grp">
+            <span class="fs-size-label">Stärke</span>
+            <input type="range" class="strength-input" min="1" max="100" value="80">
+            <span class="strength-val fs-size-label">80%</span>
+          </div>
+
+          <!-- Toleranz — nur für Zauberstab -->
+          <div id="fullscreen-tolerance" class="fs-slider-grp">
+            <span class="fs-size-label">Toleranz</span>
+            <input type="range" class="tolerance-input" min="0" max="100" value="25">
+            <span class="tolerance-val fs-size-label">25%</span>
+          </div>
+        </div>
+
         <div id="editor-top-right">
           <div id="cell-size-wrap">
             <label>Zoom:</label>
@@ -116,6 +155,7 @@
         <div id="editor-canvas-wrap">
           <canvas id="editor-canvas"></canvas>
           <img id="template-overlay" alt="">
+          <div id="brush-cursor"></div>
         </div>
       </div>
 
@@ -176,13 +216,13 @@
           <div id="tool-sliders">
             <div class="tool-slider-row" id="strength-row">
               <span class="tool-slider-lbl">Stärke</span>
-              <input type="range" id="strength-slider" min="1" max="100" value="80">
-              <span id="strength-val" class="tool-slider-val">80%</span>
+              <input type="range" id="strength-slider" class="strength-input" min="1" max="100" value="80">
+              <span id="strength-val" class="strength-val tool-slider-val">80%</span>
             </div>
             <div class="tool-slider-row" id="tolerance-row" style="display:none">
               <span class="tool-slider-lbl">Toleranz</span>
-              <input type="range" id="tolerance-slider" min="0" max="100" value="25">
-              <span id="tolerance-val" class="tool-slider-val">25%</span>
+              <input type="range" id="tolerance-slider" class="tolerance-input" min="0" max="100" value="25">
+              <span id="tolerance-val" class="tolerance-val tool-slider-val">25%</span>
             </div>
           </div>
         </div>

@@ -168,7 +168,7 @@ function exportFilename(ext) {
   const base = state.curType.startsWith('custom_')
     ? (customMeta[state.curType]?.name || state.curType).replace(/[^a-zA-Z0-9_-]/g, '_')
     : `${state.curType}_${state.curState}`;
-  return `${base}_${state.curVariant}.${ext}`;
+  return `${base}.${ext}`; // ohne Palettennamen
 }
 
 // Canvas → PNG-Blob (Promise).

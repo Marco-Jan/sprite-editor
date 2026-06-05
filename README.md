@@ -1,6 +1,6 @@
 # 🐾 Sprite Editor
 
-Pixel-Art Editor für kleine Sprites (z.B. 24×24 Tier-Sprites) mit Palette-System, Schablonen-Overlay zum Abzeichnen, lokaler Speicherung und PNG/PDF-Export.
+claude
 
 Ursprünglich als Tool zum Erstellen von Hund-/Katze-Sprites für eine React-App gebaut, jetzt als eigenständiger Editor.
 

@@ -225,6 +225,34 @@ body.editor-fullscreen #output-section { display: none; }
 #editor-top-right {
   margin-left: auto; display: flex; align-items: center; gap: 10px; flex-wrap: nowrap;
 }
+
+/* Tool-Schnellleiste in der Topbar — standardmäßig versteckt, nur im Vollbild */
+#fullscreen-toolbar { display: none; }
+body.editor-fullscreen #fullscreen-toolbar {
+  display: flex; align-items: center; gap: 4px; flex-wrap: wrap;
+}
+/* Kompakte horizontale Tool-Buttons (überschreibt den vertikalen Panel-Look) */
+#fullscreen-toolbar .tool-btn { width: auto; padding: 5px 9px; gap: 5px; }
+#fullscreen-toolbar .tool-btn span { font-size: 11px; }
+
+/* Größen-Buttons (1–9) in der Vollbild-Leiste — kompakt, mit Trenner davor */
+#fullscreen-size {
+  display: none; align-items: center; gap: 3px;
+  margin-left: 4px; padding-left: 8px; border-left: 1px solid #333;
+}
+body.editor-fullscreen #fullscreen-size.on { display: flex; }
+#fullscreen-size .fs-size-label { font-size: 10px; font-weight: 600; color: #999; margin-right: 2px; }
+#fullscreen-size .brush-sz { flex: 0 0 auto; min-width: 22px; padding: 4px 6px; }
+
+/* Stärke-/Toleranz-Slider in der Vollbild-Leiste */
+.fs-slider-grp {
+  display: none; align-items: center; gap: 6px;
+  margin-left: 4px; padding-left: 8px; border-left: 1px solid #333;
+}
+body.editor-fullscreen .fs-slider-grp.on { display: flex; }
+.fs-slider-grp .fs-size-label { font-size: 10px; font-weight: 600; color: #999; }
+.fs-slider-grp input[type="range"] { width: 90px; }
+.fs-slider-grp .strength-val, .fs-slider-grp .tolerance-val { min-width: 30px; text-align: right; }
 #cell-size-wrap { display: flex; align-items: center; gap: 6px; }
 #cell-size-wrap label { font-size: 11px; color: #999; }
 #cell-size { width: 70px; }
@@ -253,6 +281,17 @@ body.editor-fullscreen #output-section { display: none; }
 }
 #editor-canvas { display: block; position: relative; z-index: 1; touch-action: none; }
 #editor-canvas-wrap.eyedrop { cursor: cell; }
+
+/* Pinsel-/Radierer-/Spray-Größenvorschau — folgt der Maus, zeigt die echte
+   Reichweite (mit Zoom skaliert). Klickt nicht durch (pointer-events:none). */
+#brush-cursor {
+  position: absolute; top: 0; left: 0; box-sizing: border-box;
+  pointer-events: none; display: none; z-index: 3;
+  border: 1px solid rgba(255,255,255,0.95);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.65), inset 0 0 0 1px rgba(0,0,0,0.45);
+}
+#brush-cursor.tool-eraser { border-color: #ff7a7a; }
+#brush-cursor.tool-spray  { border-style: dashed; }
 
 #template-overlay {
   position: absolute; top: 50%; left: 50%;

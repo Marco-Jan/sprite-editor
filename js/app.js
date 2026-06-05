@@ -252,6 +252,10 @@ function updateToolUI() {
   document.getElementById('tool-sliders').style.display    = (hasStrength || isWand) ? '' : 'none';
   document.getElementById('strength-row').style.display    = hasStrength ? '' : 'none';
   document.getElementById('tolerance-row').style.display   = isWand ? '' : 'none';
+  // Vollbild-Leiste: Größe/Stärke nur bei Größe-Tools, Toleranz nur beim Zauberstab
+  document.getElementById('fullscreen-size').classList.toggle('on', hasSize);
+  document.getElementById('fullscreen-strength').classList.toggle('on', hasStrength);
+  document.getElementById('fullscreen-tolerance').classList.toggle('on', isWand);
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -268,6 +272,40 @@ function eraseAt(e) {
 // ────────────────────────────────────────────────────────────────────
 // Canvas-Events: Malen / Löschen / Pipette / Schablone-Drag
 // ────────────────────────────────────────────────────────────────────
+// Pinsel-/Radierer-/Spray-Größenvorschau am Mauszeiger aktualisieren.
+// Zeigt exakt die Reichweite, die paintBrush/paintSpray verwenden würden.
+function updateBrushCursor(e) {
+  const el = document.getElementById('brush-cursor');
+  if (!el) return;
+  const tool = state.tool;
+  if (tool !== 'brush' && tool !== 'spray' && tool !== 'eraser') {
+    el.style.display = 'none';
+    return;
+  }
+  const c = cellFromEvent(e);
+  if (!c) { el.style.display = 'none'; return; }
+  const cs = state.cellSize;
+  let left, top, size, round;
+  if (tool === 'spray') {
+    // Spray: Kreis mit Radius brushSize um die Zelle
+    const r = state.brushSize;
+    left = (c.x - r) * cs; top = (c.y - r) * cs;
+    size = (2 * r + 1) * cs; round = true;
+  } else {
+    // Pinsel/Radierer: Quadrat brushSize×brushSize (gleicher Versatz wie paintBrush)
+    const lo = -Math.floor((state.brushSize - 1) / 2);
+    left = (c.x + lo) * cs; top = (c.y + lo) * cs;
+    size = state.brushSize * cs; round = false;
+  }
+  el.className = 'tool-' + tool;
+  el.style.left = left + 'px';
+  el.style.top = top + 'px';
+  el.style.width = size + 'px';
+  el.style.height = size + 'px';
+  el.style.borderRadius = round ? '50%' : '0';
+  el.style.display = 'block';
+}
+
 function initCanvasEvents() {
   const canvas = document.getElementById('editor-canvas');
   const infoBar = document.getElementById('info-bar');
@@ -350,6 +388,8 @@ function initCanvasEvents() {
       return;
     }
 
+    updateBrushCursor(e); // Größenvorschau folgt der Maus
+
     const c = cellFromEvent(e);
     if (c) {
       const cur = getGrid()[c.y][c.x];
@@ -371,6 +411,12 @@ function initCanvasEvents() {
   };
   window.addEventListener('pointerup', endPointer);
   window.addEventListener('pointercancel', endPointer);
+
+  // Größenvorschau ausblenden, sobald die Maus den Canvas verlässt
+  canvas.addEventListener('pointerleave', () => {
+    const el = document.getElementById('brush-cursor');
+    if (el) el.style.display = 'none';
+  });
 
   // Browser-Kontextmenü unterdrücken — Rechtsklick-Logik läuft via pointerdown
   canvas.addEventListener('contextmenu', e => e.preventDefault());
@@ -535,6 +581,7 @@ function initControls() {
 function enterFullscreen() {
   document.body.classList.add('editor-fullscreen');
   document.getElementById('fullscreen-btn').textContent = '✕ Vollbild';
+  updateToolUI(); // aktives Tool in der Vollbild-Tool-Leiste markieren
 }
 
 function exitFullscreen() {
@@ -629,23 +676,29 @@ function initTools() {
   document.querySelectorAll('.brush-sz').forEach(btn => {
     btn.addEventListener('click', () => {
       state.brushSize = Number(btn.dataset.size);
-      document.querySelectorAll('.brush-sz').forEach(b => b.classList.toggle('active', b === btn));
+      // Aktiv-Markierung nach Größe synchronisieren (es gibt zwei Button-Sätze:
+      // rechtes Panel + Vollbild-Leiste).
+      document.querySelectorAll('.brush-sz').forEach(b =>
+        b.classList.toggle('active', Number(b.dataset.size) === state.brushSize));
     });
   });
 
-  const strengthSlider = document.getElementById('strength-slider');
-  const strengthVal    = document.getElementById('strength-val');
-  strengthSlider.addEventListener('input', () => {
-    state.brushStrength = Number(strengthSlider.value);
-    strengthVal.textContent = strengthSlider.value + '%';
-  });
-
-  const tolSlider = document.getElementById('tolerance-slider');
-  const tolVal    = document.getElementById('tolerance-val');
-  tolSlider.addEventListener('input', () => {
-    state.wandTolerance = Number(tolSlider.value);
-    tolVal.textContent = tolSlider.value + '%';
-  });
+  // Stärke- und Toleranz-Slider gibt es zweimal (rechtes Panel + Vollbild-Leiste);
+  // beide Sätze schreiben in denselben State und halten sich gegenseitig synchron.
+  const setStrength = v => {
+    state.brushStrength = Number(v);
+    document.querySelectorAll('.strength-input').forEach(s => { if (s.value !== String(v)) s.value = v; });
+    document.querySelectorAll('.strength-val').forEach(el => { el.textContent = v + '%'; });
+  };
+  const setTolerance = v => {
+    state.wandTolerance = Number(v);
+    document.querySelectorAll('.tolerance-input').forEach(s => { if (s.value !== String(v)) s.value = v; });
+    document.querySelectorAll('.tolerance-val').forEach(el => { el.textContent = v + '%'; });
+  };
+  document.querySelectorAll('.strength-input').forEach(s =>
+    s.addEventListener('input', () => setStrength(s.value)));
+  document.querySelectorAll('.tolerance-input').forEach(s =>
+    s.addEventListener('input', () => setTolerance(s.value)));
 
   // ── Aufräumen-Sektion: Glätten + Outline ──
   const cleanupToggle = document.getElementById('cleanup-toggle');
