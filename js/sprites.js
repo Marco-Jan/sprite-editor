@@ -1,101 +1,185 @@
 // ════════════════════════════════════════════════════════════════════
-// SPRITES — Custom-Sprite-Management: Header-Buttons + "Neuer Sprite"-Modal
+// SPRITES — anlegen, umbenennen, duplizieren, löschen
 // ════════════════════════════════════════════════════════════════════
-import { state, grids, customMeta, getVariants } from './state.js';
-import { ORIG } from './data.js';
-import { renderAll, syncButtons, ensureGroupExpanded, fillPaletteSelect } from './render.js';
+import {
+  state, sprites, createSprite, selectFirstSprite, emptyGrid,
+  getSprite, makeSpriteId, listSprites,
+} from './state.js';
+import { DEFAULT_PALETTE, dc } from './data.js';
+import { renderAll, fillPaletteSelect } from './render.js';
 import { saveState } from './storage.js';
 import { showInfoToast } from './toast.js';
+import { clearHistory } from './history.js';
 
-// No-op — custom sprite navigation is handled via the overview group cards.
-// Kept as exported API so call sites in app.js (init load) don't break.
-export function addCustomTypeButton(_key, _name) {}
-
-export function deleteCustomSprite(key) {
-  delete grids[key];
-  delete customMeta[key];
-
-  // Falls aktiver Sprite gelöscht: zurück auf Default Hund/normal/golden
-  if (state.curType === key) {
-    state.curType = 'dog';
-    state.curState = 'normal';
-    state.curVariant = 'golden';
-  }
-
-  syncButtons(); renderAll(); saveState();
+// ────────────────────────────────────────────────────────────────────
+// Auswahl
+// ────────────────────────────────────────────────────────────────────
+export function selectSprite(id) {
+  if (!sprites[id] || state.curSprite === id) return;
+  state.curSprite = id;
+  renderAll();
+  saveState();
 }
 
 // ────────────────────────────────────────────────────────────────────
-// "Neuer Sprite"-Modal: Name, Tierart (Palette), Grid-Größe, optionale Vorlage
+// Erzeugen — auch beim allerersten Start (leeres Projekt)
+// ────────────────────────────────────────────────────────────────────
+export function createDefaultSprite() {
+  const id = createSprite({ name: 'Sprite 1', size: 24, palette: DEFAULT_PALETTE });
+  state.curSprite = id;
+  return id;
+}
+
+export function duplicateSprite(id) {
+  const src = sprites[id];
+  if (!src) return;
+  const newId = createSprite({
+    name: src.name + ' Kopie',
+    palette: src.palette,
+    grid: dc(src.grid),
+  });
+  state.curSprite = newId;
+  renderAll();
+  saveState();
+  showInfoToast(`„${sprites[newId].name}“ angelegt.`);
+}
+
+export function deleteSprite(id) {
+  if (!sprites[id]) return;
+  delete sprites[id];
+  if (state.curSprite === id) {
+    selectFirstSprite();
+    if (!state.curSprite) createDefaultSprite();
+  }
+  clearHistory(); // Undo-Einträge zeigen evtl. auf den gelöschten Sprite
+  renderAll();
+  saveState();
+}
+
+// Grid des aktuellen Sprites leeren (Undo-fähig — der Aufrufer wrappt in recordOp).
+export function clearCurrentGrid() {
+  const sp = getSprite();
+  if (!sp) return;
+  const size = sp.grid.length;
+  const w = sp.grid[0].length;
+  sp.grid = Array.from({ length: size }, () => Array(w).fill(0));
+}
+
+// ────────────────────────────────────────────────────────────────────
+// "Neuer Sprite"-Modal
 // ────────────────────────────────────────────────────────────────────
 export function initNewSpriteModal() {
   const overlay = document.getElementById('new-modal-overlay');
-  const openBtn = document.getElementById('new-sprite-btn');
   const nameInp = document.getElementById('new-name');
   const sizeSel = document.getElementById('new-size');
+  const palSel  = document.getElementById('new-palette');
   const tplSel  = document.getElementById('new-template');
   const cancel  = document.getElementById('new-modal-cancel');
   const create  = document.getElementById('new-modal-create');
 
-  const varSel  = document.getElementById('new-variant');
-
-  openBtn.addEventListener('click', () => {
-    overlay.classList.add('open');
-    // Reset Form-Felder bei jedem Öffnen — keine hängenden Werte vom letzten Mal
-    nameInp.value = '';
+  const open = () => {
+    nameInp.value = suggestName();
     sizeSel.value = '24';
-    tplSel.value  = '';
-    // ALLE Paletten (alle Tierarten) zur Auswahl anbieten; Default: Hund/golden
-    fillPaletteSelect(varSel, 'dog', 'golden');
+    fillPaletteSelect(palSel, getSprite()?.palette || DEFAULT_PALETTE);
+    fillSpriteTemplateSelect(tplSel);
+    overlay.classList.add('open');
     nameInp.focus();
-  });
+    nameInp.select();
+  };
 
-  cancel.addEventListener('click', () => overlay.classList.remove('open'));
+  document.getElementById('new-sprite-btn').addEventListener('click', open);
 
-  // Klick auf Overlay-Hintergrund schließt
-  overlay.addEventListener('click', e => {
-    if (e.target === overlay) overlay.classList.remove('open');
-  });
+  const close = () => overlay.classList.remove('open');
+  cancel.addEventListener('click', close);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  nameInp.addEventListener('keydown', e => { if (e.key === 'Enter') create.click(); });
 
   create.addEventListener('click', () => {
-    const rawName = nameInp.value.trim();
-    // Gewählte Palette bestimmt die Tierart: value ist "type:variant"
-    const [palType, chosenVariant] = (varSel.value || 'dog:golden').split(':');
-    const size    = Number(sizeSel.value);
-    const tplKey  = tplSel.value;
+    const name = nameInp.value.trim();
+    if (!name) { showInfoToast('Bitte einen Namen eingeben.'); nameInp.focus(); return; }
 
-    if (!rawName) { showInfoToast('Bitte einen Namen eingeben.'); return; }
+    const size = Number(sizeSel.value) || 24;
+    const palette = palSel.value || DEFAULT_PALETTE;
+    const srcId = tplSel.value;
 
-    const key = 'custom_' + rawName.replace(/[^a-zA-Z0-9_]/g, '_');
-
-    // Immer ein frisches leeres Grid in der gewählten Größe.
-    // Wenn eine Vorlage gewählt ist, wird sie zentriert reingelegt
-    // (geclippt falls Vorlage größer als Ziel, gepadded falls kleiner).
-    const baseGrid = Array.from({ length: size }, () => Array(size).fill(0));
-    if (tplKey && ORIG[tplKey.split('_')[0]]?.[tplKey.split('_')[1]]) {
-      const [t, s] = tplKey.split('_');
-      const tpl = ORIG[t][s];
+    // Vorlage wird zentriert eingesetzt (geclippt wenn größer, gepadded wenn kleiner).
+    let grid = emptyGrid(size);
+    if (srcId && sprites[srcId]) {
+      const tpl = sprites[srcId].grid;
       const tplH = tpl.length, tplW = tpl[0].length;
       const ox = Math.floor((size - tplW) / 2);
       const oy = Math.floor((size - tplH) / 2);
       for (let y = 0; y < tplH; y++) for (let x = 0; x < tplW; x++) {
         const ty = y + oy, tx = x + ox;
-        if (ty >= 0 && ty < size && tx >= 0 && tx < size) baseGrid[ty][tx] = tpl[y][x];
+        if (ty >= 0 && ty < size && tx >= 0 && tx < size) grid[ty][tx] = tpl[y][x];
       }
     }
 
-    grids[key] = baseGrid;
-    customMeta[key] = { palType, name: rawName };
-
-    state.curType = key;
-    // Gewählte Palette übernehmen — Fallback: erste verfügbare Variante.
-    const available = getVariants(key);
-    state.curVariant = available.includes(chosenVariant) ? chosenVariant : available[0];
-    state.curState = 'normal';
-
-    ensureGroupExpanded(key);
-    overlay.classList.remove('open');
-
-    syncButtons(); renderAll(); saveState();
+    const id = createSprite({ name, size, palette, grid });
+    state.curSprite = id;
+    close();
+    renderAll();
+    saveState();
   });
 }
+
+// Namensvorschlag: "Sprite N" mit der nächsten freien Nummer.
+function suggestName() {
+  const taken = new Set(Object.values(sprites).map(s => s.name));
+  let i = Object.keys(sprites).length + 1;
+  while (taken.has('Sprite ' + i)) i++;
+  return 'Sprite ' + i;
+}
+
+// Vorlagen-Dropdown mit den vorhandenen Sprites füllen.
+function fillSpriteTemplateSelect(sel) {
+  sel.innerHTML = '<option value="">— Leeres Grid —</option>';
+  listSprites().forEach(sp => {
+    const opt = document.createElement('option');
+    opt.value = sp.id;
+    opt.textContent = `${sp.name} (${sp.grid[0].length}×${sp.grid.length})`;
+    sel.appendChild(opt);
+  });
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Umbenennen-Modal
+// ────────────────────────────────────────────────────────────────────
+let _renameId = null;
+
+export function openRenameModal(id) {
+  const sp = sprites[id];
+  if (!sp) return;
+  _renameId = id;
+  const overlay = document.getElementById('rename-modal-overlay');
+  const inp = document.getElementById('rename-input');
+  inp.value = sp.name;
+  overlay.classList.add('open');
+  inp.focus();
+  inp.select();
+}
+
+export function initRenameModal() {
+  const overlay = document.getElementById('rename-modal-overlay');
+  const inp = document.getElementById('rename-input');
+  const ok = document.getElementById('rename-modal-ok');
+  const close = () => { overlay.classList.remove('open'); _renameId = null; };
+
+  document.getElementById('rename-modal-cancel').addEventListener('click', close);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') ok.click(); });
+
+  ok.addEventListener('click', () => {
+    const sp = sprites[_renameId];
+    if (!sp) { close(); return; }
+    const name = inp.value.trim();
+    if (!name) { showInfoToast('Bitte einen Namen eingeben.'); return; }
+    sp.name = name;
+    close();
+    renderAll();
+    saveState();
+  });
+}
+
+// ID-Vergabe nach außen geben (wird beim TS-Import gebraucht).
+export { makeSpriteId };

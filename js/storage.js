@@ -1,209 +1,216 @@
 // ════════════════════════════════════════════════════════════════════
-// STORAGE — Persistierung via localStorage
+// STORAGE — Persistierung via localStorage (+ Projekt-Datei als JSON)
 // ════════════════════════════════════════════════════════════════════
-// Alles wird unter EINEM Key gespeichert (versioniert, damit man bei
-// Schema-Änderungen v2 anlegen kann ohne alte Saves zu zerschießen).
-import { state, grids, customMeta, customPalettes, getVariants } from './state.js';
-import { ORIG } from './data.js';
+// Alles liegt unter EINEM Key. `version` im Payload erlaubt Migrationen,
+// ohne alte Saves zu zerschießen.
+import { state, sprites, customPalettes, selectFirstSprite, paletteExists } from './state.js';
+import { DEFAULT_PALETTE, completePalette } from './data.js';
 import { saveBlob } from './filesystem.js';
 import { showInfoToast } from './toast.js';
+import { migrateV1 } from './migrate.js';
 
-const STORAGE_KEY = 'wb_sprite_tester_v1';
+const STORAGE_KEY = 'wb_sprite_tester_v1'; // Key bleibt — Migration passiert im Payload
+const SCHEMA_VERSION = 2;
+
 let _saveTimer = null;
 let _flashTimer = null;
 
-function _restorePanel(bodyId, toggleId, collapsed) {
-  const body   = document.getElementById(bodyId);
-  const toggle = document.getElementById(toggleId);
-  if (!body || !toggle) return;
-  body.classList.toggle('collapsed', collapsed);
-  toggle.textContent = collapsed ? '▼' : '▲';
-}
+// Wenn wir die Seite absichtlich neu laden, nachdem wir den Storage ersetzt
+// haben (Projekt öffnen, Zurücksetzen), darf der beforeunload-Handler NICHT
+// mehr den alten In-Memory-Zustand darüberschreiben — sonst verpufft die
+// Aktion wirkungslos.
+let _saveDisabled = false;
 
-// Debounce: bei Mausziehen (paintCell pro Pixel) nicht 100× pro Sekunde schreiben.
-export function saveState() {
+function disableSaving() {
+  _saveDisabled = true;
   clearTimeout(_saveTimer);
-  _saveTimer = setTimeout(() => {
-    try {
-      const payload = {
-        grids,
-        customMeta,
-        customPalettes,
-        ui: {
-          curType: state.curType, curState: state.curState,
-          curVariant: state.curVariant, curColor: state.curColor,
-          cellSize: state.cellSize, editorBg: state.editorBg,
-          openGroupKey: state.openGroupKey,
-          fullscreen: document.body.classList.contains('editor-fullscreen'),
-          panels: {
-            overview:  document.getElementById('overview-body')?.classList.contains('collapsed') ?? true,
-            palette:   document.getElementById('palette-body')?.classList.contains('collapsed') ?? true,
-            tools:     document.getElementById('tools-body')?.classList.contains('collapsed') ?? false,
-            template:  document.getElementById('template-body')?.classList.contains('collapsed') ?? true,
-            shortcuts: document.getElementById('shortcuts-bar')?.classList.contains('collapsed') ?? true,
-          },
-        },
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-      flashSaved();
-    } catch (e) {
-      console.warn('Sprite-Tester: Speichern fehlgeschlagen', e);
-    }
-  }, 250);
 }
 
-// Vollständiges Laden aus dem Storage. KEIN automatisches Rendern hier —
-// das macht app.js nach loadState() einmal mit renderAll().
-// Liefert `true` falls geladen wurde (z.B. um zu signalisieren dass Custom-
-// Sprite-Buttons aufgebaut werden müssen).
-export function loadState() {
+// ────────────────────────────────────────────────────────────────────
+// Panel-Zustände (auf-/zugeklappt) — generisch über [data-panel]
+// ────────────────────────────────────────────────────────────────────
+function collectPanelStates() {
+  const out = {};
+  document.querySelectorAll('[data-panel]').forEach(p => {
+    out[p.dataset.panel] = p.classList.contains('collapsed');
+  });
+  return out;
+}
+
+function applyPanelStates(panels) {
+  if (!panels) return;
+  document.querySelectorAll('[data-panel]').forEach(p => {
+    const collapsed = panels[p.dataset.panel];
+    if (typeof collapsed === 'boolean') p.classList.toggle('collapsed', collapsed);
+  });
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Payload bauen / schreiben
+// ────────────────────────────────────────────────────────────────────
+function buildPayload() {
+  return {
+    version: SCHEMA_VERSION,
+    sprites,
+    customPalettes,
+    ui: {
+      curSprite: state.curSprite,
+      curColor:  state.curColor,
+      cellSize:  state.cellSize,
+      editorBg:  state.editorBg,
+      tool:      state.tool,
+      fullscreen: document.body.classList.contains('editor-fullscreen'),
+      panels: collectPanelStates(),
+    },
+  };
+}
+
+// Debounce: beim Mausziehen (ein paintCell pro Pixel) nicht 100× pro Sekunde
+// in den localStorage schreiben.
+export function saveState() {
+  if (_saveDisabled) return;
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(writeNow, 250);
+}
+
+function writeNow() {
+  if (_saveDisabled) return;
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return false;
-    const p = JSON.parse(raw);
-
-    // Built-in + Custom-Grids zurückspielen
-    if (p.grids && typeof p.grids === 'object') {
-      for (const k of Object.keys(p.grids)) {
-        grids[k] = p.grids[k];
-      }
-    }
-    if (p.customMeta && typeof p.customMeta === 'object') {
-      Object.assign(customMeta, p.customMeta);
-    }
-    if (p.customPalettes && typeof p.customPalettes === 'object') {
-      if (p.customPalettes.dog)     Object.assign(customPalettes.dog,     p.customPalettes.dog);
-      if (p.customPalettes.cat)     Object.assign(customPalettes.cat,     p.customPalettes.cat);
-      if (p.customPalettes.neutral) Object.assign(customPalettes.neutral, p.customPalettes.neutral);
-    }
-
-    // UI-Zustand wiederherstellen (mit Fallbacks)
-    if (p.ui) {
-      if (p.ui.curType && (grids[p.ui.curType] || ORIG[p.ui.curType])) {
-        state.curType = p.ui.curType;
-      }
-      if (p.ui.curState) state.curState = p.ui.curState;
-      if (p.ui.curColor != null) state.curColor = p.ui.curColor;
-      if (p.ui.cellSize) {
-        state.cellSize = p.ui.cellSize;
-        const slider = document.getElementById('cell-size');
-        if (slider) {
-          slider.value = state.cellSize;
-          document.getElementById('cell-size-val').textContent = state.cellSize + 'px';
-        }
-      }
-      // Variant: nur übernehmen wenn für aktuellen Typ verfügbar
-      if (p.ui.curVariant && getVariants(state.curType).includes(p.ui.curVariant)) {
-        state.curVariant = p.ui.curVariant;
-      } else {
-        state.curVariant = getVariants(state.curType)[0];
-      }
-      if (p.ui.editorBg) state.editorBg = p.ui.editorBg;
-      if (p.ui.openGroupKey !== undefined) state.openGroupKey = p.ui.openGroupKey;
-
-      // Panel-Zustände wiederherstellen
-      if (p.ui.panels) {
-        _restorePanel('overview-body',  'overview-toggle',  p.ui.panels.overview);
-        _restorePanel('palette-body',   'palette-toggle',   p.ui.panels.palette);
-        _restorePanel('tools-body',     'tools-toggle',     p.ui.panels.tools     ?? false);
-        _restorePanel('template-body',  'template-toggle',  p.ui.panels.template  ?? true);
-        _restorePanel('shortcuts-bar',  'shortcuts-toggle', p.ui.panels.shortcuts);
-      }
-    }
-    return true;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(buildPayload()));
+    flashSaved();
   } catch (e) {
-    console.warn('Sprite-Tester: Laden fehlgeschlagen, starte frisch', e);
-    return false;
+    console.warn('Sprite-Editor: Speichern fehlgeschlagen', e);
+    showInfoToast('Speichern fehlgeschlagen — localStorage voll? (Limit ~5 MB)');
   }
 }
 
-// Alles wegwerfen und Seite neu laden (= zurück zu Werkseinstellungen).
-// Bestätigung läuft über showConfirmToast in app.js.
+// Forcierter Save beim Tab-Schließen (der Debouncer könnte noch pending sein).
+export function forceSaveBeforeUnload() {
+  if (_saveDisabled) return;
+  clearTimeout(_saveTimer);
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(buildPayload())); } catch {}
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Laden
+// ────────────────────────────────────────────────────────────────────
+// Kein Rendern hier — app.js ruft danach einmal renderAll().
+// Rückgabe: { loaded, migrated, note } — `note` erklärt dem Nutzer, was die
+// Migration mit alten Hund/Katze-Daten gemacht hat.
+export function loadState() {
+  let raw;
+  try { raw = localStorage.getItem(STORAGE_KEY); } catch { return { loaded: false }; }
+  if (!raw) return { loaded: false };
+
+  let payload;
+  try { payload = JSON.parse(raw); } catch (e) {
+    console.warn('Sprite-Editor: Save unlesbar, starte frisch', e);
+    return { loaded: false };
+  }
+
+  return applyPayload(payload);
+}
+
+// Payload (v1 ODER v2) in den State übernehmen.
+function applyPayload(payload) {
+  let note = null;
+  let migrated = false;
+
+  // v1 = altes dog/cat-Schema (erkennbar an `grids`), auf v2 heben.
+  if (!payload.version || payload.grids) {
+    const r = migrateV1(payload);
+    payload = r.payload;
+    note = r.note;
+    migrated = true;
+  }
+
+  try {
+    if (payload.sprites && typeof payload.sprites === 'object') {
+      for (const [id, sp] of Object.entries(payload.sprites)) {
+        if (!sp || !Array.isArray(sp.grid) || !sp.grid.length || !Array.isArray(sp.grid[0])) continue;
+        sprites[id] = {
+          name: typeof sp.name === 'string' && sp.name ? sp.name : id,
+          palette: typeof sp.palette === 'string' ? sp.palette : DEFAULT_PALETTE,
+          grid: sp.grid,
+        };
+      }
+    }
+    if (payload.customPalettes && typeof payload.customPalettes === 'object') {
+      for (const [name, pal] of Object.entries(payload.customPalettes)) {
+        if (pal && typeof pal === 'object') customPalettes[name] = completePalette(pal);
+      }
+    }
+
+    // Paletten-Referenzen prüfen — eine gelöschte Palette darf keinen Sprite
+    // unrenderbar machen.
+    for (const sp of Object.values(sprites)) {
+      if (!paletteExists(sp.palette)) sp.palette = DEFAULT_PALETTE;
+    }
+
+    const ui = payload.ui || {};
+    state.curSprite = sprites[ui.curSprite] ? ui.curSprite : null;
+    if (!state.curSprite) selectFirstSprite();
+    if (ui.curColor != null) state.curColor = ui.curColor;
+    if (ui.cellSize) state.cellSize = ui.cellSize;
+    if (ui.editorBg) state.editorBg = ui.editorBg;
+    if (ui.tool) state.tool = ui.tool;
+    applyPanelStates(ui.panels);
+
+    return { loaded: true, migrated, note, fullscreen: !!ui.fullscreen };
+  } catch (e) {
+    console.warn('Sprite-Editor: Laden fehlgeschlagen, starte frisch', e);
+    return { loaded: false };
+  }
+}
+
+// Alles wegwerfen und Seite neu laden (= Werkseinstellungen).
 export function clearStorage() {
-  localStorage.removeItem(STORAGE_KEY);
+  disableSaving(); // sonst schreibt beforeunload alles sofort wieder zurück
+  try { localStorage.removeItem(STORAGE_KEY); } catch {}
   location.reload();
 }
 
-// Kurzes "💾 gespeichert"-Aufblitzen oben rechts (visuelles Feedback).
+// Kurzes "gespeichert"-Aufblitzen in der Kopfzeile.
 export function flashSaved() {
   const el = document.getElementById('save-indicator');
   if (!el) return;
-  el.style.opacity = '1';
+  el.classList.add('on');
   clearTimeout(_flashTimer);
-  _flashTimer = setTimeout(() => { el.style.opacity = '0'; }, 800);
+  _flashTimer = setTimeout(() => el.classList.remove('on'), 900);
 }
 
-// Das GANZE Projekt (alle Sprites + Paletten + UI) als JSON-Datei in den
-// gewählten Ordner speichern (Fallback: klassischer Download).
+// ────────────────────────────────────────────────────────────────────
+// Projekt-Datei (JSON) speichern / laden
+// ────────────────────────────────────────────────────────────────────
 export async function saveToFile() {
-  const payload = {
-    grids,
-    customMeta,
-    customPalettes,
-    ui: {
-      curType: state.curType, curState: state.curState,
-      curVariant: state.curVariant, curColor: state.curColor,
-      cellSize: state.cellSize, editorBg: state.editorBg,
-      openGroupKey: state.openGroupKey,
-      fullscreen: document.body.classList.contains('editor-fullscreen'),
-      panels: {
-        overview:  document.getElementById('overview-body')?.classList.contains('collapsed') ?? true,
-        palette:   document.getElementById('palette-body')?.classList.contains('collapsed') ?? true,
-        tools:     document.getElementById('tools-body')?.classList.contains('collapsed') ?? false,
-        template:  document.getElementById('template-body')?.classList.contains('collapsed') ?? true,
-        shortcuts: document.getElementById('shortcuts-bar')?.classList.contains('collapsed') ?? true,
-      },
-    },
-  };
-  const filename = (state.curType.startsWith('custom_')
-    ? (customMeta[state.curType]?.name || state.curType).replace(/[^a-zA-Z0-9_-]/g, '_')
-    : `${state.curType}_${state.curState}`.toUpperCase()) + '.json';
-
+  const payload = buildPayload();
+  const base = (sprites[state.curSprite]?.name || 'sprites').replace(/[^a-zA-Z0-9_-]/g, '_');
+  const filename = `${base}.json`;
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
   const result = await saveBlob(blob, filename);
   flashSaved();
   showInfoToast(result.fallback
-    ? `„${filename}“ wurde heruntergeladen (Standard-Download-Ordner). ` +
-      `Tipp: Mit „📁 Speicherort“ einen festen Ordner wählen.`
-    : `✅ Projekt als „${filename}“ gespeichert${result.dir ? ` in „${result.dir}“` : ''}.`);
+    ? `„${filename}“ wurde heruntergeladen (Standard-Download-Ordner). Tipp: Mit „Speicherort“ einen festen Ordner wählen.`
+    : `„${filename}“ gespeichert${result.dir ? ` in „${result.dir}“` : ''}.`);
 }
 
-// JSON-Datei (ganzes Projekt) einlesen, in localStorage schreiben, Seite neu laden.
+// JSON-Projektdatei einlesen. Wird validiert und (nach Migration beim nächsten
+// Load) in den Storage geschrieben; danach Reload für einen sauberen Start.
 export function loadFromFile(file, onError) {
   const reader = new FileReader();
   reader.onload = e => {
     try {
-      JSON.parse(e.target.result); // Validierung
+      const p = JSON.parse(e.target.result);
+      if (!p || typeof p !== 'object' || (!p.sprites && !p.grids)) {
+        throw new Error('kein Sprite-Projekt');
+      }
+      disableSaving(); // sonst überschreibt beforeunload die frisch geladene Datei
       localStorage.setItem(STORAGE_KEY, e.target.result);
       location.reload();
     } catch {
-      if (onError) onError('Ungültige Datei — kein gültiges JSON.');
+      if (onError) onError('Ungültige Datei — das ist kein Sprite-Projekt.');
     }
   };
   reader.onerror = () => { if (onError) onError('Datei konnte nicht gelesen werden.'); };
   reader.readAsText(file);
-}
-
-// Forcierter Save beim Tab-Schließen (Debouncer könnte noch pending sein,
-// in dem Fall wäre die letzte Änderung verloren).
-export function forceSaveBeforeUnload() {
-  clearTimeout(_saveTimer);
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      grids, customMeta, customPalettes,
-      ui: {
-        curType: state.curType, curState: state.curState,
-        curVariant: state.curVariant, curColor: state.curColor,
-        cellSize: state.cellSize, editorBg: state.editorBg,
-        openGroupKey: state.openGroupKey,
-        fullscreen: document.body.classList.contains('editor-fullscreen'),
-        panels: {
-          overview:  document.getElementById('overview-body')?.classList.contains('collapsed') ?? true,
-          palette:   document.getElementById('palette-body')?.classList.contains('collapsed') ?? true,
-          tools:     document.getElementById('tools-body')?.classList.contains('collapsed') ?? false,
-          shortcuts: document.getElementById('shortcuts-bar')?.classList.contains('collapsed') ?? true,
-        },
-      },
-    }));
-  } catch {}
 }

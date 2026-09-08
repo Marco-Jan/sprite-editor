@@ -2,118 +2,142 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <title>🐾 Sprite Editor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sprite Editor</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
 <div id="app">
 
-  <!-- ── Header ── -->
-  <header>
-    <h1>🐾 Sprite Editor</h1>
-    <div class="btn-group" id="type-btns"></div>
-    <div class="btn-group" id="state-btns" style="display:none"></div>
-    <span id="save-indicator"
-          style="font-size:11px;color:#70c090;opacity:0;transition:opacity 0.2s;font-weight:600">
-      💾 gespeichert
-    </span>
-    <button class="btn" id="help-btn" title="Hilfe & Erklärungen" style="margin-left:auto">ℹ Hilfe</button>
-    <button class="btn" id="save-dir-btn" title="Speicherort für PNG/PDF/Sprite-Dateien wählen — wird gemerkt">📁 Speicherort</button>
-    <button class="btn" id="save-file-btn" title="Alle Sprites als JSON-Datei speichern">💾 Datei speichern</button>
-    <button class="btn" id="load-file-btn" title="Sprites aus JSON-Datei laden">📂 Datei laden</button>
-    <input type="file" id="load-file-input" accept=".json,application/json" style="display:none">
-    <button class="btn danger" id="clear-storage-btn" title="Allen Fortschritt löschen">🗑 Reset Storage</button>
+  <!-- ══ Kopfzeile ══ -->
+  <header id="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-name">Sprite&nbsp;Editor</span>
+    </div>
+    <span id="doc-title" class="doc-title"></span>
+    <span id="save-indicator" class="save-indicator">gespeichert</span>
+
+    <div class="topbar-actions">
+      <button class="btn" id="help-btn" title="Hilfe &amp; Erklärungen">Hilfe</button>
+      <button class="btn" id="save-dir-btn" title="Speicherort für Dateien wählen — wird gemerkt">Speicherort</button>
+      <button class="btn" id="save-file-btn" title="Projekt als JSON-Datei sichern">Projekt sichern</button>
+      <button class="btn" id="load-file-btn" title="Projekt aus JSON-Datei laden">Öffnen</button>
+      <input type="file" id="load-file-input" accept=".json,application/json" hidden>
+      <button class="btn btn--danger" id="clear-storage-btn" title="Alles zurücksetzen">Zurücksetzen</button>
+    </div>
   </header>
 
-  <!-- ── Workspace: Übersicht (links) | Editor | Palette (rechts) ── -->
-  <div id="main-layout">
+  <!-- ══ Arbeitsfläche ══ -->
+  <div id="workspace">
 
-    <!-- ── Linke Spalte: Übersicht (oben) + TypeScript-Export (darunter) ── -->
-    <div id="left-column">
+    <!-- ── Linke Spalte ── -->
+    <aside id="rail-left" class="rail">
 
-      <!-- ── Übersicht (einklappbar) ── -->
-      <div id="overview">
-        <div id="overview-header">
-          <h2>Übersicht</h2>
-          <button id="overview-toggle" title="Übersicht ein-/ausklappen">▲</button>
+      <section class="panel" data-panel="sprites">
+        <div class="panel-head">
+          <h2 class="panel-title">Sprites</h2>
+          <span class="panel-badge" id="sprite-count"></span>
+          <button class="panel-toggle" type="button" aria-expanded="true"></button>
         </div>
-        <button class="btn" id="new-sprite-btn" title="Neuen Sprite erstellen" style="background:#1a3a1a;color:#80c080;border-color:#2a5a2a;font-size:11px;width:100%;margin-bottom:8px">+ Neuer Sprite</button>
-        <div id="overview-body">
-          <input type="text" id="overview-search" placeholder="🔍 Sprite suchen…" autocomplete="off"
-                 style="width:100%;box-sizing:border-box;background:#252525;color:#d4d4d4;border:1px solid #333;border-radius:5px;padding:6px 8px;font-size:11px;margin-bottom:8px">
-          <div id="overview-grid" class="overview-grid"></div>
+        <div class="panel-body">
+          <button class="btn btn--primary btn--block" id="new-sprite-btn">+ Neuer Sprite</button>
+          <input type="search" id="sprite-search" class="input" placeholder="Sprite suchen…" autocomplete="off">
+          <div id="sprite-list" class="sprite-list"></div>
+        </div>
+      </section>
+
+      <section class="panel" data-panel="output">
+        <div class="panel-head">
+          <h2 class="panel-title">Code &amp; Export</h2>
+          <button class="panel-toggle" type="button" aria-expanded="true"></button>
+        </div>
+        <div class="panel-body">
+
+          <div class="btn-row">
+            <button class="btn" id="copy-btn">Kopieren</button>
+            <button class="btn" id="save-ts-btn">.ts speichern</button>
+            <button class="btn btn--accent" id="import-btn">Import…</button>
+            <button class="btn btn--danger-soft" id="clear-grid-btn" title="Alle Pixel dieses Sprites löschen">Leeren</button>
+          </div>
+
+          <label class="check">
+            <input type="checkbox" id="export-include-palette">
+            <span>Palette in den Code schreiben</span>
+          </label>
+
+          <textarea id="output-textarea" class="code-out" readonly spellcheck="false"></textarea>
+
+          <div class="export-row">
+            <label class="field field--inline">
+              <span class="field-label">Skalierung</span>
+              <select id="export-scale" class="input input--sm">
+                <option value="1">1×</option>
+                <option value="4">4×</option>
+                <option value="8" selected>8×</option>
+                <option value="16">16×</option>
+                <option value="32">32×</option>
+              </select>
+            </label>
+            <button class="btn" id="export-png-btn">PNG</button>
+            <button class="btn" id="export-pdf-btn">PDF</button>
+          </div>
+
+          <label class="check" title="Bettet eine Farb-Legende ins Bild ein, damit die Farbwerte nicht verloren gehen">
+            <input type="checkbox" id="export-embed-palette" checked>
+            <span>Farb-Legende ins Bild</span>
+          </label>
+
+        </div>
+      </section>
+
+    </aside>
+
+    <!-- ── Mitte: Bühne ── -->
+    <main id="stage">
+
+      <div id="stage-head">
+        <div class="stage-ident">
+          <h1 id="stage-title" class="stage-title">Editor</h1>
+          <span id="stage-dims" class="stage-dims"></span>
+        </div>
+
+        <div class="stage-head-right">
+          <div class="btn-group">
+            <button class="btn" id="undo-btn" title="Rückgängig (Strg+Z)" disabled>↶</button>
+            <button class="btn" id="redo-btn" title="Wiederholen (Strg+Y)" disabled>↷</button>
+          </div>
+          <div class="btn-group" role="group" aria-label="Editor-Hintergrund">
+            <button class="btn is-active" id="bg-dark-btn" title="Dunkler Hintergrund">Dunkel</button>
+            <button class="btn" id="bg-bw-btn" title="Heller Hintergrund">Hell</button>
+          </div>
+          <label class="field field--inline">
+            <span class="field-label">Zoom</span>
+            <input type="range" id="cell-size" min="4" max="32" value="16">
+            <span id="cell-size-val" class="field-value">16px</span>
+          </label>
+          <button class="btn" id="fullscreen-btn" title="Vollbild (Esc zum Schließen)">⤢ Vollbild</button>
         </div>
       </div>
 
-      <!-- ── Output (TS-Array + Export-Buttons) — Reiter, einklappbar ── -->
-      <div id="output-section">
-        <div id="output-tabbar">
-          <button id="output-toggle" class="output-tab" title="TypeScript-Array & Export ein-/ausklappen">
-            &lt;/&gt; TypeScript &amp; Export <span class="tab-caret">▾</span>
-          </button>
-        </div>
-        <div id="output-body" class="collapsed">
-        <div class="output-header">
-          <button class="copy-btn" id="copy-btn">📋 Kopieren</button>
-          <button class="copy-btn" id="save-ts-btn" style="background:#1a3a1a;color:#80c080;border-color:#2a5a2a">💾 .ts speichern</button>
-          <button class="copy-btn" id="reset-btn" style="background:#4a1a1a">↺ Reset</button>
-          <button class="copy-btn" id="import-array-btn" style="background:#1a2a3a;color:#80a0c0;border-color:#2a4060">📥 Import</button>
-          <label style="font-size:11px;color:#999;font-weight:600;display:flex;align-items:center;gap:4px;cursor:pointer">
-            <input type="checkbox" id="export-include-palette"> 🎨 Farben mitkopieren
-          </label>
-          <label style="font-size:11px;color:#999;font-weight:600;display:flex;align-items:center;gap:4px;cursor:pointer" title="Bettet eine Farbpalette (Swatches + Hex-Codes) ins PNG/PDF ein, damit die Farb-Infos nicht verloren gehen">
-            <input type="checkbox" id="export-embed-palette" checked> 🎨 Palette ins Bild
-          </label>
-          <span style="flex:1"></span>
-          <label style="font-size:11px;color:#666;font-weight:600">Export-Skalierung:</label>
-          <select id="export-scale"
-                  style="background:#252525;color:#d4d4d4;border:1px solid #333;border-radius:4px;padding:4px 6px;font-size:11px">
-            <option value="1">1×</option>
-            <option value="4">4×</option>
-            <option value="8" selected>8×</option>
-            <option value="16">16×</option>
-            <option value="32">32×</option>
-          </select>
-          <button class="copy-btn" id="export-png-btn"
-                  style="background:#1e3a4a;color:#80b0c0;border-color:#2a5060">🖼 PNG</button>
-          <button class="copy-btn" id="export-pdf-btn"
-                  style="background:#3a2a1e;color:#c0a080;border-color:#5a4030">📄 PDF</button>
-        </div>
-        <textarea id="output-textarea" readonly></textarea>
-        <div class="hint">Kopiere den Array und ersetze die entsprechende Konstante in deinem Code · PNG/PDF Export ohne Hintergrund (transparent)</div>
-        </div>
-      </div>
-
-    </div>
-
-    <div id="editor-wrap">
-
-      <div id="editor-top">
-        <div id="editor-title">Editor</div>
-        <div class="btn-group" id="history-btns">
-          <button class="btn" id="undo-btn" title="Rückgängig (Ctrl+Z)" disabled>↶ Undo</button>
-          <button class="btn" id="redo-btn" title="Wiederholen (Ctrl+Y / Ctrl+Shift+Z)" disabled>↷ Redo</button>
-        </div>
-        <div id="bg-toggle-wrap">
-          <button class="btn active" id="bg-dark-btn" title="Dunkler Schachbrett-Hintergrund">◩ Dunkel</button>
-          <button class="btn"        id="bg-bw-btn"   title="Heller Schachbrett-Hintergrund">◩ Hell</button>
+      <!-- Werkzeugleiste — eine einzige, auch im Vollbild -->
+      <div id="toolbar">
+        <div class="tool-group" role="group" aria-label="Werkzeuge">
+          <button class="tool-btn is-active" data-tool="pencil" aria-pressed="true" title="Stift — einzelne Pixel (P)"><span class="tool-ico">✎</span><span class="tool-name">Stift</span></button>
+          <button class="tool-btn" data-tool="brush"  aria-pressed="false" title="Pinsel — Fläche, Stärke = Dichte (B)"><span class="tool-ico">🖌</span><span class="tool-name">Pinsel</span></button>
+          <button class="tool-btn" data-tool="spray"  aria-pressed="false" title="Spray — zufällige Pixel (S)"><span class="tool-ico">✳</span><span class="tool-name">Spray</span></button>
+          <button class="tool-btn" data-tool="fill"   aria-pressed="false" title="Füllen — Flood-Fill (F)"><span class="tool-ico">◍</span><span class="tool-name">Füllen</span></button>
+          <button class="tool-btn" data-tool="eraser" aria-pressed="false" title="Radierer (E)"><span class="tool-ico">⌫</span><span class="tool-name">Radierer</span></button>
+          <button class="tool-btn" data-tool="wand"   aria-pressed="false" title="Zauberstab — ähnliche Fläche löschen (W)"><span class="tool-ico">✦</span><span class="tool-name">Zauberstab</span></button>
         </div>
 
-        <!-- Tool-Schnellleiste — nur im Vollbild sichtbar (zwischen Hell/Dunkel und Zoom) -->
-        <div id="fullscreen-toolbar">
-          <button class="tool-btn" data-tool="pencil" title="Stift — 1 Pixel (P)">🖊 <span>Stift</span></button>
-          <button class="tool-btn" data-tool="brush"  title="Pinsel — Stärke = Dichte (B)">🖌 <span>Pinsel</span></button>
-          <button class="tool-btn" data-tool="spray"  title="Spray — Stärke = Pixel/Event (S)">✳ <span>Spray</span></button>
-          <button class="tool-btn" data-tool="fill"   title="Fülleimer — Flood-Fill (F)">🪣 <span>Füllen</span></button>
-          <button class="tool-btn" data-tool="eraser" title="Radierer — Stärke = Dichte (E)">⬜ <span>Radierer</span></button>
-          <button class="tool-btn" data-tool="wand"   title="Zauberstab — zusammenhängende Fläche löschen (W)">🪄 <span>Zauberstab</span></button>
+        <div class="tool-sep" aria-hidden="true"></div>
 
-          <!-- Größe (1–9) — nur für Pinsel/Spray/Radierer sichtbar -->
-          <div id="fullscreen-size">
-            <span class="fs-size-label">Größe</span>
-            <button class="brush-sz active" data-size="1">1</button>
+        <div class="tool-group" id="brush-size-group" hidden>
+          <span class="field-label">Größe</span>
+          <div class="size-btns">
+            <button class="brush-sz is-active" data-size="1">1</button>
             <button class="brush-sz" data-size="2">2</button>
             <button class="brush-sz" data-size="3">3</button>
             <button class="brush-sz" data-size="4">4</button>
@@ -123,237 +147,182 @@
             <button class="brush-sz" data-size="8">8</button>
             <button class="brush-sz" data-size="9">9</button>
           </div>
-
-          <!-- Stärke — nur für Pinsel/Spray/Radierer -->
-          <div id="fullscreen-strength" class="fs-slider-grp">
-            <span class="fs-size-label">Stärke</span>
-            <input type="range" class="strength-input" min="1" max="100" value="80">
-            <span class="strength-val fs-size-label">80%</span>
-          </div>
-
-          <!-- Toleranz — nur für Zauberstab -->
-          <div id="fullscreen-tolerance" class="fs-slider-grp">
-            <span class="fs-size-label">Toleranz</span>
-            <input type="range" class="tolerance-input" min="0" max="100" value="25">
-            <span class="tolerance-val fs-size-label">25%</span>
-          </div>
         </div>
 
-        <div id="editor-top-right">
-          <div id="cell-size-wrap">
-            <label>Zoom:</label>
-            <input type="range" id="cell-size" min="4" max="32" value="16">
-            <span id="cell-size-val">16px</span>
-          </div>
-          <button class="btn" id="fullscreen-btn" title="Vollbild (Esc zum Schließen)">Vollbild</button>
-        </div>
+        <label class="field field--inline" id="strength-group" hidden>
+          <span class="field-label">Stärke</span>
+          <input type="range" id="strength-slider" min="1" max="100" value="80">
+          <span id="strength-val" class="field-value">80%</span>
+        </label>
+
+        <label class="field field--inline" id="tolerance-group" hidden>
+          <span class="field-label">Toleranz</span>
+          <input type="range" id="tolerance-slider" min="0" max="100" value="25">
+          <span id="tolerance-val" class="field-value">25%</span>
+        </label>
       </div>
 
-      <div id="quick-palette"></div>
+      <div id="quick-palette" role="group" aria-label="Farb-Schnellwahl"></div>
 
       <div id="editor-canvas-area">
         <div id="editor-canvas-wrap">
           <canvas id="editor-canvas"></canvas>
-          <img id="template-overlay" alt="">
-          <div id="brush-cursor"></div>
+          <img id="template-overlay" alt="" hidden>
+          <div id="brush-cursor" hidden></div>
         </div>
       </div>
 
-      <div id="info-bar"></div>
+      <div id="info-bar" role="status" aria-live="polite"></div>
 
-    </div>
+    </main>
 
-    <div id="palette-section">
+    <!-- ── Rechte Spalte ── -->
+    <aside id="rail-right" class="rail">
 
-      <div id="palette-header">
-        <h2>Farbpaletten</h2>
-        <button id="palette-toggle" title="Palette ein-/ausklappen">▼</button>
-      </div>
-
-      <div id="palette-body" class="collapsed">
-        <div style="font-size:10px;color:#6070a0;margin-bottom:6px" id="variant-label">Variante</div>
-        <div id="variant-btns"></div>
-        <div id="palette-items"></div>
-      </div>
-
-      <div id="tools-section">
-        <div id="tools-header">
-          <span class="tools-title">Tools</span>
-          <button id="tools-toggle" title="Tools ein-/ausklappen">▲</button>
+      <section class="panel" data-panel="palette">
+        <div class="panel-head">
+          <h2 class="panel-title">Farben</h2>
+          <span class="badge badge--builtin" id="palette-origin">eingebaut</span>
+          <button class="panel-toggle" type="button" aria-expanded="true"></button>
         </div>
-        <div id="tools-body">
-          <div id="current-color" title="Klicken — Farbwähler öffnen">
-            <div class="cc-swatch transp"></div>
-            <div class="cc-info">
+        <div class="panel-body">
+
+          <button type="button" id="current-color" class="current-color" title="Klicken — freien Farbwähler öffnen">
+            <span class="cc-swatch is-transparent"></span>
+            <span class="cc-info">
               <span class="cc-label">Aktuelle Farbe</span>
               <span class="cc-hex">—</span>
-            </div>
-            <span class="cc-pick-icon">🎨</span>
-            <input type="color" id="free-color-picker" style="position:absolute;width:0;height:0;opacity:0;pointer-events:none">
-          </div>
-          <div id="tool-btns">
-            <button class="tool-btn active" data-tool="pencil" title="Stift — 1 Pixel (P)">🖊 <span>Stift</span></button>
-            <button class="tool-btn" data-tool="brush"  title="Pinsel — Stärke = Dichte (B)">🖌 <span>Pinsel</span></button>
-            <button class="tool-btn" data-tool="spray"  title="Spray — Stärke = Pixel/Event (S)">✳ <span>Spray</span></button>
-            <button class="tool-btn" data-tool="fill"   title="Fülleimer — Flood-Fill (F)">🪣 <span>Füllen</span></button>
-            <button class="tool-btn" data-tool="eraser" title="Radierer — Stärke = Dichte (E)">⬜ <span>Radierer</span></button>
-            <button class="tool-btn" data-tool="wand"   title="Zauberstab — zusammenhängende ähnliche Fläche löschen, z.B. Hintergrund (W)">🪄 <span>Zauberstab</span></button>
-          </div>
-          <div id="brush-size-wrap">
-            <span class="brush-size-label">Größe</span>
-            <div id="brush-size-btns">
-              <button class="brush-sz active" data-size="1">1</button>
-              <button class="brush-sz" data-size="2">2</button>
-              <button class="brush-sz" data-size="3">3</button>
-              <button class="brush-sz" data-size="4">4</button>
-              <button class="brush-sz" data-size="5">5</button>
-              <button class="brush-sz" data-size="6">6</button>
-              <button class="brush-sz" data-size="7">7</button>
-              <button class="brush-sz" data-size="8">8</button>
-              <button class="brush-sz" data-size="9">9</button>
-            </div>
-          </div>
-          <div id="tool-sliders">
-            <div class="tool-slider-row" id="strength-row">
-              <span class="tool-slider-lbl">Stärke</span>
-              <input type="range" id="strength-slider" class="strength-input" min="1" max="100" value="80">
-              <span id="strength-val" class="strength-val tool-slider-val">80%</span>
-            </div>
-            <div class="tool-slider-row" id="tolerance-row" style="display:none">
-              <span class="tool-slider-lbl">Toleranz</span>
-              <input type="range" id="tolerance-slider" class="tolerance-input" min="0" max="100" value="25">
-              <span id="tolerance-val" class="tolerance-val tool-slider-val">25%</span>
-            </div>
-          </div>
-        </div>
-      </div>
+            </span>
+            <span class="cc-pick" aria-hidden="true">◈</span>
+            <input type="color" id="free-color-picker" class="hidden-color-input" aria-label="Freie Farbe wählen">
+          </button>
 
-      <div id="template-section">
-        <div id="template-header">
-          <span class="template-title">📷 Schablone</span>
-          <button id="template-toggle" title="Schablone ein-/ausklappen">▼</button>
-        </div>
-        <div id="template-body" class="collapsed">
-          <input type="file" id="template-file" accept="image/*">
-          <div class="tpl-row">
-            <span class="tpl-lbl">Deckkraft</span>
-            <input type="range" id="template-opacity" min="0" max="100" value="50">
-            <input type="number" id="template-opacity-num" class="tpl-num" min="0" max="100" value="50">
-            <span class="tpl-unit">%</span>
+          <div class="palette-picker">
+            <select id="palette-select" class="input" aria-label="Palette wählen"></select>
+            <button class="icon-btn" id="palette-edit-btn" title="Palette bearbeiten" hidden>✎</button>
+            <button class="icon-btn is-danger" id="palette-del-btn" title="Palette löschen" hidden>×</button>
           </div>
-          <div class="tpl-row">
-            <span class="tpl-lbl">Größe</span>
-            <input type="range" id="template-scale" min="10" max="200" value="100">
-            <input type="number" id="template-scale-num" class="tpl-num" min="10" max="200" value="100">
-            <span class="tpl-unit">%</span>
-          </div>
-          <div id="tpl-action-btns">
-            <button id="template-center" style="display:none">📐 Zentrieren</button>
-            <button id="template-clear" style="display:none">✕ Entfernen</button>
-          </div>
-          <div id="tpl-trace-btns">
-            <button id="template-trace" style="display:none" title="Schablonenfarben auf die aktuelle Palette einrasten und ins Grid übernehmen (Undo-fähig)">🎨 Palette</button>
-            <button id="template-trace-raw" style="display:none" title="Schablonenfarben als freie Pixel übernehmen — fotorealistisch, sehr viele Farben">Rohfarben</button>
-          </div>
-          <div id="tpl-quant-row" style="display:none">
-            <span class="tpl-lbl">Reduzieren</span>
-            <input type="number" id="trace-colors" class="tpl-num" min="2" max="64" value="8" style="width:34px">
-            <span class="tpl-unit">Farben</span>
-            <button id="template-trace-quant" title="Schablone abtasten und Farben automatisch auf N dominante Töne reduzieren (Median-Cut) — flache Flächen statt Foto-Rauschen">🎚 Übernehmen</button>
-          </div>
-        </div>
-      </div>
 
-      <div id="cleanup-section">
-        <div id="cleanup-header">
-          <span class="cleanup-title">🪄 Aufräumen</span>
-          <button id="cleanup-toggle" title="Aufräumen ein-/ausklappen">▼</button>
-        </div>
-        <div id="cleanup-body" class="collapsed">
-          <div class="fx-row">
-            <span class="tpl-lbl">Hintergr.</span>
-            <input type="number" id="bg-tolerance" class="tpl-num" min="0" max="100" value="25" style="width:34px">
-            <span class="tpl-unit">%</span>
-            <button id="bg-remove-btn" class="fx-btn" title="Vom Bildrand her zusammenhängende, ähnlich gefärbte Flächen automatisch löschen — Toleranz höher = mehr wird mitgelöscht (Undo-fähig)">🪄 Auto-Hintergrund weg</button>
+          <input type="search" id="palette-search" class="input input--sm" placeholder="Palette suchen…" autocomplete="off">
+
+          <div class="btn-row">
+            <button class="btn btn--primary" id="palette-add-btn" title="Neue eigene Palette anlegen">+ Palette</button>
+            <button class="btn" id="palette-fork-btn" title="Diese eingebaute Palette als eigene Kopie anlegen — dann ist sie änderbar">Kopie bearbeiten</button>
           </div>
-          <button id="despeckle-btn" class="fx-btn" title="Einzelne Streupixel auf die Mehrheitsfarbe der Nachbarn setzen — glättet Flächen und Kanten (Undo-fähig)">▦ Glätten (Streupixel weg)</button>
-          <div class="fx-row">
-            <span class="tpl-lbl">Outline</span>
+          <button class="btn btn--accent btn--block" id="palette-from-image-btn"
+                  title="Die Farben des aktuellen Bildes als editierbare Palette übernehmen">Bild → Palette</button>
+
+          <p class="panel-hint" id="palette-hint"></p>
+
+          <div id="palette-items" class="color-list"></div>
+        </div>
+      </section>
+
+      <section class="panel collapsed" data-panel="template">
+        <div class="panel-head">
+          <h2 class="panel-title">Schablone</h2>
+          <button class="panel-toggle" type="button" aria-expanded="false"></button>
+        </div>
+        <div class="panel-body">
+          <input type="file" id="template-file" accept="image/*" class="file-input">
+
+          <label class="field">
+            <span class="field-label">Deckkraft</span>
+            <span class="field-controls">
+              <input type="range" id="template-opacity" min="0" max="100" value="50">
+              <input type="number" id="template-opacity-num" class="input input--num" min="0" max="100" value="50">
+              <span class="field-unit">%</span>
+            </span>
+          </label>
+
+          <label class="field">
+            <span class="field-label">Größe</span>
+            <span class="field-controls">
+              <input type="range" id="template-scale" min="10" max="200" value="100">
+              <input type="number" id="template-scale-num" class="input input--num" min="10" max="200" value="100">
+              <span class="field-unit">%</span>
+            </span>
+          </label>
+
+          <div class="btn-row">
+            <button class="btn" id="template-center" hidden>Zentrieren</button>
+            <button class="btn btn--danger-soft" id="template-clear" hidden>Entfernen</button>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn btn--accent" id="template-trace" hidden
+                    title="Schablonenfarben auf die aktuelle Palette einrasten">Auf Palette</button>
+            <button class="btn" id="template-trace-raw" hidden
+                    title="Schablonenfarben als freie Pixel übernehmen — fotorealistisch">Rohfarben</button>
+          </div>
+
+          <div class="field field--inline" id="tpl-quant-row" hidden>
+            <span class="field-label">Reduzieren auf</span>
+            <input type="number" id="trace-colors" class="input input--num" min="2" max="64" value="8">
+            <span class="field-unit">Farben</span>
+            <button class="btn btn--primary" id="template-trace-quant"
+                    title="Schablone abtasten und Farben auf N dominante Töne reduzieren (Median-Cut)">Übernehmen</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel collapsed" data-panel="cleanup">
+        <div class="panel-head">
+          <h2 class="panel-title">Aufräumen</h2>
+          <button class="panel-toggle" type="button" aria-expanded="false"></button>
+        </div>
+        <div class="panel-body">
+          <div class="field field--inline">
+            <span class="field-label">Hintergrund</span>
+            <input type="number" id="bg-tolerance" class="input input--num" min="0" max="100" value="25">
+            <span class="field-unit">%</span>
+          </div>
+          <button class="btn btn--block" id="bg-remove-btn"
+                  title="Vom Bildrand her zusammenhängende, ähnlich gefärbte Flächen löschen">Hintergrund entfernen</button>
+
+          <button class="btn btn--block" id="despeckle-btn"
+                  title="Einzelne Streupixel auf die Mehrheitsfarbe der Nachbarn setzen">Glätten</button>
+
+          <div class="field field--inline">
+            <span class="field-label">Outline</span>
             <input type="color" id="outline-color" value="#1a1a1a" title="Outline-Farbe">
-            <select id="outline-thickness" title="Dicke der Kante">
-              <option value="1">1px</option>
-              <option value="2">2px</option>
-              <option value="3">3px</option>
+            <select id="outline-thickness" class="input input--sm" title="Dicke der Kante">
+              <option value="1">1 px</option>
+              <option value="2">2 px</option>
+              <option value="3">3 px</option>
             </select>
-            <button id="outline-btn" class="fx-btn" title="Dunkle Kante rund um alle nicht-transparenten Pixel ziehen (Undo-fähig)">✏ Anwenden</button>
+            <button class="btn" id="outline-btn">Anwenden</button>
           </div>
         </div>
-      </div>
+      </section>
 
-    </div>
+    </aside>
 
-  </div>
-
-</div>
-
-<!-- ── Palette-Modal (erstellen + bearbeiten) ── -->
-<div id="pal-modal-overlay"
-     style="position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:100">
-  <div style="background:#1e1e1e;border-radius:8px;padding:22px;width:380px;border:1px solid #333;box-shadow:0 20px 60px rgba(0,0,0,0.6);max-height:90vh;overflow-y:auto">
-    <h2 style="font-size:14px;font-weight:700;color:#d4d4d4;margin-bottom:16px">🎨 Neue Palette erstellen</h2>
-
-    <div class="form-row">
-      <label>Name</label>
-      <input type="text" id="pal-name" placeholder="z.B. neon, pastell, dark" maxlength="30">
-    </div>
-
-    <div class="form-row">
-      <label>Für Tierart</label>
-      <select id="pal-type">
-        <option value="dog">🐕 Hund</option>
-        <option value="cat">🐈 Katze</option>
-        <option value="neutral">⬜ Leer</option>
-      </select>
-    </div>
-
-    <div class="form-row">
-      <label>Basis-Palette (optional — Farben übernehmen)</label>
-      <select id="pal-source">
-        <option value="">— Leer / aktuell —</option>
-      </select>
-    </div>
-
-    <div class="form-row">
-      <label>Farben</label>
-      <div id="pal-color-rows" style="display:flex;flex-direction:column;gap:6px"></div>
-    </div>
-
-    <div id="new-modal-btns">
-      <button id="pal-modal-cancel"
-              style="flex:1;padding:9px;border-radius:5px;border:1px solid #333;background:#252525;color:#999;font-weight:600;font-size:13px;cursor:pointer">Abbrechen</button>
-      <button id="pal-modal-create"
-              style="flex:1;padding:9px;border-radius:5px;border:1px solid #555;background:#3a3a3a;color:#d4d4d4;font-weight:600;font-size:13px;cursor:pointer">Erstellen</button>
-    </div>
   </div>
 </div>
 
-<!-- ── New-Sprite Modal ── -->
-<div id="new-modal-overlay">
-  <div id="new-modal">
-    <h2>✨ Neuen Sprite erstellen</h2>
-    <div class="form-row">
-      <label>Name (z.B. DOG_BLINK, RABBIT_NORMAL)</label>
-      <input type="text" id="new-name" placeholder="z.B. DOG_BLINK" maxlength="40">
-    </div>
-    <div class="form-row">
-      <label>Farbpalette (alle Tierarten — Built-in & gespeicherte eigene)</label>
-      <select id="new-variant"></select>
-    </div>
-    <div class="form-row">
-      <label>Größe</label>
-      <select id="new-size">
-        <option value="24">24 × 24 (Standard)</option>
+<!-- ══════════════════ Modale ══════════════════ -->
+
+<!-- Neuer Sprite -->
+<div id="new-modal-overlay" class="modal-overlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="new-modal-title">
+    <h2 class="modal-title" id="new-modal-title">Neuer Sprite</h2>
+
+    <label class="form-row">
+      <span class="form-label">Name</span>
+      <input type="text" id="new-name" class="input" maxlength="40" placeholder="z.B. Held, Baum, Icon">
+    </label>
+
+    <label class="form-row">
+      <span class="form-label">Farbpalette</span>
+      <select id="new-palette" class="input"></select>
+    </label>
+
+    <label class="form-row">
+      <span class="form-label">Größe</span>
+      <select id="new-size" class="input">
         <option value="16">16 × 16</option>
+        <option value="24" selected>24 × 24</option>
         <option value="32">32 × 32</option>
         <option value="40">40 × 40</option>
         <option value="48">48 × 48</option>
@@ -363,138 +332,179 @@
         <option value="96">96 × 96</option>
         <option value="128">128 × 128</option>
       </select>
+    </label>
+
+    <label class="form-row">
+      <span class="form-label">Vorlage <span class="form-note">(optional — Kopie eines vorhandenen Sprites)</span></span>
+      <select id="new-template" class="input"></select>
+    </label>
+
+    <div class="modal-actions">
+      <button class="btn" id="new-modal-cancel">Abbrechen</button>
+      <button class="btn btn--primary" id="new-modal-create">Erstellen</button>
     </div>
+  </div>
+</div>
+
+<!-- Sprite umbenennen -->
+<div id="rename-modal-overlay" class="modal-overlay">
+  <div class="modal modal--sm" role="dialog" aria-modal="true" aria-labelledby="rename-modal-title">
+    <h2 class="modal-title" id="rename-modal-title">Sprite umbenennen</h2>
+    <label class="form-row">
+      <span class="form-label">Name</span>
+      <input type="text" id="rename-input" class="input" maxlength="40">
+    </label>
+    <div class="modal-actions">
+      <button class="btn" id="rename-modal-cancel">Abbrechen</button>
+      <button class="btn btn--primary" id="rename-modal-ok">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Palette anlegen / bearbeiten -->
+<div id="pal-modal-overlay" class="modal-overlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="pal-modal-title">
+    <h2 class="modal-title" id="pal-modal-title">Neue Palette</h2>
+
+    <label class="form-row">
+      <span class="form-label">Name</span>
+      <input type="text" id="pal-name" class="input" maxlength="30" placeholder="z.B. neon, pastell, dark">
+    </label>
+
+    <label class="form-row" id="pal-source-row">
+      <span class="form-label">Basis <span class="form-note">(Farben übernehmen)</span></span>
+      <select id="pal-source" class="input"></select>
+    </label>
+
     <div class="form-row">
-      <label>Vorlage (optional — Kopie eines bestehenden Sprites)</label>
-      <select id="new-template">
-        <option value="">— Leeres Grid —</option>
-        <option value="dog_normal">dog_normal</option>
-        <option value="dog_happy">dog_happy</option>
-        <option value="dog_sad">dog_sad</option>
-        <option value="cat_normal">cat_normal</option>
-        <option value="cat_happy">cat_happy</option>
-        <option value="cat_sad">cat_sad</option>
-      </select>
+      <span class="form-label">Farben</span>
+      <div id="pal-color-rows" class="pal-rows"></div>
     </div>
-    <div id="new-modal-btns">
-      <button id="new-modal-cancel">Abbrechen</button>
-      <button id="new-modal-create">Erstellen</button>
+
+    <div class="modal-actions">
+      <button class="btn" id="pal-modal-cancel">Abbrechen</button>
+      <button class="btn btn--primary" id="pal-modal-create">Erstellen</button>
     </div>
   </div>
 </div>
 
-<!-- ── Import-Array-Modal ── -->
-<div id="import-modal-overlay"
-     style="position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:100">
-  <div style="background:#1e1e1e;border-radius:8px;padding:22px;width:480px;border:1px solid #333;box-shadow:0 20px 60px rgba(0,0,0,0.6)">
-    <h2 style="font-size:14px;font-weight:700;color:#d4d4d4;margin-bottom:12px">📥 Array importieren</h2>
-    <p style="font-size:11px;color:#778;margin-bottom:10px">Füge ein <code style="color:#80a0c0">number[][]</code>-Array ein — das Format aus dem Output-Feld oder direkt aus deinem Code.</p>
-    <textarea id="import-textarea"
-              style="width:100%;height:180px;background:#141414;color:#d4d4d4;border:1px solid #333;border-radius:5px;padding:8px;font-family:monospace;font-size:11px;resize:vertical;box-sizing:border-box"
-              placeholder="const MY_SPRITE: number[][] = [&#10;  [0,1,2,...],&#10;  ...&#10;];&#10;&#10;— oder nur den Array-Teil: [[0,1,...], ...]"></textarea>
-    <div id="import-error" style="font-size:11px;color:#e06060;margin-top:6px;display:none"></div>
-    <div style="display:flex;gap:8px;margin-top:14px">
-      <button id="import-modal-cancel"
-              style="flex:1;padding:9px;border-radius:5px;border:1px solid #333;background:#252525;color:#999;font-weight:600;font-size:13px;cursor:pointer">Abbrechen</button>
-      <button id="import-modal-load"
-              style="flex:1;padding:9px;border-radius:5px;border:1px solid #2a4060;background:#1a2a3a;color:#80a0c0;font-weight:600;font-size:13px;cursor:pointer">Laden</button>
+<!-- Import -->
+<div id="import-modal-overlay" class="modal-overlay">
+  <div class="modal modal--lg" role="dialog" aria-modal="true" aria-labelledby="import-modal-title">
+    <h2 class="modal-title" id="import-modal-title">Sprite importieren</h2>
+    <p class="modal-intro">
+      Fügt ein <code>number[][]</code>-Array ein — aus dem Code-Feld oder direkt aus deinem Projekt.
+      Steht im Text auch ein <code>Record&lt;number, string&gt;</code>-Palettenblock, wird die Palette mit übernommen.
+    </p>
+
+    <div class="btn-row">
+      <button class="btn" id="import-file-btn">Datei wählen (.ts / .js / .json / .txt)</button>
+      <input type="file" id="import-file-input" accept=".ts,.tsx,.js,.jsx,.json,.txt,text/plain" hidden>
+    </div>
+
+    <textarea id="import-textarea" class="code-in" spellcheck="false"
+              placeholder="export const HELD_PALETTE: Record<number, string> = {&#10;  1: '#F5D98A',&#10;};&#10;&#10;export const HELD: number[][] = [&#10;  [0,1,2],&#10;];"></textarea>
+
+    <p id="import-preview" class="msg msg--ok" hidden></p>
+    <p id="import-error" class="msg msg--error" hidden></p>
+
+    <label class="check" id="import-use-palette-label">
+      <input type="checkbox" id="import-use-palette" checked>
+      <span>Palette aus der Datei übernehmen und dem Sprite zuweisen</span>
+    </label>
+
+    <div class="modal-actions">
+      <button class="btn" id="import-modal-cancel">Abbrechen</button>
+      <button class="btn" id="import-modal-current" title="Überschreibt das Grid des aktuellen Sprites">In aktuellen Sprite</button>
+      <button class="btn btn--primary" id="import-modal-new">Als neuen Sprite</button>
     </div>
   </div>
 </div>
 
-<!-- ── Confirm-Toast ── -->
-<div id="confirm-toast">
-  <span id="confirm-toast-msg"></span>
-  <div id="confirm-toast-btns">
-    <button id="confirm-toast-cancel">Abbrechen</button>
-    <button id="confirm-toast-ok">Löschen</button>
-  </div>
-</div>
-
-<!-- ── Hilfe-Modal ── -->
-<div id="help-modal-overlay">
-  <div id="help-modal">
-    <div class="help-top">
-      <h2>ℹ Hilfe &amp; Erklärungen</h2>
-      <button id="help-close" class="help-close" title="Schließen">×</button>
+<!-- Hilfe -->
+<div id="help-modal-overlay" class="modal-overlay">
+  <div class="modal modal--lg modal--scroll" role="dialog" aria-modal="true" aria-labelledby="help-title">
+    <div class="modal-head">
+      <h2 class="modal-title" id="help-title">Hilfe</h2>
+      <button class="icon-btn" id="help-close" title="Schließen">×</button>
     </div>
 
-    <p class="help-intro">Pixel-Sprite-Editor mit Foto-Vorlage. Du kannst frei malen — oder ein Foto als <b>Schablone</b> abpausen und automatisch zu einem sauberen Sprite verarbeiten.</p>
+    <p class="modal-intro">
+      Pixel-Editor mit Foto-Vorlage. Du malst frei — oder paust ein Foto als <b>Schablone</b> ab
+      und lässt es automatisch zu einem sauberen Sprite verarbeiten.
+    </p>
 
-    <h3 class="help-h">🖊 Werkzeuge</h3>
+    <h3 class="help-h">Farbpaletten</h3>
     <div class="help-list">
-      <div><b>Stift</b> – einzelne Pixel malen.</div>
-      <div><b>Pinsel</b> – Fläche; <i>Stärke</i> = Dichte, <i>Größe</i> = Radius.</div>
-      <div><b>Spray</b> – zufällige Pixel; <i>Stärke</i> = Menge pro Klick.</div>
-      <div><b>Füllen</b> – Flood-Fill: zusammenhängende gleiche Fläche.</div>
-      <div><b>Radierer</b> – löscht zu transparent.</div>
-      <div><b>Zauberstab</b> – löscht zusammenhängende <i>ähnliche</i> Fläche (z.B. Hintergrund); <i>Toleranz</i>-Slider = wie viel Farbabweichung mitgeht.</div>
+      <div>Eine Palette bildet <b>Index → Farbe</b> ab. <b>0</b> ist immer transparent, <b>1–9</b> sind frei belegbar.</div>
+      <div>Konvention (kein Zwang): <b>1–4</b> eine Tonleiter hell → dunkel, <b>5</b> die Kontur, <b>6–9</b> Akzente.</div>
+      <div>Jeder Sprite merkt sich seine eigene Palette. Farbe ändern färbt alle Pixel mit diesem Index sofort um.</div>
+      <div>Eingebaute Paletten sind schreibgeschützt — <b>Kopie bearbeiten</b> macht eine änderbare eigene daraus.</div>
     </div>
 
-    <h3 class="help-h">📷 Schablone (Foto-Vorlage)</h3>
+    <h3 class="help-h">Werkzeuge</h3>
     <div class="help-list">
-      <div>Bild laden, mit <span class="kbd">Shift</span>+Linksklick ziehen verschieben, Deckkraft/Größe per Slider.</div>
+      <div><b>Stift</b> — einzelne Pixel.</div>
+      <div><b>Pinsel</b> — Fläche; <i>Stärke</i> = Dichte, <i>Größe</i> = Kantenlänge.</div>
+      <div><b>Spray</b> — zufällige Pixel; <i>Stärke</i> = Menge pro Ereignis.</div>
+      <div><b>Füllen</b> — zusammenhängende gleiche Fläche.</div>
+      <div><b>Radierer</b> — setzt auf transparent.</div>
+      <div><b>Zauberstab</b> — löscht zusammenhängende <i>ähnliche</i> Fläche; <i>Toleranz</i> steuert, wie viel Abweichung mitgeht.</div>
+    </div>
+
+    <h3 class="help-h">Schablone</h3>
+    <div class="help-list">
+      <div>Bild laden, mit <span class="kbd">Shift</span>+Linksklick ziehen verschieben, Deckkraft und Größe per Regler.</div>
       <div><span class="kbd">Shift</span> halten → Schablone voll in den Vordergrund.</div>
       <div><span class="kbd">Shift</span>+Rechtsklick → Schablonen-Pipette (exakte Farbe aus dem Bild).</div>
-      <div>Bleibt nach Browser-Reload erhalten (lokal gespeichert).</div>
+      <div>Bleibt nach einem Reload erhalten.</div>
     </div>
 
-    <h3 class="help-h">🎨 Schablone übernehmen (Trace)</h3>
-    <div class="help-list">
-      <div><b>Palette</b> – Farben auf die aktuelle Palette einrasten (Export-tauglich).</div>
-      <div><b>Rohfarben</b> – echte Bildfarben (fotorealistisch, sehr viele Farben).</div>
-      <div><b>Reduzieren (N Farben)</b> – automatisch auf N dominante Töne quantisieren → flache Flächen statt Foto-Rauschen. <i>Empfohlen.</i></div>
-      <div><b>🎨 Bild → Palette</b> (im Paletten-Panel rechts) – macht aus den Bildfarben eine gespeicherte, editierbare Palette. Danach jeden Farb-Swatch rechts anklicken und ändern → das Bild färbt sich live um.</div>
-    </div>
-
-    <h3 class="help-h">🪄 Aufräumen</h3>
-    <div class="help-list">
-      <div><b>Auto-Hintergrund weg</b> – löscht vom Bildrand her zusammenhängende ähnliche Flächen (Toleranz höher = mehr).</div>
-      <div><b>Glätten</b> – einzelne Streupixel entfernen → saubere Flächen/Kanten.</div>
-      <div><b>Outline</b> – dunkle Kante ums Motiv (Farbe + Dicke wählbar). Macht es sofort „spriteiger".</div>
-    </div>
-
-    <h3 class="help-h">✨ Foto → Sprite (empfohlener Ablauf)</h3>
+    <h3 class="help-h">Foto → Sprite</h3>
     <ol class="help-ol">
-      <li>Foto als Schablone laden, übers Grid legen</li>
-      <li><b>Reduzieren</b> auf ~8 Farben</li>
-      <li><b>🎨 Bild → Palette</b> – Farben als editierbare Palette übernehmen, dann rechts feinjustieren</li>
-      <li><b>Auto-Hintergrund weg</b> (oder Zauberstab)</li>
-      <li><b>Glätten</b></li>
-      <li><b>Outline</b> drüber</li>
-      <li>Reste von Hand mit Stift/Radierer säubern</li>
+      <li>Foto als Schablone laden und übers Grid legen</li>
+      <li><b>Reduzieren auf ~8 Farben</b> übernehmen</li>
+      <li><b>Bild → Palette</b> — die Farben werden zur editierbaren Palette</li>
+      <li><b>Hintergrund entfernen</b> (oder Zauberstab)</li>
+      <li><b>Glätten</b>, dann <b>Outline</b> drüber</li>
+      <li>Reste von Hand mit Stift und Radierer säubern</li>
     </ol>
-    <p class="help-note">Die Pose kommt vom Foto — etwas Handarbeit am Ende bleibt.</p>
 
-    <h3 class="help-h">💾 Speichern &amp; Export</h3>
+    <h3 class="help-h">Import &amp; Export</h3>
     <div class="help-list">
-      <div><b>Auto-Speicher</b> – alles bleibt im Browser (localStorage).</div>
-      <div><b>Datei speichern/laden</b> – alle Sprites als JSON sichern/zurückholen.</div>
-      <div><b>PNG / PDF</b> – mit „Palette ins Bild" wird eine Farb-Legende eingebettet, damit keine Farb-Info verloren geht.</div>
-      <div><b>TypeScript-Reiter</b> – Array für deinen Code; Rohfarben werden verlustfrei als Palette-Indizes mitgespeichert.</div>
+      <div><b>Import</b> liest <code>number[][]</code> aus Text oder Datei. Ein mitgelieferter Palettenblock wird als eigene Palette angelegt und zugewiesen.</div>
+      <div><b>Code-Feld</b> erzeugt den TypeScript-Export. Freie Pipetten-Farben werden als Indizes oberhalb der Palette gesichert — der Round-Trip ist verlustfrei.</div>
+      <div><b>PNG / PDF</b> exportieren transparent; mit <i>Farb-Legende</i> wird die Palette ins Bild gerendert.</div>
+      <div><b>Projekt sichern / Öffnen</b> schreibt alle Sprites und Paletten in eine JSON-Datei.</div>
     </div>
 
-    <h3 class="help-h">⌨ Tastenkürzel</h3>
+    <h3 class="help-h">Tastenkürzel</h3>
     <div class="help-shortcuts">
       <div class="sc-row"><b>Klick</b><span>Malen</span></div>
-      <div class="sc-row"><b>Rechtsklick</b><span>Löschen (gedrückt = durchgehend)</span></div>
-      <div class="sc-row"><b>Alt+Klick</b><span>Pixel-Pipette</span></div>
-      <div class="sc-row"><b>Shift halten</b><span>Schablone in Vordergrund</span></div>
-      <div class="sc-row"><b>Shift+Links+Drag</b><span>Schablone verschieben</span></div>
-      <div class="sc-row"><b>Shift+Rechts</b><span>Schablone-Pipette</span></div>
-      <div class="sc-row"><b>0–9</b><span>Farbe wechseln</span></div>
-      <div class="sc-row"><b>P/B/S/F/E/W</b><span>Stift / Pinsel / Spray / Füllen / Radierer / Zauberstab</span></div>
-      <div class="sc-row"><b>Ctrl+Z</b><span>Rückgängig</span></div>
-      <div class="sc-row"><b>Ctrl+Y · Ctrl+Shift+Z</b><span>Wiederholen</span></div>
-      <div class="sc-row"><b>Esc</b><span>Vollbild / Hilfe schließen</span></div>
+      <div class="sc-row"><b>Rechtsklick</b><span>Löschen (gedrückt halten = durchgehend)</span></div>
+      <div class="sc-row"><b>Alt + Klick</b><span>Pipette auf das Grid</span></div>
+      <div class="sc-row"><b>Shift halten</b><span>Schablone in den Vordergrund</span></div>
+      <div class="sc-row"><b>Shift + Links + Ziehen</b><span>Schablone verschieben</span></div>
+      <div class="sc-row"><b>Shift + Rechtsklick</b><span>Schablonen-Pipette</span></div>
+      <div class="sc-row"><b>0 – 9</b><span>Farb-Index wählen</span></div>
+      <div class="sc-row"><b>P B S F E W</b><span>Stift · Pinsel · Spray · Füllen · Radierer · Zauberstab</span></div>
+      <div class="sc-row"><b>Strg + Z</b><span>Rückgängig</span></div>
+      <div class="sc-row"><b>Strg + Y</b><span>Wiederholen</span></div>
+      <div class="sc-row"><b>Esc</b><span>Dialog oder Vollbild schließen</span></div>
     </div>
   </div>
 </div>
 
-<!-- ── Externe Library: jsPDF für PDF-Export ── -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- Bestätigungs-Toast -->
+<div id="confirm-toast" role="alertdialog" aria-live="assertive">
+  <span id="confirm-toast-msg"></span>
+  <div id="confirm-toast-btns">
+    <button class="btn" id="confirm-toast-cancel">Abbrechen</button>
+    <button class="btn btn--danger" id="confirm-toast-ok">Löschen</button>
+  </div>
+</div>
 
-<!-- ── App-Entry (ES-Module) ── -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script type="module" src="js/app.js"></script>
 
 </body>

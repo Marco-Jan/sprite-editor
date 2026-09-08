@@ -89,7 +89,7 @@ function buildTplOffscreen() {
 // Öffentliche Status-Abfragen (für andere Module)
 // ────────────────────────────────────────────────────────────────────
 export function tplLoaded() {
-  return tplImg && tplImg.style.display !== 'none' && tplImg.src;
+  return !!(tplImg && !tplImg.hidden && tplImg.getAttribute('src'));
 }
 
 export function tplHasOffscreen() {
@@ -278,13 +278,11 @@ function clearTplStorage() {
 }
 
 // Schablone-Bedienelemente ein-/ausblenden (Buttons + Quant-Zeile).
+// Über das hidden-Attribut statt inline-display, damit das CSS die
+// Darstellungsart (flex/inline) behält.
 function showTplControls(show) {
-  const d = show ? 'inline-block' : 'none';
-  tplClear.style.display = d;
-  tplCenterBtn.style.display = d;
-  tplTraceBtn.style.display = d;
-  tplTraceRawBtn.style.display = d;
-  tplQuantRow.style.display = show ? 'flex' : 'none';
+  [tplClear, tplCenterBtn, tplTraceBtn, tplTraceRawBtn, tplQuantRow]
+    .forEach(el => { if (el) el.hidden = !show; });
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -313,7 +311,7 @@ export function initTemplate() {
     const reader = new FileReader();
     reader.onload = ev => {
       tplImg.src = ev.target.result;
-      tplImg.style.display = 'block';
+      tplImg.hidden = false;
       centerTpl();
       applyTplOpacity();
       applyTplScale();
@@ -331,7 +329,7 @@ export function initTemplate() {
 
   tplClear.addEventListener('click', () => {
     tplImg.removeAttribute('src');
-    tplImg.style.display = 'none';
+    tplImg.hidden = true;
     tplFile.value = '';
     showTplControls(false);
     tplOffscreen = null;
@@ -365,7 +363,7 @@ export function initTemplate() {
       tplOffsetX = cfg.offsetX || 0;
       tplOffsetY = cfg.offsetY || 0;
       tplImg.src = src;                 // löst 'load' → buildTplOffscreen aus
-      tplImg.style.display = 'block';
+      tplImg.hidden = false;
       applyTplOpacity();
       applyTplScale();
       applyTplPosition();

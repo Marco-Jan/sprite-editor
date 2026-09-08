@@ -1,104 +1,133 @@
 // ════════════════════════════════════════════════════════════════════
 // STATE — Veränderlicher Zustand + Lookup-Helpers
 // ════════════════════════════════════════════════════════════════════
-// Alle anderen Module importieren von hier. Mutationen erfolgen über das
-// `state`-Objekt (z.B. state.curType = 'cat'), NICHT über lokale Re-Assignments
-// — sonst sehen andere Module die Änderung nicht.
-import { PALETTE_SETS, ORIG, dc } from './data.js';
+// Alle anderen Module importieren von hier. Mutationen erfolgen über die
+// exportierten Objekte (state.curSprite = …, sprites[id] = …), NICHT über
+// lokale Re-Assignments — sonst sehen andere Module die Änderung nicht.
+import { BUILTIN_PALETTES, DEFAULT_PALETTE, MAX_IDX } from './data.js';
+
+// ────────────────────────────────────────────────────────────────────
+// Sprites — eine flache Sammlung. Jeder Sprite bringt sein eigenes Grid
+// und seine eigene Palette mit; es gibt keine eingebauten Motive mehr.
+//   sprites[id] = { name: 'Held', palette: 'golden', grid: [[0,1,…], …] }
+// Die Reihenfolge der Keys ist die Anzeige-Reihenfolge (Insertion Order).
+// ────────────────────────────────────────────────────────────────────
+export const sprites = {};
+
+// Eigene Paletten des Nutzers — flacher Namensraum neben den Built-ins.
+//   customPalettes['neon'] = { 1:'#…', …, 9:'#…' }
+export const customPalettes = {};
 
 // UI-Zustand (alles veränderlich)
 export const state = {
-  curType:    'dog',
-  curState:   'normal',
-  curVariant: 'golden',
-  curColor:   1,        // Zahl = Palette-Index | String "#RRGGBB" = freie Pipette-Farbe
-  cellSize:   16,
-  tool:         'pencil', // 'pencil' | 'brush' | 'spray' | 'fill' | 'eraser' | 'wand'
-  brushSize:    1,        // Radius / Breite in Zellen
-  brushStrength: 80,      // 1–100 — Brush/Eraser: Dichte, Spray: Pixel/Event
-  wandTolerance: 25,      // 0–100 % — Zauberstab: Farb-Ähnlichkeitsschwelle
-  isDrawing:    false,
-  isErasing:    false,
-  editorBg:     'dark',   // 'dark' | 'bw'
-  openGroupKey: null,     // welche Sprite-Gruppe aufgeklappt ist
+  curSprite:     null,     // id in `sprites`, null solange keiner existiert
+  curColor:      1,        // Zahl = Palette-Index | String "#RRGGBB" = freie Farbe
+  cellSize:      16,
+  tool:          'pencil', // 'pencil' | 'brush' | 'spray' | 'fill' | 'eraser' | 'wand'
+  brushSize:     1,        // Kantenlänge / Radius in Zellen
+  brushStrength: 80,       // 1–100 — Brush/Eraser: Dichte, Spray: Pixel/Event
+  wandTolerance: 25,       // 0–100 % — Zauberstab: Farb-Ähnlichkeitsschwelle
+  isDrawing:     false,
+  isErasing:     false,
+  editorBg:      'dark',   // 'dark' | 'bw'
 };
 
-// Working Grids — Kopien der ORIG, werden vom User editiert.
-// Custom-Sprites werden als `grids['custom_NAME'] = grid` ergänzt.
-export const grids = {
-  dog: { normal: dc(ORIG.dog.normal), happy: dc(ORIG.dog.happy), sad: dc(ORIG.dog.sad) },
-  cat: { normal: dc(ORIG.cat.normal), happy: dc(ORIG.cat.happy), sad: dc(ORIG.cat.sad) },
-};
-
-// Metadaten für Custom-Sprites: key → { palType: 'dog'|'cat'|'neutral', name }
-export const customMeta = {};
-
-// Custom-Paletten pro Typ: { dog: { name: {1:'#..', ...} }, cat: {...}, neutral: {...} }
-export const customPalettes = { dog: {}, cat: {}, neutral: {} };
-
 // ────────────────────────────────────────────────────────────────────
-// Helpers — gehen davon aus dass state/grids/customMeta/customPalettes
-// die einzige Wahrheit sind.
+// Sprite-Helpers
 // ────────────────────────────────────────────────────────────────────
 
-// Aktuelles Grid: built-in dog/cat hat 3 States (normal/happy/sad),
-// Custom hat nur ein Grid.
+// Eindeutige Sprite-ID aus einem Anzeigenamen ableiten.
+export function makeSpriteId(name) {
+  const base = (name || 'sprite').replace(/[^a-zA-Z0-9_-]/g, '_').replace(/^_+|_+$/g, '') || 'sprite';
+  if (!sprites[base]) return base;
+  let i = 2;
+  while (sprites[base + '_' + i]) i++;
+  return base + '_' + i;
+}
+
+// Leeres Grid der Kantenlänge `size`.
+export function emptyGrid(size) {
+  return Array.from({ length: size }, () => Array(size).fill(0));
+}
+
+// Sprite anlegen und zurückgeben. Setzt ihn NICHT automatisch aktiv.
+export function createSprite({ name, size = 24, palette = DEFAULT_PALETTE, grid = null }) {
+  const id = makeSpriteId(name);
+  sprites[id] = {
+    name: (name || id).trim() || id,
+    palette: paletteExists(palette) ? palette : DEFAULT_PALETTE,
+    grid: grid || emptyGrid(size),
+  };
+  return id;
+}
+
+// Aktueller Sprite-Datensatz (oder null wenn keiner existiert).
+export function getSprite() {
+  return state.curSprite ? sprites[state.curSprite] || null : null;
+}
+
+// Aktuelles Grid. Fällt auf ein leeres 24×24-Grid zurück, damit Render-Code
+// nie gegen null läuft (passiert nur im Moment zwischen Löschen und Neuwahl).
 export function getGrid() {
-  if (state.curType.startsWith('custom_')) return grids[state.curType];
-  return grids[state.curType][state.curState];
+  return getSprite()?.grid || emptyGrid(24);
 }
 
-// Palette-Typ eines Sprites: Custom liest palType aus den Metadaten,
-// Built-in (dog/cat) ist selbst schon der Typ.
-export function palTypeOf(type) {
-  return type.startsWith('custom_')
-    ? (customMeta[type]?.palType || 'dog')
-    : type;
+// Sortierte Liste aller Sprites für die Übersicht: [{ id, name, palette, grid }]
+export function listSprites() {
+  return Object.keys(sprites).map(id => ({ id, ...sprites[id] }));
 }
 
-// Palette für (type, variant): Custom-Palette hat Vorrang vor Built-in.
-export function getPal(type, variant) {
-  const t = palTypeOf(type);
-  if (customPalettes[t] && customPalettes[t][variant]) {
-    return customPalettes[t][variant];
-  }
-  return PALETTE_SETS[t].palettes[variant];
+// Ersten verfügbaren Sprite aktiv setzen (nach Löschen o.ä.).
+export function selectFirstSprite() {
+  state.curSprite = Object.keys(sprites)[0] || null;
 }
 
-// Liste aller Varianten für einen Typ: Built-in + Custom-Paletten.
-export function getVariants(type) {
-  const t = palTypeOf(type);
-  const builtin = PALETTE_SETS[t].variants;
-  const custom = customPalettes[t] ? Object.keys(customPalettes[t]) : [];
-  return [...builtin, ...custom];
+// ────────────────────────────────────────────────────────────────────
+// Paletten-Helpers
+// ────────────────────────────────────────────────────────────────────
+
+export function paletteExists(name) {
+  return !!(customPalettes[name] || BUILTIN_PALETTES[name]);
 }
 
-// True wenn variant eine User-erstellte Palette ist (für Edit/Delete-X).
-export function isCustomVariant(type, variant) {
-  const t = palTypeOf(type);
-  return !!(customPalettes[t] && customPalettes[t][variant]);
+export function isCustomPalette(name) {
+  return !!customPalettes[name];
 }
 
-// Welcher Palette-Typ liegt dem aktuellen Sprite zugrunde?
-export function getCurrentPalType() {
-  return palTypeOf(state.curType);
+// Palette-Objekt nach Namen. Eigene Paletten haben Vorrang vor Built-ins,
+// damit man eine gleichnamige Built-in überschreiben kann.
+export function getPaletteByName(name) {
+  return customPalettes[name] || BUILTIN_PALETTES[name] || BUILTIN_PALETTES[DEFAULT_PALETTE];
 }
 
-// Höchster gültiger Palette-Index für den aktuellen Typ (Katze/Neutral=9, Hund=8).
-export function getMaxIdx() {
-  return PALETTE_SETS[getCurrentPalType()].maxIdx;
+// Palette des aktuellen Sprites.
+export function getPal() {
+  return getPaletteByName(getSprite()?.palette || DEFAULT_PALETTE);
 }
 
-// Anzeige-Label je Paletten-Tierart (für gruppierte Dropdowns).
-export const PAL_TYPE_LABELS = { dog: '🐕 Hund', cat: '🐈 Katze', neutral: '⬜ Neutral' };
+// Name der aktuell aktiven Palette.
+export function getPaletteName() {
+  return getSprite()?.palette || DEFAULT_PALETTE;
+}
 
-// ALLE verfügbaren Paletten über alle Tierarten hinweg: Built-in + gespeicherte
-// eigene. Reihenfolge: pro Tierart erst Built-in, dann eigene.
+// Alle wählbaren Paletten: erst Built-ins, dann eigene.
+//   → [{ name, isCustom }]
 export function getAllPaletteOptions() {
-  const out = [];
-  for (const t of Object.keys(PALETTE_SETS)) {
-    PALETTE_SETS[t].variants.forEach(v => out.push({ type: t, variant: v, isCustom: false }));
-    Object.keys(customPalettes[t] || {}).forEach(v => out.push({ type: t, variant: v, isCustom: true }));
-  }
-  return out;
+  return [
+    ...Object.keys(BUILTIN_PALETTES).map(name => ({ name, isCustom: false })),
+    ...Object.keys(customPalettes).map(name => ({ name, isCustom: true })),
+  ];
+}
+
+// Eindeutigen Palettennamen finden (foto, foto2, …).
+export function uniquePaletteName(base) {
+  if (!paletteExists(base)) return base;
+  let i = 2;
+  while (paletteExists(base + i)) i++;
+  return base + i;
+}
+
+// Höchster gültiger Palette-Index — im generischen System immer gleich.
+export function getMaxIdx() {
+  return MAX_IDX;
 }

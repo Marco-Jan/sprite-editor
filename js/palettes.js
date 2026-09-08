@@ -1,189 +1,196 @@
 // ════════════════════════════════════════════════════════════════════
-// PALETTES — Custom-Paletten erstellen/bearbeiten/löschen
+// PALETTES — eigene Paletten erstellen, bearbeiten, löschen
 // ════════════════════════════════════════════════════════════════════
-import { state, customMeta, customPalettes, getCurrentPalType } from './state.js';
-import { PALETTE_SETS, COLOR_LABELS } from './data.js';
+import {
+  sprites, customPalettes,
+  getSprite, getPaletteName, getPaletteByName, getAllPaletteOptions,
+  paletteExists, isCustomPalette, uniquePaletteName,
+} from './state.js';
+import { BUILTIN_PALETTES, COLOR_LABELS, MAX_IDX, DEFAULT_PALETTE, NEW_PALETTE_DEFAULTS, completePalette } from './data.js';
 import { renderAll } from './render.js';
 import { saveState } from './storage.js';
 import { showConfirmToast, showInfoToast } from './toast.js';
 
-// Edit-Mode: { type: 'dog'|'cat', variant: 'name' } oder null = create
-let _editMode = null;
+// Name der Palette, die gerade bearbeitet wird — null = neue anlegen.
+let _editName = null;
 
-// Modal öffnen — entweder im Create- oder Edit-Modus.
-// Beim Edit: Name + Farben werden vorbefüllt, Tierart gelockt, Basis-Auswahl
-// versteckt (im Edit ergibt eine "Basis"-Wahl wenig Sinn).
-export function openPaletteModal(editType, editVariant) {
-  const overlay = document.getElementById('pal-modal-overlay');
-  const typeSel = document.getElementById('pal-type');
-  const nameInp = document.getElementById('pal-name');
-  const srcRow  = document.getElementById('pal-source').parentElement;
-  const heading = overlay.querySelector('h2');
-  const createBtn = document.getElementById('pal-modal-create');
-
-  if (editType && editVariant) {
-    _editMode = {
-      type: editType.startsWith('custom_') ? (customMeta[editType]?.palType || 'dog') : editType,
-      variant: editVariant,
-    };
-    heading.textContent = `🎨 Palette "${editVariant}" bearbeiten`;
-    nameInp.value = editVariant;
-    typeSel.value = _editMode.type;
-    typeSel.disabled = true;
-    srcRow.style.display = 'none';
-    createBtn.textContent = 'Speichern';
-    buildPaletteColorRows(customPalettes[_editMode.type][editVariant]);
-  } else {
-    _editMode = null;
-    heading.textContent = '🎨 Neue Palette erstellen';
-    nameInp.value = '';
-    typeSel.value = getCurrentPalType();
-    typeSel.disabled = false;
-    srcRow.style.display = '';
-    createBtn.textContent = 'Erstellen';
-    refreshPaletteModalSource();
-    buildPaletteColorRows(null);
-  }
-
-  overlay.style.display = 'flex';
-  nameInp.focus();
+// ────────────────────────────────────────────────────────────────────
+// Palette dem aktuellen Sprite zuweisen
+// ────────────────────────────────────────────────────────────────────
+export function applyPaletteToCurrentSprite(name) {
+  const sp = getSprite();
+  if (!sp || !paletteExists(name)) return;
+  sp.palette = name;
+  renderAll();
+  saveState();
 }
 
-// Dropdown "Basis-Palette" mit allen Built-in + Custom-Paletten des Typs füllen.
-function refreshPaletteModalSource() {
-  const t = document.getElementById('pal-type').value;
+// Eine eingebaute Palette als eigene Kopie anlegen (dann ist sie editierbar).
+export function forkCurrentPalette() {
+  const src = getPaletteName();
+  const name = uniquePaletteName(src + '_kopie');
+  customPalettes[name] = { ...getPaletteByName(src) };
+  const sp = getSprite();
+  if (sp) sp.palette = name;
+  renderAll();
+  saveState();
+  showInfoToast(`Palette „${name}“ angelegt — die Farb-Swatches rechts sind jetzt änderbar.`);
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Löschen
+// ────────────────────────────────────────────────────────────────────
+export function deleteCustomPalette(name) {
+  if (!customPalettes[name]) return;
+  delete customPalettes[name];
+
+  // Sprites, die auf die gelöschte Palette zeigten, auf den Default setzen.
+  let affected = 0;
+  for (const sp of Object.values(sprites)) {
+    if (sp.palette === name) { sp.palette = DEFAULT_PALETTE; affected++; }
+  }
+  renderAll();
+  saveState();
+  if (affected) {
+    showInfoToast(`Palette gelöscht — ${affected} Sprite${affected === 1 ? '' : 's'} auf „${DEFAULT_PALETTE}“ gesetzt.`);
+  }
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Modal
+// ────────────────────────────────────────────────────────────────────
+export function openPaletteModal(editName) {
+  const overlay   = document.getElementById('pal-modal-overlay');
+  const nameInp   = document.getElementById('pal-name');
+  const srcRow    = document.getElementById('pal-source-row');
+  const heading   = document.getElementById('pal-modal-title');
+  const createBtn = document.getElementById('pal-modal-create');
+
+  if (editName && customPalettes[editName]) {
+    _editName = editName;
+    heading.textContent = `Palette „${editName}“ bearbeiten`;
+    nameInp.value = editName;
+    srcRow.hidden = true;
+    createBtn.textContent = 'Speichern';
+    buildPaletteColorRows(customPalettes[editName]);
+  } else {
+    _editName = null;
+    heading.textContent = 'Neue Palette';
+    nameInp.value = uniquePaletteName('meine_palette');
+    srcRow.hidden = false;
+    createBtn.textContent = 'Erstellen';
+    refreshPaletteSourceSelect();
+    buildPaletteColorRows(getPaletteByName(getPaletteName()));
+  }
+
+  overlay.classList.add('open');
+  nameInp.focus();
+  nameInp.select();
+}
+
+// Dropdown "Basis-Palette" mit allen verfügbaren Paletten füllen.
+function refreshPaletteSourceSelect() {
   const src = document.getElementById('pal-source');
-  src.innerHTML = '<option value="">— Leer / aktuell —</option>';
-  const builtin = PALETTE_SETS[t].variants;
-  builtin.forEach(v => src.innerHTML += `<option value="${v}">${v} (built-in)</option>`);
-  Object.keys(customPalettes[t] || {}).forEach(v => {
-    src.innerHTML += `<option value="custom:${v}">${v} (custom)</option>`;
+  src.innerHTML = '<option value="">— aktuelle Palette —</option>';
+  getAllPaletteOptions().forEach(o => {
+    const opt = document.createElement('option');
+    opt.value = o.name;
+    opt.textContent = o.isCustom ? `${o.name} (eigene)` : o.name;
+    src.appendChild(opt);
   });
 }
 
-// Color-Picker-Reihen erzeugen — eine pro Palette-Index (1-8 für Hund, 1-9 für Katze).
+// Eine Color-Picker-Zeile pro Palette-Index.
 function buildPaletteColorRows(sourcePalette) {
-  const t = document.getElementById('pal-type').value;
-  const maxIdx = PALETTE_SETS[t].maxIdx;
   const container = document.getElementById('pal-color-rows');
   container.innerHTML = '';
 
-  const defaultFixed = PALETTE_SETS[t].fixed;
-  const defaultVariable = { 1:'#cccccc', 2:'#888888', 3:'#555555', 4:'#222222', 9:'#888899' };
-
-  for (let i = 1; i <= maxIdx; i++) {
-    const def = sourcePalette?.[i] || defaultFixed[i] || defaultVariable[i] || '#888888';
+  for (let i = 1; i <= MAX_IDX; i++) {
+    const def = sourcePalette?.[i] || NEW_PALETTE_DEFAULTS[i] || '#888888';
     const row = document.createElement('div');
     row.className = 'pal-color-row';
-    row.innerHTML = `
-      <span class="idx">${i}</span>
-      <input type="color" data-idx="${i}" value="${def}">
-      <span class="name">${COLOR_LABELS[i] || '—'}</span>
-      <span class="hex">${def}</span>
-    `;
+    row.innerHTML =
+      `<span class="pal-idx">${i}</span>` +
+      `<input type="color" data-idx="${i}" value="${def}" aria-label="Farbe ${i}">` +
+      `<span class="pal-name">${COLOR_LABELS[i] || '—'}</span>` +
+      `<span class="pal-hex">${def}</span>`;
     const input = row.querySelector('input');
-    const hex = row.querySelector('.hex');
+    const hex = row.querySelector('.pal-hex');
     input.addEventListener('input', () => { hex.textContent = input.value; });
     container.appendChild(row);
   }
 }
 
-// Custom-Palette komplett löschen. Bestätigung läuft über renderCallbacks.onDeletePalette in app.js.
-export function deleteCustomPalette(type, variant) {
-  const t = type.startsWith('custom_') ? (customMeta[type]?.palType || 'dog') : type;
-  delete customPalettes[t][variant];
-
-  // Wenn die gelöschte Palette gerade aktiv war: auf erste Built-in zurück
-  if (state.curVariant === variant) {
-    state.curVariant = PALETTE_SETS[t].variants[0];
-  }
-  renderAll(); saveState();
-}
-
-// Modal-Event-Bindings einmalig setzen
 export function initPaletteModal() {
-  document.getElementById('pal-type').addEventListener('change', () => {
-    refreshPaletteModalSource();
-    buildPaletteColorRows(null);
-  });
+  const overlay = document.getElementById('pal-modal-overlay');
+  const close = () => { overlay.classList.remove('open'); _editName = null; };
 
   document.getElementById('pal-source').addEventListener('change', e => {
-    const t = document.getElementById('pal-type').value;
-    const val = e.target.value;
-    let src = null;
-    if (val.startsWith('custom:')) {
-      src = customPalettes[t][val.slice(7)];
-    } else if (val) {
-      src = PALETTE_SETS[t].palettes[val];
-    }
-    buildPaletteColorRows(src);
+    buildPaletteColorRows(e.target.value ? getPaletteByName(e.target.value) : null);
   });
 
-  document.getElementById('pal-modal-cancel').addEventListener('click', () => {
-    document.getElementById('pal-modal-overlay').style.display = 'none';
-  });
-
-  document.getElementById('pal-modal-overlay').addEventListener('click', e => {
-    if (e.target.id === 'pal-modal-overlay') {
-      document.getElementById('pal-modal-overlay').style.display = 'none';
-    }
-  });
+  document.getElementById('pal-modal-cancel').addEventListener('click', close);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
 
   document.getElementById('pal-modal-create').addEventListener('click', () => {
-    const rawName = document.getElementById('pal-name').value.trim();
-    const t = document.getElementById('pal-type').value;
-    if (!rawName) { showInfoToast('Bitte einen Namen eingeben.'); return; }
-    const name = rawName.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
+    const raw = document.getElementById('pal-name').value.trim();
+    if (!raw) { showInfoToast('Bitte einen Namen eingeben.'); return; }
+    const name = raw.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
 
-    // Farben aus den Color-Pickern einsammeln
+    if (BUILTIN_PALETTES[name]) {
+      showInfoToast(`„${name}“ ist eine eingebaute Palette — bitte einen anderen Namen wählen.`);
+      return;
+    }
+
     const pal = {};
     document.querySelectorAll('#pal-color-rows input[type="color"]').forEach(inp => {
       pal[Number(inp.dataset.idx)] = inp.value;
     });
 
-    function commit() {
-      document.getElementById('pal-modal-overlay').style.display = 'none';
-      _editMode = null;
-      renderAll(); saveState();
-    }
-
-    if (_editMode) {
-      const oldName = _editMode.variant;
-      const palType = _editMode.type;
-
-      if (name !== oldName) {
-        const builtin = PALETTE_SETS[palType].variants;
-        if (builtin.includes(name)) { showInfoToast('Name ist bereits eine Built-in-Palette.'); return; }
-        if (customPalettes[palType][name]) {
-          showConfirmToast(`Palette "${name}" existiert schon — überschreiben?`, () => {
-            delete customPalettes[palType][oldName];
-            customPalettes[palType][name] = pal;
-            if (state.curVariant === oldName) state.curVariant = name;
-            commit();
-          }, 'Überschreiben');
-          return;
+    const commit = (finalName, oldName) => {
+      if (oldName && oldName !== finalName) {
+        delete customPalettes[oldName];
+        // Sprites mitziehen, die auf den alten Namen zeigten.
+        for (const sp of Object.values(sprites)) {
+          if (sp.palette === oldName) sp.palette = finalName;
         }
-        delete customPalettes[palType][oldName];
-        customPalettes[palType][name] = pal;
-        if (state.curVariant === oldName) state.curVariant = name;
-      } else {
-        customPalettes[palType][oldName] = pal;
       }
-    } else {
-      const builtin = PALETTE_SETS[t].variants;
-      if (builtin.includes(name)) { showInfoToast('Name ist bereits eine Built-in-Palette.'); return; }
-      if (customPalettes[t][name]) {
-        showConfirmToast(`Palette "${name}" existiert schon — überschreiben?`, () => {
-          customPalettes[t][name] = pal;
-          if (getCurrentPalType() === t) state.curVariant = name;
-          commit();
-        }, 'Überschreiben');
-        return;
-      }
-      customPalettes[t][name] = pal;
-      if (getCurrentPalType() === t) state.curVariant = name;
-    }
+      customPalettes[finalName] = pal;
+      const sp = getSprite();
+      if (sp && !oldName) sp.palette = finalName; // neue Palette direkt anwenden
+      close();
+      renderAll();
+      saveState();
+    };
 
-    commit();
+    // Kollision mit einer anderen bestehenden eigenen Palette?
+    if (customPalettes[name] && name !== _editName) {
+      showConfirmToast(`Palette „${name}“ existiert schon — überschreiben?`,
+        () => commit(name, _editName), 'Überschreiben');
+      return;
+    }
+    commit(name, _editName);
   });
 }
+
+// ────────────────────────────────────────────────────────────────────
+// Palette aus einem Import übernehmen (TS-Import)
+// ────────────────────────────────────────────────────────────────────
+// `entries` ist ein { index: '#hex' }-Objekt. Legt eine eigene Palette an
+// und gibt deren Namen zurück. Indizes > MAX_IDX werden verworfen — die
+// gehören zu freien Farben und werden vom Importer direkt ins Grid geschrieben.
+export function createPaletteFromImport(entries, baseName) {
+  const pal = {};
+  for (const [k, v] of Object.entries(entries)) {
+    const i = Number(k);
+    if (Number.isInteger(i) && i >= 1 && i <= MAX_IDX) pal[i] = v;
+  }
+  if (!Object.keys(pal).length) return null;
+
+  const name = uniquePaletteName((baseName || 'import').toLowerCase().replace(/[^a-z0-9_-]/g, '_'));
+  // Lücken auffüllen — sonst wären Pixel mit einem nicht gelieferten Index unsichtbar.
+  customPalettes[name] = completePalette(pal);
+  return name;
+}
+
+export { isCustomPalette };

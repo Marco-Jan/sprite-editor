@@ -1,64 +1,35 @@
 // ════════════════════════════════════════════════════════════════════
 // RENDER — alle DOM-/Canvas-Render-Funktionen
 // ════════════════════════════════════════════════════════════════════
-// Liest aus state, schreibt ins DOM. Keine Event-Bindings, keine Mutationen
-// am State (außer wo unvermeidbar — z.B. Klick-Handler die in render-Funktionen
-// erzeugte Buttons brauchen, ändern state und triggern dann re-render via
-// Callback aus app.js).
+// Liest aus state, schreibt ins DOM. Event-Bindings für statische Elemente
+// leben in app.js; nur Handler an dynamisch erzeugten Elementen (Sprite-Karten,
+// Farb-Swatches) werden hier gesetzt und rufen dann renderCallbacks auf.
 import {
-  state, grids, customMeta, customPalettes,
-  getGrid, getPal, getVariants, isCustomVariant, getMaxIdx, getCurrentPalType,
-  getAllPaletteOptions, PAL_TYPE_LABELS,
+  state, sprites, customPalettes,
+  getGrid, getSprite, getPal, getPaletteName, getMaxIdx,
+  getAllPaletteOptions, isCustomPalette, listSprites, getPaletteByName,
 } from './state.js';
-import { COLOR_LABELS } from './data.js';
-import { showInfoToast } from './toast.js';
+import { COLOR_LABELS, COLOR_LABELS_SHORT, PALETTE_GROUP_SPLIT } from './data.js';
 
-// Ein <select> mit ALLEN Paletten füllen, gruppiert nach Tierart (optgroup).
-// selType/selVariant markieren die aktuell gewählte Option. Optionaler `filter`
-// blendet nur Paletten ein, deren Name (oder Tierart) den Suchtext enthält.
-// Wird vom rechten Paletten-Dropdown und vom "Neuer Sprite"-Modal genutzt.
-export function fillPaletteSelect(sel, selType, selVariant, filter = '') {
-  sel.innerHTML = '';
-  const q = filter.trim().toLowerCase();
-  const byType = {};
-  getAllPaletteOptions().forEach(o => {
-    if (q
-      && !o.variant.toLowerCase().includes(q)
-      && !(PAL_TYPE_LABELS[o.type] || '').toLowerCase().includes(q)) return;
-    (byType[o.type] = byType[o.type] || []).push(o);
-  });
-  for (const t of Object.keys(byType)) {
-    const og = document.createElement('optgroup');
-    og.label = PAL_TYPE_LABELS[t] || t;
-    byType[t].forEach(o => {
-      const opt = document.createElement('option');
-      opt.value = `${o.type}:${o.variant}`;
-      opt.textContent = o.isCustom ? `🎨 ${o.variant}` : o.variant;
-      if (o.type === selType && o.variant === selVariant) opt.selected = true;
-      og.appendChild(opt);
-    });
-    sel.appendChild(og);
-  }
-}
-
-// Callbacks die von app.js gesetzt werden, weil renderPalette/Overview/QuickPalette
-// Buttons erzeugen, die Aktionen aus anderen Modulen triggern (z.B. Save, Modal öffnen).
-// Vermeidet Zirkularimporte zwischen render <-> sprites/palettes/storage.
+// Callbacks, die app.js verdrahtet — vermeidet Zirkularimporte zwischen
+// render und den Feature-Modulen (sprites/palettes/storage).
 export const renderCallbacks = {
-  onSave: () => {},                   // wird mit saveState verdrahtet
-  onOpenPaletteModal: () => {},       // ohne Args = create-Mode
-  onEditPalette: (type, variant) => {},
-  onDeletePalette: (type, variant) => {},
-  onDeleteSprite: (key) => {},        // Custom-Sprite löschen (mit Toast-Bestätigung)
-  onImageToPalette: () => {},         // aktuelle Bildfarben → editierbare Custom-Palette
+  onSave:            () => {},
+  onSelectSprite:    (_id) => {},
+  onRenameSprite:    (_id) => {},
+  onDeleteSprite:    (_id) => {},
+  onDuplicateSprite: (_id) => {},
+  onOpenPaletteModal:() => {},
+  onEditPalette:     (_name) => {},
+  onDeletePalette:   (_name) => {},
+  onImageToPalette:  () => {},
 };
 
 // ────────────────────────────────────────────────────────────────────
 // Eine Grid-Zelle → CSS-Farbe (oder null = nichts zeichnen).
-// Zellen können sein:
-//   0           → transparent (nicht zeichnen)
-//   1-9         → Palette-Index
-//   "#RRGGBB"   → freie Farbe (von Schablone-Pipette)
+//   0          → transparent
+//   1-9        → Palette-Index
+//   "#RRGGBB"  → freie Farbe (Pipette / Rohfarben-Trace)
 // ────────────────────────────────────────────────────────────────────
 export function cellToColor(c, palette) {
   if (c === 0) return null;
@@ -66,7 +37,7 @@ export function cellToColor(c, palette) {
   return palette[c] || null;
 }
 
-// SVG-String für eine Sprite-Preview (z.B. im Overview-Panel).
+// SVG-String für eine Sprite-Vorschau (Thumbnails in der Sprite-Liste).
 export function svgSprite(grid, palette, scale) {
   const H = grid.length, W = grid[0].length;
   let r = '';
@@ -74,206 +45,147 @@ export function svgSprite(grid, palette, scale) {
     const fill = cellToColor(grid[y][x], palette);
     if (fill) r += `<rect x="${x}" y="${y}" width="1" height="1" fill="${fill}"/>`;
   }
-  return `<svg width="${W*scale}" height="${H*scale}" viewBox="0 0 ${W} ${H}" style="image-rendering:pixelated;display:block" xmlns="http://www.w3.org/2000/svg">${r}</svg>`;
+  return `<svg viewBox="0 0 ${W} ${H}" width="${W * scale}" height="${H * scale}" `
+       + `style="image-rendering:pixelated;display:block" xmlns="http://www.w3.org/2000/svg">${r}</svg>`;
+}
+
+// HTML-Escaping für Nutzer-Eingaben (Sprite-/Palettennamen landen im innerHTML).
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
 // ────────────────────────────────────────────────────────────────────
-// OVERVIEW — Namensliste der Sprites (Klick klappt auf, Doppelklick lädt)
+// SPRITE-LISTE (linke Spalte)
 // ────────────────────────────────────────────────────────────────────
-let overviewInitialized = false;
+export function renderSpriteList() {
+  const list = document.getElementById('sprite-list');
+  if (!list) return;
+  list.innerHTML = '';
 
-export function ensureGroupExpanded(key) {
-  state.openGroupKey = key;
-}
+  const q = (document.getElementById('sprite-search')?.value || '').trim().toLowerCase();
+  const all = listSprites();
+  const shown = q ? all.filter(s => s.name.toLowerCase().includes(q)) : all;
 
-// Ein konkretes Sprite in den Editor laden (Auswahl setzen + neu rendern).
-function loadSprite({ type, st, variant }) {
-  state.curType = type;
-  if (!type.startsWith('custom_')) state.curState = st;
-  state.curVariant = variant;
-  syncButtons();
-  renderAll();
-}
+  const countEl = document.getElementById('sprite-count');
+  if (countEl) countEl.textContent = all.length ? String(all.length) : '';
 
-// Aufgeklapptes Varianten-Panel einer Gruppe (reine Namensliste, Doppelklick lädt).
-function buildExpandedPanel(items) {
-  const panel = document.createElement('div');
-  panel.className = 'overview-expanded';
-  items.forEach(({ type: t, st, variant, label: lbl }) => {
+  // Suchfeld erst einblenden, wenn die Liste lang genug ist, um Suchen zu
+  // rechtfertigen — sonst ist es nur Rauschen. Bei aktivem Filter bleibt es da.
+  const searchEl = document.getElementById('sprite-search');
+  if (searchEl) searchEl.hidden = all.length < 6 && !q;
+
+  if (!all.length) {
+    list.innerHTML = '<p class="empty-note">Noch keine Sprites. Leg oben einen an.</p>';
+    return;
+  }
+  if (!shown.length) {
+    list.innerHTML = `<p class="empty-note">Kein Sprite passt zu „${esc(q)}“.</p>`;
+    return;
+  }
+
+  shown.forEach(sp => {
     const card = document.createElement('div');
-    const isSel = t === state.curType &&
-      (t.startsWith('custom_') || st === state.curState) &&
-      variant === state.curVariant;
-    card.className = 'sprite-card' + (isSel ? ' selected' : '');
-    card.title = 'Doppelklick: laden';
-    card.innerHTML = `<div class="sprite-card-label">${lbl}</div>`;
-    card.ondblclick = () => loadSprite({ type: t, st, variant });
-    panel.appendChild(card);
+    card.className = 'sprite-card' + (sp.id === state.curSprite ? ' is-active' : '');
+    card.tabIndex = 0;
+    card.title = `${sp.name} — ${sp.grid[0].length}×${sp.grid.length}, Palette „${sp.palette}“`;
+
+    const thumb = document.createElement('div');
+    thumb.className = 'sprite-thumb';
+    thumb.innerHTML = svgSprite(sp.grid, getPaletteFor(sp), 40 / Math.max(sp.grid.length, sp.grid[0].length));
+
+    const meta = document.createElement('div');
+    meta.className = 'sprite-meta';
+    meta.innerHTML =
+      `<span class="sprite-name">${esc(sp.name)}</span>` +
+      `<span class="sprite-sub">${sp.grid[0].length}×${sp.grid.length} · ${esc(sp.palette)}</span>`;
+
+    const acts = document.createElement('div');
+    acts.className = 'sprite-acts';
+    acts.appendChild(iconBtn('✎', 'Umbenennen', e => { e.stopPropagation(); renderCallbacks.onRenameSprite(sp.id); }));
+    acts.appendChild(iconBtn('⧉', 'Duplizieren', e => { e.stopPropagation(); renderCallbacks.onDuplicateSprite(sp.id); }));
+    acts.appendChild(iconBtn('×', 'Löschen', e => { e.stopPropagation(); renderCallbacks.onDeleteSprite(sp.id); }, 'is-danger'));
+
+    card.append(thumb, meta, acts);
+    card.addEventListener('click', () => renderCallbacks.onSelectSprite(sp.id));
+    card.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); renderCallbacks.onSelectSprite(sp.id); }
+    });
+    list.appendChild(card);
   });
-  return panel;
 }
 
-export function renderOverview() {
-  const container = document.getElementById('overview-grid');
-  container.innerHTML = '';
+function iconBtn(label, title, onClick, extraClass = '') {
+  const b = document.createElement('button');
+  b.className = 'icon-btn ' + extraClass;
+  b.type = 'button';
+  b.textContent = label;
+  b.title = title;
+  b.setAttribute('aria-label', title);
+  b.addEventListener('click', onClick);
+  return b;
+}
 
-  if (!overviewInitialized) {
-    overviewInitialized = true;
-    // openGroupKey bleibt wie aus storage geladen (null = alle zu)
-  }
-
-  const stateEmoji = { normal: '😐', happy: '😊', sad: '😢' };
-  const groups = [];
-
-  // Dog
-  {
-    const items = [];
-    ['normal', 'happy', 'sad'].forEach(s =>
-      getVariants('dog').forEach(v =>
-        items.push({ type: 'dog', st: s, variant: v, label: `${v}·${stateEmoji[s]}` })
-      )
-    );
-    groups.push({ key: 'dog', label: '🐕 Hund', items });
-  }
-
-  // Cat
-  {
-    const items = [];
-    ['normal', 'happy', 'sad'].forEach(s =>
-      getVariants('cat').forEach(v =>
-        items.push({ type: 'cat', st: s, variant: v, label: `${v}·${stateEmoji[s]}` })
-      )
-    );
-    groups.push({ key: 'cat', label: '🐈 Katze', items });
-  }
-
-  // Custom sprites
-  Object.keys(grids).forEach(k => {
-    if (!k.startsWith('custom_')) return;
-    const meta = customMeta[k] || {};
-    const items = getVariants(k).map(v => ({ type: k, st: null, variant: v, label: `${meta.name || k}·${v}` }));
-    groups.push({ key: k, label: `✨ ${meta.name || k}`, items });
-  });
-
-  // ── Namensliste der Gruppen (nur Name, kein Vorschaubild) ──
-  const cardsRow = document.createElement('div');
-  cardsRow.className = 'overview-group-cards';
-
-  // Suchfilter (Suchfeld liegt außerhalb von #overview-grid, bleibt erhalten).
-  const q = (document.getElementById('overview-search')?.value || '').trim().toLowerCase();
-  const visibleGroups = q ? groups.filter(g => g.label.toLowerCase().includes(q)) : groups;
-
-  visibleGroups.forEach(({ key, label, items }) => {
-    // Repräsentatives Sprite der Gruppe (aktuelles, sonst erstes) — wird beim
-    // Doppelklick geladen.
-    const repItem = items.find(it =>
-      it.type === state.curType &&
-      (it.type.startsWith('custom_') || it.st === state.curState) &&
-      it.variant === state.curVariant
-    ) || items[0];
-
-    const isOpen   = state.openGroupKey === key;
-    const isActive = items.some(it =>
-      it.type === state.curType &&
-      (it.type.startsWith('custom_') || it.st === state.curState) &&
-      it.variant === state.curVariant
-    );
-
-    const card = document.createElement('div');
-    card.className = 'sprite-group-card'
-      + (isOpen   ? ' open'   : '')
-      + (isActive ? ' group-active' : '');
-    card.title = 'Klick: auf-/zuklappen · Doppelklick: laden';
-    // Bewusst nur der Name — kein Vorschaubild.
-    card.innerHTML = `<div class="sprite-group-name">${label}</div>`;
-
-    // Einzelklick = auf-/zuklappen, Doppelklick = Sprite laden. Der Timer
-    // entkoppelt beide: ohne ihn würde der Klick-Handler die Karte sofort neu
-    // rendern und das dblclick-Event auf dem zerstörten Element nie feuern.
-    let clickTimer = null;
-    card.addEventListener('click', () => {
-      if (clickTimer) return;             // 2. Klick eines Doppelklicks
-      clickTimer = setTimeout(() => {
-        clickTimer = null;
-        state.openGroupKey = isOpen ? null : key;
-        renderOverview();
-      }, 220);
-    });
-    card.addEventListener('dblclick', () => {
-      clearTimeout(clickTimer); clickTimer = null;
-      loadSprite(repItem);
-    });
-
-    // × Löschen-Button nur für Custom-Sprites
-    if (key.startsWith('custom_')) {
-      const del = document.createElement('button');
-      del.className = 'group-card-del';
-      del.textContent = '×';
-      del.title = 'Sprite löschen';
-      del.addEventListener('click', e => {
-        e.stopPropagation();
-        renderCallbacks.onDeleteSprite(key);
-      });
-      card.appendChild(del);
-    }
-
-    cardsRow.appendChild(card);
-
-    // Varianten direkt unter dieser Zeile aufklappen (nicht am Listenende).
-    if (state.openGroupKey === key) {
-      cardsRow.appendChild(buildExpandedPanel(items));
-    }
-  });
-
-  container.appendChild(cardsRow);
+// Palette eines beliebigen Sprite-Datensatzes (nicht nur des aktiven).
+function getPaletteFor(sp) {
+  return getPaletteByName(sp.palette);
 }
 
 // ────────────────────────────────────────────────────────────────────
-// EDITOR-CANVAS — die zoom-bare Pixel-Zeichenfläche
+// EDITOR-CANVAS
 // ────────────────────────────────────────────────────────────────────
 export function renderEditor() {
   const canvas = document.getElementById('editor-canvas');
+  if (!canvas) return;
   const grid = getGrid();
   const H = grid.length, W = grid[0].length;
-  canvas.width  = W * state.cellSize;
-  canvas.height = H * state.cellSize;
-  const ctx = canvas.getContext('2d');
-  const pal = getPal(state.curType, state.curVariant);
+  const cs = state.cellSize;
 
-  // Schachbrett-Hintergrund je nach Modus
-  const [bg1, bg2] = state.editorBg === 'bw'
-    ? ['#ffffff', '#cccccc']
-    : ['#222233', '#2d2d40'];
+  canvas.width  = W * cs;
+  canvas.height = H * cs;
+  const ctx = canvas.getContext('2d');
+  const pal = getPal();
+
+  // Schachbrett-Hintergrund (zeigt Transparenz an)
+  const [bg1, bg2] = state.editorBg === 'bw' ? ['#ffffff', '#d8d8d8'] : ['#20202c', '#2a2a38'];
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
     ctx.fillStyle = (x + y) % 2 === 0 ? bg1 : bg2;
-    ctx.fillRect(x * state.cellSize, y * state.cellSize, state.cellSize, state.cellSize);
+    ctx.fillRect(x * cs, y * cs, cs, cs);
   }
-  // Pixel (Index ODER freier Hex)
+
+  // Pixel
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
     const fill = cellToColor(grid[y][x], pal);
-    if (fill) {
-      ctx.fillStyle = fill;
-      ctx.fillRect(x * state.cellSize, y * state.cellSize, state.cellSize, state.cellSize);
-    }
-  }
-  // Grid-Linien (subtil)
-  ctx.strokeStyle = 'rgba(255,255,255,0.07)';
-  ctx.lineWidth = 0.5;
-  for (let x = 0; x <= W; x++) {
-    ctx.beginPath(); ctx.moveTo(x * state.cellSize, 0); ctx.lineTo(x * state.cellSize, H * state.cellSize); ctx.stroke();
-  }
-  for (let y = 0; y <= H; y++) {
-    ctx.beginPath(); ctx.moveTo(0, y * state.cellSize); ctx.lineTo(W * state.cellSize, y * state.cellSize); ctx.stroke();
+    if (fill) { ctx.fillStyle = fill; ctx.fillRect(x * cs, y * cs, cs, cs); }
   }
 
-  // Titel über dem Editor
-  const name = state.curType.startsWith('custom_')
-    ? (customMeta[state.curType]?.name || state.curType) + ` (${state.curVariant})`
-    : `${state.curType.toUpperCase()}_${state.curState.toUpperCase()} (${state.curVariant})`;
-  document.getElementById('editor-title').textContent = 'Editor — ' + name;
+  // Grid-Linien — bei sehr kleinen Zellen weglassen, sonst wird alles Raster.
+  if (cs >= 6) {
+    ctx.strokeStyle = state.editorBg === 'bw' ? 'rgba(0,0,0,0.09)' : 'rgba(255,255,255,0.07)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let x = 0; x <= W; x++) { ctx.moveTo(x * cs + 0.5, 0); ctx.lineTo(x * cs + 0.5, H * cs); }
+    for (let y = 0; y <= H; y++) { ctx.moveTo(0, y * cs + 0.5); ctx.lineTo(W * cs, y * cs + 0.5); }
+    ctx.stroke();
+  }
+
+  updateStageTitle();
 }
 
-// Maus-Event → Grid-Zelle (oder null wenn außerhalb)
+// Sprite-Name + Maße über dem Canvas.
+export function updateStageTitle() {
+  const sp = getSprite();
+  const nameEl = document.getElementById('stage-title');
+  const dimEl  = document.getElementById('stage-dims');
+  if (nameEl) nameEl.textContent = sp ? sp.name : 'Kein Sprite';
+  if (dimEl) {
+    dimEl.textContent = sp ? `${sp.grid[0].length}×${sp.grid.length} · ${sp.palette}` : '';
+  }
+  const docTitle = document.getElementById('doc-title');
+  if (docTitle) docTitle.textContent = sp ? sp.name : '';
+}
+
+// Maus-/Touch-Event → Grid-Zelle (oder null wenn außerhalb)
 export function cellFromEvent(e) {
   const canvas = document.getElementById('editor-canvas');
   const r = canvas.getBoundingClientRect();
@@ -284,322 +196,24 @@ export function cellFromEvent(e) {
   return { x, y };
 }
 
-// Zelle mit aktueller Farbe füllen (oder löschen wenn curColor=0)
-export function paintCell(x, y) {
-  const g = getGrid();
-  if (g[y][x] === state.curColor) return;
-  g[y][x] = state.curColor;
+// ────────────────────────────────────────────────────────────────────
+// MAL-OPERATIONEN
+// ────────────────────────────────────────────────────────────────────
+// Nach einer Änderung: Canvas + abhängige Anzeigen auffrischen.
+function afterPaint() {
   renderEditor();
-  renderOverview();
+  renderSpriteList();
   updateOutput();
   renderCallbacks.onSave();
 }
 
-// ────────────────────────────────────────────────────────────────────
-// QUICK-PALETTE — horizontale Swatch-Leiste über dem Canvas
-// ────────────────────────────────────────────────────────────────────
-export function renderQuickPalette() {
-  const pal = getPal(state.curType, state.curVariant);
-  const maxIdx = getMaxIdx();
-  const qp = document.getElementById('quick-palette');
-  qp.innerHTML = '';
-
-  for (let i = 0; i <= maxIdx; i++) {
-    const color = pal[i];
-    const el = document.createElement('div');
-    el.className = 'qp-swatch' + (i === state.curColor ? ' active' : '');
-    el.title = `${i}: ${COLOR_LABELS[i] || ''}${color ? ' — ' + color : ''}`;
-
-    if (i === 0) {
-      // Transparenz als Schachbrett
-      el.style.cssText = 'background-image:linear-gradient(45deg,#444 25%,transparent 25%),linear-gradient(-45deg,#444 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#444 75%),linear-gradient(-45deg,transparent 75%,#444 75%);background-size:8px 8px;background-position:0 0,0 4px,4px -4px,-4px 0;background-color:#333;';
-    } else if (color) {
-      el.style.background = color;
-    } else {
-      el.style.background = '#282828';
-    }
-
-    const idx = document.createElement('span');
-    idx.className = 'qp-idx';
-    idx.textContent = i;
-    el.appendChild(idx);
-
-    el.addEventListener('click', () => { state.curColor = i; syncColorActive(); });
-    qp.appendChild(el);
-
-    if (i === 4) {
-      // Trenner zwischen variablen Fell-Farben (1-4) und Detail-Farben (5+)
-      const sep = document.createElement('div'); sep.className = 'qp-sep'; qp.appendChild(sep);
-    }
-  }
-
-  const hint = document.createElement('span');
-  hint.className = 'qp-hint';
-  hint.textContent = 'Tasten 0–9 · Alt+Klick = Pipette';
-  qp.appendChild(hint);
+export function paintCell(x, y) {
+  const g = getGrid();
+  if (g[y][x] === state.curColor) return;
+  g[y][x] = state.curColor;
+  afterPaint();
 }
 
-// Aktuelle Farbe (Palette-Index oder Hex-String) im Editor-Header darstellen
-export function updateCurrentColorIndicator() {
-  const sw  = document.querySelector('.cc-swatch');
-  const hex = document.querySelector('.cc-hex');
-  if (!sw || !hex) return;
-
-  if (state.curColor === 0) {
-    sw.style.background = '';
-    sw.classList.add('transp');
-    hex.textContent = 'transparent';
-    return;
-  }
-  sw.classList.remove('transp');
-
-  if (typeof state.curColor === 'string' && state.curColor[0] === '#') {
-    sw.style.background = state.curColor;
-    hex.textContent = state.curColor + ' (Pipette)';
-  } else {
-    const pal = getPal(state.curType, state.curVariant);
-    const color = pal[state.curColor] || '#888';
-    sw.style.background = color;
-    hex.textContent = color + ' (Index ' + state.curColor + ')';
-  }
-}
-
-// Active-Klasse auf Palette-Buttons setzen (ohne Full-Re-Render)
-export function syncColorActive() {
-  const isHex = typeof state.curColor === 'string';
-  document.querySelectorAll('.qp-swatch').forEach((el, i) =>
-    el.classList.toggle('active', !isHex && i === state.curColor));
-  document.querySelectorAll('.color-item').forEach(el =>
-    el.classList.toggle('active', !isHex && Number(el.dataset.idx) === state.curColor));
-  updateCurrentColorIndicator();
-}
-
-// ────────────────────────────────────────────────────────────────────
-// PALETTE-PANEL (rechts) — Variant-Buttons + ausführliche Farbliste
-// ────────────────────────────────────────────────────────────────────
-export function renderPalette() {
-  const pal = getPal(state.curType, state.curVariant);
-
-  // Variant-Auswahl als Dropdown (alle Paletten, gruppiert nach Tierart)
-  const vbtns = document.getElementById('variant-btns');
-  vbtns.innerHTML = '';
-
-  const selRow = document.createElement('div');
-  selRow.className = 'variant-row';
-
-  const sel = document.createElement('select');
-  sel.id = 'variant-select';
-  sel.className = 'variant-select';
-  // ALLE Paletten (alle Tierarten), gruppiert — aktuell genutzte ist markiert.
-  fillPaletteSelect(sel, getCurrentPalType(), state.curVariant);
-
-  // Suchfeld — nur wenn es viele Paletten gibt (sonst unnötig). Filtert die
-  // Optionen des Dropdowns live, ohne das ganze Panel neu zu rendern.
-  if (getAllPaletteOptions().length > 6) {
-    const search = document.createElement('input');
-    search.type = 'text';
-    search.className = 'variant-search';
-    search.placeholder = '🔍 Palette suchen…';
-    search.autocomplete = 'off';
-    search.oninput = () => fillPaletteSelect(sel, getCurrentPalType(), state.curVariant, search.value);
-    vbtns.appendChild(search);
-  }
-  sel.onchange = () => {
-    const [t, v] = sel.value.split(':');
-    if (state.curType.startsWith('custom_')) {
-      // Custom-Sprite übernimmt die Tierart der gewählten Palette
-      customMeta[state.curType].palType = t;
-      state.curVariant = v;
-    } else if (t === getCurrentPalType()) {
-      // Eingebautes dog/cat-Sprite: nur eigene Tierart-Paletten möglich
-      state.curVariant = v;
-    } else {
-      showInfoToast('Eingebaute Hund/Katze-Sprites nutzen nur ihre eigene Tierart-Palette. ' +
-        'Für freie Palettenwahl ein Custom-Sprite anlegen.');
-      renderPalette(); // Auswahl zurücksetzen
-      return;
-    }
-    renderPalette(); renderQuickPalette(); renderEditor(); renderOverview();
-    renderCallbacks.onSave();
-  };
-  selRow.appendChild(sel);
-
-  // ✎ Bearbeiten / × Löschen — beziehen sich auf die im Dropdown gewählte
-  // Palette (Typ:Variante), nicht auf das Sprite. So funktioniert Löschen
-  // zuverlässig, auch wenn die Palette zu einer anderen Tierart gehört.
-  const [selPalType, selVariant] = (sel.value || '').split(':');
-  const selIsCustom = !!(customPalettes[selPalType] && customPalettes[selPalType][selVariant]);
-  if (selIsCustom) {
-    const edit = document.createElement('button');
-    edit.className = 'btn variant-act';
-    edit.textContent = '✎';
-    edit.title = `Palette „${selVariant}“ bearbeiten`;
-    edit.onclick = () => renderCallbacks.onEditPalette(selPalType, selVariant);
-    selRow.appendChild(edit);
-
-    const del = document.createElement('button');
-    del.className = 'btn variant-act';
-    del.textContent = '×';
-    del.title = `Palette „${selVariant}“ löschen`;
-    del.onclick = () => renderCallbacks.onDeletePalette(selPalType, selVariant);
-    selRow.appendChild(del);
-  }
-
-  vbtns.appendChild(selRow);
-
-  // Aktionen darunter: neue Palette anlegen / Bildfarben übernehmen
-  const actions = document.createElement('div');
-  actions.className = 'variant-actions';
-
-  const addBtn = document.createElement('button');
-  addBtn.id = 'palette-add-btn';
-  addBtn.className = 'btn';
-  addBtn.style.cssText = 'background:#1a3a1a;color:#80c080;border-color:#2a5a2a';
-  addBtn.textContent = '+ Palette';
-  addBtn.title = 'Neue eigene Farbpalette erstellen und speichern';
-  addBtn.onclick = () => renderCallbacks.onOpenPaletteModal();
-  actions.appendChild(addBtn);
-
-  // "🎨 Bild → Palette" — aktuelle Bildfarben in eine editierbare Custom-Palette
-  // umwandeln (Pixel werden auf Indizes umgeschrieben). Macht reduzierte
-  // Rohfarben rechts direkt editierbar und speicherbar.
-  const img2pal = document.createElement('button');
-  img2pal.id = 'palette-from-image-btn';
-  img2pal.className = 'btn';
-  img2pal.style.cssText = 'background:#1a2a3a;color:#80a0c0;border-color:#2a4060';
-  img2pal.textContent = '🎨 Bild → Palette';
-  img2pal.title = 'Die Farben des aktuellen Bildes als editierbare Palette übernehmen — danach rechts direkt änderbar';
-  img2pal.onclick = () => renderCallbacks.onImageToPalette();
-  actions.appendChild(img2pal);
-
-  vbtns.appendChild(actions);
-
-  document.getElementById('variant-label').textContent = 'Variante: ' + state.curVariant;
-
-  // Ausführliche Farbliste mit Labels. Bei Custom-Paletten sind die Swatches
-  // editierbar (Color-Picker) — eine Farbänderung färbt das Bild live um, weil
-  // die Pixel die Palette per Index referenzieren.
-  const maxIdx = getMaxIdx();
-  const editable = isCustomVariant(state.curType, state.curVariant);
-  const items = document.getElementById('palette-items');
-  items.innerHTML = '';
-  for (let i = 0; i <= maxIdx; i++) {
-    const color = pal[i];
-    const item = document.createElement('div');
-    item.className = 'color-item' + (i === state.curColor ? ' active' : '')
-      + (editable && i !== 0 ? ' editable' : '');
-    item.dataset.idx = i;
-
-    const sw = document.createElement('div');
-    sw.className = 'color-swatch' + (i === 0 ? ' transp' : '');
-    if (i !== 0 && color) sw.style.background = color;
-
-    const lbl = document.createElement('div');
-    lbl.style.overflow = 'hidden';
-    lbl.innerHTML = `<div style="display:flex;align-items:center;gap:4px"><span class="color-idx">${i}</span><span class="color-name">${COLOR_LABELS[i] || ''}</span></div>${i !== 0 && color ? `<div class="color-hex">${color}</div>` : ''}`;
-    item.appendChild(sw); item.appendChild(lbl);
-
-    // Custom-Paletten: Swatch klickbar zum Editieren. Verstecktes Color-Input
-    // (gleiches Muster wie der Haupt-Farbwähler) — eine Änderung färbt das Bild
-    // live um, weil die Pixel die Palette per Index referenzieren.
-    if (editable && i !== 0) {
-      const picker = document.createElement('input');
-      picker.type = 'color';
-      picker.value = color || '#888888';
-      picker.style.cssText = 'position:absolute;width:0;height:0;opacity:0;pointer-events:none';
-      sw.title = 'Klicken zum Ändern — das Bild aktualisiert sich live';
-      sw.style.cursor = 'pointer';
-      sw.addEventListener('click', e => {
-        e.stopPropagation();
-        picker.value = (getPal(state.curType, state.curVariant)[i]) || '#888888';
-        picker.click();
-      });
-      picker.addEventListener('input', () => {
-        const t = getCurrentPalType();
-        if (!customPalettes[t] || !customPalettes[t][state.curVariant]) return;
-        customPalettes[t][state.curVariant][i] = picker.value;
-        sw.style.background = picker.value;
-        const hexEl = item.querySelector('.color-hex');
-        if (hexEl) hexEl.textContent = picker.value;
-        renderEditor(); renderQuickPalette(); renderOverview(); updateCurrentColorIndicator();
-        renderCallbacks.onSave();
-      });
-      item.appendChild(picker);
-    }
-
-    item.onclick = () => { state.curColor = i; syncColorActive(); };
-    items.appendChild(item);
-  }
-}
-
-// ────────────────────────────────────────────────────────────────────
-// OUTPUT — TypeScript-Array-Generator (für PetSprite.tsx)
-// ────────────────────────────────────────────────────────────────────
-export function updateOutput() {
-  const grid = getGrid();
-  const name = state.curType.startsWith('custom_')
-    ? (customMeta[state.curType]?.name || state.curType).replace(/[^a-zA-Z0-9_]/g, '_')
-    : `${state.curType.toUpperCase()}_${state.curState.toUpperCase()}`;
-
-  const pal = getPal(state.curType, state.curVariant);
-  const maxIdx = getMaxIdx();
-  const includePalette = document.getElementById('export-include-palette')?.checked;
-
-  // Raw-Hex-Pixel (freie Pipette-/Schablonen-Farben) erkennen. Sie passen nicht
-  // direkt ins `number[][]`-Format → wir vergeben ihnen fortlaufende Indizes
-  // oberhalb der Palette (maxIdx+1, +2, …) und legen sie im Palette-Block ab.
-  // So bleibt der Export verlustfrei.
-  const rawMap = new Map(); // '#rrggbb' (lowercase) → Index
-  let nextIdx = maxIdx + 1;
-  for (const row of grid) for (const c of row) {
-    if (typeof c === 'string') {
-      const key = c.toLowerCase();
-      if (!rawMap.has(key)) rawMap.set(key, nextIdx++);
-    }
-  }
-  const hasRaw = rawMap.size > 0;
-
-  // Grid-Zeilen: Raw-Hex → zugewiesener Index, sonst Zahl unverändert.
-  const rows = grid.map(row => '  [' + row.map(c =>
-    typeof c === 'string' ? rawMap.get(c.toLowerCase()) : c
-  ).join(',') + ']').join(',\n');
-
-  // Palette-Block: bei Raw-Farben IMMER nötig (sonst sind die Indizes wertlos),
-  // sonst nur wenn "Farben mitkopieren" aktiv ist.
-  let palBlock = '';
-  if (hasRaw || includePalette) {
-    // Benutzte Palette-Indizes (für schlanken Block bei Raw-Sprites).
-    const usedIdx = new Set();
-    for (const row of grid) for (const c of row) {
-      if (typeof c === 'number' && c >= 1) usedIdx.add(c);
-    }
-    const entries = [];
-    for (let i = 1; i <= maxIdx; i++) {
-      if (pal[i] && (hasRaw ? usedIdx.has(i) : true)) entries.push(`  ${i}: '${pal[i]}',`);
-    }
-    for (const [hex, idx] of rawMap) entries.push(`  ${idx}: '${hex}',`);
-    palBlock = `const ${name}_PALETTE: Record<number, string> = {\n${entries.join('\n')}\n};\n\n`;
-  }
-
-  const note = hasRaw
-    ? `// ✔ ${rawMap.size} freie Farben als Palette-Indizes ${maxIdx + 1}+ gespeichert (verlustfrei)\n`
-    : '';
-
-  document.getElementById('output-textarea').value =
-    `${note}${palBlock}const ${name}: number[][] = [\n${rows},\n];`;
-}
-
-// Header-Buttons (Typ + State) als aktiv markieren
-export function syncButtons() {
-  document.querySelectorAll('#type-btns .btn').forEach(b =>
-    b.classList.toggle('active', b.dataset.type === state.curType));
-  document.querySelectorAll('#state-btns .btn').forEach(b =>
-    b.classList.toggle('active', b.dataset.state === state.curState));
-}
-
-// ────────────────────────────────────────────────────────────────────
-// TOOLS — Pinsel + Flood-Fill
-// ────────────────────────────────────────────────────────────────────
 export function paintBrush(x, y) {
   const grid = getGrid();
   const H = grid.length, W = grid[0].length;
@@ -617,7 +231,7 @@ export function paintBrush(x, y) {
       }
     }
   }
-  if (changed) { renderEditor(); renderOverview(); updateOutput(); renderCallbacks.onSave(); }
+  if (changed) afterPaint();
 }
 
 export function paintSpray(x, y) {
@@ -638,7 +252,7 @@ export function paintSpray(x, y) {
       changed = true;
     }
   }
-  if (changed) { renderEditor(); renderOverview(); updateOutput(); renderCallbacks.onSave(); }
+  if (changed) afterPaint();
 }
 
 export function floodFill(startX, startY) {
@@ -654,12 +268,279 @@ export function floodFill(startX, startY) {
     grid[y][x] = fill;
     stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
   }
-  renderEditor(); renderOverview(); updateOutput(); renderCallbacks.onSave();
+  afterPaint();
 }
 
-// Full Re-Render (nach jeder größeren State-Änderung)
+// ────────────────────────────────────────────────────────────────────
+// QUICK-PALETTE — Swatch-Leiste über dem Canvas
+// ────────────────────────────────────────────────────────────────────
+export function renderQuickPalette() {
+  const qp = document.getElementById('quick-palette');
+  if (!qp) return;
+  const pal = getPal();
+  const maxIdx = getMaxIdx();
+  qp.innerHTML = '';
+
+  for (let i = 0; i <= maxIdx; i++) {
+    const color = pal[i];
+    const el = document.createElement('button');
+    el.type = 'button';
+    el.className = 'qp-swatch' + (i === state.curColor ? ' is-active' : '') + (i === 0 ? ' is-transparent' : '');
+    el.title = `${i} — ${COLOR_LABELS_SHORT[i] || ''}${color && i !== 0 ? ' · ' + color : ''}  (Taste ${i})`;
+    if (i !== 0) el.style.background = color || 'var(--surface-3)';
+
+    const idx = document.createElement('span');
+    idx.className = 'qp-idx';
+    idx.textContent = i;
+    el.appendChild(idx);
+
+    el.addEventListener('click', () => { state.curColor = i; syncColorActive(); });
+    qp.appendChild(el);
+
+    if (i === PALETTE_GROUP_SPLIT) {
+      const sep = document.createElement('span');
+      sep.className = 'qp-sep';
+      qp.appendChild(sep);
+    }
+  }
+}
+
+// ────────────────────────────────────────────────────────────────────
+// AKTUELLE FARBE (Kopf des Farb-Panels)
+// ────────────────────────────────────────────────────────────────────
+export function updateCurrentColorIndicator() {
+  const sw  = document.querySelector('#current-color .cc-swatch');
+  const hex = document.querySelector('#current-color .cc-hex');
+  const lbl = document.querySelector('#current-color .cc-label');
+  if (!sw || !hex) return;
+
+  if (state.curColor === 0) {
+    sw.style.background = '';
+    sw.classList.add('is-transparent');
+    hex.textContent = 'transparent';
+    if (lbl) lbl.textContent = 'Radieren (Index 0)';
+    return;
+  }
+  sw.classList.remove('is-transparent');
+
+  if (typeof state.curColor === 'string' && state.curColor[0] === '#') {
+    sw.style.background = state.curColor;
+    hex.textContent = state.curColor;
+    if (lbl) lbl.textContent = 'Freie Farbe';
+  } else {
+    const color = getPal()[state.curColor] || '#888888';
+    sw.style.background = color;
+    hex.textContent = color;
+    if (lbl) lbl.textContent = `Index ${state.curColor} — ${COLOR_LABELS_SHORT[state.curColor] || ''}`;
+  }
+}
+
+// Aktiv-Markierung ohne Full-Re-Render.
+export function syncColorActive() {
+  const isHex = typeof state.curColor === 'string';
+  document.querySelectorAll('.qp-swatch').forEach((el, i) =>
+    el.classList.toggle('is-active', !isHex && i === state.curColor));
+  document.querySelectorAll('.color-item').forEach(el =>
+    el.classList.toggle('is-active', !isHex && Number(el.dataset.idx) === state.curColor));
+  updateCurrentColorIndicator();
+}
+
+// ────────────────────────────────────────────────────────────────────
+// FARB-PANEL (rechte Spalte)
+// ────────────────────────────────────────────────────────────────────
+
+// Das Paletten-Dropdown befüllen. `filter` blendet Optionen aus, deren Name
+// den Suchtext nicht enthält.
+export function fillPaletteSelect(sel, selectedName, filter = '') {
+  if (!sel) return;
+  sel.innerHTML = '';
+  const q = filter.trim().toLowerCase();
+  const opts = getAllPaletteOptions().filter(o => !q || o.name.toLowerCase().includes(q));
+
+  const groups = [
+    { label: 'Eingebaut', items: opts.filter(o => !o.isCustom) },
+    { label: 'Eigene',    items: opts.filter(o => o.isCustom) },
+  ];
+  for (const g of groups) {
+    if (!g.items.length) continue;
+    const og = document.createElement('optgroup');
+    og.label = g.label;
+    g.items.forEach(o => {
+      const opt = document.createElement('option');
+      opt.value = o.name;
+      opt.textContent = o.name;
+      if (o.name === selectedName) opt.selected = true;
+      og.appendChild(opt);
+    });
+    sel.appendChild(og);
+  }
+  // Ausgewählte Palette ist wegfiltert → trotzdem als Wert halten.
+  if (selectedName && !opts.some(o => o.name === selectedName)) sel.value = '';
+}
+
+export function renderPalette() {
+  const pal     = getPal();
+  const palName = getPaletteName();
+  const maxIdx  = getMaxIdx();
+
+  const sel = document.getElementById('palette-select');
+  const search = document.getElementById('palette-search');
+  fillPaletteSelect(sel, palName, search?.value || '');
+  if (search) search.hidden = getAllPaletteOptions().length <= 12 && !search.value;
+
+  // Bearbeiten/Löschen gibt es nur für eigene Paletten.
+  const custom = isCustomPalette(palName);
+  document.getElementById('palette-edit-btn')?.toggleAttribute('hidden', !custom);
+  document.getElementById('palette-del-btn')?.toggleAttribute('hidden', !custom);
+
+  const badge = document.getElementById('palette-origin');
+  if (badge) {
+    badge.textContent = custom ? 'eigene' : 'eingebaut';
+    badge.className = 'badge ' + (custom ? 'badge--custom' : 'badge--builtin');
+  }
+
+  const hint = document.getElementById('palette-hint');
+  if (hint) {
+    hint.textContent = custom
+      ? 'Swatch anklicken zum Ändern — das Bild färbt sich live um.'
+      : 'Eingebaute Paletten sind schreibgeschützt. „Kopie bearbeiten“ macht sie änderbar.';
+  }
+  document.getElementById('palette-fork-btn')?.toggleAttribute('hidden', custom);
+
+  // Farbliste
+  const items = document.getElementById('palette-items');
+  if (!items) return;
+  items.innerHTML = '';
+
+  for (let i = 0; i <= maxIdx; i++) {
+    const color = pal[i];
+    const item = document.createElement('div');
+    item.className = 'color-item'
+      + (i === state.curColor ? ' is-active' : '')
+      + (custom && i !== 0 ? ' is-editable' : '');
+    item.dataset.idx = i;
+
+    const sw = document.createElement('span');
+    sw.className = 'color-swatch' + (i === 0 ? ' is-transparent' : '');
+    if (i !== 0 && color) sw.style.background = color;
+
+    const text = document.createElement('span');
+    text.className = 'color-text';
+    text.innerHTML =
+      `<span class="color-line"><span class="color-idx">${i}</span>` +
+      `<span class="color-name">${COLOR_LABELS[i] || ''}</span></span>` +
+      (i !== 0 && color ? `<span class="color-hex">${color}</span>` : '');
+
+    item.append(sw, text);
+
+    if (custom && i !== 0) {
+      // Verstecktes <input type="color"> — Klick auf den Swatch öffnet es.
+      const picker = document.createElement('input');
+      picker.type = 'color';
+      picker.className = 'hidden-color-input';
+      picker.value = color || '#888888';
+      sw.title = 'Farbe ändern';
+      sw.addEventListener('click', e => {
+        e.stopPropagation();
+        picker.value = getPal()[i] || '#888888';
+        picker.click();
+      });
+      picker.addEventListener('input', () => {
+        const target = customPalettes[getPaletteName()];
+        if (!target) return;
+        target[i] = picker.value;
+        sw.style.background = picker.value;
+        const hexEl = item.querySelector('.color-hex');
+        if (hexEl) hexEl.textContent = picker.value;
+        renderEditor(); renderQuickPalette(); renderSpriteList(); updateCurrentColorIndicator();
+        renderCallbacks.onSave();
+      });
+      item.appendChild(picker);
+    }
+
+    item.addEventListener('click', () => { state.curColor = i; syncColorActive(); });
+    items.appendChild(item);
+
+    if (i === PALETTE_GROUP_SPLIT) {
+      const sep = document.createElement('div');
+      sep.className = 'color-sep';
+      items.appendChild(sep);
+    }
+  }
+}
+
+// ────────────────────────────────────────────────────────────────────
+// OUTPUT — TypeScript-Array-Generator
+// ────────────────────────────────────────────────────────────────────
+// Erzeugt einen selbstbeschreibenden Block: optional Palette, dann das Grid.
+// Freie Hex-Pixel bekommen Indizes oberhalb der Palette, damit der Export
+// verlustfrei bleibt und wieder importiert werden kann.
+export function updateOutput() {
+  const ta = document.getElementById('output-textarea');
+  if (!ta) return;
+  const sp = getSprite();
+  if (!sp) { ta.value = ''; return; }
+
+  const grid = sp.grid;
+  const name = tsIdentifier(sp.name);
+  const pal = getPal();
+  const maxIdx = getMaxIdx();
+  const includePalette = document.getElementById('export-include-palette')?.checked;
+
+  const rawMap = new Map(); // '#rrggbb' → Index oberhalb der Palette
+  let nextIdx = maxIdx + 1;
+  for (const row of grid) for (const c of row) {
+    if (typeof c === 'string') {
+      const key = c.toLowerCase();
+      if (!rawMap.has(key)) rawMap.set(key, nextIdx++);
+    }
+  }
+  const hasRaw = rawMap.size > 0;
+
+  const rows = grid.map(row => '  [' + row.map(c =>
+    typeof c === 'string' ? rawMap.get(c.toLowerCase()) : c
+  ).join(',') + ']').join(',\n');
+
+  // Palette-Block: bei freien Farben zwingend (sonst sind die Indizes wertlos),
+  // sonst nur wenn "Farben mitkopieren" aktiv ist.
+  let palBlock = '';
+  if (hasRaw || includePalette) {
+    const usedIdx = new Set();
+    for (const row of grid) for (const c of row) {
+      if (typeof c === 'number' && c >= 1) usedIdx.add(c);
+    }
+    const entries = [];
+    for (let i = 1; i <= maxIdx; i++) {
+      if (pal[i] && (hasRaw ? usedIdx.has(i) : true)) entries.push(`  ${i}: '${pal[i]}',`);
+    }
+    for (const [hex, idx] of rawMap) entries.push(`  ${idx}: '${hex}',`);
+    palBlock = `// Palette „${sp.palette}“\n`
+             + `export const ${name}_PALETTE: Record<number, string> = {\n${entries.join('\n')}\n};\n\n`;
+  }
+
+  const note = hasRaw
+    ? `// ${rawMap.size} freie Farben wurden als Palette-Indizes ${maxIdx + 1}+ gesichert (verlustfrei)\n`
+    : '';
+
+  ta.value = `${note}${palBlock}export const ${name}: number[][] = [\n${rows},\n];`;
+}
+
+// Sprite-Name → gültiger TS-Bezeichner (SCREAMING_SNAKE, nie mit Ziffer beginnend).
+export function tsIdentifier(name) {
+  let id = String(name || 'SPRITE')
+    .replace(/[^a-zA-Z0-9_]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .toUpperCase();
+  if (!id) id = 'SPRITE';
+  if (/^[0-9]/.test(id)) id = 'S_' + id;
+  return id;
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Full Re-Render
+// ────────────────────────────────────────────────────────────────────
 export function renderAll() {
-  renderOverview();
+  renderSpriteList();
   renderEditor();
   renderPalette();
   renderQuickPalette();

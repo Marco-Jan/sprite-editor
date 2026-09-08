@@ -2,7 +2,7 @@
 // EXPORT — PNG + PDF mit transparentem Hintergrund, ohne Grid-Linien
 // ════════════════════════════════════════════════════════════════════
 // PDF nutzt jsPDF, das via CDN in index.html geladen wird (window.jspdf).
-import { state, customMeta, getGrid, getPal } from './state.js';
+import { getGrid, getPal, getSprite } from './state.js';
 import { cellToColor } from './render.js';
 import { showInfoToast } from './toast.js';
 import { saveBlob } from './filesystem.js';
@@ -12,7 +12,7 @@ import { flashSaved } from './storage.js';
 // Hintergrund bleibt transparent (default-state des Canvas).
 function renderSpriteToCanvas(scale) {
   const grid = getGrid();
-  const pal  = getPal(state.curType, state.curVariant);
+  const pal  = getPal();
   const H = grid.length, W = grid[0].length;
 
   const c = document.createElement('canvas');
@@ -144,7 +144,7 @@ function buildExportCanvas(scale, includePalette) {
   if (!includePalette) return sprite;
 
   const grid = getGrid();
-  const pal  = getPal(state.curType, state.curVariant);
+  const pal  = getPal();
   const colors = collectUsedColors(grid, pal);
   if (!colors.length) return sprite;
 
@@ -165,10 +165,8 @@ function buildExportCanvas(scale, includePalette) {
 }
 
 function exportFilename(ext) {
-  const base = state.curType.startsWith('custom_')
-    ? (customMeta[state.curType]?.name || state.curType).replace(/[^a-zA-Z0-9_-]/g, '_')
-    : `${state.curType}_${state.curState}`;
-  return `${base}.${ext}`; // ohne Palettennamen
+  const base = (getSprite()?.name || 'sprite').replace(/[^a-zA-Z0-9_-]/g, '_') || 'sprite';
+  return `${base}.${ext}`;
 }
 
 // Canvas → PNG-Blob (Promise).
