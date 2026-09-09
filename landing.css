@@ -16,14 +16,17 @@
   color-scheme: dark;
 
   /* Flaechen — aus dem Editor */
-  --bg:          #121214;
-  --surface-1:   #1a1a1e;
-  --surface-2:   #202026;
-  --surface-3:   #292930;
-  --surface-4:   #33333c;
+  /* Flaechen — leicht ins Indigo gezogen, damit die Seite unter demselben
+     Abendhimmel steht wie die Kulisse. Neutrales Grau liess alles wie eine
+     beliebige dunkle Website aussehen. */
+  --bg:          #131222;
+  --surface-1:   #1a1830;
+  --surface-2:   #221f3a;
+  --surface-3:   #2b2746;
+  --surface-4:   #383253;
 
-  --line:        #2b2b33;
-  --line-strong: #3d3d47;
+  --line:        #2e2a48;
+  --line-strong: #443e63;
 
   --text:        #e6e6ea;
   --text-muted:  #9a9aa6;
@@ -49,11 +52,14 @@
   --leaf:      #5d9642;
   --leaf-deep: #21492c;
 
-  /* Himmel — Daemmerung, oben am Seitengrund angeschlossen */
-  --sky-top:  #12131a;
-  --sky-mid:  #1a2130;
-  --sky-low:  #26374a;
-  --sky-horizon: #33485c;
+  /* Himmel — Abenddaemmerung. Oben schliesst er an den Seitengrund an,
+     unten glueht der Horizont warm: das ist der Farbtraeger der Seite.
+     Vorher waren das entsaettigte Blaugraus, die wie Smog wirkten. */
+  --sky-top:     #171630;
+  --sky-mid:     #2e2557;
+  --sky-low:     #6b3f6a;
+  --sky-horizon: #c26b56;
+  --sky-glow:    #f0a35e;   /* Sonnenrest direkt ueber der Kante */
 
   --on-primary: #0c1f15;
 
@@ -284,7 +290,8 @@ kbd {
 .band--warm {
   max-width: none;
   background:
-    radial-gradient(120% 140% at 12% 0%, rgba(176, 120, 72, 0.10) 0%, transparent 60%),
+    radial-gradient(120% 140% at 12% 0%, rgba(216, 168, 96, 0.16) 0%, transparent 62%),
+    radial-gradient(90% 120% at 92% 100%, rgba(194, 107, 86, 0.12) 0%, transparent 60%),
     var(--surface-1);
   border-block: 1px solid var(--line);
 }
@@ -295,7 +302,7 @@ kbd {
   position: sticky;
   top: 0;
   z-index: 40;
-  background: rgba(18, 18, 20, 0.88);
+  background: rgba(19, 18, 34, 0.9);
   border-bottom: 1px solid var(--line);
   backdrop-filter: blur(10px);
 }
@@ -350,13 +357,21 @@ kbd {
 .scene-sky {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to bottom,
-    var(--sky-top) 0%,
-    var(--sky-mid) 40%,
-    var(--sky-low) 74%,
-    var(--sky-horizon) 100%
-  );
+  background:
+    /* Die untergehende Sonne — sitzt hinter der Skyline und gibt der
+       ganzen Kulisse ihr warmes Gegenlicht. */
+    radial-gradient(46% 34% at 72% 100%,
+      rgba(240, 163, 94, 0.55) 0%,
+      rgba(240, 163, 94, 0.22) 42%,
+      transparent 72%),
+    linear-gradient(
+      to bottom,
+      var(--sky-top) 0%,
+      var(--sky-mid) 38%,
+      var(--sky-low) 72%,
+      var(--sky-horizon) 92%,
+      var(--sky-glow) 100%
+    );
 }
 
 /* Lesbarkeit: der Text liegt auf einem Schleier, nicht auf dem Himmel. */
@@ -365,8 +380,8 @@ kbd {
   inset: 0;
   z-index: 2;
   background:
-    linear-gradient(to right, rgba(18, 18, 20, 0.92) 0%, rgba(18, 18, 20, 0.55) 46%, rgba(18, 18, 20, 0.1) 78%),
-    linear-gradient(to bottom, rgba(18, 18, 20, 0.55) 0%, rgba(18, 18, 20, 0) 30%);
+    linear-gradient(to right, rgba(16, 14, 26, 0.9) 0%, rgba(16, 14, 26, 0.5) 44%, rgba(16, 14, 26, 0) 76%),
+    linear-gradient(to bottom, rgba(16, 14, 26, 0.5) 0%, rgba(16, 14, 26, 0) 30%);
 }
 
 /* Alle waagerecht laufenden Ebenen teilen diese Basis. Der Versatz
@@ -384,21 +399,27 @@ kbd {
   will-change: background-position;
 }
 
+/* Die Wolken-PNG ist neutralgrau. Der Filter faerbt sie warm an, damit sie
+   im Abendlicht stehen statt als Smogbaenke davor. */
 .layer--clouds {
   top: 8%;
   height: 120px;
   background-image: url("assets/landing/clouds.png");
   background-size: 900px 120px;
-  opacity: 0.42;
+  opacity: 0.5;
+  filter: brightness(1.15) sepia(0.55) saturate(1.7) hue-rotate(-12deg);
   animation-name: driftClouds;
   animation-duration: 190s;
 }
+/* Gegen einen hellen Horizont gehoert die Stadt als dunkle Silhouette —
+   abgedunkelt und ins Violette gezogen, statt grau davorzustehen. */
 .layer--skyline {
   bottom: 0;
   height: 204px;
   background-image: url("assets/landing/skyline.png");
   background-size: 640px 204px;
-  opacity: 0.55;
+  opacity: 0.85;
+  filter: brightness(0.42) saturate(0.5) sepia(0.4) hue-rotate(215deg);
   animation-name: driftSkyline;
   animation-duration: 240s;
 }
@@ -407,8 +428,8 @@ kbd {
   height: 76px;
   background-image: url("assets/landing/deco-band.png");
   background-size: 340px 76px;
-  opacity: 0.5;
-  filter: brightness(0.6) saturate(0.7);
+  opacity: 0.62;
+  filter: brightness(0.5) saturate(0.75) sepia(0.3) hue-rotate(-8deg);
   transform: scaleX(-1);
   animation-name: driftDecoFar;
   animation-duration: 150s;
@@ -418,6 +439,7 @@ kbd {
   height: 152px;
   background-image: url("assets/landing/deco-band.png");
   background-size: 680px 152px;
+  filter: saturate(1.1) sepia(0.12);
   animation-name: driftDecoNear;
   animation-duration: 96s;
 }
@@ -507,6 +529,16 @@ kbd {
   align-items: center;
 }
 .hero-text .lead { color: var(--text); }
+
+/* Text auf der Kulisse: der Schleier allein reicht nicht, wenn dahinter die
+   helle Skyline steht. Eine Stufe heller plus ein weicher Schatten haelt
+   auch die Kleinschrift lesbar. */
+.hero-text .note { color: var(--text-muted); }
+.hero-text .note code { color: var(--text); }
+.stage .eyebrow,
+.stage h1,
+.stage .lead,
+.stage .note { text-shadow: 0 1px 10px rgba(12, 8, 22, 0.85); }
 .cta-row {
   display: flex;
   flex-wrap: wrap;
@@ -802,6 +834,10 @@ kbd {
 .closer-inner h2 { max-width: 18ch; }
 .closer-inner .lead { max-width: 44ch; }
 .closer-inner .btn { margin-top: var(--sp-2); }
+.closer-inner .note { color: var(--text-muted); }
+.closer-inner h2,
+.closer-inner .lead,
+.closer-inner .note { text-shadow: 0 1px 10px rgba(12, 8, 22, 0.85); }
 
 /* ── 13 · Fuss ──────────────────────────────────────────────────── */
 .foot { background: var(--bg); border-top: 1px solid var(--line); }
