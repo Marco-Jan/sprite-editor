@@ -105,6 +105,8 @@
             </label>
             <button class="btn" id="export-png-btn">PNG</button>
             <button class="btn" id="export-pdf-btn">PDF</button>
+            <button class="btn" id="export-sheet-btn"
+                    title="Alle Sprites in einem Bild — plus JSON-Atlas mit Namen und Koordinaten">Spritesheet</button>
           </div>
 
           <label class="check" title="Bettet eine Farb-Legende ins Bild ein, damit die Farbwerte nicht verloren gehen">
@@ -146,14 +148,39 @@
 
       <!-- Werkzeugleiste — eine einzige, auch im Vollbild -->
       <div id="toolbar">
-        <div class="tool-group" role="group" aria-label="Werkzeuge">
+        <div class="tool-group" role="group" aria-label="Malwerkzeuge">
           <button class="tool-btn is-active" data-tool="pencil" aria-pressed="true" title="Stift — einzelne Pixel (P)"><span class="tool-ico">✎</span><span class="tool-name">Stift</span></button>
           <button class="tool-btn" data-tool="brush"  aria-pressed="false" title="Pinsel — Fläche, Stärke = Dichte (B)"><span class="tool-ico">🖌</span><span class="tool-name">Pinsel</span></button>
           <button class="tool-btn" data-tool="spray"  aria-pressed="false" title="Spray — zufällige Pixel (S)"><span class="tool-ico">✳</span><span class="tool-name">Spray</span></button>
           <button class="tool-btn" data-tool="fill"   aria-pressed="false" title="Füllen — Flood-Fill (F)"><span class="tool-ico">◍</span><span class="tool-name">Füllen</span></button>
           <button class="tool-btn" data-tool="eraser" aria-pressed="false" title="Radierer (E)"><span class="tool-ico">⌫</span><span class="tool-name">Radierer</span></button>
           <button class="tool-btn" data-tool="wand"   aria-pressed="false" title="Zauberstab — ähnliche Fläche löschen (W)"><span class="tool-ico">✦</span><span class="tool-name">Zauberstab</span></button>
-          <button class="tool-btn" data-tool="select" aria-pressed="false" title="Auswahl — Bereich aufziehen, ausschneiden und verschieben (A)"><span class="tool-ico">⬚</span><span class="tool-name">Auswahl</span></button>
+        </div>
+
+        <div class="tool-sep" aria-hidden="true"></div>
+
+        <div class="tool-group" role="group" aria-label="Formen">
+          <button class="tool-btn" data-tool="line"    aria-pressed="false" title="Linie ziehen (I)"><span class="tool-ico">╱</span><span class="tool-name">Linie</span></button>
+          <button class="tool-btn" data-tool="rect"    aria-pressed="false" title="Rechteck ziehen (R)"><span class="tool-ico">▭</span><span class="tool-name">Rechteck</span></button>
+          <button class="tool-btn" data-tool="ellipse" aria-pressed="false" title="Ellipse ziehen (O)"><span class="tool-ico">◯</span><span class="tool-name">Ellipse</span></button>
+        </div>
+
+        <div class="tool-sep" aria-hidden="true"></div>
+
+        <div class="tool-group" role="group" aria-label="Auswahl">
+          <button class="tool-btn" data-tool="select" aria-pressed="false" title="Rechteck-Auswahl — aufziehen, ausschneiden, verschieben (A)"><span class="tool-ico">⬚</span><span class="tool-name">Auswahl</span></button>
+          <button class="tool-btn" data-tool="lasso"  aria-pressed="false" title="Lasso — Form frei umfahren, wird beim Loslassen geschlossen (L)"><span class="tool-ico">➰</span><span class="tool-name">Lasso</span></button>
+          <button class="tool-btn" data-tool="magic"  aria-pressed="false" title="Farbauswahl — zusammenhängende ähnliche Fläche wählen, Toleranz steuert wie viel mitgeht (K)"><span class="tool-ico">✧</span><span class="tool-name">Farbwahl</span></button>
+        </div>
+
+        <div class="tool-sep" aria-hidden="true"></div>
+
+        <div class="tool-group" id="mirror-group" role="group" aria-label="Symmetrie">
+          <span class="field-label">Symmetrie</span>
+          <div class="btn-group">
+            <button class="btn" id="mirror-x-btn" aria-pressed="false" title="Senkrechte Achse — was links entsteht, entsteht auch rechts">↔</button>
+            <button class="btn" id="mirror-y-btn" aria-pressed="false" title="Waagerechte Achse — oben und unten gespiegelt">↕</button>
+          </div>
         </div>
 
         <div class="tool-sep" aria-hidden="true"></div>
@@ -185,6 +212,11 @@
           <span id="tolerance-val" class="field-value">25%</span>
         </label>
 
+        <div class="tool-group" id="shape-group" hidden>
+          <button class="btn" id="shape-fill-btn" aria-pressed="false"
+                  title="Rechteck und Ellipse gefüllt statt nur als Kontur zeichnen">Gefüllt</button>
+        </div>
+
         <div class="tool-group" id="select-group" hidden>
           <span class="field-label">Auswahl</span>
           <div class="btn-group">
@@ -192,6 +224,7 @@
             <button class="btn" id="sel-cut-btn"    title="Ausschneiden (Strg+X)">Ausschneiden</button>
             <button class="btn" id="sel-copy-btn"   title="Kopieren (Strg+C)">Kopieren</button>
             <button class="btn" id="sel-paste-btn"  title="Einfügen (Strg+V)">Einfügen</button>
+            <button class="btn" id="sel-fill-btn"   title="Auswahl mit der aktuellen Farbe füllen">Füllen</button>
             <button class="btn btn--danger-soft" id="sel-delete-btn" title="Auswahl leeren (Entf)">Leeren</button>
             <button class="btn" id="sel-none-btn"   title="Auswahl aufheben (Esc)">Aufheben</button>
           </div>
@@ -298,6 +331,48 @@
             <span class="field-unit">Farben</span>
             <button class="btn btn--primary" id="template-trace-quant"
                     title="Schablone abtasten und Farben auf N dominante Töne reduzieren (Median-Cut)">Übernehmen</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel collapsed" data-panel="image">
+        <div class="panel-head">
+          <h2 class="panel-title">Bild</h2>
+          <span class="badge" id="image-scope">Sprite</span>
+          <button class="panel-toggle" type="button" aria-expanded="false"></button>
+        </div>
+        <div class="panel-body">
+          <p class="field-note">Mit Auswahl wirken Spiegeln und Drehen nur auf sie, sonst auf den ganzen Sprite.</p>
+
+          <div class="btn-row">
+            <button class="btn" id="flip-h-btn" title="Waagerecht spiegeln">↔ Spiegeln</button>
+            <button class="btn" id="flip-v-btn" title="Senkrecht spiegeln">↕ Spiegeln</button>
+            <button class="btn" id="rotate-btn" title="90° im Uhrzeigersinn drehen">↻ 90°</button>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn" id="trim-btn" title="Leeren Rand rundherum abschneiden">Zuschneiden</button>
+            <button class="btn" id="center-btn" title="Inhalt mittig setzen">Zentrieren</button>
+          </div>
+
+          <div class="field field--inline">
+            <span class="field-label">Größe</span>
+            <input type="number" id="resize-w" class="input input--num" min="1" max="256" title="Breite in Pixeln">
+            <span class="field-unit">×</span>
+            <input type="number" id="resize-h" class="input input--num" min="1" max="256" title="Höhe in Pixeln">
+            <select id="resize-anchor" class="input input--sm" title="Wohin der alte Inhalt rutscht">
+              <option value="center">mittig</option>
+              <option value="topleft">oben links</option>
+            </select>
+            <button class="btn" id="resize-btn">Anwenden</button>
+          </div>
+
+          <div class="field field--inline">
+            <span class="field-label">Skalieren</span>
+            <div class="btn-group">
+              <button class="btn" id="scale-up-btn" title="Auf das Doppelte vergrößern (Pixel bleiben hart)">×2</button>
+              <button class="btn" id="scale-down-btn" title="Auf die Hälfte verkleinern — Details gehen verloren">÷2</button>
+            </div>
           </div>
         </div>
       </section>
@@ -486,18 +561,35 @@
       <div><b>Füllen</b> — zusammenhängende gleiche Fläche.</div>
       <div><b>Radierer</b> — setzt auf transparent.</div>
       <div><b>Zauberstab</b> — löscht zusammenhängende <i>ähnliche</i> Fläche; <i>Toleranz</i> steuert, wie viel Abweichung mitgeht.</div>
-      <div><b>Auswahl</b> — Bereich aufziehen und als Ganzes verschieben, kopieren oder löschen.</div>
+      <div><b>Linie · Rechteck · Ellipse</b> — aufziehen, die Vorschau zeigt das Ergebnis, Loslassen zeichnet. <i>Gefüllt</i> schaltet zwischen Kontur und Fläche.</div>
+      <div><b>Auswahl · Lasso · Farbwahl</b> — drei Wege zur selben Sache: ein Bereich, den man als Ganzes bewegt.</div>
     </div>
 
-    <h3 class="help-h">Auswahl verschieben</h3>
+    <h3 class="help-h">Symmetrie</h3>
     <div class="help-list">
-      <div>Werkzeug <b>Auswahl</b> (<span class="kbd">A</span>) wählen und mit gedrückter Maustaste ein Rechteck aufziehen.</div>
+      <div>Die beiden Knöpfe <b>↔</b> und <b>↕</b> in der Werkzeugleiste spiegeln jeden Strich an der Mittelachse — beide zusammen ergeben vier Spiegelungen.</div>
+      <div>Gilt für Stift, Pinsel, Spray, Füllen und die Formen. Die Achsen werden als gestrichelte Linien eingeblendet.</div>
+    </div>
+
+    <h3 class="help-h">Auswahl: ausschneiden und verschieben</h3>
+    <div class="help-list">
+      <div><b>Auswahl</b> (<span class="kbd">A</span>) zieht ein Rechteck auf.</div>
+      <div><b>Lasso</b> (<span class="kbd">L</span>) umfährt eine freie Form; beim Loslassen wird sie geschlossen und alles darin gehört dazu — auch bei krakeliger Linie.</div>
+      <div><b>Farbwahl</b> (<span class="kbd">K</span>) nimmt die zusammenhängende ähnliche Fläche unter dem Klick; die <i>Toleranz</i> bestimmt, wie viel mitgeht.</div>
       <div>In die Auswahl fassen und ziehen → der Bereich wird <b>ausgeschnitten und verschoben</b>; loslassen setzt ihn ab.</div>
       <div><span class="kbd">Alt</span>+Ziehen lässt das Original stehen — man verschiebt eine <b>Kopie</b>.</div>
-      <div>Feinarbeit mit den <b>Pfeiltasten</b>: ein Pixel pro Druck.</div>
+      <div>Feinarbeit mit den <b>Pfeiltasten</b>: ein Pixel pro Druck. <b>Füllen</b> färbt die ganze Auswahl in der aktuellen Farbe.</div>
       <div>Beim Absetzen überschreiben nur gefüllte Pixel; transparente Stellen lassen den Untergrund stehen.</div>
       <div>Was über den Rand hinausgeschoben wird, geht verloren — <span class="kbd">Strg</span>+<span class="kbd">Z</span> holt alles zurück.</div>
       <div>Ein Klick neben die Auswahl (oder <span class="kbd">Esc</span>) hebt sie auf.</div>
+    </div>
+
+    <h3 class="help-h">Bild</h3>
+    <div class="help-list">
+      <div><b>Spiegeln</b> und <b>Drehen</b> wirken auf die Auswahl, wenn es eine gibt — sonst auf den ganzen Sprite. Das Abzeichen im Panel sagt, worauf gerade.</div>
+      <div><b>Zuschneiden</b> schneidet den leeren Rand weg, <b>Zentrieren</b> rückt den Inhalt in die Mitte.</div>
+      <div><b>Größe</b> ändert die Fläche, ohne zu skalieren; der Anker bestimmt, wohin der alte Inhalt rutscht.</div>
+      <div><b>×2 / ÷2</b> skaliert hart (Nearest Neighbor) — Pixel bleiben Pixel, beim Halbieren fällt jedes zweite weg.</div>
     </div>
 
     <h3 class="help-h">Schablone</h3>
@@ -532,6 +624,7 @@
         <div><b>Text-Raster</b> — ein Zeichen pro Pixel mit Legende; praktisch für Diffs und Doku.</div>
       </div>
       <div><b>PNG / PDF</b> exportieren transparent; mit <i>Farb-Legende</i> wird die Palette ins Bild gerendert.</div>
+      <div><b>Spritesheet</b> packt alle Sprites in gleich große Zellen und legt einen JSON-Atlas mit Namen und Koordinaten daneben — so lesen Engines es direkt ein.</div>
       <div><b>Projekt sichern / Öffnen</b> schreibt alle Sprites und Paletten in eine JSON-Datei.</div>
     </div>
 
@@ -544,7 +637,10 @@
       <div class="sc-row"><b>Shift + Links + Ziehen</b><span>Schablone verschieben</span></div>
       <div class="sc-row"><b>Shift + Rechtsklick</b><span>Schablonen-Pipette</span></div>
       <div class="sc-row"><b>0 – 9</b><span>Farb-Index wählen</span></div>
-      <div class="sc-row"><b>P B S F E W A</b><span>Stift · Pinsel · Spray · Füllen · Radierer · Zauberstab · Auswahl</span></div>
+      <div class="sc-row"><b>P B S F E W</b><span>Stift · Pinsel · Spray · Füllen · Radierer · Zauberstab</span></div>
+      <div class="sc-row"><b>I R O</b><span>Linie · Rechteck · Ellipse</span></div>
+      <div class="sc-row"><b>A L K</b><span>Auswahl · Lasso · Farbwahl</span></div>
+      <div class="sc-row"><b>Strg + Mausrad</b><span>Zoomen</span></div>
       <div class="sc-row"><b>Ziehen in der Auswahl</b><span>Bereich ausschneiden und verschieben</span></div>
       <div class="sc-row"><b>Alt + Ziehen</b><span>Kopie verschieben (Original bleibt)</span></div>
       <div class="sc-row"><b>Pfeiltasten</b><span>Auswahl pixelweise verschieben</span></div>

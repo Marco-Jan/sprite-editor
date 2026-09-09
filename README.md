@@ -108,18 +108,44 @@ geprüft und mit `JSON.parse` gelesen.
 
 - **PNG** transparent, Skalierung 1× bis 32×
 - **PDF** mit eingebettetem PNG
+- **Spritesheet** packt *alle* Sprites in gleich große Zellen (möglichst quadratisches
+  Raster) und schreibt einen JSON-Atlas daneben: Name, Palette und Pixelkoordinaten je
+  Frame. Jeder Sprite sitzt mittig in seiner Zelle, der Atlas nennt die echte Lage —
+  auch für Sprites, die kleiner als die Zelle sind.
 - *Farb-Legende ins Bild* rendert die verwendeten Farben mit Hex-Codes unter den Sprite
+
+---
+
+## Werkzeuge
+
+| Gruppe | Werkzeuge |
+|---|---|
+| Malen | Stift `P` · Pinsel `B` · Spray `S` · Füllen `F` · Radierer `E` · Zauberstab `W` |
+| Formen | Linie `I` · Rechteck `R` · Ellipse `O` — mit Live-Vorschau, *Gefüllt* schaltet Kontur/Fläche |
+| Auswahl | Rechteck `A` · Lasso `L` · Farbwahl `K` |
+
+**Symmetrie** (↔ / ↕ in der Werkzeugleiste) spiegelt jeden Strich an der Mittelachse;
+beide Achsen zusammen ergeben vier Spiegelungen. Gilt für alle Mal- und Formwerkzeuge,
+die Achsen werden gestrichelt eingeblendet.
 
 ---
 
 ## Auswahl — ausschneiden und verschieben
 
-Werkzeug **Auswahl** (`A`), dann mit gedrückter Maustaste ein Rechteck aufziehen.
+Drei Wege zur selben Sache — ein Bereich, den man als Ganzes bewegt:
+
+- **Auswahl** (`A`) zieht ein Rechteck auf.
+- **Lasso** (`L`) umfährt eine freie Form. Beim Loslassen wird die Spur geschlossen und
+  alles darin gehört dazu. Statt Polygon-Mathematik wird von außen geflutet — deshalb
+  kommt es auch mit überkreuzten und krakeligen Zügen zurecht.
+- **Farbwahl** (`K`) nimmt die zusammenhängende ähnliche Fläche unter dem Klick; die
+  *Toleranz* steuert, wie viel mitgeht. Derselbe Bereich, den der Zauberstab löschen
+  würde — nur eben als Auswahl.
 
 - **In die Auswahl fassen und ziehen** schneidet den Bereich aus und verschiebt ihn;
   Loslassen setzt ihn ab. Der ganze Zug ist *ein* Undo-Schritt.
 - **`Alt` + Ziehen** lässt das Original stehen — man verschiebt eine Kopie.
-- **Pfeiltasten** schieben pixelweise.
+- **Pfeiltasten** schieben pixelweise, **Füllen** färbt die ganze Auswahl um.
 - **`Strg`+`X` / `C` / `V`** schneiden aus, kopieren, fügen ein; die Zwischenablage
   überlebt einen Sprite-Wechsel, sodass sich Teile zwischen Sprites kopieren lassen.
 - **`Entf`** leert den Bereich, **`Esc`** oder ein Klick daneben hebt die Auswahl auf.
@@ -127,6 +153,25 @@ Werkzeug **Auswahl** (`A`), dann mit gedrückter Maustaste ein Rechteck aufziehe
 Beim Absetzen überschreiben nur gefüllte Pixel — transparente Stellen des Blocks lassen
 den Untergrund stehen. Was über den Rand hinausgeschoben wird, ist weg (`Strg`+`Z` holt es
 zurück).
+
+---
+
+## Bild
+
+Das Panel **Bild** arbeitet nach der üblichen Konvention: gibt es eine Auswahl, trifft
+die Aktion nur sie — sonst den ganzen Sprite. Das Abzeichen im Panelkopf sagt, worauf
+gerade.
+
+| Aktion | Wirkung |
+|---|---|
+| ↔ / ↕ Spiegeln | Waagerecht bzw. senkrecht; die Lasso-Form spiegelt mit |
+| ↻ 90° | Dreht im Uhrzeigersinn; bei nicht-quadratischen Sprites tauschen Breite und Höhe |
+| Zuschneiden | Schneidet den leeren Rand rundherum weg |
+| Zentrieren | Rückt den Inhalt in die Mitte der Fläche |
+| Größe | Ändert die Fläche ohne zu skalieren; Anker bestimmt, wohin der Inhalt rutscht |
+| ×2 / ÷2 | Hartes Skalieren (Nearest Neighbor) — Pixel bleiben Pixel |
+
+Alles ist ein einzelner Undo-Schritt, auch wenn dabei das ganze Grid ausgetauscht wird.
 
 ---
 
@@ -153,7 +198,10 @@ Die Schablone überlebt einen Reload (eigener localStorage-Key).
 | `Shift` + Links + Ziehen | Schablone verschieben |
 | `Shift` + Rechtsklick | Schablonen-Pipette (exakter Hex) |
 | `0`–`9` | Farb-Index wählen |
-| `P` `B` `S` `F` `E` `W` `A` | Stift · Pinsel · Spray · Füllen · Radierer · Zauberstab · Auswahl |
+| `P` `B` `S` `F` `E` `W` | Stift · Pinsel · Spray · Füllen · Radierer · Zauberstab |
+| `I` `R` `O` | Linie · Rechteck · Ellipse |
+| `A` `L` `K` | Auswahl · Lasso · Farbwahl |
+| `Strg` + Mausrad | Zoomen |
 | Ziehen in der Auswahl | Bereich ausschneiden und verschieben |
 | `Alt` + Ziehen | Kopie verschieben, Original bleibt |
 | Pfeiltasten | Auswahl pixelweise verschieben |
@@ -211,7 +259,8 @@ sprite-editor/
     ├── migrate.js      ← v1 (dog/cat) → v2 (generisch)
     ├── render.js       ← alle Render-Funktionen + Mal-Operationen
     ├── codegen.js      ← Code-Formate (TS/JS/JSON/SVG/CSS/C/Python/Text)
-    ├── selection.js    ← Auswahl: aufziehen, ausschneiden, verschieben, einfügen
+    ├── selection.js    ← Auswahl: Rechteck, Lasso, Farbwahl, verschieben, einfügen
+    ├── transform.js    ← spiegeln, drehen, zuschneiden, zentrieren, Größe, skalieren
     ├── history.js      ← Undo/Redo pro Strich
     ├── sprites.js      ← anlegen, umbenennen, duplizieren, löschen
     ├── palettes.js     ← Paletten-Modal + Fork/Import
@@ -233,7 +282,8 @@ state.js
    ↑
    ├─ codegen.js ← (data, state)
    ├─ render.js ← (data, state, codegen)
-   ├─ selection.js ← (state, render, storage, history)
+   ├─ selection.js ← (state, render, storage, history, spritefx)
+   ├─ transform.js ← (state, render, storage, history)
    ├─ migrate.js ← (data)
    ├─ tsimport.js ← (data)
    ├─ storage.js ← (state, data, migrate, filesystem, toast)
@@ -251,6 +301,9 @@ state.js
 ## Eigenheiten
 
 - `file://` geht nicht — ES-Module brauchen HTTP.
+- Eine Auswahl ist bewusst flüchtig: sie überlebt weder Reload noch Sprite-Wechsel.
+- Die Zwischenablage der Auswahl liegt im Speicher, nicht in der System-Zwischenablage —
+  `Strg`+`C` im Editor kopiert also keine Pixel in andere Programme.
 - Inkognito-Modus verliert alles beim Tab-Schließen.
 - localStorage-Limit ~5 MB; bei Überschreitung erscheint ein Hinweis-Toast.
 - PDF braucht beim ersten Aufruf Internet (jsPDF vom CDN).

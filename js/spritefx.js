@@ -135,7 +135,9 @@ export function outlineGrid(grid, colorVal, thickness) {
 // ── Zauberstab: zusammenhängende ähnliche Farbe löschen ──────────────
 // Flood-Fill ab (sx,sy) über 4er-Nachbarn, deren Farbe innerhalb der Toleranz
 // (0-100 %) zur Startfarbe liegt → auf transparent (0). Gibt gelöschte Anzahl.
-export function magicWandDelete(grid, pal, sx, sy, tolerancePct) {
+// Zusammenhängende Fläche ähnlicher Farbe ab (sx,sy) einsammeln.
+// Gibt boolean[H][W] zurück — die Grundlage für Zauberstab UND Farbauswahl.
+export function magicWandRegion(grid, pal, sx, sy, tolerancePct) {
   const H = grid.length, W = grid[0].length;
   const start = cellRgb(grid[sy][sx], pal);
   const startTransparent = start === null;
@@ -143,8 +145,9 @@ export function magicWandDelete(grid, pal, sx, sy, tolerancePct) {
   const tol2 = linear * linear;
 
   const seen = Array.from({ length: H }, () => new Array(W).fill(false));
+  const hit  = Array.from({ length: H }, () => new Array(W).fill(false));
   const stack = [[sx, sy]];
-  let removed = 0;
+  let count = 0;
   while (stack.length) {
     const [x, y] = stack.pop();
     if (x < 0 || y < 0 || x >= W || y >= H || seen[y][x]) continue;
@@ -156,8 +159,18 @@ export function magicWandDelete(grid, pal, sx, sy, tolerancePct) {
       if (rgb === null) continue;            // transparente Zellen stoppen
       if (dist2(rgb, start) > tol2) continue; // zu unterschiedlich → stoppen
     }
-    if (grid[y][x] !== 0) { grid[y][x] = 0; removed++; }
+    hit[y][x] = true;
+    count++;
     stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+  }
+  return { hit, count };
+}
+
+export function magicWandDelete(grid, pal, sx, sy, tolerancePct) {
+  const { hit } = magicWandRegion(grid, pal, sx, sy, tolerancePct);
+  let removed = 0;
+  for (let y = 0; y < grid.length; y++) for (let x = 0; x < grid[y].length; x++) {
+    if (hit[y][x] && grid[y][x] !== 0) { grid[y][x] = 0; removed++; }
   }
   return removed;
 }

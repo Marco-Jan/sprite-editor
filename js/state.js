@@ -31,6 +31,12 @@ export const state = {
   isErasing:     false,
   editorBg:      'dark',   // 'dark' | 'bw'
   outputFormat:  'ts',     // Schlüssel aus CODE_FORMATS (codegen.js)
+  mirror:        'off',    // 'off' | 'x' (senkrechte Achse) | 'y' | 'both'
+  shapeFill:     false,    // Rechteck/Ellipse gefüllt statt nur Kontur
+
+  // Vorschau der Formen-Werkzeuge zwischen pointerdown und pointerup.
+  // Liegt hier, damit renderEditor sie ohne Umweg zeichnen kann.
+  shape: { cells: [], color: 0 },
 };
 
 // ────────────────────────────────────────────────────────────────────
@@ -41,25 +47,33 @@ export const state = {
 // herausgelösten Zellen, solange sie in der Luft hängen: das Grid ist an
 // der Quelle bereits leer, gezeichnet wird der Block aus `float`.
 // Bewusst nicht persistiert — eine Auswahl überlebt keinen Reload.
+// `mask` macht aus dem Rechteck eine beliebige Form: null heißt "volles
+// Rechteck", sonst ist es ein boolean-Raster relativ zu rect. Damit tragen
+// Lasso und Farbauswahl dieselbe Mechanik wie die Rechteck-Auswahl.
 export const selection = {
-  rect:  null,   // {x, y, w, h} in Grid-Zellen
+  rect:  null,   // {x, y, w, h} in Grid-Zellen (Bounding-Box)
+  mask:  null,   // null | boolean[h][w] relativ zu rect
   float: null,   // 2D-Array der schwebenden Zellen | null
-  mode:  null,   // null | 'marquee' (aufziehen) | 'move' (verschieben)
+  mode:  null,   // null | 'marquee' | 'lasso' | 'move'
   anchor: null,  // {x,y} — Startecke beim Aufziehen
   grab:  null,   // {dx,dy} — Griffversatz innerhalb der Auswahl beim Ziehen
+  path:  null,   // Stützpunkte der Lasso-Spur, solange gezogen wird
 };
 
 export function clearSelection() {
   selection.rect = null;
+  selection.mask = null;
   selection.float = null;
   selection.mode = null;
   selection.anchor = null;
   selection.grab = null;
+  selection.path = null;
 }
 
 export function isInSelection(x, y) {
   const r = selection.rect;
-  return !!r && x >= r.x && y >= r.y && x < r.x + r.w && y < r.y + r.h;
+  if (!r || x < r.x || y < r.y || x >= r.x + r.w || y >= r.y + r.h) return false;
+  return !selection.mask || !!selection.mask[y - r.y][x - r.x];
 }
 
 // ────────────────────────────────────────────────────────────────────
