@@ -5,11 +5,15 @@
 // leben in app.js; nur Handler an dynamisch erzeugten Elementen (Sprite-Karten,
 // Farb-Swatches) werden hier gesetzt und rufen dann renderCallbacks auf.
 import {
-  state, sprites, customPalettes,
+  state, sprites, customPalettes, selection,
   getGrid, getSprite, getPal, getPaletteName, getMaxIdx,
   getAllPaletteOptions, isCustomPalette, listSprites, getPaletteByName,
 } from './state.js';
-import { COLOR_LABELS, COLOR_LABELS_SHORT, PALETTE_GROUP_SPLIT } from './data.js';
+import { COLOR_LABELS, COLOR_LABELS_SHORT, PALETTE_GROUP_SPLIT, cellToColor } from './data.js';
+import { buildCode, tsIdentifier } from './codegen.js';
+
+// Weiterreichen, damit bestehende Importe aus render.js gültig bleiben.
+export { cellToColor, tsIdentifier };
 
 // Callbacks, die app.js verdrahtet — vermeidet Zirkularimporte zwischen
 // render und den Feature-Modulen (sprites/palettes/storage).
@@ -24,18 +28,6 @@ export const renderCallbacks = {
   onDeletePalette:   (_name) => {},
   onImageToPalette:  () => {},
 };
-
-// ────────────────────────────────────────────────────────────────────
-// Eine Grid-Zelle → CSS-Farbe (oder null = nichts zeichnen).
-//   0          → transparent
-//   1-9        → Palette-Index
-//   "#RRGGBB"  → freie Farbe (Pipette / Rohfarben-Trace)
-// ────────────────────────────────────────────────────────────────────
-export function cellToColor(c, palette) {
-  if (c === 0) return null;
-  if (typeof c === 'string' && c[0] === '#') return c;
-  return palette[c] || null;
-}
 
 // SVG-String für eine Sprite-Vorschau (Thumbnails in der Sprite-Liste).
 export function svgSprite(grid, palette, scale) {
@@ -159,6 +151,20 @@ export function renderEditor() {
     if (fill) { ctx.fillStyle = fill; ctx.fillRect(x * cs, y * cs, cs, cs); }
   }
 
+  // Schwebender Auswahl-Block — liegt über dem Grid, weil er beim Ziehen
+  // gerade nicht im Grid steht (dort ist die Quelle schon leer).
+  if (selection.float && selection.rect) {
+    const fl = selection.float;
+    for (let y = 0; y < fl.length; y++) {
+      for (let x = 0; x < fl[y].length; x++) {
+        const gx = selection.rect.x + x, gy = selection.rect.y + y;
+        if (gx < 0 || gy < 0 || gx >= W || gy >= H) continue; // außerhalb → wird verworfen
+        const fill = cellToColor(fl[y][x], pal);
+        if (fill) { ctx.fillStyle = fill; ctx.fillRect(gx * cs, gy * cs, cs, cs); }
+      }
+    }
+  }
+
   // Grid-Linien — bei sehr kleinen Zellen weglassen, sonst wird alles Raster.
   if (cs >= 6) {
     ctx.strokeStyle = state.editorBg === 'bw' ? 'rgba(0,0,0,0.09)' : 'rgba(255,255,255,0.07)';
@@ -169,7 +175,24 @@ export function renderEditor() {
     ctx.stroke();
   }
 
+  if (selection.rect) drawSelectionFrame(ctx, selection.rect, cs);
+
   updateStageTitle();
+}
+
+// Auswahlrahmen — schwarze Volllinie mit weißer Strichlinie darüber, damit
+// er auf hellem wie dunklem Untergrund sichtbar bleibt ("laufende Ameisen").
+function drawSelectionFrame(ctx, r, cs) {
+  const x = r.x * cs + 0.5, y = r.y * cs + 0.5;
+  const w = r.w * cs - 1,   h = r.h * cs - 1;
+  ctx.save();
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+  ctx.strokeRect(x, y, w, h);
+  ctx.setLineDash([4, 4]);
+  ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+  ctx.strokeRect(x, y, w, h);
+  ctx.restore();
 }
 
 // Sprite-Name + Maße über dem Canvas.
@@ -194,6 +217,20 @@ export function cellFromEvent(e) {
   const g = getGrid();
   if (x < 0 || y < 0 || x >= g[0].length || y >= g.length) return null;
   return { x, y };
+}
+
+// Wie cellFromEvent, aber ohne null: Werte außerhalb werden auf den Rand
+// gezogen. Für Aktionen, die über den Rand hinaus ziehen dürfen (Auswahl).
+export function cellFromEventClamped(e) {
+  const canvas = document.getElementById('editor-canvas');
+  const r = canvas.getBoundingClientRect();
+  const g = getGrid();
+  const W = g[0].length, H = g.length;
+  const clamp = (v, max) => Math.max(0, Math.min(max, v));
+  return {
+    x: clamp(Math.floor((e.clientX - r.left) / state.cellSize), W - 1),
+    y: clamp(Math.floor((e.clientY - r.top) / state.cellSize), H - 1),
+  };
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -470,70 +507,14 @@ export function renderPalette() {
 }
 
 // ────────────────────────────────────────────────────────────────────
-// OUTPUT — TypeScript-Array-Generator
+// OUTPUT — Code-Feld füllen (das Format liefert codegen.js)
 // ────────────────────────────────────────────────────────────────────
-// Erzeugt einen selbstbeschreibenden Block: optional Palette, dann das Grid.
-// Freie Hex-Pixel bekommen Indizes oberhalb der Palette, damit der Export
-// verlustfrei bleibt und wieder importiert werden kann.
 export function updateOutput() {
   const ta = document.getElementById('output-textarea');
   if (!ta) return;
-  const sp = getSprite();
-  if (!sp) { ta.value = ''; return; }
-
-  const grid = sp.grid;
-  const name = tsIdentifier(sp.name);
-  const pal = getPal();
-  const maxIdx = getMaxIdx();
+  if (!getSprite()) { ta.value = ''; return; }
   const includePalette = document.getElementById('export-include-palette')?.checked;
-
-  const rawMap = new Map(); // '#rrggbb' → Index oberhalb der Palette
-  let nextIdx = maxIdx + 1;
-  for (const row of grid) for (const c of row) {
-    if (typeof c === 'string') {
-      const key = c.toLowerCase();
-      if (!rawMap.has(key)) rawMap.set(key, nextIdx++);
-    }
-  }
-  const hasRaw = rawMap.size > 0;
-
-  const rows = grid.map(row => '  [' + row.map(c =>
-    typeof c === 'string' ? rawMap.get(c.toLowerCase()) : c
-  ).join(',') + ']').join(',\n');
-
-  // Palette-Block: bei freien Farben zwingend (sonst sind die Indizes wertlos),
-  // sonst nur wenn "Farben mitkopieren" aktiv ist.
-  let palBlock = '';
-  if (hasRaw || includePalette) {
-    const usedIdx = new Set();
-    for (const row of grid) for (const c of row) {
-      if (typeof c === 'number' && c >= 1) usedIdx.add(c);
-    }
-    const entries = [];
-    for (let i = 1; i <= maxIdx; i++) {
-      if (pal[i] && (hasRaw ? usedIdx.has(i) : true)) entries.push(`  ${i}: '${pal[i]}',`);
-    }
-    for (const [hex, idx] of rawMap) entries.push(`  ${idx}: '${hex}',`);
-    palBlock = `// Palette „${sp.palette}“\n`
-             + `export const ${name}_PALETTE: Record<number, string> = {\n${entries.join('\n')}\n};\n\n`;
-  }
-
-  const note = hasRaw
-    ? `// ${rawMap.size} freie Farben wurden als Palette-Indizes ${maxIdx + 1}+ gesichert (verlustfrei)\n`
-    : '';
-
-  ta.value = `${note}${palBlock}export const ${name}: number[][] = [\n${rows},\n];`;
-}
-
-// Sprite-Name → gültiger TS-Bezeichner (SCREAMING_SNAKE, nie mit Ziffer beginnend).
-export function tsIdentifier(name) {
-  let id = String(name || 'SPRITE')
-    .replace(/[^a-zA-Z0-9_]+/g, '_')
-    .replace(/^_+|_+$/g, '')
-    .toUpperCase();
-  if (!id) id = 'SPRITE';
-  if (/^[0-9]/.test(id)) id = 'S_' + id;
-  return id;
+  ta.value = buildCode(state.outputFormat, includePalette);
 }
 
 // ────────────────────────────────────────────────────────────────────

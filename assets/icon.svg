@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Sprite Editor">
+  <rect width="64" height="64" rx="14" fill="#1b1b21"/>
+  <g clip-path="url(#r)">
+    <rect x="0" y="0" width="8" height="8" fill="#212128"/>
+    <rect x="16" y="0" width="8" height="8" fill="#212128"/>
+    <rect x="32" y="0" width="8" height="8" fill="#212128"/>
+    <rect x="48" y="0" width="8" height="8" fill="#212128"/>
+    <rect x="8" y="8" width="8" height="8" fill="#212128"/>
+    <rect x="24" y="8" width="8" height="8" fill="#212128"/>
+    <rect x="56" y="8" width="8" height="8" fill="#212128"/>
+    <rect x="0" y="16" width="8" height="8" fill="#212128"/>
+    <rect x="16" y="16" width="8" height="8" fill="#212128"/>
+    <rect x="48" y="16" width="8" height="8" fill="#212128"/>
+    <rect x="8" y="24" width="8" height="8" fill="#212128"/>
+    <rect x="40" y="24" width="8" height="8" fill="#212128"/>
+    <rect x="56" y="24" width="8" height="8" fill="#212128"/>
+    <rect x="0" y="32" width="8" height="8" fill="#212128"/>
+    <rect x="32" y="32" width="8" height="8" fill="#212128"/>
+    <rect x="48" y="32" width="8" height="8" fill="#212128"/>
+    <rect x="24" y="40" width="8" height="8" fill="#212128"/>
+    <rect x="40" y="40" width="8" height="8" fill="#212128"/>
+    <rect x="56" y="40" width="8" height="8" fill="#212128"/>
+    <rect x="0" y="48" width="8" height="8" fill="#212128"/>
+    <rect x="16" y="48" width="8" height="8" fill="#212128"/>
+    <rect x="32" y="48" width="8" height="8" fill="#212128"/>
+    <rect x="48" y="48" width="8" height="8" fill="#212128"/>
+    <rect x="8" y="56" width="8" height="8" fill="#212128"/>
+    <rect x="24" y="56" width="8" height="8" fill="#212128"/>
+    <rect x="40" y="56" width="8" height="8" fill="#212128"/>
+    <rect x="56" y="56" width="8" height="8" fill="#212128"/>
+    <rect x="40" y="8" width="8" height="8" fill="#6ed49a"/>
+    <rect x="48" y="8" width="8" height="8" fill="#6ed49a"/>
+    <rect x="32" y="16" width="8" height="8" fill="#6ec9b3"/>
+    <rect x="40" y="16" width="8" height="8" fill="#6ec9b3"/>
+    <rect x="24" y="24" width="8" height="8" fill="#6ebecc"/>
+    <rect x="32" y="24" width="8" height="8" fill="#6ebecc"/>
+    <rect x="16" y="32" width="8" height="8" fill="#6eb3e5"/>
+    <rect x="24" y="32" width="8" height="8" fill="#6eb3e5"/>
+    <rect x="8" y="40" width="8" height="8" fill="#6ea8fe"/>
+    <rect x="16" y="40" width="8" height="8" fill="#6ea8fe"/>
+  </g>
+  <defs><clipPath id="r"><rect width="64" height="64" rx="14"/></clipPath></defs>
+</svg>

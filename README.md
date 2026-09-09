@@ -61,14 +61,33 @@ Jeder Sprite merkt sich seine eigene Palette.
 
 ## Import / Export
 
-### TypeScript-Export
+### Code-Formate
 
-Das Code-Feld erzeugt ein `number[][]`. Mit *Palette in den Code schreiben* kommt ein
-`Record<number, string>`-Block dazu.
+Das Code-Feld hat eine **Format**-Auswahl. Alle Formate enthalten die Farben, sind also
+für sich allein benutzbar:
+
+| Format | Datei | Wofür |
+|---|---|---|
+| TypeScript | `.ts` | `number[][]` + `Record<number, string>` — der Klassiker |
+| JavaScript (ESM) | `.js` | Dasselbe ohne Typen |
+| JSON | `.json` | Sprachneutral, für eigene Pipelines und Engines |
+| SVG-Bild | `.svg` | Vektorgrafik, skaliert verlustfrei, direkt einbindbar |
+| CSS (box-shadow) | `.css` | Der Sprite auf einem einzigen Element, ohne Bilddatei |
+| C-Header | `.h` | `uint8`-Indizes + `uint32`-Palette für Mikrocontroller / LED-Matrix |
+| Python | `.py` | Dict + Liste für Pygame, Pillow, Skripte |
+| Text-Raster | `.txt` | Ein Zeichen pro Pixel plus Legende — für Diffs und Doku |
+
+**Zurück in den Editor** kommen TypeScript, JavaScript und JSON. Der Rest ist Einbahnstraße.
+
+*Palette in den Code schreiben* gibt es nur bei TS und JS — überall sonst stecken die
+Farben ohnehin im Ergebnis.
 
 Freie Farben (Pipette, Rohfarben-Trace) passen nicht in `number[][]` — sie bekommen
 Indizes oberhalb der Palette (10, 11, …) und landen im Palettenblock. Der Round-Trip
 Export → Import ist damit verlustfrei.
+
+Das SVG fasst waagerechte Läufe gleicher Farbe zu einem Rechteck zusammen; bei großen
+Flächen spart das den Löwenanteil der Dateigröße.
 
 ### Import
 
@@ -90,6 +109,24 @@ geprüft und mit `JSON.parse` gelesen.
 - **PNG** transparent, Skalierung 1× bis 32×
 - **PDF** mit eingebettetem PNG
 - *Farb-Legende ins Bild* rendert die verwendeten Farben mit Hex-Codes unter den Sprite
+
+---
+
+## Auswahl — ausschneiden und verschieben
+
+Werkzeug **Auswahl** (`A`), dann mit gedrückter Maustaste ein Rechteck aufziehen.
+
+- **In die Auswahl fassen und ziehen** schneidet den Bereich aus und verschiebt ihn;
+  Loslassen setzt ihn ab. Der ganze Zug ist *ein* Undo-Schritt.
+- **`Alt` + Ziehen** lässt das Original stehen — man verschiebt eine Kopie.
+- **Pfeiltasten** schieben pixelweise.
+- **`Strg`+`X` / `C` / `V`** schneiden aus, kopieren, fügen ein; die Zwischenablage
+  überlebt einen Sprite-Wechsel, sodass sich Teile zwischen Sprites kopieren lassen.
+- **`Entf`** leert den Bereich, **`Esc`** oder ein Klick daneben hebt die Auswahl auf.
+
+Beim Absetzen überschreiben nur gefüllte Pixel — transparente Stellen des Blocks lassen
+den Untergrund stehen. Was über den Rand hinausgeschoben wird, ist weg (`Strg`+`Z` holt es
+zurück).
 
 ---
 
@@ -116,9 +153,14 @@ Die Schablone überlebt einen Reload (eigener localStorage-Key).
 | `Shift` + Links + Ziehen | Schablone verschieben |
 | `Shift` + Rechtsklick | Schablonen-Pipette (exakter Hex) |
 | `0`–`9` | Farb-Index wählen |
-| `P` `B` `S` `F` `E` `W` | Stift · Pinsel · Spray · Füllen · Radierer · Zauberstab |
+| `P` `B` `S` `F` `E` `W` `A` | Stift · Pinsel · Spray · Füllen · Radierer · Zauberstab · Auswahl |
+| Ziehen in der Auswahl | Bereich ausschneiden und verschieben |
+| `Alt` + Ziehen | Kopie verschieben, Original bleibt |
+| Pfeiltasten | Auswahl pixelweise verschieben |
+| `Strg+A` / `C` / `X` / `V` | Alles wählen · Kopieren · Ausschneiden · Einfügen |
+| `Entf` | Auswahl leeren |
 | `Strg+Z` / `Strg+Y` | Rückgängig / Wiederholen |
-| `Esc` | Dialog oder Vollbild schließen |
+| `Esc` | Auswahl aufheben, Dialog oder Vollbild schließen |
 
 ---
 
@@ -157,12 +199,19 @@ Ein Toast fasst nach der Migration zusammen, was passiert ist.
 sprite-editor/
 ├── index.html          ← Struktur, keine Inline-Styles
 ├── styles.css          ← Token-System + Komponenten
+├── site.webmanifest    ← PWA-Manifest (Name, Farben, Icons)
+├── assets/             ← Logos: icon.svg, favicon(.ico|-16|-32|-48), apple-touch,
+│                          icon-192/512, icon-maskable-512, og-image
+├── tools/
+│   └── make_icons.py   ← erzeugt alles in assets/ neu (nur Standardbibliothek)
 └── js/
-    ├── data.js         ← Farb-Labels, eingebaute Paletten, Konstanten
+    ├── data.js         ← Farb-Labels, eingebaute Paletten, cellToColor, Konstanten
     ├── state.js        ← Sprites, Paletten, UI-State + Lookups
     ├── storage.js      ← localStorage + Projekt-Datei
     ├── migrate.js      ← v1 (dog/cat) → v2 (generisch)
     ├── render.js       ← alle Render-Funktionen + Mal-Operationen
+    ├── codegen.js      ← Code-Formate (TS/JS/JSON/SVG/CSS/C/Python/Text)
+    ├── selection.js    ← Auswahl: aufziehen, ausschneiden, verschieben, einfügen
     ├── history.js      ← Undo/Redo pro Strich
     ├── sprites.js      ← anlegen, umbenennen, duplizieren, löschen
     ├── palettes.js     ← Paletten-Modal + Fork/Import
@@ -182,7 +231,9 @@ data.js
    ↑
 state.js
    ↑
-   ├─ render.js ← (data, state)
+   ├─ codegen.js ← (data, state)
+   ├─ render.js ← (data, state, codegen)
+   ├─ selection.js ← (state, render, storage, history)
    ├─ migrate.js ← (data)
    ├─ tsimport.js ← (data)
    ├─ storage.js ← (state, data, migrate, filesystem, toast)
@@ -204,6 +255,22 @@ state.js
 - localStorage-Limit ~5 MB; bei Überschreitung erscheint ein Hinweis-Toast.
 - PDF braucht beim ersten Aufruf Internet (jsPDF vom CDN).
 - Die Schablonen-Pipette ignoriert Stellen mit Alpha = 0.
+
+---
+
+## Logos
+
+Alle Icons stammen aus `tools/make_icons.py` — ein Skript ohne Fremdbibliotheken, das
+PNG, ICO und SVG selbst schreibt. Motiv ist eine Pixel-Treppe in den beiden Akzentfarben
+der App auf dem Transparenz-Schachbrett des Editors.
+
+```
+python tools/make_icons.py
+```
+
+Danach liegen Favicon (SVG + ICO + PNG), Apple-Touch-Icon, die PWA-Icons (192/512 und
+maskierbar) sowie ein OG-Vorschaubild in `assets/`. Wer das Motiv ändert, ändert
+`band_cells()` im Skript und lässt es neu laufen — alle Größen bleiben dadurch identisch.
 
 ---
 
