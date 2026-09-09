@@ -525,6 +525,10 @@ kbd {
   z-index: 2;
   will-change: transform;
 }
+/* Der Hund im Hero. z-index 1 haelt ihn hinter dem Lese-Schleier, damit
+   der Text vorn bleibt und lesbar ueber ihm liegt. */
+.actor--hero { z-index: 1; }
+
 .actor--walk {
   animation: actorWander var(--walk-dur, 30s) ease-in-out infinite;
 }
