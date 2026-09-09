@@ -1,34 +1,34 @@
 /* ══════════════════════════════════════════════════════════════════
    SPRITE EDITOR — Landingpage
-   Eigenes Stylesheet. Bindet styles.css NICHT ein, übernimmt aber
-   dieselben Tokens, damit Startseite und Editor zusammenpassen.
+   Eigenes Stylesheet. Bindet styles.css NICHT ein, uebernimmt aber
+   dessen Tokens, damit Startseite und Editor zusammenpassen.
+   Kein JavaScript, keine externen Ressourcen.
 
-   Aufbau:  1 Tokens · 2 Basis · 3 Bausteine · 4 Bänder · 5 Kopfzeile
-            6 Hero · 7 Karten · 8 Palette · 9 Export · 10 Schritte
-            11 Kürzel · 12 Abschluss · 13 Fuß · 14 Responsive · 15 Motion
+   Aufbau:  1 Tokens · 2 Basis · 3 Bausteine · 4 Baender · 5 Kopfzeile
+            6 Buehne (Himmel, Ebenen, Figuren) · 7 Hero
+            8 Station 01 Pixel · 9 Station 02 Farbe · 10 Station 03 Werkzeug
+            11 Station 05 Export · 12 Abschluss · 13 Fuss
+            14 Responsive · 15 Keyframes · 16 Reduzierte Bewegung
    ══════════════════════════════════════════════════════════════════ */
 
 /* ── 1 · Tokens ─────────────────────────────────────────────────── */
 :root {
   color-scheme: dark;
 
-  /* Flächen — von hinten nach vorne */
+  /* Flaechen — aus dem Editor */
   --bg:          #121214;
   --surface-1:   #1a1a1e;
   --surface-2:   #202026;
   --surface-3:   #292930;
   --surface-4:   #33333c;
 
-  /* Linien */
   --line:        #2b2b33;
   --line-strong: #3d3d47;
 
-  /* Text */
   --text:        #e6e6ea;
   --text-muted:  #9a9aa6;
   --text-dim:    #6c6c78;
 
-  /* Akzente */
   --accent:        #6ea8fe;
   --accent-bg:     #17253c;
   --accent-line:   #2d4870;
@@ -36,43 +36,49 @@
   --primary-bg:    #142a20;
   --primary-line:  #245c40;
 
-  /* Marken-Rampe aus assets/icon.svg — sparsam einsetzen */
+  /* Marken-Rampe aus assets/icon.svg */
   --ramp-1: #6ed49a;
   --ramp-2: #6ec9b3;
   --ramp-3: #6ebecc;
   --ramp-4: #6eb3e5;
   --ramp-5: #6ea8fe;
 
-  /* Tinte auf hellem Grün — für den Hauptknopf */
+  /* Warme Toene, abgenommen von der Pixel-Art in assets/landing/ */
+  --warm:      #b07848;
+  --warm-lift: #d8a860;
+  --leaf:      #5d9642;
+  --leaf-deep: #21492c;
+
+  /* Himmel — Daemmerung, oben am Seitengrund angeschlossen */
+  --sky-top:  #12131a;
+  --sky-mid:  #1a2130;
+  --sky-low:  #26374a;
+  --sky-horizon: #33485c;
+
   --on-primary: #0c1f15;
 
-  /* Schrift */
   --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, 'Cascadia Code', Consolas, 'SF Mono', monospace;
 
-  /* Typo-Skala */
   --fs-label: 0.6875rem;
   --fs-xs:    0.75rem;
   --fs-sm:    0.8125rem;
   --fs-md:    0.9375rem;
   --fs-lg:    1.0625rem;
-  --fs-h3:    1.0625rem;
-  --fs-h2:    clamp(1.5rem, 1.1rem + 1.6vw, 2.125rem);
-  --fs-h1:    clamp(2.25rem, 1.4rem + 3.6vw, 3.75rem);
+  --fs-h3:    1rem;
+  --fs-h2:    clamp(1.55rem, 1.05rem + 2vw, 2.4rem);
+  --fs-h1:    clamp(2.6rem, 1.5rem + 4.6vw, 4.5rem);
 
-  /* Maße */
   --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px;  --sp-4: 16px;
   --sp-5: 24px; --sp-6: 32px; --sp-7: 48px;
   --r-sm: 4px;  --r-md: 6px;  --r-lg: 10px;
 
-  --measure: 62ch;
+  --measure: 60ch;
   --page:    1120px;
   --gutter:  clamp(1.25rem, 4vw, 3rem);
   --band-y:  clamp(3.5rem, 7vw, 6rem);
 
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.35);
-
-  /* Schachbrett für Transparenz-Anzeige — wie im Editor */
+  /* Schachbrett fuer Transparenz — wie im Editor */
   --checker:
     linear-gradient(45deg, #3a3a44 25%, transparent 25%),
     linear-gradient(-45deg, #3a3a44 25%, transparent 25%),
@@ -104,34 +110,24 @@ h1, h2, h3 {
   font-weight: 700;
   text-wrap: balance;
 }
+h1 { font-size: var(--fs-h1); line-height: 0.98; letter-spacing: -0.04em; }
+h2 { font-size: var(--fs-h2); line-height: 1.1;  letter-spacing: -0.025em; }
+h3 { font-size: var(--fs-h3); line-height: 1.3;  letter-spacing: -0.01em; }
 
-h1 {
-  font-size: var(--fs-h1);
-  line-height: 1.02;
-  letter-spacing: -0.033em;
-}
-
-h2 {
-  font-size: var(--fs-h2);
-  line-height: 1.12;
-  letter-spacing: -0.022em;
-}
-
-h3 {
-  font-size: var(--fs-h3);
-  line-height: 1.3;
-  letter-spacing: -0.012em;
+/* Die Station, in der es um Zahlen geht, spricht Mono. */
+.h2--mono {
+  font-family: var(--mono);
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
 p  { margin: 0; }
 ul, ol, dl, dd { margin: 0; padding: 0; }
 ul, ol { list-style: none; }
-em { color: var(--text); font-style: normal; font-weight: 600; }
 
 img, svg { max-width: 100%; }
 
-a { color: var(--accent); text-decoration-color: var(--accent-line); text-underline-offset: 3px; }
-a:hover { text-decoration-color: var(--accent); }
+a { color: var(--accent); text-underline-offset: 3px; }
 
 code {
   font-family: var(--mono);
@@ -139,27 +135,19 @@ code {
   color: var(--accent);
   word-break: break-word;
 }
+.mono { font-family: var(--mono); }
 
 :focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  outline-offset: 3px;
   border-radius: var(--r-sm);
-}
-
-.visually-hidden {
-  position: absolute;
-  width: 1px; height: 1px;
-  margin: -1px; padding: 0;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
 }
 
 .skip {
   position: absolute;
   left: var(--sp-4);
   top: -4rem;
-  z-index: 50;
+  z-index: 60;
   padding: var(--sp-2) var(--sp-4);
   background: var(--surface-3);
   border: 1px solid var(--line-strong);
@@ -173,133 +161,144 @@ code {
 .skip:focus { top: var(--sp-3); }
 
 /* ── 3 · Bausteine ──────────────────────────────────────────────── */
-
-/* Knöpfe */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--sp-2);
-  padding: 0.7rem 1.15rem;
+  padding: 0.72rem 1.2rem;
   border: 1px solid transparent;
   border-radius: var(--r-md);
   background: var(--surface-2);
   color: var(--text);
   font: 600 var(--fs-md)/1 var(--font);
-  letter-spacing: -0.005em;
   text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
-  transition: background-color 140ms ease, border-color 140ms ease,
-              color 140ms ease, transform 140ms ease;
+  transition: background-color 140ms ease, border-color 140ms ease, transform 140ms ease;
 }
-
 .btn--primary {
   background: var(--primary);
   border-color: var(--primary);
   color: var(--on-primary);
+  box-shadow: 0 6px 22px rgba(110, 212, 154, 0.16);
 }
 .btn--primary:hover {
-  background: #85e0ac;
-  border-color: #85e0ac;
-  transform: translateY(-1px);
+  background: #8ce2b1;
+  border-color: #8ce2b1;
+  transform: translateY(-2px);
 }
 .btn--primary:active { transform: translateY(0); }
 
 .btn--ghost {
-  background: transparent;
+  background: rgba(26, 26, 30, 0.55);
   border-color: var(--line-strong);
   color: var(--text);
+  backdrop-filter: blur(4px);
 }
-.btn--ghost:hover {
-  background: var(--surface-2);
-  border-color: var(--text-dim);
-}
+.btn--ghost:hover { background: var(--surface-2); border-color: var(--text-dim); }
 
 .btn--sm { padding: 0.45rem 0.85rem; font-size: var(--fs-sm); }
-.btn--lg { padding: 0.85rem 1.6rem; font-size: var(--fs-lg); }
+.btn--lg { padding: 0.9rem 1.7rem; font-size: var(--fs-lg); }
 
-/* Tastenkappen */
 kbd {
   display: inline-block;
-  min-width: 1.6em;
-  padding: 0.15em 0.45em;
+  min-width: 1.7em;
+  padding: 0.18em 0.42em;
   background: var(--surface-3);
   border: 1px solid var(--line-strong);
   border-bottom-width: 2px;
   border-radius: var(--r-sm);
   color: var(--text);
-  font: 600 var(--fs-xs)/1.5 var(--mono);
+  font: 600 var(--fs-xs)/1.45 var(--mono);
   text-align: center;
   white-space: nowrap;
 }
 
-/* Eyebrow — Mono als Auszeichnungsschrift */
 .eyebrow {
   display: flex;
   align-items: center;
-  gap: 0.6em;
+  gap: 0.7em;
   margin-bottom: var(--sp-4);
   color: var(--text-dim);
   font: 500 var(--fs-label)/1 var(--mono);
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
 }
-.eyebrow::before {
-  content: "";
-  flex: none;
-  width: 6px; height: 6px;
-  background: var(--accent);
+
+/* Die Stationen sind eine echte Reihenfolge — darum sind sie nummeriert. */
+.st-num {
+  padding: 0.32em 0.5em;
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--r-sm);
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 0.08em;
 }
 
-/* Fließtext-Varianten */
 .lead {
   max-width: var(--measure);
   margin-top: var(--sp-5);
-  color: var(--text-muted);
+  color: var(--text);
   font-size: var(--fs-lg);
-  line-height: 1.55;
+  line-height: 1.5;
 }
-
 .section-lead {
   max-width: var(--measure);
   margin-top: var(--sp-4);
   font-size: var(--fs-md);
 }
-
 .note {
-  max-width: var(--measure);
+  max-width: 46ch;
   color: var(--text-dim);
   font-size: var(--fs-sm);
   line-height: 1.6;
 }
 .note code { color: var(--text-muted); }
 
-.card-meta {
-  color: var(--text-dim);
-  font-size: var(--fs-sm);
-  line-height: 1.55;
+.chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.chip-tag {
+  padding: 0.32rem 0.62rem;
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  color: var(--text-muted);
+  font: 500 var(--fs-xs)/1.4 var(--mono);
+}
+.chip-tag--in {
+  background: var(--primary-bg);
+  border-color: var(--primary-line);
+  color: var(--primary);
 }
 
-/* ── 4 · Bänder ─────────────────────────────────────────────────── */
+/* ── 4 · Baender ────────────────────────────────────────────────── */
 .band {
+  position: relative;
   max-width: var(--page);
   margin-inline: auto;
   padding: var(--band-y) var(--gutter);
 }
-.band + .band { border-top: 1px solid var(--line); }
-.band--tight { padding-block: clamp(2.75rem, 5vw, 4.25rem); }
+.band--flush { padding-block: clamp(2.5rem, 5vw, 4rem); }
+
+/* Station 02 sitzt auf einer eigenen, waermeren Flaeche. */
+.band--warm {
+  max-width: none;
+  background:
+    radial-gradient(120% 140% at 12% 0%, rgba(176, 120, 72, 0.10) 0%, transparent 60%),
+    var(--surface-1);
+  border-block: 1px solid var(--line);
+}
+.band--warm > * { max-width: var(--page); margin-inline: auto; }
 
 /* ── 5 · Kopfzeile ──────────────────────────────────────────────── */
 .topbar {
   position: sticky;
   top: 0;
-  z-index: 20;
-  background: rgba(18, 18, 20, 0.92);
+  z-index: 40;
+  background: rgba(18, 18, 20, 0.88);
   border-bottom: 1px solid var(--line);
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(10px);
 }
-
 .topbar-inner {
   display: flex;
   align-items: center;
@@ -308,31 +307,15 @@ kbd {
   margin-inline: auto;
   padding: 0.7rem var(--gutter);
 }
-
-.brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55rem;
-}
-
-.brand-mark {
-  width: 22px;
-  height: 22px;
-  image-rendering: pixelated;
-}
-
+.brand { display: inline-flex; align-items: center; gap: 0.55rem; }
+.brand-mark { width: 22px; height: 22px; image-rendering: pixelated; }
 .brand-name {
   color: var(--text);
   font-size: var(--fs-md);
   font-weight: 650;
   letter-spacing: -0.015em;
 }
-
-.topnav {
-  display: flex;
-  gap: var(--sp-5);
-  margin-inline-start: auto;
-}
+.topnav { display: flex; gap: var(--sp-5); margin-inline-start: auto; }
 .topnav a {
   color: var(--text-muted);
   font-size: var(--fs-sm);
@@ -340,18 +323,190 @@ kbd {
 }
 .topnav a:hover { color: var(--text); }
 
-/* ── 6 · Hero ───────────────────────────────────────────────────── */
-.hero { padding-block: clamp(3.5rem, 8vw, 6.5rem); }
+/* ══ 6 · Buehne ═════════════════════════════════════════════════════
+   Die Handschrift stammt aus dem Stream-Overlay des Autors:
+   endlos scrollende Ebenen (scrollHalf), Flattern als Frame-Wechsel
+   ueber opacity, und Figuren in drei verschachtelten Ebenen, weil
+   drei Bewegungen gleichzeitig auf `transform` laufen:
+     .actor       Standort + Wandern    translateX
+     .actor-face  Zentrierung + Drehung translateX(-50%) scaleX
+     .actor-body  Wippen                translateY
+   ═══════════════════════════════════════════════════════════════ */
+.stage {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+.stage-inner {
+  position: relative;
+  z-index: 3;
+  max-width: var(--page);
+  margin-inline: auto;
+  padding: var(--gutter);
+}
+
+.scene { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+
+.scene-sky {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    var(--sky-top) 0%,
+    var(--sky-mid) 40%,
+    var(--sky-low) 74%,
+    var(--sky-horizon) 100%
+  );
+}
+
+/* Lesbarkeit: der Text liegt auf einem Schleier, nicht auf dem Himmel. */
+.scene-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background:
+    linear-gradient(to right, rgba(18, 18, 20, 0.92) 0%, rgba(18, 18, 20, 0.55) 46%, rgba(18, 18, 20, 0.1) 78%),
+    linear-gradient(to bottom, rgba(18, 18, 20, 0.55) 0%, rgba(18, 18, 20, 0) 30%);
+}
+
+/* Alle waagerecht laufenden Ebenen teilen diese Basis. Der Versatz
+   entsteht ueber background-position, die Kacheln sind nahtlos
+   (die Skyline ist dafuer gespiegelt verdoppelt). */
+.layer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  background-repeat: repeat-x;
+  background-position: 0 bottom;
+  image-rendering: pixelated;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: background-position;
+}
+
+.layer--clouds {
+  top: 8%;
+  height: 120px;
+  background-image: url("assets/landing/clouds.png");
+  background-size: 900px 120px;
+  opacity: 0.42;
+  animation-name: driftClouds;
+  animation-duration: 190s;
+}
+.layer--skyline {
+  bottom: 0;
+  height: 204px;
+  background-image: url("assets/landing/skyline.png");
+  background-size: 640px 204px;
+  opacity: 0.55;
+  animation-name: driftSkyline;
+  animation-duration: 240s;
+}
+.layer--deco-far {
+  bottom: 34px;
+  height: 76px;
+  background-image: url("assets/landing/deco-band.png");
+  background-size: 340px 76px;
+  opacity: 0.5;
+  filter: brightness(0.6) saturate(0.7);
+  transform: scaleX(-1);
+  animation-name: driftDecoFar;
+  animation-duration: 150s;
+}
+.layer--deco-near {
+  bottom: 22px;
+  height: 152px;
+  background-image: url("assets/landing/deco-band.png");
+  background-size: 680px 152px;
+  animation-name: driftDecoNear;
+  animation-duration: 96s;
+}
+
+.scene-ground {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 44px;
+  background:
+    linear-gradient(to bottom,
+      var(--leaf) 0 3px,
+      var(--leaf-deep) 3px 14px,
+      #16281c 14px 100%);
+}
+
+/* --- Vogel: zwei PNG-Frames, per opacity umgeschaltet ------------ */
+.bird {
+  position: absolute;
+  left: 100%;
+  top: var(--top, 24%);
+  z-index: 3;
+  width: var(--bw, 68px);
+  height: var(--bh, 28px);
+  animation: birdPass var(--every, 34s) linear infinite;
+  animation-delay: var(--delay, 4s);
+  will-change: transform;
+}
+.bird img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  animation-duration: var(--flap, 0.42s);
+  animation-timing-function: steps(2, jump-none);
+  animation-iteration-count: infinite;
+}
+/* Zwei eigene Keyframe-Saetze statt animation-direction: reverse —
+   nur so ist garantiert immer genau ein Frame sichtbar. */
+.bird img:first-child { opacity: 1; animation-name: flapFrameA; }
+.bird img:last-child  { opacity: 0; animation-name: flapFrameB; }
+
+.bird--hero { --top: 22%; --bw: 68px; --bh: 28px; --every: 38s; --delay: 3s; }
+.bird--far  { --top: 16%; --bw: 51px; --bh: 21px; --every: 29s; --delay: 7s; --flap: 0.5s; }
+
+/* --- Figuren ---------------------------------------------------- */
+.actor {
+  position: absolute;
+  left: var(--x, 50%);
+  bottom: var(--base, 12px);
+  z-index: 2;
+  will-change: transform;
+}
+.actor--walk {
+  animation: actorWander var(--walk-dur, 30s) ease-in-out infinite;
+}
+.actor-face {
+  display: block;
+  transform: translateX(-50%) scaleX(var(--face, 1));
+}
+/* Die Blickrichtung kippt als harte Stufe. Interpoliert man scaleX,
+   wird das Sprite beim Wenden durch die Nullbreite gequetscht. */
+.actor--walk .actor-face {
+  animation: actorTurn var(--walk-dur, 30s) linear infinite;
+}
+.actor-body {
+  display: block;
+  width: auto;
+  height: var(--h, 100px);
+  image-rendering: pixelated;
+  animation: actorBob var(--bob-dur, 2.6s) ease-in-out infinite alternate;
+  animation-delay: var(--bob-delay, 0s);
+}
+
+/* ── 7 · Hero ───────────────────────────────────────────────────── */
+.stage--hero { border-bottom: 1px solid var(--line); }
+.stage--hero .stage-inner {
+  padding-block: clamp(3.5rem, 9vw, 7rem) clamp(4.5rem, 11vw, 8.5rem);
+}
 
 .hero-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
-  gap: clamp(2rem, 5vw, 4rem);
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: clamp(2rem, 5vw, 4.5rem);
   align-items: center;
 }
-
-.hero-text h1 { margin-top: 0; }
-
+.hero-text .lead { color: var(--text); }
 .cta-row {
   display: flex;
   flex-wrap: wrap;
@@ -359,83 +514,223 @@ kbd {
   margin-block: var(--sp-6) var(--sp-5);
 }
 
-/* Demo-Panel: Raster links, Export rechts */
-.hero-demo {
-  display: grid;
-  grid-template-columns: minmax(110px, 36%) minmax(0, 1fr);
-  gap: 1px;
-  margin: 0;
-  background: var(--line);
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  overflow: hidden;
-}
-
-.demo-canvas {
+/* Das leere Raster — der Anfang von allem. */
+.raster-card {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: clamp(1rem, 2.5vw, 1.75rem);
+  flex-direction: column;
+  gap: var(--sp-3);
+  max-width: 21rem;
+  margin: 0;
+  margin-inline-start: auto;
+  padding: var(--sp-4);
+  background: rgba(20, 20, 24, 0.72);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+}
+.raster {
+  position: relative;
+  aspect-ratio: 1;
   background-color: var(--surface-1);
   background-image: var(--checker);
   background-size: 16px 16px;
   background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+  border: 1px solid var(--line-strong);
+}
+.raster::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(to right,  rgba(230, 230, 234, 0.07) 0 1px, transparent 1px 6.25%),
+    repeating-linear-gradient(to bottom, rgba(230, 230, 234, 0.07) 0 1px, transparent 1px 6.25%);
+}
+/* Der Cursor steht schon auf dem Feld, auf dem gleich Station 01
+   den ersten Pixel setzt. */
+.raster-caret {
+  position: absolute;
+  left: 31.25%;
+  top: 6.25%;
+  width: 6.25%;
+  height: 6.25%;
+  background: var(--ramp-1);
+  animation: caretBlink 1.15s steps(1, end) infinite;
+}
+.raster-card figcaption {
+  color: var(--text-dim);
+  font-size: var(--fs-xs);
+  text-align: center;
 }
 
+/* ── 8 · Station 01 · Pixel ─────────────────────────────────────── */
+.pixel-demo {
+  display: grid;
+  grid-template-columns: minmax(0, 17rem) minmax(0, 9rem) minmax(0, 1fr);
+  grid-template-areas: "bits build code";
+  gap: clamp(1.25rem, 3vw, 2.75rem);
+  align-items: center;
+  margin-top: var(--sp-7);
+}
+
+.bits {
+  grid-area: bits;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 3px;
+}
+.bits span {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  color: var(--text-dim);
+  font: 500 var(--fs-xs)/1 var(--mono);
+  animation: cellIn 11s ease-out infinite;
+  animation-delay: calc(var(--i) * 48ms);
+}
+.bits .b1 { color: var(--ramp-1); background: rgba(110, 212, 154, 0.12); border-color: rgba(110, 212, 154, 0.4); }
+.bits .b2 { color: var(--ramp-2); background: rgba(110, 201, 179, 0.12); border-color: rgba(110, 201, 179, 0.4); }
+.bits .b3 { color: var(--ramp-3); background: rgba(110, 190, 204, 0.12); border-color: rgba(110, 190, 204, 0.4); }
+.bits .b4 { color: var(--ramp-4); background: rgba(110, 179, 229, 0.12); border-color: rgba(110, 179, 229, 0.4); }
+.bits .b5 { color: var(--ramp-5); background: rgba(110, 168, 254, 0.12); border-color: rgba(110, 168, 254, 0.4); }
+
+.build-wrap {
+  grid-area: build;
+  padding: var(--sp-3);
+  background-color: var(--surface-1);
+  background-image: var(--checker);
+  background-size: 20px 20px;
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-md);
+}
 .sprite {
   display: block;
   width: 100%;
   height: auto;
   shape-rendering: crispEdges;
-  image-rendering: pixelated;
+}
+/* Jeder Pixel geht genau dann an, wenn seine Ziffer links angeht. */
+.build rect {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: cellIn 11s ease-out infinite;
+  animation-delay: calc(var(--i) * 48ms);
 }
 
 .demo-code {
-  padding: clamp(1rem, 2.5vw, 1.5rem);
+  grid-area: code;
+  min-width: 0;
+  padding: var(--sp-4) var(--sp-5);
   background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
   overflow-x: auto;
 }
 .demo-code pre {
   margin: 0;
-  font: 400 var(--fs-xs)/1.75 var(--mono);
+  font: 400 var(--fs-xs)/1.7 var(--mono);
   color: var(--text-dim);
-  tab-size: 2;
 }
-.demo-code code {
-  color: inherit;
-  font-size: inherit;
-  word-break: normal;
-}
-
-/* Code-Farben: Schlüsselwörter dezent, Indizes in der Marken-Rampe */
+.demo-code code { color: inherit; font-size: inherit; word-break: normal; }
 .demo-code .k  { color: var(--accent); }
 .demo-code .v  { color: var(--text); }
 .demo-code .t  { color: var(--text-muted); }
+.demo-code .s  { color: var(--warm-lift); }
 .demo-code .n1 { color: var(--ramp-1); font-weight: 600; }
 .demo-code .n2 { color: var(--ramp-2); font-weight: 600; }
 .demo-code .n3 { color: var(--ramp-3); font-weight: 600; }
 .demo-code .n4 { color: var(--ramp-4); font-weight: 600; }
 .demo-code .n5 { color: var(--ramp-5); font-weight: 600; }
-
-.hero-demo figcaption {
-  grid-column: 1 / -1;
-  padding: 0.7rem clamp(1rem, 2.5vw, 1.5rem);
-  background: var(--surface-2);
+.demo-cap {
+  margin-top: var(--sp-3);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--line);
   color: var(--text-muted);
   font-size: var(--fs-xs);
-  line-height: 1.55;
 }
 .fc-dim { color: var(--text-dim); }
 
-/* ── 7 · Karten ─────────────────────────────────────────────────── */
-.cards {
+/* ── 9 · Station 02 · Farbe ─────────────────────────────────────── */
+.swap {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(255px, 1fr));
+  grid-template-columns: minmax(0, 15rem) minmax(0, 1fr);
+  gap: clamp(1.5rem, 4vw, 3.5rem);
+  align-items: center;
+  margin-top: var(--sp-7);
+}
+.swap-demo { display: flex; flex-direction: column; gap: var(--sp-4); }
+.recolor {
+  padding: var(--sp-3);
+  background-color: var(--surface-2);
+  background-image: var(--checker);
+  background-size: 24px 24px;
+  background-position: 0 0, 0 12px, 12px -12px, -12px 0;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-md);
+}
+
+.swatches {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: var(--sp-2);
+}
+.swatch {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  align-items: center;
+}
+.swatch .chip {
+  display: block;
+  width: 100%;
+  height: 30px;
+  border: 1px solid rgba(0, 0, 0, 0.4);
+  border-radius: var(--r-sm);
+}
+.swatch--transparent .chip {
+  background-color: var(--surface-2);
+  background-image: var(--checker);
+  background-size: 10px 10px;
+  background-position: 0 0, 0 5px, 5px -5px, -5px 0;
+}
+.swatch .idx {
+  color: var(--text-dim);
+  font: 600 var(--fs-xs)/1 var(--mono);
+}
+
+/* Ein Satz Keyframes pro Index. `fill` greift im SVG, `background-color`
+   auf dem Swatch — so wandern Sprite und Palette im Gleichschritt. */
+.c1 { fill: var(--ramp-1); background-color: var(--ramp-1); animation: pal1 15s ease-in-out infinite; }
+.c2 { fill: var(--ramp-2); background-color: var(--ramp-2); animation: pal2 15s ease-in-out infinite; }
+.c3 { fill: var(--ramp-3); background-color: var(--ramp-3); animation: pal3 15s ease-in-out infinite; }
+.c4 { fill: var(--ramp-4); background-color: var(--ramp-4); animation: pal4 15s ease-in-out infinite; }
+.c5 { fill: var(--ramp-5); background-color: var(--ramp-5); animation: pal5 15s ease-in-out infinite; }
+
+.swap-text { display: flex; flex-direction: column; gap: var(--sp-5); }
+.facts { display: flex; flex-direction: column; gap: var(--sp-3); }
+.facts li {
+  padding-left: var(--sp-4);
+  border-left: 2px solid var(--line-strong);
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+}
+.fact-key { color: var(--text); font-weight: 600; }
+
+/* ── 10 · Station 03 · Werkzeug ─────────────────────────────────── */
+/* 280px statt 245px: so ergeben sich auf dem Desktop drei Spalten und
+   die sechs Werkzeuge stehen 3 + 3, statt dass zwei allein umbrechen. */
+.tools {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: var(--sp-4);
   margin-top: var(--sp-7);
 }
-
-.card {
+.tools--three { margin-top: 0; }
+.tool {
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
@@ -445,213 +740,71 @@ kbd {
   border-radius: var(--r-lg);
   transition: border-color 160ms ease, background-color 160ms ease;
 }
-.card:hover {
-  background: var(--surface-2);
-  border-color: var(--line-strong);
+.tool:hover { background: var(--surface-2); border-color: var(--line-strong); }
+.tool p { font-size: var(--fs-sm); line-height: 1.6; }
+.keys-row { display: flex; flex-wrap: wrap; gap: 0.28rem; }
+.tool-meta {
+  margin-top: auto;
+  color: var(--text-dim);
+  font-size: var(--fs-xs);
+  line-height: 1.55;
 }
-.card p { font-size: var(--fs-sm); line-height: 1.6; }
-.card .card-meta { margin-top: auto; padding-top: var(--sp-1); }
 
-/* ── 8 · Palettenstreifen ───────────────────────────────────────── */
-.swatches {
+/* ── 11 · Station 05 · Export ───────────────────────────────────── */
+.formats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(76px, 1fr));
-  gap: var(--sp-2);
-  margin-block: var(--sp-6) var(--sp-5);
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: var(--sp-3);
+  margin-top: var(--sp-7);
 }
-
-.swatch {
+.fmt {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
-  padding: var(--sp-2);
+  gap: var(--sp-2);
+  padding: var(--sp-4);
   background: var(--surface-1);
   border: 1px solid var(--line);
   border-radius: var(--r-md);
+  transition: border-color 160ms ease, transform 160ms ease;
 }
-
-.swatch .chip {
-  display: block;
-  height: 46px;
-  border: 1px solid rgba(0, 0, 0, 0.35);
+.fmt:hover { border-color: var(--accent-line); transform: translateY(-2px); }
+.fmt-ext {
+  align-self: flex-start;
+  padding: 0.1em 0.45em;
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-line);
   border-radius: var(--r-sm);
-  image-rendering: pixelated;
+  color: var(--accent);
+  font: 600 var(--fs-sm)/1.5 var(--mono);
 }
-
-.swatch--transparent .chip {
-  background-color: var(--surface-2);
-  background-image: var(--checker);
-  background-size: 12px 12px;
-  background-position: 0 0, 0 6px, 6px -6px, -6px 0;
-}
-
-.swatch .idx {
-  color: var(--text);
-  font: 600 var(--fs-sm)/1 var(--mono);
-  font-variant-numeric: tabular-nums;
-}
-
-.swatch .hex {
-  color: var(--text-dim);
-  font: 400 var(--fs-label)/1.2 var(--mono);
-  letter-spacing: 0.01em;
-}
-
-/* ── 9 · Export ─────────────────────────────────────────────────── */
-.table-wrap {
-  margin-top: var(--sp-6);
-  overflow-x: auto;
-}
-
-.formats {
-  width: 100%;
-  min-width: 34rem;
-  border-collapse: collapse;
-  text-align: left;
-}
-
-.formats thead th {
-  padding: 0 var(--sp-4) var(--sp-2) 0;
-  border-bottom: 1px solid var(--line-strong);
-  color: var(--text-dim);
-  font: 500 var(--fs-label)/1 var(--mono);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.formats tbody th,
-.formats tbody td {
-  padding: 0.72rem var(--sp-4) 0.72rem 0;
-  border-bottom: 1px solid var(--line);
-  font-size: var(--fs-sm);
-  vertical-align: baseline;
-}
-
-.formats tbody th {
-  color: var(--text);
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.formats tbody td { color: var(--text-muted); }
-.formats tbody tr:last-child th,
-.formats tbody tr:last-child td { border-bottom: 0; }
+.fmt h3 { font-size: var(--fs-sm); }
+.fmt p { color: var(--text-dim); font-size: var(--fs-xs); line-height: 1.55; }
 
 .export-extras {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
   gap: var(--sp-5);
   margin-top: var(--sp-6);
+  padding-top: var(--sp-6);
+  border-top: 1px solid var(--line);
 }
-
-.extra {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-3);
-}
-
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-}
-
-.chip-tag {
-  padding: 0.3rem 0.6rem;
-  background: var(--surface-2);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--r-sm);
-  color: var(--text-muted);
-  font: 500 var(--fs-xs)/1.4 var(--mono);
-}
-
-.chip-tag--in {
-  background: var(--primary-bg);
-  border-color: var(--primary-line);
-  color: var(--primary);
-}
-
-/* ── 10 · Schritte ──────────────────────────────────────────────── */
-.steps {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(255px, 1fr));
-  gap: var(--sp-5);
-  margin-top: var(--sp-6);
-}
-
-.steps li {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-3);
-  padding-top: var(--sp-4);
-  border-top: 2px solid var(--line-strong);
-}
-
-.step-num {
-  color: var(--text-dim);
-  font: 500 var(--fs-label)/1 var(--mono);
-  letter-spacing: 0.14em;
-}
-.step-num::after { content: " / 3"; color: var(--line-strong); }
-
-.steps p { font-size: var(--fs-sm); line-height: 1.6; }
-
-/* ── 11 · Kürzel ────────────────────────────────────────────────── */
-.keys {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 0 var(--sp-7);
-  margin-top: var(--sp-6);
-}
-
-.keys > div {
-  display: grid;
-  grid-template-columns: minmax(0, 10.5rem) minmax(0, 1fr);
-  gap: var(--sp-4);
-  align-items: baseline;
-  padding-block: 0.62rem;
-  border-bottom: 1px solid var(--line);
-}
-
-.keys dt {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem;
-  align-items: baseline;
-  color: var(--text-dim);
-  font-size: var(--fs-xs);
-}
-
-.keys dd {
-  color: var(--text-muted);
-  font-size: var(--fs-sm);
-}
+.extra { display: flex; flex-direction: column; gap: var(--sp-3); }
 
 /* ── 12 · Abschluss ─────────────────────────────────────────────── */
-.closer {
-  background: var(--primary-bg);
-  border-top: 1px solid var(--primary-line);
-  border-bottom: 1px solid var(--primary-line);
-}
-
+.stage--closer { border-top: 1px solid var(--line); }
 .closer-inner {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: var(--sp-4);
-  max-width: var(--page);
-  margin-inline: auto;
-  padding: clamp(3rem, 6vw, 4.5rem) var(--gutter);
+  padding-block: clamp(3.5rem, 8vw, 6rem) clamp(4.5rem, 10vw, 7.5rem);
 }
-
-.closer-inner h2 { max-width: 20ch; }
-.closer-inner p { max-width: var(--measure); color: var(--text-muted); }
+.closer-inner h2 { max-width: 18ch; }
+.closer-inner .lead { max-width: 44ch; }
 .closer-inner .btn { margin-top: var(--sp-2); }
-.closer-inner .note { color: rgba(230, 230, 234, 0.55); }
 
-/* ── 13 · Fuß ───────────────────────────────────────────────────── */
-.foot { background: var(--bg); }
-
+/* ── 13 · Fuss ──────────────────────────────────────────────────── */
+.foot { background: var(--bg); border-top: 1px solid var(--line); }
 .foot-inner {
   display: flex;
   flex-wrap: wrap;
@@ -661,7 +814,6 @@ kbd {
   margin-inline: auto;
   padding: var(--sp-6) var(--gutter) clamp(2.5rem, 5vw, 3.5rem);
 }
-
 .foot-brand {
   display: inline-flex;
   align-items: center;
@@ -671,16 +823,14 @@ kbd {
   font-weight: 600;
 }
 .foot-brand img { image-rendering: pixelated; }
-
 .foot-note {
-  flex: 1 1 22rem;
-  max-width: 52ch;
+  flex: 1 1 24rem;
+  max-width: 60ch;
   color: var(--text-dim);
   font-size: var(--fs-xs);
   line-height: 1.65;
 }
 .foot-note code { color: var(--text-muted); }
-
 .foot-meta {
   display: inline-flex;
   align-items: center;
@@ -693,49 +843,156 @@ kbd {
 .foot-meta a:hover { color: var(--text); text-decoration: underline; }
 
 /* ── 14 · Responsive ────────────────────────────────────────────── */
+.stage--wide { height: clamp(230px, 30vw, 330px); }
+
+/* Auf der breiten Buehne rueckt die Skyline eine Stufe zurueck (3x statt
+   4x) und hinter die Standlinie — sonst draengt sie sich vor die Baeume. */
+.stage--wide .layer--skyline {
+  bottom: 26px;
+  height: 153px;
+  background-size: 480px 153px;
+  opacity: 0.42;
+}
+
+@media (max-width: 1080px) {
+  .pixel-demo {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 9rem);
+    grid-template-areas: "bits build" "code code";
+    align-items: start;
+  }
+  .bits { max-width: 20rem; }
+}
+
 @media (max-width: 940px) {
   .hero-grid { grid-template-columns: minmax(0, 1fr); }
-  .hero-demo { max-width: 34rem; }
+  .raster-card { margin-inline: 0; }
+  .swap { grid-template-columns: minmax(0, 1fr); }
+  .swap-demo { max-width: 20rem; }
+  .layer--deco-near { background-size: 510px 114px; height: 114px; }
+  .layer--deco-far  { bottom: 30px; }
 }
 
 @media (max-width: 720px) {
   .topnav { display: none; }
   .brand { margin-inline-end: auto; }
-  .hero-demo { grid-template-columns: minmax(0, 1fr); }
-  .demo-canvas { padding: var(--sp-5) 22%; }
-  .keys > div { grid-template-columns: minmax(0, 1fr); gap: var(--sp-1); }
+  .scene-scrim {
+    background: linear-gradient(to bottom,
+      rgba(18, 18, 20, 0.72) 0%, rgba(18, 18, 20, 0.5) 50%, rgba(18, 18, 20, 0.9) 100%);
+  }
+  .stage--closer .actor { display: none; }
+  .layer--clouds { height: 84px; background-size: 630px 84px; }
+  .layer--skyline { height: 143px; background-size: 448px 143px; }
+}
+
+@media (max-width: 560px) {
+  .pixel-demo {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "bits" "build" "code";
+    justify-items: start;
+  }
+  .build-wrap { width: 8rem; }
+  .cta-row .btn { flex: 1 1 100%; }
   .foot-meta { margin-inline-start: 0; }
 }
 
-@media (max-width: 420px) {
-  .cta-row .btn { flex: 1 1 100%; }
-  .swatches { grid-template-columns: repeat(auto-fit, minmax(64px, 1fr)); }
-  .swatch .hex { font-size: 0.625rem; }
+/* ── 15 · Keyframes ─────────────────────────────────────────────── */
+
+/* Endlose Baender. Die Weite entspricht genau einer Kachel, darum
+   springt der Ruecksprung nicht sichtbar. */
+@keyframes driftClouds   { from { background-position-x: 0; } to { background-position-x: -900px; } }
+@keyframes driftSkyline  { from { background-position-x: 0; } to { background-position-x: -640px; } }
+@keyframes driftDecoFar  { from { background-position-x: 0; } to { background-position-x: -340px; } }
+@keyframes driftDecoNear { from { background-position-x: 0; } to { background-position-x: -680px; } }
+
+/* Fluegelschlag: zwei Frames, harter Wechsel ueber opacity. */
+@keyframes flapFrameA { from { opacity: 1; } to { opacity: 0; } }
+@keyframes flapFrameB { from { opacity: 0; } to { opacity: 1; } }
+
+/* Der Vogel zieht durch und laesst sich danach lange nicht blicken.
+   Das Auf und Ab ist kein Schmuck: ohne es gleitet er wie auf einer
+   Schiene durchs Bild. */
+@keyframes birdPass {
+  0%   { transform: translate(0, 0); }
+  6%   { transform: translate(-32vw, -26px); }
+  12%  { transform: translate(-64vw, 16px); }
+  18%  { transform: translate(-96vw, -14px); }
+  24%  { transform: translate(-128vw, 4px); }
+  100% { transform: translate(-128vw, 4px); }
 }
 
-/* ── 15 · Bewegung ──────────────────────────────────────────────── */
-@keyframes rise {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: none; }
+/* Figuren: wandern, wenden, wippen — je auf eigener Ebene. */
+@keyframes actorWander {
+  0%   { transform: translateX(0); }
+  50%  { transform: translateX(var(--range, 90px)); }
+  100% { transform: translateX(0); }
+}
+@keyframes actorTurn {
+  0%, 49.99% { transform: translateX(-50%) scaleX(var(--face, 1)); }
+  50%, 100%  { transform: translateX(-50%) scaleX(calc(var(--face, 1) * -1)); }
+}
+@keyframes actorBob {
+  from { transform: translateY(0); }
+  to   { transform: translateY(calc(-1 * var(--bob, 5px))); }
 }
 
-.hero-text > *,
-.hero-demo {
-  animation: rise 520ms cubic-bezier(0.22, 0.7, 0.3, 1) backwards;
+/* Station 01: Ziffer und Pixel gehen im selben Takt an. */
+@keyframes cellIn {
+  0%   { opacity: 0; transform: scale(0.3); }
+  3%   { opacity: 1; transform: scale(1); }
+  82%  { opacity: 1; transform: scale(1); }
+  88%  { opacity: 0; transform: scale(0.3); }
+  100% { opacity: 0; transform: scale(0.3); }
 }
-.hero-text > *:nth-child(2) { animation-delay: 60ms; }
-.hero-text > *:nth-child(3) { animation-delay: 110ms; }
-.hero-text > *:nth-child(4) { animation-delay: 150ms; }
-.hero-text > *:nth-child(5) { animation-delay: 190ms; }
-.hero-demo { animation-delay: 150ms; }
 
+@keyframes caretBlink {
+  0%, 49%   { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+/* Station 02: drei Paletten auf demselben Raster. Die Farben sind
+   der Pixel-Art aus assets/landing/ abgenommen. */
+@keyframes pal1 {
+  0%, 28%   { fill: #6ed49a; background-color: #6ed49a; }
+  34%, 61%  { fill: #f0d2a4; background-color: #f0d2a4; }
+  67%, 94%  { fill: #c2e07a; background-color: #c2e07a; }
+  100%      { fill: #6ed49a; background-color: #6ed49a; }
+}
+@keyframes pal2 {
+  0%, 28%   { fill: #6ec9b3; background-color: #6ec9b3; }
+  34%, 61%  { fill: #d8a860; background-color: #d8a860; }
+  67%, 94%  { fill: #8fbe4e; background-color: #8fbe4e; }
+  100%      { fill: #6ec9b3; background-color: #6ec9b3; }
+}
+@keyframes pal3 {
+  0%, 28%   { fill: #6ebecc; background-color: #6ebecc; }
+  34%, 61%  { fill: #b07848; background-color: #b07848; }
+  67%, 94%  { fill: #5d9642; background-color: #5d9642; }
+  100%      { fill: #6ebecc; background-color: #6ebecc; }
+}
+@keyframes pal4 {
+  0%, 28%   { fill: #6eb3e5; background-color: #6eb3e5; }
+  34%, 61%  { fill: #8a5a28; background-color: #8a5a28; }
+  67%, 94%  { fill: #3d6029; background-color: #3d6029; }
+  100%      { fill: #6eb3e5; background-color: #6eb3e5; }
+}
+@keyframes pal5 {
+  0%, 28%   { fill: #6ea8fe; background-color: #6ea8fe; }
+  34%, 61%  { fill: #6a3e18; background-color: #6a3e18; }
+  67%, 94%  { fill: #2a5855; background-color: #2a5855; }
+  100%      { fill: #6ea8fe; background-color: #6ea8fe; }
+}
+
+/* ── 16 · Reduzierte Bewegung ───────────────────────────────────────
+   Alles wird stillgelegt. Jede animierte Regel hat oben einen
+   sichtbaren Ruhezustand, darum bleibt die Seite vollstaendig:
+   Pixel und Ziffern stehen, die Palette bleibt auf der Marken-Rampe,
+   vom Vogel ist genau ein Frame zu sehen.
+   ═══════════════════════════════════════════════════════════════ */
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after {
-    animation-duration: 0.001ms !important;
-    animation-delay: 0ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
+    animation: none !important;
+    transition: none !important;
   }
-  .btn--primary:hover { transform: none; }
+  .btn--primary:hover, .fmt:hover { transform: none; }
 }

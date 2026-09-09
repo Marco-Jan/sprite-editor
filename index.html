@@ -17,7 +17,7 @@
 
   <meta property="og:type" content="website">
   <meta property="og:title" content="Sprite Editor — Pixel-Art im Browser">
-  <meta property="og:description" content="Zeichnen, Paletten bauen, Fotos abpausen, in acht Code-Formaten exportieren. Läuft komplett im Browser.">
+  <meta property="og:description" content="Vom leeren Raster zum fertigen Sprite. Zeichnen, Paletten bauen, exportieren — alles im Browser, nichts wird hochgeladen.">
   <meta property="og:image" content="assets/og-image.png">
   <meta name="twitter:card" content="summary_large_image">
 
@@ -27,17 +27,19 @@
 
 <a class="skip" href="#inhalt">Zum Inhalt springen</a>
 
-<!-- ══ Kopfzeile ══════════════════════════════════════════════════ -->
+<!-- ══ Kopfzeile — der Knopf ist ab der ersten Sekunde erreichbar ══ -->
 <header class="topbar">
   <div class="topbar-inner">
     <span class="brand">
       <img class="brand-mark" src="assets/icon.svg" alt="" width="22" height="22">
       <span class="brand-name">Sprite&nbsp;Editor</span>
     </span>
-    <nav class="topnav" aria-label="Seitenbereiche">
-      <a href="#werkzeuge">Werkzeuge</a>
+    <nav class="topnav" aria-label="Stationen">
+      <a href="#pixel">Pixel</a>
+      <a href="#farbe">Farbe</a>
+      <a href="#werkzeug">Werkzeug</a>
+      <a href="#szene">Szene</a>
       <a href="#export">Export</a>
-      <a href="#kuerzel">Kürzel</a>
     </nav>
     <a class="btn btn--primary btn--sm" href="editor.html">Editor öffnen</a>
   </div>
@@ -45,186 +47,293 @@
 
 <main id="inhalt">
 
-  <!-- ══ Hero ═════════════════════════════════════════════════════ -->
-  <section class="hero band">
-    <div class="hero-grid">
+  <!-- ══════════════════════════════════════════════════════════════
+       HERO — leerer Himmel, leeres Raster
+       ═══════════════════════════════════════════════════════════ -->
+  <section class="stage stage--hero">
 
+    <div class="scene" aria-hidden="true">
+      <div class="scene-sky"></div>
+      <div class="layer layer--clouds"></div>
+      <div class="layer layer--skyline"></div>
+      <div class="scene-scrim"></div>
+      <div class="bird bird--hero">
+        <img src="assets/landing/bird-a.png" alt="" width="17" height="7">
+        <img src="assets/landing/bird-b.png" alt="" width="17" height="7">
+      </div>
+    </div>
+
+    <div class="stage-inner hero-grid">
       <div class="hero-text">
-        <p class="eyebrow">Pixel-Art-Editor · reines Frontend</p>
-        <h1>Ein Pixel ist eine&nbsp;Zahl.</h1>
+        <p class="eyebrow">Sprite&nbsp;Editor · Pixel-Art im Browser</p>
+        <h1>Fang klein an.</h1>
         <p class="lead">
-          Sprite&nbsp;Editor ist ein Pixel-Art-Werkzeug, das komplett im Browser läuft.
-          Du malst auf einem Raster aus Paletten-Indizes und nimmst das Ergebnis als
-          TypeScript, JSON, SVG, PNG oder C-Header wieder mit.
+          Ein leeres Raster, eine Handvoll Farben, und du malst los. Der Editor läuft
+          komplett im Browser — kein Build, kein Konto, keine Cloud.
         </p>
         <div class="cta-row">
-          <a class="btn btn--primary" href="editor.html">Editor öffnen</a>
-          <a class="btn btn--ghost" href="#werkzeuge">Was drin ist</a>
+          <a class="btn btn--primary btn--lg" href="editor.html">Editor öffnen</a>
+          <a class="btn btn--ghost" href="#pixel">Erst mal zuschauen</a>
         </div>
         <p class="note">
-          Läuft im Browser. Keine Anmeldung, keine Cloud, kein Build&nbsp;— deine Pixel
-          bleiben im <code>localStorage</code> auf deinem Rechner.
+          Deine Pixel bleiben im <code>localStorage</code> auf deinem Rechner.
+          Nichts wird hochgeladen.
         </p>
       </div>
 
-      <figure class="hero-demo">
-        <div class="demo-canvas">
-          <svg class="sprite" viewBox="0 0 8 8" role="img"
-               aria-label="Acht mal acht Pixel großer Sprite: eine diagonale Treppe aus zehn Pixeln, die von Grün oben rechts nach Blau unten links verläuft.">
-            <rect x="5" y="1" width="1" height="1" fill="#6ed49a"/>
-            <rect x="6" y="1" width="1" height="1" fill="#6ed49a"/>
-            <rect x="4" y="2" width="1" height="1" fill="#6ec9b3"/>
-            <rect x="5" y="2" width="1" height="1" fill="#6ec9b3"/>
-            <rect x="3" y="3" width="1" height="1" fill="#6ebecc"/>
-            <rect x="4" y="3" width="1" height="1" fill="#6ebecc"/>
-            <rect x="2" y="4" width="1" height="1" fill="#6eb3e5"/>
-            <rect x="3" y="4" width="1" height="1" fill="#6eb3e5"/>
-            <rect x="1" y="5" width="1" height="1" fill="#6ea8fe"/>
-            <rect x="2" y="5" width="1" height="1" fill="#6ea8fe"/>
-          </svg>
+      <figure class="raster-card">
+        <div class="raster" role="img" aria-label="Ein leeres Zeichenraster aus 16 mal 16 Feldern auf einem Transparenz-Schachbrett, mit einem blinkenden Cursor.">
+          <span class="raster-caret"></span>
         </div>
-        <div class="demo-code">
-          <pre><code><span class="k">export const</span> <span class="v">SPRITE</span>: <span class="t">number</span>[][] = [
+        <figcaption><span class="mono">16 × 16</span> · noch nichts drin</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       01 — Der erste Pixel
+       ═══════════════════════════════════════════════════════════ -->
+  <section class="band" id="pixel" aria-labelledby="h-pixel">
+    <p class="eyebrow"><span class="st-num">01</span> Der erste Pixel</p>
+    <h2 id="h-pixel" class="h2--mono">Ein Pixel ist eine Zahl.</h2>
+    <p class="section-lead">
+      Du malst nicht auf Farben, sondern auf Indizes. Links stehen die Zahlen, rechts
+      steht dasselbe als Bild. Setz einen Pixel, und beides wächst gleichzeitig.
+    </p>
+
+    <div class="pixel-demo">
+
+      <div class="bits" role="img" aria-label="Ein Zahlenraster aus acht mal acht Ziffern. Zehn Felder tragen die Werte 1 bis 5 und bilden eine Treppe von oben rechts nach unten links, alle übrigen Felder sind 0.">
+        <span style="--i:0">0</span><span style="--i:1">0</span><span style="--i:2">0</span><span style="--i:3">0</span><span style="--i:4">0</span><span style="--i:5">0</span><span style="--i:6">0</span><span style="--i:7">0</span>
+        <span style="--i:8">0</span><span style="--i:9">0</span><span style="--i:10">0</span><span style="--i:11">0</span><span style="--i:12">0</span><span class="b1" style="--i:13">1</span><span class="b1" style="--i:14">1</span><span style="--i:15">0</span>
+        <span style="--i:16">0</span><span style="--i:17">0</span><span style="--i:18">0</span><span style="--i:19">0</span><span class="b2" style="--i:20">2</span><span class="b2" style="--i:21">2</span><span style="--i:22">0</span><span style="--i:23">0</span>
+        <span style="--i:24">0</span><span style="--i:25">0</span><span style="--i:26">0</span><span class="b3" style="--i:27">3</span><span class="b3" style="--i:28">3</span><span style="--i:29">0</span><span style="--i:30">0</span><span style="--i:31">0</span>
+        <span style="--i:32">0</span><span style="--i:33">0</span><span class="b4" style="--i:34">4</span><span class="b4" style="--i:35">4</span><span style="--i:36">0</span><span style="--i:37">0</span><span style="--i:38">0</span><span style="--i:39">0</span>
+        <span style="--i:40">0</span><span class="b5" style="--i:41">5</span><span class="b5" style="--i:42">5</span><span style="--i:43">0</span><span style="--i:44">0</span><span style="--i:45">0</span><span style="--i:46">0</span><span style="--i:47">0</span>
+        <span style="--i:48">0</span><span style="--i:49">0</span><span style="--i:50">0</span><span style="--i:51">0</span><span style="--i:52">0</span><span style="--i:53">0</span><span style="--i:54">0</span><span style="--i:55">0</span>
+        <span style="--i:56">0</span><span style="--i:57">0</span><span style="--i:58">0</span><span style="--i:59">0</span><span style="--i:60">0</span><span style="--i:61">0</span><span style="--i:62">0</span><span style="--i:63">0</span>
+      </div>
+
+      <div class="build-wrap">
+        <svg class="sprite build" viewBox="0 0 8 8" role="img"
+             aria-label="Derselbe Inhalt als Bild: eine zehn Pixel lange Treppe, die von Grün oben rechts nach Blau unten links läuft.">
+          <rect style="--i:13" x="5" y="1" width="1" height="1" fill="#6ed49a"/>
+          <rect style="--i:14" x="6" y="1" width="1" height="1" fill="#6ed49a"/>
+          <rect style="--i:20" x="4" y="2" width="1" height="1" fill="#6ec9b3"/>
+          <rect style="--i:21" x="5" y="2" width="1" height="1" fill="#6ec9b3"/>
+          <rect style="--i:27" x="3" y="3" width="1" height="1" fill="#6ebecc"/>
+          <rect style="--i:28" x="4" y="3" width="1" height="1" fill="#6ebecc"/>
+          <rect style="--i:34" x="2" y="4" width="1" height="1" fill="#6eb3e5"/>
+          <rect style="--i:35" x="3" y="4" width="1" height="1" fill="#6eb3e5"/>
+          <rect style="--i:41" x="1" y="5" width="1" height="1" fill="#6ea8fe"/>
+          <rect style="--i:42" x="2" y="5" width="1" height="1" fill="#6ea8fe"/>
+        </svg>
+      </div>
+
+      <div class="demo-code">
+        <pre><code><span class="k">export const</span> <span class="v">SPRITE</span>: <span class="t">number</span>[][] = [
   [0,0,0,0,0,<span class="n1">1</span>,<span class="n1">1</span>,0],
   [0,0,0,0,<span class="n2">2</span>,<span class="n2">2</span>,0,0],
   [0,0,0,<span class="n3">3</span>,<span class="n3">3</span>,0,0,0],
   [0,0,<span class="n4">4</span>,<span class="n4">4</span>,0,0,0,0],
   [0,<span class="n5">5</span>,<span class="n5">5</span>,0,0,0,0,0],
-];</code></pre>
-        </div>
-        <figcaption>
-          Links das Raster, rechts der Export. Dieselbe Sache in zwei Ansichten&nbsp;—
-          <span class="fc-dim">Zeilen 0, 6 und 7 sind leer und hier gekürzt.</span>
-        </figcaption>
-      </figure>
+];
 
+<span class="k">export const</span> <span class="v">PALETTE</span>: <span class="t">Record</span>&lt;<span class="t">number</span>, <span class="t">string</span>&gt; = {
+  <span class="n1">1</span>: <span class="s">'#6ed49a'</span>, <span class="n2">2</span>: <span class="s">'#6ec9b3'</span>, <span class="n3">3</span>: <span class="s">'#6ebecc'</span>,
+  <span class="n4">4</span>: <span class="s">'#6eb3e5'</span>, <span class="n5">5</span>: <span class="s">'#6ea8fe'</span>,
+};</code></pre>
+        <p class="demo-cap">
+          Das ist der TypeScript-Export, Zeile für Zeile.
+          <span class="fc-dim">Leere Zeilen sind hier gekürzt.</span>
+        </p>
+      </div>
     </div>
   </section>
 
-  <!-- ══ Werkzeuge ════════════════════════════════════════════════ -->
-  <section class="band" id="werkzeuge" aria-labelledby="h-werkzeuge">
-    <p class="eyebrow">Werkzeuge</p>
-    <h2 id="h-werkzeuge">Sechs Panels, ein Raster</h2>
+  <!-- ══════════════════════════════════════════════════════════════
+       02 — Farbe
+       ═══════════════════════════════════════════════════════════ -->
+  <section class="band band--warm" id="farbe" aria-labelledby="h-farbe">
+    <p class="eyebrow"><span class="st-num">02</span> Farbe</p>
+    <h2 id="h-farbe">Und dann kippst du die Palette um.</h2>
+
+    <div class="swap">
+      <div class="swap-demo">
+        <svg class="sprite recolor" viewBox="0 0 8 8" role="img"
+             aria-label="Dieselbe Treppe, die fortlaufend zwischen drei Farbpaletten wechselt: kühles Blaugrün, warme Brauntöne, Waldgrün.">
+          <rect class="c1" x="5" y="1" width="1" height="1"/>
+          <rect class="c1" x="6" y="1" width="1" height="1"/>
+          <rect class="c2" x="4" y="2" width="1" height="1"/>
+          <rect class="c2" x="5" y="2" width="1" height="1"/>
+          <rect class="c3" x="3" y="3" width="1" height="1"/>
+          <rect class="c3" x="4" y="3" width="1" height="1"/>
+          <rect class="c4" x="2" y="4" width="1" height="1"/>
+          <rect class="c4" x="3" y="4" width="1" height="1"/>
+          <rect class="c5" x="1" y="5" width="1" height="1"/>
+          <rect class="c5" x="2" y="5" width="1" height="1"/>
+        </svg>
+
+        <ol class="swatches" aria-label="Die Paletten-Indizes 0 bis 5; Index 0 ist transparent.">
+          <li class="swatch swatch--transparent"><span class="chip"></span><span class="idx">0</span></li>
+          <li class="swatch"><span class="chip c1"></span><span class="idx">1</span></li>
+          <li class="swatch"><span class="chip c2"></span><span class="idx">2</span></li>
+          <li class="swatch"><span class="chip c3"></span><span class="idx">3</span></li>
+          <li class="swatch"><span class="chip c4"></span><span class="idx">4</span></li>
+          <li class="swatch"><span class="chip c5"></span><span class="idx">5</span></li>
+        </ol>
+      </div>
+
+      <div class="swap-text">
+        <p class="section-lead">
+          Das Raster speichert nur die Zahlen. Änderst du eine Farbe, färben sich alle
+          Pixel mit diesem Index sofort mit um — ohne dass du ein Pixel anfasst.
+        </p>
+        <ul class="facts">
+          <li><span class="fact-key">Index 0</span> ist immer transparent, <span class="fact-key">1–9</span> belegst du frei.</li>
+          <li><span class="fact-key">Neun Schemata</span> sind eingebaut, eigene legst du daneben an.</li>
+          <li><span class="fact-key">Jeder Sprite</span> merkt sich seine eigene Palette.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       03 — Werkzeug
+       ═══════════════════════════════════════════════════════════ -->
+  <section class="band" id="werkzeug" aria-labelledby="h-werkzeug">
+    <p class="eyebrow"><span class="st-num">03</span> Werkzeug</p>
+    <h2 id="h-werkzeug">Alles, was die Hand braucht.</h2>
     <p class="section-lead">
-      Alles sitzt in einklappbaren Panels um die Zeichenfläche. Jede Aktion ist ein
-      einzelner Undo-Schritt, auch wenn sie das ganze Grid austauscht.
+      Undo greift pro Strich, Auto-Save läuft nebenher, und für jedes Werkzeug gibt es
+      eine Taste. Die Maus muss die Leiste nicht suchen.
     </p>
 
-    <ul class="cards">
-
-      <li class="card">
-        <h3>Zeichnen</h3>
-        <p>
-          Stift, Pinsel, Spray, Füllen, Radierer und Zauberstab. Linie, Rechteck und
-          Ellipse ziehen mit Live-Vorschau, umschaltbar zwischen Kontur und Fläche.
-        </p>
-        <p class="card-meta">Symmetrie an zwei Achsen spiegelt jeden Strich mit.</p>
+    <ul class="tools">
+      <li class="tool">
+        <h3>Malen</h3>
+        <p class="keys-row"><kbd>P</kbd><kbd>B</kbd><kbd>S</kbd><kbd>F</kbd><kbd>E</kbd><kbd>W</kbd></p>
+        <p>Stift, Pinsel, Spray, Füllen, Radierer, Zauberstab.</p>
       </li>
-
-      <li class="card">
+      <li class="tool">
+        <h3>Formen</h3>
+        <p class="keys-row"><kbd>I</kbd><kbd>R</kbd><kbd>O</kbd></p>
+        <p>Linie, Rechteck, Ellipse — mit Live-Vorschau, wahlweise Kontur oder Fläche.</p>
+      </li>
+      <li class="tool">
+        <h3>Symmetrie</h3>
+        <p class="keys-row"><kbd>↔</kbd><kbd>↕</kbd></p>
+        <p>Zwei Achsen. Jeder Strich wird gespiegelt mitgezeichnet, beide zusammen ergeben vier.</p>
+      </li>
+      <li class="tool">
         <h3>Auswahl</h3>
-        <p>
-          Rechteck, Lasso für freie Formen, Farbauswahl mit Toleranz. Der gewählte
-          Bereich wird ausgeschnitten und schwebt, bis du ihn absetzt.
-        </p>
-        <p class="card-meta">Verschieben, frei drehen, spiegeln, kopieren — der Untergrund bleibt heil.</p>
+        <p class="keys-row"><kbd>A</kbd><kbd>L</kbd><kbd>K</kbd></p>
+        <p>Rechteck, Lasso, Farbwahl. Der Bereich wird ausgeschnitten und schwebt, bis du ihn absetzt.</p>
       </li>
-
-      <li class="card">
-        <h3>Paletten</h3>
-        <p>
-          Index-basiert: <code>0</code> ist transparent, <code>1</code>–<code>9</code>
-          belegst du frei. Neun Farbschemata sind eingebaut, eigene legst du daneben an.
-        </p>
-        <p class="card-meta">Eine Farbe ändern färbt alle Pixel mit diesem Index sofort um.</p>
+      <li class="tool">
+        <h3>Schweben</h3>
+        <p class="keys-row"><kbd>Alt</kbd><kbd>↑↓←→</kbd></p>
+        <p>Verschieben, frei drehen, spiegeln, kopieren — der Untergrund bleibt heil.</p>
       </li>
-
-      <li class="card">
-        <h3>Foto-Vorlage</h3>
-        <p>
-          Bild laden, über das Raster legen und per Median-Cut auf N Farben reduzieren.
-          Die Bildfarben lassen sich als editierbare Palette übernehmen.
-        </p>
-        <p class="card-meta">Dazu: Hintergrund entfernen, glätten, Outline ziehen.</p>
-      </li>
-
-      <li class="card">
-        <h3>Ebene</h3>
-        <p>
-          Ein zweiter Sprite lässt sich halbdurchsichtig unterlegen — zum Abpausen und
-          um Teile von einem Sprite in den anderen zu übertragen.
-        </p>
-        <p class="card-meta">Die Zwischenablage überlebt den Sprite-Wechsel.</p>
-      </li>
-
-      <li class="card">
+      <li class="tool">
         <h3>Bild</h3>
-        <p>
-          Spiegeln, drehen, auf den Inhalt zuschneiden, zentrieren, die Fläche ändern
-          und hart skalieren — Nearest Neighbor, Pixel bleiben Pixel.
-        </p>
-        <p class="card-meta">Gibt es eine Auswahl, trifft die Aktion nur sie.</p>
+        <p class="keys-row"><kbd>Strg</kbd><kbd>Z</kbd></p>
+        <p>Spiegeln, drehen, auf den Inhalt zuschneiden, zentrieren, Fläche ändern, hart skalieren.</p>
       </li>
-
     </ul>
   </section>
 
-  <!-- ══ Palettenstreifen ═════════════════════════════════════════ -->
-  <section class="band band--tight" aria-labelledby="h-palette">
-    <p class="eyebrow">Palettensystem</p>
-    <h2 id="h-palette">Farbe ist ein Index</h2>
-    <p class="section-lead">
-      Eine Palette ist ein Mapping von Zahl auf Hex-Farbe. Das Grid speichert nur die
-      Zahlen — deshalb lässt sich ein fertiger Sprite umfärben, ohne ein Pixel anzufassen.
-    </p>
+  <!-- ══════════════════════════════════════════════════════════════
+       04 — Szene · die Bühne füllt sich
+       ═══════════════════════════════════════════════════════════ -->
+  <section id="szene" aria-labelledby="h-szene">
+    <div class="band band--flush">
+      <p class="eyebrow"><span class="st-num">04</span> Szene</p>
+      <h2 id="h-szene">Ein Sprite kommt selten allein.</h2>
+      <p class="section-lead">
+        Irgendwann sind es viele: eine Figur, ihr Hund, ein Vogel, ein Busch. Der Editor
+        hält sie alle nebeneinander und hilft, sie zusammenzubringen.
+      </p>
+    </div>
 
-    <ol class="swatches" aria-label="Beispielpalette mit den Indizes 0 bis 9">
-      <li class="swatch swatch--transparent"><span class="chip" aria-hidden="true"></span><span class="idx">0</span><span class="hex">transparent</span></li>
-      <li class="swatch"><span class="chip" style="background:#6ed49a" aria-hidden="true"></span><span class="idx">1</span><span class="hex">#6ed49a</span></li>
-      <li class="swatch"><span class="chip" style="background:#6ec9b3" aria-hidden="true"></span><span class="idx">2</span><span class="hex">#6ec9b3</span></li>
-      <li class="swatch"><span class="chip" style="background:#6ebecc" aria-hidden="true"></span><span class="idx">3</span><span class="hex">#6ebecc</span></li>
-      <li class="swatch"><span class="chip" style="background:#6eb3e5" aria-hidden="true"></span><span class="idx">4</span><span class="hex">#6eb3e5</span></li>
-      <li class="swatch"><span class="chip" style="background:#2b2b33" aria-hidden="true"></span><span class="idx">5</span><span class="hex">#2b2b33</span></li>
-      <li class="swatch"><span class="chip" style="background:#6ea8fe" aria-hidden="true"></span><span class="idx">6</span><span class="hex">#6ea8fe</span></li>
-      <li class="swatch"><span class="chip" style="background:#e6e6ea" aria-hidden="true"></span><span class="idx">7</span><span class="hex">#e6e6ea</span></li>
-      <li class="swatch"><span class="chip" style="background:#9a9aa6" aria-hidden="true"></span><span class="idx">8</span><span class="hex">#9a9aa6</span></li>
-      <li class="swatch"><span class="chip" style="background:#33333c" aria-hidden="true"></span><span class="idx">9</span><span class="hex">#33333c</span></li>
-    </ol>
+    <!-- Reine Deko: die Bühne, auf der die Sprites landen -->
+    <div class="stage stage--wide">
+      <div class="scene" aria-hidden="true">
+        <div class="scene-sky"></div>
+        <div class="layer layer--clouds"></div>
+        <div class="layer layer--skyline"></div>
+        <div class="layer layer--deco-far"></div>
+        <div class="layer layer--deco-near"></div>
+        <div class="scene-ground"></div>
 
-    <p class="note">
-      Beispielbelegung. Üblich, aber kein Zwang: <code>1</code>–<code>4</code> als
-      Tonleiter hell nach dunkel, <code>5</code> als Kontur, <code>6</code>–<code>9</code>
-      für Akzente. Jeder Sprite merkt sich seine eigene Palette.
-    </p>
+        <div class="bird bird--far">
+          <img src="assets/landing/bird-a.png" alt="" width="17" height="7">
+          <img src="assets/landing/bird-b.png" alt="" width="17" height="7">
+        </div>
+
+        <div class="actor actor--walk" style="--x:26%; --range:140px; --walk-dur:34s; --h:116px; --base:12px">
+          <span class="actor-face"><img class="actor-body" src="assets/landing/dog-brown.png" alt="" width="52" height="58"></span>
+        </div>
+        <div class="actor" style="--x:58%; --h:78px; --base:18px; --bob-dur:3.4s">
+          <span class="actor-face"><img class="actor-body" src="assets/landing/cat-gray.png" alt="" width="56" height="39"></span>
+        </div>
+        <div class="actor" style="--x:76%; --h:110px; --base:10px; --bob-dur:2.8s; --bob-delay:.7s">
+          <span class="actor-face"><img class="actor-body" src="assets/landing/dog-cream.png" alt="" width="53" height="55"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="band band--flush">
+      <ul class="tools tools--three">
+        <li class="tool">
+          <h3>Foto als Vorlage</h3>
+          <p>
+            Bild laden, darüberlegen, per Median-Cut auf N Farben reduzieren. Die
+            Bildfarben lassen sich als editierbare Palette übernehmen.
+          </p>
+          <p class="tool-meta">Dazu: Hintergrund entfernen, glätten, Outline ziehen.</p>
+        </li>
+        <li class="tool">
+          <h3>Ebene darunter</h3>
+          <p>
+            Ein zweiter Sprite liegt halbdurchsichtig unter deinem — zum Abpausen und
+            um Teile von einem in den anderen zu übertragen.
+          </p>
+          <p class="tool-meta">Die Zwischenablage überlebt den Sprite-Wechsel.</p>
+        </li>
+        <li class="tool">
+          <h3>Alle zusammen</h3>
+          <p>
+            Das Spritesheet packt alle Sprites in gleich große Zellen und schreibt einen
+            JSON-Atlas daneben.
+          </p>
+          <p class="tool-meta">Der Atlas nennt Name, Palette und die echte Lage jedes Frames.</p>
+        </li>
+      </ul>
+    </div>
   </section>
 
-  <!-- ══ Export ═══════════════════════════════════════════════════ -->
+  <!-- ══════════════════════════════════════════════════════════════
+       05 — Export
+       ═══════════════════════════════════════════════════════════ -->
   <section class="band" id="export" aria-labelledby="h-export">
-    <p class="eyebrow">Import &amp; Export</p>
-    <h2 id="h-export">Acht Code-Formate</h2>
+    <p class="eyebrow"><span class="st-num">05</span> Export</p>
+    <h2 id="h-export">Und dann darf es gehen.</h2>
     <p class="section-lead">
-      Jedes Format enthält die Farben und ist für sich allein benutzbar. Kein Format
-      braucht eine zweite Datei daneben.
+      Acht Code-Formate, jedes mit den Farben darin und für sich allein benutzbar.
+      Keins braucht eine zweite Datei daneben.
     </p>
 
-    <div class="table-wrap">
-      <table class="formats">
-        <caption class="visually-hidden">Die acht Code-Formate mit Dateiendung und Verwendungszweck</caption>
-        <thead>
-          <tr><th scope="col">Format</th><th scope="col">Datei</th><th scope="col">Wofür</th></tr>
-        </thead>
-        <tbody>
-          <tr><th scope="row">TypeScript</th><td><code>.ts</code></td><td><code>number[][]</code> plus <code>Record&lt;number, string&gt;</code></td></tr>
-          <tr><th scope="row">JavaScript</th><td><code>.js</code></td><td>Dasselbe als ES-Modul, ohne Typen</td></tr>
-          <tr><th scope="row">JSON</th><td><code>.json</code></td><td>Sprachneutral, für eigene Pipelines und Engines</td></tr>
-          <tr><th scope="row">SVG</th><td><code>.svg</code></td><td>Vektor, skaliert verlustfrei, direkt einbindbar</td></tr>
-          <tr><th scope="row">CSS</th><td><code>.css</code></td><td>Der Sprite als <code>box-shadow</code> auf einem Element</td></tr>
-          <tr><th scope="row">C-Header</th><td><code>.h</code></td><td><code>uint8</code>-Indizes für Mikrocontroller und LED-Matrix</td></tr>
-          <tr><th scope="row">Python</th><td><code>.py</code></td><td>Dict und Liste für Pygame, Pillow, Skripte</td></tr>
-          <tr><th scope="row">Text-Raster</th><td><code>.txt</code></td><td>Ein Zeichen pro Pixel plus Legende, gut für Diffs</td></tr>
-        </tbody>
-      </table>
-    </div>
+    <ul class="formats">
+      <li class="fmt"><span class="fmt-ext">.ts</span><h3>TypeScript</h3><p><code>number[][]</code> plus <code>Record&lt;number, string&gt;</code></p></li>
+      <li class="fmt"><span class="fmt-ext">.js</span><h3>JavaScript</h3><p>Dasselbe als ES-Modul, ohne Typen</p></li>
+      <li class="fmt"><span class="fmt-ext">.json</span><h3>JSON</h3><p>Sprachneutral, für eigene Pipelines und Engines</p></li>
+      <li class="fmt"><span class="fmt-ext">.svg</span><h3>SVG</h3><p>Vektor, skaliert verlustfrei, direkt einbindbar</p></li>
+      <li class="fmt"><span class="fmt-ext">.css</span><h3>CSS</h3><p>Der Sprite als <code>box-shadow</code> auf einem Element</p></li>
+      <li class="fmt"><span class="fmt-ext">.h</span><h3>C-Header</h3><p><code>uint8</code>-Indizes für Mikrocontroller und LED-Matrix</p></li>
+      <li class="fmt"><span class="fmt-ext">.py</span><h3>Python</h3><p>Dict und Liste für Pygame, Pillow, Skripte</p></li>
+      <li class="fmt"><span class="fmt-ext">.txt</span><h3>Text-Raster</h3><p>Ein Zeichen pro Pixel plus Legende, gut für Diffs</p></li>
+    </ul>
 
     <div class="export-extras">
       <div class="extra">
@@ -234,94 +343,45 @@
           <span class="chip-tag">PDF</span>
           <span class="chip-tag">Spritesheet + JSON-Atlas</span>
         </p>
-        <p class="card-meta">
-          Das Spritesheet packt alle Sprites in gleich große Zellen; der Atlas nennt
-          Name, Palette und die echte Lage jedes Frames.
-        </p>
       </div>
       <div class="extra">
-        <h3>Und zurück</h3>
+        <h3>Und wieder zurück</h3>
         <p class="chips">
           <span class="chip-tag chip-tag--in">TypeScript</span>
           <span class="chip-tag chip-tag--in">JavaScript</span>
           <span class="chip-tag chip-tag--in">JSON</span>
         </p>
-        <p class="card-meta">
-          Diese drei kommen verlustfrei wieder herein. Der Import wertet keinen Code aus,
-          er liest den Text gegen eine Zeichen-Whitelist.
+        <p class="tool-meta">
+          Diese drei kommen verlustfrei wieder herein. Der Import wertet keinen Code
+          aus, er liest den Text gegen eine Zeichen-Whitelist.
         </p>
       </div>
     </div>
   </section>
 
-  <!-- ══ Ablauf ═══════════════════════════════════════════════════ -->
-  <section class="band band--tight" aria-labelledby="h-ablauf">
-    <p class="eyebrow">So arbeitest du</p>
-    <h2 id="h-ablauf">Vom Foto zum Sprite</h2>
+  <!-- ══════════════════════════════════════════════════════════════
+       Abschluss — zurück zum leeren Raster
+       ═══════════════════════════════════════════════════════════ -->
+  <section class="stage stage--closer" aria-labelledby="h-closer">
+    <div class="scene" aria-hidden="true">
+      <div class="scene-sky"></div>
+      <div class="layer layer--clouds"></div>
+      <div class="layer layer--skyline"></div>
+      <div class="scene-ground"></div>
+      <div class="scene-scrim"></div>
+      <div class="actor" style="--x:86%; --h:110px; --base:14px; --bob-dur:3.1s">
+        <span class="actor-face"><img class="actor-body" src="assets/landing/dog-cream.png" alt="" width="53" height="55"></span>
+      </div>
+    </div>
 
-    <ol class="steps">
-      <li>
-        <span class="step-num" aria-hidden="true">1</span>
-        <h3>Vorlage legen</h3>
-        <p>
-          Foto laden, mit <kbd>Shift</kbd> und Ziehen positionieren, auf eine Handvoll
-          Farben reduzieren. Aus den Bildfarben wird auf Wunsch direkt die Palette.
-        </p>
-      </li>
-      <li>
-        <span class="step-num" aria-hidden="true">2</span>
-        <h3>Abpausen und säubern</h3>
-        <p>
-          Mit Stift und Füllen die Flächen setzen, mit Auswahl und Lasso Teile
-          verschieben oder drehen. Undo greift pro Strich, Auto-Save läuft nebenher.
-        </p>
-      </li>
-      <li>
-        <span class="step-num" aria-hidden="true">3</span>
-        <h3>Mitnehmen</h3>
-        <p>
-          Format wählen, Datei speichern oder den Code kopieren. Für Backups schreibt
-          <em>Projekt sichern</em> Sprites, Paletten und Layout in eine JSON-Datei.
-        </p>
-      </li>
-    </ol>
-  </section>
-
-  <!-- ══ Kürzel ═══════════════════════════════════════════════════ -->
-  <section class="band" id="kuerzel" aria-labelledby="h-kuerzel">
-    <p class="eyebrow">Tastenkürzel</p>
-    <h2 id="h-kuerzel">Die Hand bleibt liegen</h2>
-    <p class="section-lead">
-      Ein Auszug. Die vollständige Liste steht im Editor unter <em>Hilfe</em>.
-    </p>
-
-    <dl class="keys">
-      <div><dt><kbd>P</kbd> <kbd>B</kbd> <kbd>S</kbd> <kbd>F</kbd> <kbd>E</kbd> <kbd>W</kbd></dt><dd>Stift · Pinsel · Spray · Füllen · Radierer · Zauberstab</dd></div>
-      <div><dt><kbd>I</kbd> <kbd>R</kbd> <kbd>O</kbd></dt><dd>Linie · Rechteck · Ellipse</dd></div>
-      <div><dt><kbd>A</kbd> <kbd>L</kbd> <kbd>K</kbd></dt><dd>Auswahl · Lasso · Farbwahl</dd></div>
-      <div><dt><kbd>0</kbd>–<kbd>9</kbd></dt><dd>Farb-Index wählen</dd></div>
-      <div><dt><kbd>Alt</kbd> + Klick</dt><dd>Pipette auf das Grid</dd></div>
-      <div><dt><kbd>Alt</kbd> + Ziehen</dt><dd>Kopie verschieben, das Original bleibt stehen</dd></div>
-      <div><dt><kbd>Shift</kbd> halten</dt><dd>Vorlage in den Vordergrund holen</dd></div>
-      <div><dt><kbd>Strg</kbd> + Mausrad</dt><dd>Zoomen</dd></div>
-      <div><dt>Pfeiltasten</dt><dd>Auswahl pixelweise verschieben</dd></div>
-      <div><dt><kbd>Strg</kbd>+<kbd>Z</kbd> · <kbd>Strg</kbd>+<kbd>Y</kbd></dt><dd>Rückgängig · Wiederholen</dd></div>
-    </dl>
-  </section>
-
-  <!-- ══ Abschluss ════════════════════════════════════════════════ -->
-  <section class="closer" aria-labelledby="h-closer">
-    <div class="closer-inner">
-      <h2 id="h-closer">Nichts wird hochgeladen.</h2>
-      <p>
-        Kein Konto, kein Server, keine Kosten. Der Editor öffnet sich als leeres Raster
-        und wartet auf den ersten Pixel.
+    <div class="stage-inner closer-inner">
+      <h2 id="h-closer">Das Raster ist noch leer.</h2>
+      <p class="lead">
+        Kein Konto, kein Server, keine Kosten. Der Editor öffnet sich und wartet auf
+        deinen ersten Pixel.
       </p>
       <a class="btn btn--primary btn--lg" href="editor.html">Editor öffnen</a>
-      <p class="note">
-        Offline benutzbar, sobald die Seite einmal geladen ist&nbsp;— einzige Ausnahme
-        ist der PDF-Export, der seine Bibliothek beim ersten Mal nachlädt.
-      </p>
+      <p class="note">Einmal geladen, läuft die Seite auch offline weiter.</p>
     </div>
   </section>
 
@@ -336,8 +396,8 @@
     </p>
     <p class="foot-note">
       ES-Module brauchen HTTP: <code>file://</code> funktioniert nicht. Lokal etwa mit
-      <code>python -m http.server</code> starten und die Seite über
-      <code>localhost</code> aufrufen.
+      <code>python -m http.server</code> starten und über <code>localhost</code> aufrufen.
+      Die Pixel-Art in der Kulisse stammt aus dem eigenen Stream-Overlay.
     </p>
     <p class="foot-meta">
       <a href="editor.html">Editor öffnen</a>
