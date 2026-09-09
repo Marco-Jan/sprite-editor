@@ -400,16 +400,23 @@
             <button class="btn" id="center-btn" title="Inhalt mittig setzen">Zentrieren</button>
           </div>
 
-          <div class="field field--inline">
+          <!-- Sechs Bedienelemente passen nicht in eine Zeile der schmalen
+               Spalte. Deshalb gestapelt: Maße oben, Anker und Aktion darunter. -->
+          <div class="field">
             <span class="field-label">Größe</span>
-            <input type="number" id="resize-w" class="input input--num" min="1" max="256" title="Breite in Pixeln">
-            <span class="field-unit">×</span>
-            <input type="number" id="resize-h" class="input input--num" min="1" max="256" title="Höhe in Pixeln">
-            <select id="resize-anchor" class="input input--sm" title="Wohin der alte Inhalt rutscht">
-              <option value="center">mittig</option>
-              <option value="topleft">oben links</option>
-            </select>
-            <button class="btn" id="resize-btn">Anwenden</button>
+            <div class="field-controls">
+              <input type="number" id="resize-w" class="input input--num" min="1" max="256" title="Breite in Pixeln">
+              <span class="field-unit">×</span>
+              <input type="number" id="resize-h" class="input input--num" min="1" max="256" title="Höhe in Pixeln">
+              <span class="field-unit">px</span>
+            </div>
+            <div class="field-controls">
+              <select id="resize-anchor" class="input input--sm" title="Wohin der alte Inhalt rutscht">
+                <option value="center">mittig</option>
+                <option value="topleft">oben links</option>
+              </select>
+              <button class="btn" id="resize-btn">Anwenden</button>
+            </div>
           </div>
 
           <div class="field field--inline">

@@ -263,6 +263,15 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   color: var(--text-dim);
 }
 .field-controls { display: flex; align-items: center; gap: var(--sp-2); }
+/* In den schmalen Spalten darf keine Zeile herauslaufen: umbrechen erlauben
+   und den Kindern das Schrumpfen gestatten. Ohne min-width:0 verweigert ein
+   Flex-Kind das Kleinerwerden unter seine Inhaltsbreite. */
+.rail .field--inline,
+.rail .field-controls { flex-wrap: wrap; }
+.rail .field--inline > *,
+.rail .field-controls > * { min-width: 0; }
+.rail .field-controls .input--sm { flex: 1 1 6rem; }
+.rail .field-controls .btn { flex: 1 1 auto; white-space: nowrap; }
 .field-value {
   min-width: 38px;
   font-family: var(--mono);
