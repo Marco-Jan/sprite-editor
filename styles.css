@@ -673,11 +673,22 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 #editor-canvas-wrap.is-eyedrop,
 #editor-canvas-wrap[data-tool="eraser"],
 #editor-canvas-wrap[data-tool="wand"] { cursor: cell; }
-#editor-canvas-wrap[data-tool="select"] { cursor: crosshair; }
-#editor-canvas-wrap[data-tool="select"].is-move { cursor: move; }
+#editor-canvas-wrap[data-tool="select"],
+#editor-canvas-wrap[data-tool="lasso"],
+#editor-canvas-wrap[data-tool="line"],
+#editor-canvas-wrap[data-tool="rect"],
+#editor-canvas-wrap[data-tool="ellipse"] { cursor: crosshair; }
+#editor-canvas-wrap[data-tool="magic"] { cursor: cell; }
+#editor-canvas-wrap.is-move { cursor: move; }
 
 /* Auswahl-Buttons in der Werkzeugleiste — kompakter als normale Buttons */
-#select-group .btn { padding: 5px 8px; }
+#select-group .btn,
+#mirror-group .btn,
+#shape-group .btn { padding: 5px 8px; }
+
+/* Die Werkzeugleiste ist lang geworden — bei schmalen Fenstern umbrechen
+   statt abschneiden. */
+#toolbar { flex-wrap: wrap; row-gap: var(--sp-2); }
 
 #template-overlay {
   position: absolute;

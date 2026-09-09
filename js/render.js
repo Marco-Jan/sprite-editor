@@ -151,6 +151,23 @@ export function renderEditor() {
     if (fill) { ctx.fillStyle = fill; ctx.fillRect(x * cs, y * cs, cs, cs); }
   }
 
+  // Formen-Vorschau (Linie, Rechteck, Ellipse) waehrend des Ziehens
+  if (state.shape.cells.length) {
+    const fill = cellToColor(state.shape.color, pal);
+    if (fill) {
+      ctx.fillStyle = fill;
+      for (const [sx, sy] of state.shape.cells) {
+        if (sx >= 0 && sy >= 0 && sx < W && sy < H) ctx.fillRect(sx * cs, sy * cs, cs, cs);
+      }
+    } else {
+      // Transparent als Vorschau: helle Schraffur statt "unsichtbar".
+      ctx.fillStyle = 'rgba(242,139,130,0.35)';
+      for (const [sx, sy] of state.shape.cells) {
+        if (sx >= 0 && sy >= 0 && sx < W && sy < H) ctx.fillRect(sx * cs, sy * cs, cs, cs);
+      }
+    }
+  }
+
   // Schwebender Auswahl-Block — liegt über dem Grid, weil er beim Ziehen
   // gerade nicht im Grid steht (dort ist die Quelle schon leer).
   if (selection.float && selection.rect) {
@@ -175,23 +192,80 @@ export function renderEditor() {
     ctx.stroke();
   }
 
-  if (selection.rect) drawSelectionFrame(ctx, selection.rect, cs);
+  if (selection.rect) drawSelectionFrame(ctx, selection.rect, selection.mask, cs);
+  if (selection.path) drawLassoPath(ctx, selection.path, cs);
+  if (state.mirror !== 'off') drawMirrorGuides(ctx, W, H, cs);
 
   updateStageTitle();
 }
 
-// Auswahlrahmen — schwarze Volllinie mit weißer Strichlinie darüber, damit
-// er auf hellem wie dunklem Untergrund sichtbar bleibt ("laufende Ameisen").
-function drawSelectionFrame(ctx, r, cs) {
-  const x = r.x * cs + 0.5, y = r.y * cs + 0.5;
-  const w = r.w * cs - 1,   h = r.h * cs - 1;
+// Auswahlrahmen — laeuft an den Kanten der Maske entlang, nicht stumpf um die
+// Bounding-Box: bei einer Lasso-Form sieht man dadurch die echte Kontur.
+// Schwarze Volllinie mit weisser Strichlinie darueber, damit der Rahmen auf
+// hellem wie dunklem Untergrund sichtbar bleibt ("laufende Ameisen").
+function drawSelectionFrame(ctx, r, mask, cs) {
+  const inside = (x, y) => {
+    const mx = x - r.x, my = y - r.y;
+    if (mx < 0 || my < 0 || mx >= r.w || my >= r.h) return false;
+    return !mask || !!mask[my][mx];
+  };
+
   ctx.save();
+  ctx.beginPath();
+  for (let y = r.y; y < r.y + r.h; y++) {
+    for (let x = r.x; x < r.x + r.w; x++) {
+      if (!inside(x, y)) continue;
+      const px = x * cs + 0.5, py = y * cs + 0.5, s = cs;
+      if (!inside(x, y - 1)) { ctx.moveTo(px, py);         ctx.lineTo(px + s, py); }
+      if (!inside(x, y + 1)) { ctx.moveTo(px, py + s);     ctx.lineTo(px + s, py + s); }
+      if (!inside(x - 1, y)) { ctx.moveTo(px, py);         ctx.lineTo(px, py + s); }
+      if (!inside(x + 1, y)) { ctx.moveTo(px + s, py);     ctx.lineTo(px + s, py + s); }
+    }
+  }
   ctx.lineWidth = 1;
   ctx.strokeStyle = 'rgba(0,0,0,0.85)';
-  ctx.strokeRect(x, y, w, h);
+  ctx.stroke();
   ctx.setLineDash([4, 4]);
   ctx.strokeStyle = 'rgba(255,255,255,0.95)';
-  ctx.strokeRect(x, y, w, h);
+  ctx.stroke();
+  ctx.restore();
+}
+
+// Die Lasso-Spur waehrend des Ziehens — durch die Zellmitten.
+function drawLassoPath(ctx, path, cs) {
+  if (path.length < 2) return;
+  ctx.save();
+  ctx.beginPath();
+  path.forEach((p, i) => {
+    const x = p.x * cs + cs / 2, y = p.y * cs + cs / 2;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = 'rgba(0,0,0,0.7)';
+  ctx.stroke();
+  ctx.lineWidth = 1;
+  ctx.setLineDash([3, 3]);
+  ctx.strokeStyle = '#6ea8fe';
+  ctx.stroke();
+  ctx.restore();
+}
+
+// Spiegelachsen sichtbar machen, solange der Symmetrie-Modus laeuft.
+function drawMirrorGuides(ctx, W, H, cs) {
+  ctx.save();
+  ctx.setLineDash([2, 3]);
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(110,168,254,0.55)';
+  ctx.beginPath();
+  if (state.mirror === 'x' || state.mirror === 'both') {
+    const x = (W / 2) * cs;
+    ctx.moveTo(x, 0); ctx.lineTo(x, H * cs);
+  }
+  if (state.mirror === 'y' || state.mirror === 'both') {
+    const y = (H / 2) * cs;
+    ctx.moveTo(0, y); ctx.lineTo(W * cs, y);
+  }
+  ctx.stroke();
   ctx.restore();
 }
 
@@ -244,11 +318,36 @@ function afterPaint() {
   renderCallbacks.onSave();
 }
 
+// ── Symmetrie ────────────────────────────────────────────────────────
+// Alle Mal-Operationen laufen durch mirrored(): der Punkt selbst plus seine
+// Spiegelbilder an der senkrechten und/oder waagerechten Mittelachse.
+// Ohne Symmetrie ist das genau ein Punkt, es kostet also nichts.
+export function mirrored(x, y) {
+  const g = getGrid();
+  const W = g[0].length, H = g.length;
+  const pts = [[x, y]];
+  const mx = W - 1 - x, my = H - 1 - y;
+  if (state.mirror === 'x' || state.mirror === 'both') pts.push([mx, y]);
+  if (state.mirror === 'y' || state.mirror === 'both') pts.push([x, my]);
+  if (state.mirror === 'both') pts.push([mx, my]);
+  // Auf der Achse fallen Punkt und Spiegelbild zusammen — Duplikate raus.
+  return pts.filter(([px, py], i) =>
+    pts.findIndex(([qx, qy]) => qx === px && qy === py) === i);
+}
+
+// Eine Zelle setzen, ohne zu rendern. Gibt zurück, ob sich etwas geändert hat.
+function setCell(g, x, y, value) {
+  const H = g.length, W = g[0].length;
+  if (x < 0 || y < 0 || x >= W || y >= H || g[y][x] === value) return false;
+  g[y][x] = value;
+  return true;
+}
+
 export function paintCell(x, y) {
   const g = getGrid();
-  if (g[y][x] === state.curColor) return;
-  g[y][x] = state.curColor;
-  afterPaint();
+  let changed = false;
+  for (const [px, py] of mirrored(x, y)) changed = setCell(g, px, py, state.curColor) || changed;
+  if (changed) afterPaint();
 }
 
 export function paintBrush(x, y) {
@@ -261,10 +360,8 @@ export function paintBrush(x, y) {
   for (let dy = lo; dy <= hi; dy++) {
     for (let dx = lo; dx <= hi; dx++) {
       if (threshold < 1 && Math.random() > threshold) continue;
-      const nx = x + dx, ny = y + dy;
-      if (nx >= 0 && ny >= 0 && nx < W && ny < H && grid[ny][nx] !== state.curColor) {
-        grid[ny][nx] = state.curColor;
-        changed = true;
+      for (const [px, py] of mirrored(x + dx, y + dy)) {
+        changed = setCell(grid, px, py, state.curColor) || changed;
       }
     }
   }
@@ -283,10 +380,8 @@ export function paintSpray(x, y) {
       dx = (Math.random() * 2 - 1) * r;
       dy = (Math.random() * 2 - 1) * r;
     } while (dx * dx + dy * dy > r * r);
-    const nx = x + Math.round(dx), ny = y + Math.round(dy);
-    if (nx >= 0 && ny >= 0 && nx < W && ny < H && grid[ny][nx] !== state.curColor) {
-      grid[ny][nx] = state.curColor;
-      changed = true;
+    for (const [px, py] of mirrored(x + Math.round(dx), y + Math.round(dy))) {
+      changed = setCell(grid, px, py, state.curColor) || changed;
     }
   }
   if (changed) afterPaint();
@@ -295,17 +390,106 @@ export function paintSpray(x, y) {
 export function floodFill(startX, startY) {
   const grid = getGrid();
   const H = grid.length, W = grid[0].length;
-  const target = grid[startY][startX];
   const fill = state.curColor;
-  if (target === fill) return;
-  const stack = [[startX, startY]];
-  while (stack.length) {
-    const [x, y] = stack.pop();
-    if (x < 0 || y < 0 || x >= W || y >= H || grid[y][x] !== target) continue;
-    grid[y][x] = fill;
-    stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+  // Bei Symmetrie startet die Füllung an jedem Spiegelpunkt einmal.
+  for (const [sx, sy] of mirrored(startX, startY)) {
+    const target = grid[sy]?.[sx];
+    if (target === undefined || target === fill) continue;
+    const stack = [[sx, sy]];
+    while (stack.length) {
+      const [x, y] = stack.pop();
+      if (x < 0 || y < 0 || x >= W || y >= H || grid[y][x] !== target) continue;
+      grid[y][x] = fill;
+      stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+    }
   }
   afterPaint();
+}
+
+// ────────────────────────────────────────────────────────────────────
+// FORMEN — Linie, Rechteck, Ellipse
+// ────────────────────────────────────────────────────────────────────
+// Alle drei liefern nur eine Zellliste; gezeichnet wird sie als Vorschau
+// (state.shape) und beim Loslassen einmal ins Grid gestempelt.
+function lineCells(x0, y0, x1, y1) {
+  const out = [];
+  const dx = Math.abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+  const dy = -Math.abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+  let err = dx + dy;
+  for (;;) {
+    out.push([x0, y0]);
+    if (x0 === x1 && y0 === y1) break;
+    const e2 = 2 * err;
+    if (e2 >= dy) { err += dy; x0 += sx; }
+    if (e2 <= dx) { err += dx; y0 += sy; }
+  }
+  return out;
+}
+
+function rectCells(x0, y0, x1, y1, filled) {
+  const ax = Math.min(x0, x1), bx = Math.max(x0, x1);
+  const ay = Math.min(y0, y1), by = Math.max(y0, y1);
+  const out = [];
+  for (let y = ay; y <= by; y++) for (let x = ax; x <= bx; x++) {
+    if (filled || y === ay || y === by || x === ax || x === bx) out.push([x, y]);
+  }
+  return out;
+}
+
+// Ellipse zeilenweise: fuer jede Zeile die waagerechte Spanne ausrechnen.
+// Die Kontur entsteht danach aus der gefuellten Form — jede Zelle mit einem
+// leeren Nachbarn gehoert dazu. Das ist einfacher als Spannen-Vergleiche und
+// laesst die Kappen oben und unten nicht aufreissen.
+function ellipseCells(x0, y0, x1, y1, filled) {
+  const ax = Math.min(x0, x1), bx = Math.max(x0, x1);
+  const ay = Math.min(y0, y1), by = Math.max(y0, y1);
+  const cx = (ax + bx) / 2, cy = (ay + by) / 2;
+  const rx = (bx - ax) / 2 + 0.5, ry = (by - ay) / 2 + 0.5;
+
+  const inside = new Set();
+  const all = [];
+  for (let y = ay; y <= by; y++) {
+    const norm = (y - cy) / ry;
+    const t = 1 - norm * norm;
+    if (t < 0) continue;
+    const half = rx * Math.sqrt(t);
+    const sx = Math.ceil(cx - half), ex = Math.floor(cx + half);
+    for (let x = sx; x <= ex; x++) { inside.add(x + ',' + y); all.push([x, y]); }
+  }
+  if (filled) return all;
+
+  const has = (x, y) => inside.has(x + ',' + y);
+  return all.filter(([x, y]) =>
+    !has(x - 1, y) || !has(x + 1, y) || !has(x, y - 1) || !has(x, y + 1));
+}
+
+// Zellen der aktuell gezogenen Form — inklusive Spiegelbildern, ohne Duplikate.
+export function shapeCells(tool, a, b) {
+  const base = tool === 'line' ? lineCells(a.x, a.y, b.x, b.y)
+             : tool === 'rect' ? rectCells(a.x, a.y, b.x, b.y, state.shapeFill)
+             : ellipseCells(a.x, a.y, b.x, b.y, state.shapeFill);
+
+  const seen = new Set();
+  const out = [];
+  for (const [x, y] of base) {
+    for (const [px, py] of mirrored(x, y)) {
+      const key = px + ',' + py;
+      if (!seen.has(key)) { seen.add(key); out.push([px, py]); }
+    }
+  }
+  return out;
+}
+
+// Vorschau ins Grid übernehmen. Gibt die Zahl geänderter Pixel zurück.
+export function commitShape() {
+  const grid = getGrid();
+  let n = 0;
+  for (const [x, y] of state.shape.cells) {
+    if (setCell(grid, x, y, state.shape.color)) n++;
+  }
+  state.shape.cells = [];
+  if (n) afterPaint(); else renderEditor();
+  return n;
 }
 
 // ────────────────────────────────────────────────────────────────────

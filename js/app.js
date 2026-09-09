@@ -11,7 +11,7 @@ import { showConfirmToast, showInfoToast } from './toast.js';
 import {
   renderAll, renderEditor, renderSpriteList, syncColorActive, updateOutput,
   cellFromEvent, cellFromEventClamped, cellToColor, paintCell, paintBrush, paintSpray, floodFill,
-  fillPaletteSelect, renderCallbacks,
+  fillPaletteSelect, renderCallbacks, shapeCells, commitShape,
 } from './render.js';
 import {
   saveState, loadState, clearStorage, forceSaveBeforeUnload, saveToFile, loadFromFile,
@@ -42,10 +42,14 @@ import {
   canUndo, canRedo, clearHistory, historyCallbacks,
 } from './history.js';
 import {
-  startMarquee, updateMarquee, startMove, updateMove, endSelectionPointer,
+  startMarquee, updateMarquee, startLasso, updateLasso, startMove, updateMove,
+  endSelectionPointer, selectByColor, fillSelection,
   selectAll, deselect, nudgeSelection, selectionInfo,
   copySelection, cutSelection, pasteClipboard, deleteSelection, hasClipboard,
 } from './selection.js';
+import {
+  flip, rotate90, trimToContent, centerContent, resizeCanvas, scaleSprite, scopeLabel,
+} from './transform.js';
 
 const $ = id => document.getElementById(id);
 
@@ -225,10 +229,20 @@ function applyTool(x, y) {
   paintCell(x, y); // pencil
 }
 
+// Werkzeug-Familien — bestimmen, welche Bedienelemente sichtbar sind und
+// wie pointerdown reagiert.
+const SELECT_TOOLS = ['select', 'lasso', 'magic'];
+const SHAPE_TOOLS  = ['line', 'rect', 'ellipse'];
+const isSelectTool = t => SELECT_TOOLS.includes(t);
+const isShapeTool  = t => SHAPE_TOOLS.includes(t);
+
 function setTool(tool) {
-  // Beim Wechsel weg vom Auswahl-Werkzeug verschwindet auch die Auswahl —
+  // Beim Wechsel weg von den Auswahl-Werkzeugen verschwindet auch die Auswahl —
   // ein Rahmen, den kein Werkzeug mehr anfassen kann, verwirrt nur.
-  if (tool !== 'select' && state.tool === 'select') clearSelection();
+  if (!isSelectTool(tool) && isSelectTool(state.tool)) clearSelection();
+  // Eine halb gezogene Form gehoert zum alten Werkzeug.
+  shapeStart = null;
+  state.shape.cells = [];
   state.tool = tool;
   updateToolUI();
   renderEditor();
@@ -244,19 +258,47 @@ function updateToolUI() {
   $('editor-canvas-wrap').dataset.tool = state.tool;
 
   const hasSize = ['brush', 'spray', 'eraser'].includes(state.tool);
-  const isWand  = state.tool === 'wand';
+  const needsTolerance = state.tool === 'wand' || state.tool === 'magic';
   $('brush-size-group').hidden = !hasSize;
   $('strength-group').hidden   = !hasSize;
-  $('tolerance-group').hidden  = !isWand;
-  $('select-group').hidden     = state.tool !== 'select';
-  if (state.tool !== 'select') $('editor-canvas-wrap').classList.remove('is-move');
+  $('tolerance-group').hidden  = !needsTolerance;
+  $('select-group').hidden     = !isSelectTool(state.tool);
+  $('shape-group').hidden      = !isShapeTool(state.tool);
+  if (!isSelectTool(state.tool)) $('editor-canvas-wrap').classList.remove('is-move');
   updateSelectionUI();
+}
+
+// Symmetrie-Knöpfe und Achsenzustand zusammenhalten.
+function updateMirrorUI() {
+  const x = state.mirror === 'x' || state.mirror === 'both';
+  const y = state.mirror === 'y' || state.mirror === 'both';
+  for (const [id, on] of [['mirror-x-btn', x], ['mirror-y-btn', y]]) {
+    const b = $(id);
+    if (!b) continue;
+    b.classList.toggle('is-active', on);
+    b.setAttribute('aria-pressed', String(on));
+  }
+}
+
+function toggleMirror(axis) {
+  const x = state.mirror === 'x' || state.mirror === 'both';
+  const y = state.mirror === 'y' || state.mirror === 'both';
+  const nx = axis === 'x' ? !x : x;
+  const ny = axis === 'y' ? !y : y;
+  state.mirror = nx && ny ? 'both' : nx ? 'x' : ny ? 'y' : 'off';
+  updateMirrorUI();
+  renderEditor();
+  saveState();
+  info(state.mirror === 'off'
+    ? 'Symmetrie aus'
+    : `Symmetrie: ${state.mirror === 'both' ? 'beide Achsen' : state.mirror === 'x' ? 'senkrechte Achse' : 'waagerechte Achse'}`);
 }
 
 // Auswahl-Buttons scharf schalten, je nachdem was gerade möglich ist.
 function updateSelectionUI() {
+  syncImagePanel();
   const has = !!selection.rect;
-  ['sel-cut-btn', 'sel-copy-btn', 'sel-delete-btn', 'sel-none-btn'].forEach(id => {
+  ['sel-cut-btn', 'sel-copy-btn', 'sel-delete-btn', 'sel-none-btn', 'sel-fill-btn'].forEach(id => {
     const b = $(id);
     if (b) b.disabled = !has;
   });
@@ -305,6 +347,11 @@ function updateBrushCursor(e) {
   el.hidden = false;
 }
 
+// Startpunkt der gerade gezogenen Form (null = keine Form im Gange).
+let shapeStart = null;
+
+const SHAPE_LABELS = { line: 'Linie', rect: 'Rechteck', ellipse: 'Ellipse' };
+
 // Statuszeile unter dem Canvas.
 function info(msg) {
   const el = $('info-bar');
@@ -341,7 +388,7 @@ function initCanvasEvents() {
     if (e.shiftKey && tplLoaded()) { startTplDrag(e); return; }
 
     // ── Auswahl anfassen (vor der Pipette, damit Alt+Ziehen kopiert) ──
-    if (state.tool === 'select') {
+    if (isSelectTool(state.tool)) {
       const c = cellFromEventClamped(e);
       if (isInSelection(c.x, c.y)) {
         startMove(e, e.altKey);
@@ -364,10 +411,33 @@ function initCanvasEvents() {
       return;
     }
 
-    // ── Auswahl aufziehen ──
+    // ── Auswahl aufziehen / lassoen / nach Farbe wählen ──
     if (state.tool === 'select') {
       startMarquee(e);
       info(selectionInfo('Aufziehen'));
+      return;
+    }
+    if (state.tool === 'lasso') {
+      startLasso(e);
+      info('Form umfahren — Loslassen schließt sie');
+      return;
+    }
+    if (state.tool === 'magic') {
+      const n = selectByColor(e);
+      updateSelectionUI();
+      info(n ? `Farbauswahl: ${n} Pixel${selection.rect ? ' · ' + selectionInfo() : ''}`
+             : 'Farbauswahl: nichts getroffen — Toleranz erhöhen?');
+      return;
+    }
+
+    // ── Formen: Startpunkt merken, gezeichnet wird beim Loslassen ──
+    if (isShapeTool(state.tool)) {
+      const c = cellFromEventClamped(e);
+      shapeStart = c;
+      state.shape.color = state.curColor;
+      state.shape.cells = shapeCells(state.tool, c, c);
+      renderEditor();
+      info(`${SHAPE_LABELS[state.tool]} ziehen — Start (${c.x}, ${c.y})`);
       return;
     }
 
@@ -403,7 +473,17 @@ function initCanvasEvents() {
     }
 
     if (selection.mode === 'marquee') { updateMarquee(e); info(selectionInfo('Aufziehen')); return; }
+    if (selection.mode === 'lasso')   { updateLasso(e);   info(selectionInfo()); return; }
     if (selection.mode === 'move')    { updateMove(e);    info(selectionInfo('Verschieben')); return; }
+
+    if (shapeStart) {
+      const c = cellFromEventClamped(e);
+      state.shape.cells = shapeCells(state.tool, shapeStart, c);
+      renderEditor();
+      const w = Math.abs(c.x - shapeStart.x) + 1, h = Math.abs(c.y - shapeStart.y) + 1;
+      info(`${SHAPE_LABELS[state.tool]} ${w}×${h} — ${state.shape.cells.length} Pixel`);
+      return;
+    }
 
     updateBrushCursor(e);
 
@@ -411,7 +491,7 @@ function initCanvasEvents() {
     if (!c) return;
 
     // Zeiger über der Auswahl → Verschiebe-Cursor.
-    if (state.tool === 'select') {
+    if (isSelectTool(state.tool)) {
       $('editor-canvas-wrap').classList.toggle('is-move', isInSelection(c.x, c.y));
     }
     const cur = getGrid()[c.y][c.x];
@@ -427,6 +507,12 @@ function initCanvasEvents() {
 
   const endPointer = () => {
     if (tplDragging()) endTplDrag();
+    if (shapeStart) {
+      shapeStart = null;
+      let n = 0;
+      recordOp(() => { n = commitShape(); });
+      info(n ? `${n} Pixel gezeichnet` : 'Nichts gezeichnet');
+    }
     if (selection.mode) {
       endSelectionPointer();
       info(selectionInfo());
@@ -441,12 +527,30 @@ function initCanvasEvents() {
 
   canvas.addEventListener('pointerleave', () => { $('brush-cursor').hidden = true; });
   canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+  // Strg + Mausrad zoomt — ohne Strg scrollt die Seite wie gewohnt weiter.
+  $('editor-canvas-area').addEventListener('wheel', e => {
+    if (!e.ctrlKey) return;
+    e.preventDefault();
+    const step = e.deltaY < 0 ? 1 : -1;
+    const next = Math.max(2, Math.min(40, state.cellSize + step));
+    if (next === state.cellSize) return;
+    state.cellSize = next;
+    $('cell-size').value = next;
+    $('cell-size-val').textContent = next + 'px';
+    renderEditor();
+    saveState();
+  }, { passive: false });
 }
 
 // ────────────────────────────────────────────────────────────────────
 // Tastatur
 // ────────────────────────────────────────────────────────────────────
-const TOOL_KEYS = { p: 'pencil', b: 'brush', s: 'spray', f: 'fill', e: 'eraser', w: 'wand', a: 'select' };
+const TOOL_KEYS = {
+  p: 'pencil', b: 'brush', s: 'spray', f: 'fill', e: 'eraser', w: 'wand',
+  a: 'select', l: 'lasso', k: 'magic',
+  i: 'line', r: 'rect', o: 'ellipse',
+};
 
 function isTypingTarget(el) {
   return el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable);
@@ -466,6 +570,13 @@ function initKeyboardEvents() {
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
       if (closeTopModal()) return;
+      if (shapeStart || state.shape.cells.length) {
+        shapeStart = null;
+        state.shape.cells = [];
+        renderEditor();
+        info('Form verworfen');
+        return;
+      }
       if (deselect()) { updateSelectionUI(); info('Auswahl aufgehoben'); return; }
       if (document.body.classList.contains('editor-fullscreen')) { exitFullscreen(); return; }
     }
@@ -579,12 +690,23 @@ function initToolbar() {
   document.querySelectorAll('.tool-btn').forEach(btn =>
     btn.addEventListener('click', () => setTool(btn.dataset.tool)));
 
+  $('mirror-x-btn').addEventListener('click', () => toggleMirror('x'));
+  $('mirror-y-btn').addEventListener('click', () => toggleMirror('y'));
+
+  $('shape-fill-btn').addEventListener('click', () => {
+    state.shapeFill = !state.shapeFill;
+    $('shape-fill-btn').classList.toggle('is-active', state.shapeFill);
+    $('shape-fill-btn').setAttribute('aria-pressed', String(state.shapeFill));
+    saveState();
+  });
+
   const selAction = (id, fn) => $(id).addEventListener('click', () => { fn(); updateSelectionUI(); });
   selAction('sel-all-btn',    () => { selectAll(); info(selectionInfo('Alles gewählt')); });
   selAction('sel-cut-btn',    () => { info(`Ausgeschnitten — ${cutSelection()} Pixel`); });
   selAction('sel-copy-btn',   () => { info(`${copySelection()} Pixel kopiert`); });
   selAction('sel-paste-btn',  () => { info(`Eingefügt — ${pasteClipboard()} Pixel. Zum Verschieben hineinziehen.`); });
   selAction('sel-delete-btn', () => { info(`Auswahl geleert — ${deleteSelection()} Pixel`); });
+  selAction('sel-fill-btn',   () => { info(`Auswahl gefüllt — ${fillSelection()} Pixel`); });
   selAction('sel-none-btn',   () => { deselect(); info('Auswahl aufgehoben'); });
 
   document.querySelectorAll('.brush-sz').forEach(btn =>
@@ -670,6 +792,84 @@ function initPalettePanel() {
   picker.addEventListener('input', () => {
     state.curColor = picker.value;
     syncColorActive();
+  });
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Bild-Panel — spiegeln, drehen, zuschneiden, Größe
+// ────────────────────────────────────────────────────────────────────
+// Zeigt im Badge an, worauf die Aktionen gerade wirken, und hält die
+// Größenfelder am aktuellen Sprite.
+function syncImagePanel() {
+  const badge = $('image-scope');
+  if (badge) badge.textContent = scopeLabel();
+  const sp = getSprite();
+  const w = $('resize-w'), h = $('resize-h');
+  if (sp && w && h && document.activeElement !== w && document.activeElement !== h) {
+    w.value = sp.grid[0].length;
+    h.value = sp.grid.length;
+  }
+}
+
+function initImagePanel() {
+  $('flip-h-btn').addEventListener('click', () => {
+    const scope = flip('h');
+    if (scope) info(`${scope} waagerecht gespiegelt`);
+    syncImagePanel();
+  });
+  $('flip-v-btn').addEventListener('click', () => {
+    const scope = flip('v');
+    if (scope) info(`${scope} senkrecht gespiegelt`);
+    syncImagePanel();
+  });
+  $('rotate-btn').addEventListener('click', () => {
+    const scope = rotate90();
+    if (scope) info(`${scope} um 90° gedreht`);
+    syncImagePanel();
+  });
+
+  $('trim-btn').addEventListener('click', () => {
+    const r = trimToContent();
+    if (!r) return;
+    showInfoToast(r.ok ? `Zugeschnitten auf ${r.w}×${r.h}.` : `Nicht zugeschnitten — ${r.reason}.`);
+    syncImagePanel();
+  });
+  $('center-btn').addEventListener('click', () => {
+    const r = centerContent();
+    if (!r) return;
+    showInfoToast(r.ok ? 'Inhalt mittig gesetzt.' : `Nicht verschoben — ${r.reason}.`);
+  });
+
+  $('resize-btn').addEventListener('click', () => {
+    const w = Number($('resize-w').value);
+    const h = Number($('resize-h').value);
+    const anchor = $('resize-anchor').value;
+    const apply = () => {
+      const r = resizeCanvas(w, h, anchor);
+      if (!r) return;
+      showInfoToast(r.ok
+        ? `Größe jetzt ${r.w}×${r.h}${r.lost ? ` — ${r.lost} Pixel abgeschnitten` : ''}.`
+        : `Größe unverändert — ${r.reason}.`);
+      syncImagePanel();
+    };
+    // Verkleinern kann Pixel kosten — vorher fragen.
+    const sp = getSprite();
+    if (sp && (w < sp.grid[0].length || h < sp.grid.length)) {
+      showConfirmToast('Kleiner machen? Was nicht mehr hineinpasst, wird abgeschnitten.', apply, 'Ändern');
+    } else apply();
+  });
+
+  $('scale-up-btn').addEventListener('click', () => {
+    const r = scaleSprite(2);
+    if (r) showInfoToast(r.ok ? `Auf ${r.w}×${r.h} vergrößert.` : `Nicht skaliert — ${r.reason}.`);
+    syncImagePanel();
+  });
+  $('scale-down-btn').addEventListener('click', () => {
+    showConfirmToast('Halbieren? Jedes zweite Pixel fällt weg.', () => {
+      const r = scaleSprite(0.5);
+      if (r) showInfoToast(r.ok ? `Auf ${r.w}×${r.h} verkleinert.` : `Nicht skaliert — ${r.reason}.`);
+      syncImagePanel();
+    }, 'Halbieren');
   });
 }
 
@@ -973,6 +1173,10 @@ function syncUiFromState() {
     b.classList.toggle('is-active', Number(b.dataset.size) === state.brushSize));
   const fmtSel = $('output-format');
   if (fmtSel) { fmtSel.value = state.outputFormat; syncFormatUI(); }
+  $('shape-fill-btn').classList.toggle('is-active', state.shapeFill);
+  $('shape-fill-btn').setAttribute('aria-pressed', String(state.shapeFill));
+  updateMirrorUI();
+  syncImagePanel();
   updateToolUI();
 }
 
@@ -991,6 +1195,7 @@ function init() {
   initTopbar();
   initToolbar();
   initPalettePanel();
+  initImagePanel();
   initCleanupPanel();
   initTemplate();
   initTemplatePanel();

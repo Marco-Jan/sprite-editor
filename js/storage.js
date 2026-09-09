@@ -60,6 +60,8 @@ function buildPayload() {
       editorBg:  state.editorBg,
       tool:      state.tool,
       outputFormat: state.outputFormat,
+      mirror:    state.mirror,
+      shapeFill: state.shapeFill,
       fullscreen: document.body.classList.contains('editor-fullscreen'),
       panels: collectPanelStates(),
     },
@@ -156,6 +158,8 @@ function applyPayload(payload) {
     if (ui.editorBg) state.editorBg = ui.editorBg;
     if (ui.tool) state.tool = ui.tool;
     if (ui.outputFormat) state.outputFormat = ui.outputFormat;
+    if (ui.mirror) state.mirror = ui.mirror;
+    if (typeof ui.shapeFill === 'boolean') state.shapeFill = ui.shapeFill;
     applyPanelStates(ui.panels);
 
     return { loaded: true, migrated, note, fullscreen: !!ui.fullscreen };

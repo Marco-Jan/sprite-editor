@@ -2,7 +2,7 @@
 // EXPORT — PNG + PDF mit transparentem Hintergrund, ohne Grid-Linien
 // ════════════════════════════════════════════════════════════════════
 // PDF nutzt jsPDF, das via CDN in index.html geladen wird (window.jspdf).
-import { getGrid, getPal, getSprite } from './state.js';
+import { getGrid, getPal, getSprite, listSprites, getPaletteByName } from './state.js';
 import { cellToColor } from './render.js';
 import { showInfoToast } from './toast.js';
 import { saveBlob } from './filesystem.js';
@@ -186,6 +186,55 @@ function reportSaved(result, filename) {
   }
 }
 
+// ────────────────────────────────────────────────────────────────────
+// SPRITESHEET — alle Sprites in einem Bild, plus Atlas
+// ────────────────────────────────────────────────────────────────────
+// Gleich große Zellen in einem möglichst quadratischen Raster: das ist das
+// Format, das Engines (Phaser, Godot, Unity) ohne Nacharbeit einlesen.
+// Jeder Sprite sitzt mittig in seiner Zelle, der Atlas nennt die echten
+// Pixelkoordinaten — auch für Sprites, die kleiner als die Zelle sind.
+function buildSheet(scale) {
+  const all = listSprites();
+  if (!all.length) return null;
+
+  const cellW = Math.max(...all.map(s => s.grid[0].length));
+  const cellH = Math.max(...all.map(s => s.grid.length));
+  const cols = Math.ceil(Math.sqrt(all.length));
+  const rows = Math.ceil(all.length / cols);
+
+  const c = document.createElement('canvas');
+  c.width  = cols * cellW * scale;
+  c.height = rows * cellH * scale;
+  const ctx = c.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+
+  const frames = all.map((sp, i) => {
+    const col = i % cols, row = Math.floor(i / cols);
+    const W = sp.grid[0].length, H = sp.grid.length;
+    // Mittig in der Zelle, auf ganze Pixel gerundet.
+    const ox = col * cellW + Math.floor((cellW - W) / 2);
+    const oy = row * cellH + Math.floor((cellH - H) / 2);
+    const pal = getPaletteByName(sp.palette);
+
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const fill = cellToColor(sp.grid[y][x], pal);
+      if (!fill) continue;
+      ctx.fillStyle = fill;
+      ctx.fillRect((ox + x) * scale, (oy + y) * scale, scale, scale);
+    }
+    return { name: sp.name, id: sp.id, x: ox * scale, y: oy * scale, w: W * scale, h: H * scale, palette: sp.palette };
+  });
+
+  const atlas = {
+    image: '',                       // wird unten mit dem Dateinamen gefüllt
+    scale,
+    cell: { w: cellW * scale, h: cellH * scale },
+    columns: cols,
+    frames,
+  };
+  return { canvas: c, atlas, count: all.length };
+}
+
 export function initExport() {
   const scaleSel = document.getElementById('export-scale');
 
@@ -198,6 +247,25 @@ export function initExport() {
     const filename = exportFilename('png');
     const result = await saveBlob(blob, filename);
     reportSaved(result, filename);
+  });
+
+  document.getElementById('export-sheet-btn').addEventListener('click', async () => {
+    const scale = Number(scaleSel.value) || 8;
+    const sheet = buildSheet(scale);
+    if (!sheet) { showInfoToast('Keine Sprites zum Zusammenpacken.'); return; }
+
+    const base = (getSprite()?.name || 'sprites').replace(/[^a-zA-Z0-9_-]/g, '_') || 'sprites';
+    const pngName = `${base}_sheet.png`;
+    sheet.atlas.image = pngName;
+
+    const pngResult = await saveBlob(await canvasToPngBlob(sheet.canvas), pngName);
+    const jsonName = `${base}_sheet.json`;
+    const jsonBlob = new Blob([JSON.stringify(sheet.atlas, null, 2)], { type: 'application/json;charset=utf-8' });
+    await saveBlob(jsonBlob, jsonName);
+
+    flashSaved();
+    showInfoToast(`Spritesheet mit ${sheet.count} Sprites gespeichert — „${pngName}“ und „${jsonName}“` +
+      (pngResult.fallback ? ' (im Download-Ordner).' : pngResult.dir ? ` in „${pngResult.dir}“.` : '.'));
   });
 
   document.getElementById('export-pdf-btn').addEventListener('click', async () => {
