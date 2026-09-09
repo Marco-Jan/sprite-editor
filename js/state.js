@@ -34,6 +34,14 @@ export const state = {
   mirror:        'off',    // 'off' | 'x' (senkrechte Achse) | 'y' | 'both'
   shapeFill:     false,    // Rechteck/Ellipse gefüllt statt nur Kontur
 
+  // Referenz-Ebene: ein zweiter Sprite, der halbdurchsichtig mitgezeichnet
+  // wird. Zum Abpausen und um Teile von einem Sprite in den anderen zu
+  // übernehmen — bearbeitet wird immer nur der aktive Sprite.
+  refSprite:     null,     // id in `sprites` | null
+  refVisible:    true,
+  refOpacity:    0.45,     // 0.05 – 1
+  refFront:      false,    // true = über dem aktiven Sprite
+
   // Vorschau der Formen-Werkzeuge zwischen pointerdown und pointerup.
   // Liegt hier, damit renderEditor sie ohne Umweg zeichnen kann.
   shape: { cells: [], color: 0 },

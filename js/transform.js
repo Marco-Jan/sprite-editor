@@ -5,13 +5,19 @@
 // Aktion nur sie — sonst den ganzen Sprite. Das ist die Konvention aus jedem
 // Bildbearbeiter und spart einen Haufen Knöpfe.
 //
-// Alles läuft durch recordOp(), ist also ein einzelner Undo-Schritt. Auch
-// Aktionen, die das Grid komplett austauschen (drehen, zuschneiden, Größe),
-// sind damit umkehrbar: history.js vergleicht die Grids als Ganzes.
+// Auf einer Auswahl wird NICHT im Grid gerechnet: der Inhalt wird angehoben
+// (siehe selection.js) und alle Drehungen und Spiegelungen passieren am
+// schwebenden Puffer. Sonst läse jede weitere Drehung den Untergrund mit und
+// würde ihn beim nächsten Schritt ausstanzen.
+//
+// Aktionen auf dem ganzen Sprite laufen durch recordOp() und sind damit ein
+// einzelner Undo-Schritt — auch wenn dabei das Grid komplett getauscht wird:
+// history.js vergleicht die Grids als Ganzes.
 import { selection, getSprite, clearSelection } from './state.js';
-import { renderAll } from './render.js';
+import { renderAll, renderEditor } from './render.js';
 import { saveState } from './storage.js';
-import { recordOp } from './history.js';
+import { recordOp, beginStroke, commitStroke } from './history.js';
+import { ensureFloating, commitFloat } from './selection.js';
 
 // ────────────────────────────────────────────────────────────────────
 // Kleine Helfer
@@ -22,41 +28,6 @@ function emptyRows(w, h) {
 
 function hasSelection() {
   return !!selection.rect;
-}
-
-// Zellen der Auswahl herausnehmen (außerhalb der Maske: 0).
-function readSel(grid, r, mask) {
-  const H = grid.length, W = grid[0].length;
-  const out = [];
-  for (let y = 0; y < r.h; y++) {
-    const row = [];
-    for (let x = 0; x < r.w; x++) {
-      const gx = r.x + x, gy = r.y + y;
-      const inMask = !mask || !!mask[y][x];
-      row.push(inMask && gx >= 0 && gy >= 0 && gx < W && gy < H ? grid[gy][gx] : 0);
-    }
-    out.push(row);
-  }
-  return out;
-}
-
-function clearSel(grid, r, mask) {
-  const H = grid.length, W = grid[0].length;
-  for (let y = 0; y < r.h; y++) for (let x = 0; x < r.w; x++) {
-    if (mask && !mask[y][x]) continue;
-    const gx = r.x + x, gy = r.y + y;
-    if (gx >= 0 && gy >= 0 && gx < W && gy < H) grid[gy][gx] = 0;
-  }
-}
-
-function stamp(grid, cells, ox, oy) {
-  const H = grid.length, W = grid[0].length;
-  for (let y = 0; y < cells.length; y++) for (let x = 0; x < cells[y].length; x++) {
-    const v = cells[y][x];
-    if (v === 0) continue;
-    const gx = ox + x, gy = oy + y;
-    if (gx >= 0 && gy >= 0 && gx < W && gy < H) grid[gy][gx] = v;
-  }
 }
 
 // ── Reine 2D-Array-Operationen ──────────────────────────────────────
@@ -86,12 +57,8 @@ export function flip(axis) {
   const flipFn = axis === 'h' ? flipRowsH : flipRowsV;
 
   if (hasSelection()) {
-    const r = selection.rect;
-    recordOp(() => {
-      const cells = flipFn(readSel(sp.grid, r, selection.mask));
-      clearSel(sp.grid, r, selection.mask);
-      stamp(sp.grid, cells, r.x, r.y);
-    });
+    ensureFloating();
+    selection.float = flipFn(selection.float);
     // Die Form spiegelt mit, sonst passt der Rahmen nicht mehr zum Inhalt.
     if (selection.mask) selection.mask = flipFn(selection.mask);
     done();
@@ -111,25 +78,22 @@ export function rotate90() {
   if (!sp) return null;
 
   if (hasSelection()) {
+    ensureFloating();
     const r = selection.rect;
-    const cells = rotateRows(readSel(sp.grid, r, selection.mask));
+    const cells = rotateRows(selection.float);
     const newMask = selection.mask ? rotateRows(selection.mask).map(row => row.map(Boolean)) : null;
 
-    // Um die Mitte drehen, damit die Auswahl nicht wegspringt, dann in
-    // das Grid zurückholen.
+    // Um die Mitte drehen, damit die Auswahl nicht wegspringt.
     const H = sp.grid.length, W = sp.grid[0].length;
     const nw = r.h, nh = r.w;
     let nx = Math.round(r.x + (r.w - nw) / 2);
     let ny = Math.round(r.y + (r.h - nh) / 2);
-    nx = Math.max(0, Math.min(W - Math.min(nw, W), nx));
-    ny = Math.max(0, Math.min(H - Math.min(nh, H), ny));
+    nx = Math.max(1 - nw, Math.min(W - 1, nx));
+    ny = Math.max(1 - nh, Math.min(H - 1, ny));
 
-    recordOp(() => {
-      clearSel(sp.grid, r, selection.mask);
-      stamp(sp.grid, cells, nx, ny);
-    });
     selection.rect = { x: nx, y: ny, w: nw, h: nh };
     selection.mask = newMask;
+    selection.float = cells;
     done();
     return 'Auswahl';
   }
@@ -138,6 +102,137 @@ export function rotate90() {
   clearSelection();
   done();
   return 'Sprite';
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Freie Drehung um einen beliebigen Winkel
+// ────────────────────────────────────────────────────────────────────
+// Gedreht wird per Rückwärts-Abbildung: für jedes Zielpixel wird gefragt,
+// welches Quellpixel dort landet (Nearest Neighbor). Das ist die Methode für
+// Pixel-Art — es wird nichts gemischt, jede Zelle behält ihren Palette-Index.
+//
+// Jede Vorschau rechnet vom UNBERÜHRTEN Original in `live`. Würde man den
+// Winkel schrittweise auf das schon gedrehte Ergebnis anwenden, wäre die Form
+// nach dreimal Ziehen am Regler Matsch.
+let live = null; // { scope, cells, mask, rect } | null
+
+// Zellen (und Maske) um `deg` Grad im Uhrzeigersinn drehen.
+// grow = true: das Ergebnis bekommt die Bounding-Box der gedrehten Form, es
+// geht also nichts verloren. grow = false: Größe bleibt, Ecken fallen weg.
+export function rotateCells(cells, mask, deg, grow = true) {
+  const h = cells.length, w = cells[0].length;
+  const rad = (deg * Math.PI) / 180;
+  const cos = Math.cos(rad), sin = Math.sin(rad);
+
+  const nw = grow ? Math.max(1, Math.ceil(Math.abs(w * cos) + Math.abs(h * sin))) : w;
+  const nh = grow ? Math.max(1, Math.ceil(Math.abs(w * sin) + Math.abs(h * cos))) : h;
+
+  const scx = w / 2, scy = h / 2;    // Mitte der Quelle
+  const dcx = nw / 2, dcy = nh / 2;  // Mitte des Ziels
+
+  const outCells = emptyRows(nw, nh);
+  const outMask = Array.from({ length: nh }, () => new Array(nw).fill(false));
+
+  for (let y = 0; y < nh; y++) {
+    for (let x = 0; x < nw; x++) {
+      // Von der Zielmitte aus zurückdrehen → Quellkoordinate
+      const dx = x + 0.5 - dcx, dy = y + 0.5 - dcy;
+      const sx = Math.floor(dx * cos + dy * sin + scx);
+      const sy = Math.floor(-dx * sin + dy * cos + scy);
+      if (sx < 0 || sy < 0 || sx >= w || sy >= h) continue;
+      if (mask && !mask[sy][sx]) continue;
+      outCells[y][x] = cells[sy][sx];
+      outMask[y][x] = true;
+    }
+  }
+  return { cells: outCells, mask: outMask, w: nw, h: nh };
+}
+
+export function isRotating() { return !!live; }
+
+// Original sichern. Bei einer Auswahl schwebt der Inhalt dafür sowieso schon.
+export function beginFreeRotate() {
+  if (live) return true;
+  const sp = getSprite();
+  if (!sp) return false;
+
+  if (hasSelection()) {
+    ensureFloating();
+    live = {
+      scope: 'Auswahl',
+      cells: selection.float.map(row => [...row]),
+      mask: selection.mask ? selection.mask.map(row => [...row]) : null,
+      rect: { ...selection.rect },
+    };
+  } else {
+    beginStroke(); // ganzer Sprite: eigener Undo-Schritt für die Dreh-Sitzung
+    live = {
+      scope: 'Sprite',
+      cells: sp.grid.map(row => [...row]),
+      mask: null,
+      rect: { x: 0, y: 0, w: sp.grid[0].length, h: sp.grid.length },
+    };
+  }
+  return true;
+}
+
+// Vorschau auf den Winkel setzen — immer vom Original gerechnet.
+export function previewFreeRotate(deg) {
+  if (!live) return null;
+  const sp = getSprite();
+  if (!sp) return null;
+
+  if (live.scope === 'Auswahl') {
+    const rot = rotateCells(live.cells, live.mask, deg, true);
+    // Um die Mitte der ursprünglichen Auswahl drehen.
+    const H = sp.grid.length, W = sp.grid[0].length;
+    const cx = live.rect.x + live.rect.w / 2;
+    const cy = live.rect.y + live.rect.h / 2;
+    const nx = Math.max(1 - rot.w, Math.min(W - 1, Math.round(cx - rot.w / 2)));
+    const ny = Math.max(1 - rot.h, Math.min(H - 1, Math.round(cy - rot.h / 2)));
+
+    selection.rect = { x: nx, y: ny, w: rot.w, h: rot.h };
+    selection.mask = rot.mask;
+    selection.float = rot.cells; // schwebt weiter, das Grid bleibt unberührt
+    renderEditor();
+    return { scope: 'Auswahl', w: rot.w, h: rot.h };
+  }
+
+  // Ganzer Sprite: Größe bleibt, damit ein 24×24-Sprite 24×24 bleibt.
+  const rot = rotateCells(live.cells, null, deg, false);
+  sp.grid = rot.cells;
+  renderEditor();
+  return { scope: 'Sprite', w: rot.w, h: rot.h };
+}
+
+// Winkel festschreiben. Bei einer Auswahl schwebt das Ergebnis weiter —
+// abgesetzt wird es wie immer beim Abwählen.
+export function applyFreeRotate() {
+  if (!live) return null;
+  const scope = live.scope;
+  live = null;
+  if (scope === 'Sprite') commitStroke();
+  done();
+  return scope;
+}
+
+// Zurück auf Anfang — Original wieder einsetzen.
+export function cancelFreeRotate() {
+  if (!live) return false;
+  const sp = getSprite();
+  if (sp) {
+    if (live.scope === 'Auswahl') {
+      selection.rect = { ...live.rect };
+      selection.mask = live.mask ? live.mask.map(row => [...row]) : null;
+      selection.float = live.cells.map(row => [...row]);
+    } else {
+      sp.grid = live.cells.map(row => [...row]);
+      commitStroke(); // Grid ist wieder wie vorher → landet nicht im Undo-Stack
+    }
+  }
+  live = null;
+  done();
+  return true;
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -161,6 +256,7 @@ export function contentBounds(grid) {
 export function trimToContent() {
   const sp = getSprite();
   if (!sp) return null;
+  commitFloat(); // was noch in der Luft hängt, gehört ins Bild
   const b = contentBounds(sp.grid);
   if (!b) return { ok: false, reason: 'leer' };
   if (b.w === sp.grid[0].length && b.h === sp.grid.length) return { ok: false, reason: 'nichts abzuschneiden' };
@@ -180,6 +276,7 @@ export function trimToContent() {
 export function centerContent() {
   const sp = getSprite();
   if (!sp) return null;
+  commitFloat(); // was noch in der Luft hängt, gehört ins Bild
   const b = contentBounds(sp.grid);
   if (!b) return { ok: false, reason: 'leer' };
 
@@ -211,6 +308,7 @@ export function centerContent() {
 export function resizeCanvas(newW, newH, anchor = 'center') {
   const sp = getSprite();
   if (!sp) return null;
+  commitFloat();
   const W = sp.grid[0].length, H = sp.grid.length;
   newW = Math.max(1, Math.min(256, Math.round(newW) || W));
   newH = Math.max(1, Math.min(256, Math.round(newH) || H));
@@ -242,6 +340,7 @@ export function resizeCanvas(newW, newH, anchor = 'center') {
 export function scaleSprite(factor) {
   const sp = getSprite();
   if (!sp) return null;
+  commitFloat();
   const W = sp.grid[0].length, H = sp.grid.length;
   const newW = Math.round(W * factor), newH = Math.round(H * factor);
   if (newW < 1 || newH < 1) return { ok: false, reason: 'zu klein' };
@@ -255,17 +354,6 @@ export function scaleSprite(factor) {
   clearSelection();
   done();
   return { ok: true, w: newW, h: newH };
-}
-
-// ────────────────────────────────────────────────────────────────────
-// Auswahl-Inhalt in einen neuen Sprite auslagern
-// ────────────────────────────────────────────────────────────────────
-// Braucht createSprite von außen (app.js reicht es herein), damit dieses
-// Modul nicht die halbe Sprite-Verwaltung importieren muss.
-export function selectionToCells() {
-  const sp = getSprite();
-  if (!sp || !selection.rect) return null;
-  return readSel(sp.grid, selection.rect, selection.mask);
 }
 
 // Für die Statuszeile: worauf würde eine Aktion gerade wirken?

@@ -5,14 +5,20 @@
 //   rect — die Bounding-Box in Grid-Zellen
 //   mask — null bei einem vollen Rechteck, sonst boolean[h][w] relativ
 //          zu rect: so trägt dieselbe Mechanik auch Freihandformen.
-// Alles, was Zellen liest, leert oder stempelt, respektiert die Maske.
 //
-// Ablauf beim Verschieben:
-//   pointerdown  → Zellen aus dem Grid heben (selection.float), Quelle leeren
-//   pointermove  → nur selection.rect wandert; gezeichnet wird aus float
-//   pointerup    → float ins Grid stempeln, ein Undo-Eintrag für die Geste
-// Gestempelt werden nur nicht-transparente Zellen: ein verschobener Block
-// löscht also nicht mit seinen leeren Rändern, was darunter liegt.
+// ── Der schwebende Inhalt ───────────────────────────────────────────
+// Sobald eine Auswahl bewegt, gedreht oder gespiegelt wird, wird ihr Inhalt
+// EINMAL aus dem Grid gehoben (selection.float) und die Quelle geleert.
+// Ab da passiert alles nur noch am schwebenden Puffer; das Grid wird erst
+// beim Absetzen wieder angefasst (commitFloat).
+//
+// Das ist nicht bloß hübsch, es ist notwendig: würde nach jeder Bewegung
+// gestempelt und beim nächsten Mal neu aus dem Grid gelesen, läse man den
+// Untergrund mit — die Auswahl würde bei jeder weiteren Drehung alles
+// mitnehmen und ausstanzen, worüber sie gerade liegt.
+//
+// Abgesetzt wird automatisch, sobald man etwas anderes tut: neue Auswahl,
+// Werkzeugwechsel, Abwählen, Sprite-Wechsel, Undo, Tab schließen.
 import { state, selection, getGrid, getSprite, getPal, clearSelection } from './state.js';
 import { renderEditor, renderSpriteList, updateOutput, cellFromEventClamped } from './render.js';
 import { saveState } from './storage.js';
@@ -49,7 +55,7 @@ function setRectPos(r, x, y) {
   r.y = Math.max(1 - r.h, Math.min(H - 1, y));
 }
 
-// Zellen der Auswahl kopieren. Alles außerhalb von Maske oder Grid wird 0.
+// Zellen der Auswahl aus dem Grid kopieren. Außerhalb von Maske oder Grid: 0.
 function readSel(grid, r, mask) {
   const { W, H } = gridSize();
   const out = [];
@@ -93,6 +99,12 @@ function stampCells(grid, cells, ox, oy) {
   return n;
 }
 
+function countCells(cells) {
+  let n = 0;
+  for (const row of cells) for (const v of row) if (v !== 0) n++;
+  return n;
+}
+
 // Zahl der tatsächlich ausgewählten Zellen (für die Statuszeile).
 function maskCount(r, mask) {
   if (!mask) return r.w * r.h;
@@ -107,6 +119,34 @@ function afterChange() {
   renderSpriteList();
   updateOutput();
   saveState();
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Schweben: anheben und absetzen
+// ────────────────────────────────────────────────────────────────────
+export function isFloating() { return !!selection.float; }
+
+// Inhalt aus dem Grid heben, falls er noch drinsteckt.
+// `copy = true` lässt das Original stehen.
+export function ensureFloating(copy = false) {
+  if (selection.float) return true;
+  const r = selection.rect;
+  if (!r || !getSprite()) return false;
+  beginStroke(); // ein Undo-Schritt für die ganze Schwebe-Sitzung
+  selection.float = readSel(getGrid(), r, selection.mask);
+  if (!copy) clearSel(getGrid(), r, selection.mask);
+  afterChange();
+  return true;
+}
+
+// Schwebenden Inhalt ins Grid schreiben. Die Auswahl selbst bleibt bestehen.
+export function commitFloat() {
+  if (!selection.float) return false;
+  stampCells(getGrid(), selection.float, selection.rect.x, selection.rect.y);
+  selection.float = null;
+  commitStroke();
+  afterChange();
+  return true;
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -185,8 +225,8 @@ function rasterizePath(path) {
 
 // Rechteck aufziehen.
 export function startMarquee(e) {
+  commitFloat(); // was noch schwebt, wird abgesetzt
   const c = cellFromEventClamped(e);
-  selection.float = null;
   selection.mask = null;
   selection.path = null;
   selection.anchor = c;
@@ -203,7 +243,7 @@ export function updateMarquee(e) {
 
 // Freihandform ziehen.
 export function startLasso(e) {
-  selection.float = null;
+  commitFloat();
   selection.mask = null;
   selection.rect = null;
   selection.anchor = null;
@@ -221,19 +261,23 @@ export function updateLasso(e) {
   renderEditor();
 }
 
-// Auswahl anfassen. `copy = true` (Alt) lässt die Quelle stehen.
+// Auswahl anfassen. `copy = true` (Alt) lässt eine Kopie zurück.
 export function startMove(e, copy) {
   const r = selection.rect;
   if (!r || !getSprite()) return;
-  const c = cellFromEventClamped(e);
-  const grid = getGrid();
 
-  beginStroke(); // Snapshot vor dem Ausschneiden — Drop committet die ganze Geste
-  selection.float = readSel(grid, r, selection.mask);
-  if (!copy) clearSel(grid, r, selection.mask);
+  if (selection.float) {
+    // Hängt schon in der Luft: bei Alt eine Kopie an der aktuellen Stelle
+    // liegen lassen, sonst einfach weiterziehen.
+    if (copy) { stampCells(getGrid(), selection.float, r.x, r.y); afterChange(); }
+  } else {
+    ensureFloating(copy);
+  }
+
+  const c = cellFromEventClamped(e);
   selection.grab = { dx: c.x - r.x, dy: c.y - r.y };
   selection.mode = 'move';
-  afterChange();
+  renderEditor();
 }
 
 export function updateMove(e) {
@@ -243,15 +287,14 @@ export function updateMove(e) {
   renderEditor();
 }
 
-// pointerup — Block absetzen bzw. Aufziehen/Lassoen abschließen.
+// pointerup — Ziehen beenden. Der Inhalt bleibt bewusst in der Luft:
+// so lässt er sich weiter verschieben und drehen, ohne den Untergrund
+// anzurühren. Abgesetzt wird beim Abwählen oder beim nächsten Werkzeug.
 export function endSelectionPointer() {
   if (selection.mode === 'move') {
-    stampCells(getGrid(), selection.float, selection.rect.x, selection.rect.y);
-    selection.float = null;
     selection.grab = null;
     selection.mode = null;
-    commitStroke(); // landet nur im Undo-Stack, wenn sich wirklich etwas geändert hat
-    afterChange();
+    renderEditor();
     return;
   }
 
@@ -280,9 +323,10 @@ export function endSelectionPointer() {
 // FARBAUSWAHL — zusammenhängende ähnliche Fläche wählen
 // ────────────────────────────────────────────────────────────────────
 // Derselbe Bereich, den der Zauberstab löschen würde — nur dass er hier zur
-// Auswahl wird und man ihn danach verschieben, kopieren oder umfärben kann.
+// Auswahl wird und man ihn danach verschieben, drehen oder umfärben kann.
 // Die Toleranz kommt aus demselben Regler.
 export function selectByColor(e) {
+  commitFloat();
   const c = cellFromEventClamped(e);
   const grid = getGrid();
   const { hit, count } = magicWandRegion(grid, getPal(), c.x, c.y, state.wandTolerance);
@@ -305,7 +349,6 @@ export function selectByColor(e) {
     mask.push(row);
   }
 
-  selection.float = null;
   selection.path = null;
   selection.mode = null;
   selection.rect = rect;
@@ -320,9 +363,20 @@ export function selectByColor(e) {
 export function fillSelection() {
   const r = selection.rect;
   if (!r) return 0;
+  let n = 0;
+
+  // Schwebt der Inhalt, wird der Puffer eingefärbt — sonst das Grid.
+  if (selection.float) {
+    for (let y = 0; y < r.h; y++) for (let x = 0; x < r.w; x++) {
+      if (!inMask(selection.mask, x, y)) continue;
+      if (selection.float[y][x] !== state.curColor) { selection.float[y][x] = state.curColor; n++; }
+    }
+    afterChange();
+    return n;
+  }
+
   const grid = getGrid();
   const { W, H } = gridSize();
-  let n = 0;
   recordOp(() => {
     for (let y = 0; y < r.h; y++) for (let x = 0; x < r.w; x++) {
       if (!inMask(selection.mask, x, y)) continue;
@@ -339,8 +393,8 @@ export function fillSelection() {
 // Befehle (Tastatur / Werkzeugleiste)
 // ────────────────────────────────────────────────────────────────────
 export function selectAll() {
+  commitFloat();
   const { W, H } = gridSize();
-  selection.float = null;
   selection.mask = null;
   selection.path = null;
   selection.rect = { x: 0, y: 0, w: W, h: H };
@@ -350,31 +404,34 @@ export function selectAll() {
 
 export function deselect() {
   if (!selection.rect) return false;
+  commitFloat(); // erst absetzen, dann loslassen — sonst wäre der Inhalt weg
   clearSelection();
   renderEditor();
   return true;
 }
 
-// Auswahl um dx/dy Zellen versetzen (Pfeiltasten) — ein Undo-Schritt pro Druck.
+// Auswahl um dx/dy Zellen versetzen (Pfeiltasten). Schwebt der Inhalt, ist
+// das reines Verschieben des Puffers — kein Lesen, kein Stempeln.
 export function nudgeSelection(dx, dy) {
   const r = selection.rect;
   if (!r) return false;
-  const grid = getGrid();
-  recordOp(() => {
-    const cells = readSel(grid, r, selection.mask);
-    clearSel(grid, r, selection.mask);
-    setRectPos(r, r.x + dx, r.y + dy);
-    stampCells(grid, cells, r.x, r.y);
-  });
-  afterChange();
+  ensureFloating();
+  setRectPos(r, r.x + dx, r.y + dy);
+  renderEditor();
   return true;
+}
+
+// Der Inhalt der Auswahl — aus der Luft oder aus dem Grid.
+function currentCells() {
+  if (selection.float) return selection.float.map(row => [...row]);
+  return readSel(getGrid(), selection.rect, selection.mask);
 }
 
 // Die Form wandert mit in die Zwischenablage — eingefügt wird wieder genau sie.
 export function copySelection() {
   if (!selection.rect) return 0;
   clipboard = {
-    cells: readSel(getGrid(), selection.rect, selection.mask),
+    cells: currentCells(),
     mask: selection.mask ? selection.mask.map(row => [...row]) : null,
   };
   return maskCount(selection.rect, selection.mask);
@@ -383,8 +440,15 @@ export function copySelection() {
 export function cutSelection() {
   if (!selection.rect) return 0;
   copySelection();
-  let n = 0;
-  recordOp(() => { n = clearSel(getGrid(), selection.rect, selection.mask); });
+  const n = countCells(clipboard.cells);
+
+  if (selection.float) {
+    // Hängt schon in der Luft — wegwerfen genügt, das Grid ist dort leer.
+    selection.float = null;
+    commitStroke();
+  } else {
+    recordOp(() => { clearSel(getGrid(), selection.rect, selection.mask); });
+  }
   afterChange();
   return n;
 }
@@ -392,7 +456,13 @@ export function cutSelection() {
 export function deleteSelection() {
   if (!selection.rect) return 0;
   let n = 0;
-  recordOp(() => { n = clearSel(getGrid(), selection.rect, selection.mask); });
+  if (selection.float) {
+    n = countCells(selection.float);
+    selection.float = null;
+    commitStroke();
+  } else {
+    recordOp(() => { n = clearSel(getGrid(), selection.rect, selection.mask); });
+  }
   afterChange();
   return n;
 }
@@ -400,23 +470,25 @@ export function deleteSelection() {
 export function hasClipboard() { return !!clipboard; }
 
 // Einfügen an der Ecke der aktuellen Auswahl, sonst links oben. Das
-// Eingefügte wird zur neuen Auswahl und ist damit sofort verschiebbar.
+// Eingefügte schwebt sofort — man kann es also erst hinschieben und dann
+// absetzen, ohne dass unterwegs etwas überschrieben wird.
 export function pasteClipboard() {
   if (!clipboard || !getSprite()) return 0;
+  commitFloat();
+
   const { W, H } = gridSize();
   const h = clipboard.cells.length, w = clipboard.cells[0].length;
   const x = Math.max(0, Math.min(W - w, selection.rect ? selection.rect.x : 0));
   const y = Math.max(0, Math.min(H - h, selection.rect ? selection.rect.y : 0));
 
-  let n = 0;
-  recordOp(() => { n = stampCells(getGrid(), clipboard.cells, x, y); });
-  selection.float = null;
+  beginStroke();
   selection.path = null;
   selection.mode = null;
   selection.rect = { x, y, w, h };
   selection.mask = clipboard.mask ? clipboard.mask.map(row => [...row]) : null;
+  selection.float = clipboard.cells.map(row => [...row]);
   afterChange();
-  return n;
+  return countCells(selection.float);
 }
 
 // Text für die Statuszeile.
@@ -427,5 +499,6 @@ export function selectionInfo(prefix = '') {
   const r = selection.rect;
   if (!r) return 'Keine Auswahl';
   const head = `${prefix}${prefix ? ' — ' : ''}Auswahl ${r.w}×${r.h} bei (${r.x}, ${r.y})`;
-  return selection.mask ? `${head} · ${maskCount(r, selection.mask)} Pixel` : head;
+  const count = selection.mask ? ` · ${maskCount(r, selection.mask)} Pixel` : '';
+  return head + count + (selection.float ? ' · schwebt' : '');
 }

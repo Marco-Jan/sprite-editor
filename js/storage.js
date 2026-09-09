@@ -62,6 +62,10 @@ function buildPayload() {
       outputFormat: state.outputFormat,
       mirror:    state.mirror,
       shapeFill: state.shapeFill,
+      refSprite:  state.refSprite,
+      refVisible: state.refVisible,
+      refOpacity: state.refOpacity,
+      refFront:   state.refFront,
       fullscreen: document.body.classList.contains('editor-fullscreen'),
       panels: collectPanelStates(),
     },
@@ -160,6 +164,11 @@ function applyPayload(payload) {
     if (ui.outputFormat) state.outputFormat = ui.outputFormat;
     if (ui.mirror) state.mirror = ui.mirror;
     if (typeof ui.shapeFill === 'boolean') state.shapeFill = ui.shapeFill;
+    // Die Ebene nur übernehmen, wenn es den Sprite noch gibt.
+    state.refSprite = ui.refSprite && sprites[ui.refSprite] ? ui.refSprite : null;
+    if (typeof ui.refVisible === 'boolean') state.refVisible = ui.refVisible;
+    if (ui.refOpacity) state.refOpacity = ui.refOpacity;
+    if (typeof ui.refFront === 'boolean') state.refFront = ui.refFront;
     applyPanelStates(ui.panels);
 
     return { loaded: true, migrated, note, fullscreen: !!ui.fullscreen };

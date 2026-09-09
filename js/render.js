@@ -145,11 +145,17 @@ export function renderEditor() {
     ctx.fillRect(x * cs, y * cs, cs, cs);
   }
 
+  // Referenz-Ebene dahinter
+  if (!state.refFront) drawRefLayer(ctx, W, H, cs);
+
   // Pixel
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
     const fill = cellToColor(grid[y][x], pal);
     if (fill) { ctx.fillStyle = fill; ctx.fillRect(x * cs, y * cs, cs, cs); }
   }
+
+  // ... oder darüber, zum Abpausen von Konturen
+  if (state.refFront) drawRefLayer(ctx, W, H, cs);
 
   // Formen-Vorschau (Linie, Rechteck, Ellipse) waehrend des Ziehens
   if (state.shape.cells.length) {
@@ -197,6 +203,28 @@ export function renderEditor() {
   if (state.mirror !== 'off') drawMirrorGuides(ctx, W, H, cs);
 
   updateStageTitle();
+}
+
+// Referenz-Ebene: ein zweiter Sprite, halbdurchsichtig, oben links
+// ausgerichtet und am aktuellen Grid abgeschnitten. Er bringt seine eigene
+// Palette mit, damit die Vorlage so aussieht wie ihr Original.
+function drawRefLayer(ctx, W, H, cs) {
+  const ref = state.refSprite && state.refSprite !== state.curSprite
+    ? sprites[state.refSprite] : null;
+  if (!ref || !state.refVisible) return;
+
+  const pal = getPaletteByName(ref.palette);
+  const rh = Math.min(H, ref.grid.length);
+  ctx.save();
+  ctx.globalAlpha = Math.max(0.05, Math.min(1, state.refOpacity));
+  for (let y = 0; y < rh; y++) {
+    const rw = Math.min(W, ref.grid[y].length);
+    for (let x = 0; x < rw; x++) {
+      const fill = cellToColor(ref.grid[y][x], pal);
+      if (fill) { ctx.fillStyle = fill; ctx.fillRect(x * cs, y * cs, cs, cs); }
+    }
+  }
+  ctx.restore();
 }
 
 // Auswahlrahmen — laeuft an den Kanten der Maske entlang, nicht stumpf um die

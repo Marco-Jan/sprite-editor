@@ -3,7 +3,7 @@
 // ════════════════════════════════════════════════════════════════════
 import {
   state, sprites, customPalettes, selection,
-  getGrid, getSprite, getPal, getMaxIdx, getPaletteName,
+  getGrid, getSprite, getPal, getMaxIdx, getPaletteName, listSprites,
   createSprite, uniquePaletteName, clearSelection, isInSelection,
 } from './state.js';
 import { COLOR_LABELS_SHORT, DEFAULT_PALETTE } from './data.js';
@@ -43,12 +43,13 @@ import {
 } from './history.js';
 import {
   startMarquee, updateMarquee, startLasso, updateLasso, startMove, updateMove,
-  endSelectionPointer, selectByColor, fillSelection,
+  endSelectionPointer, selectByColor, fillSelection, commitFloat, isFloating,
   selectAll, deselect, nudgeSelection, selectionInfo,
   copySelection, cutSelection, pasteClipboard, deleteSelection, hasClipboard,
 } from './selection.js';
 import {
   flip, rotate90, trimToContent, centerContent, resizeCanvas, scaleSprite, scopeLabel,
+  beginFreeRotate, previewFreeRotate, applyFreeRotate, cancelFreeRotate, isRotating,
 } from './transform.js';
 
 const $ = id => document.getElementById(id);
@@ -57,7 +58,12 @@ const $ = id => document.getElementById(id);
 // Render-Callbacks (vermeidet Zirkularimporte render <-> Feature-Module)
 // ────────────────────────────────────────────────────────────────────
 renderCallbacks.onSave             = saveState;
-renderCallbacks.onSelectSprite     = selectSprite;
+renderCallbacks.onSelectSprite     = id => {
+  stopRotating(true);
+  commitFloat();
+  selectSprite(id);
+  renderRefSelect(); // der neue aktive Sprite fällt als Ebene raus
+};
 renderCallbacks.onRenameSprite     = openRenameModal;
 renderCallbacks.onDuplicateSprite  = duplicateSprite;
 renderCallbacks.onOpenPaletteModal = openPaletteModal;
@@ -237,6 +243,10 @@ const isSelectTool = t => SELECT_TOOLS.includes(t);
 const isShapeTool  = t => SHAPE_TOOLS.includes(t);
 
 function setTool(tool) {
+  stopRotating(true);
+  // Schwebender Auswahl-Inhalt gehört ins Bild, bevor ein anderes Werkzeug
+  // drankommt — sonst wäre er beim Abwählen weg.
+  if (!isSelectTool(tool)) commitFloat();
   // Beim Wechsel weg von den Auswahl-Werkzeugen verschwindet auch die Auswahl —
   // ein Rahmen, den kein Werkzeug mehr anfassen kann, verwirrt nur.
   if (!isSelectTool(tool) && isSelectTool(state.tool)) clearSelection();
@@ -374,6 +384,7 @@ function initCanvasEvents() {
         else if (r.status === 'transparent') info('Schablone: transparenter Bereich');
         else                                 info(`Schablonen-Pipette: ${r.hex}`);
       } else {
+        commitFloat(); // sonst radiert man in ein Loch, unter dem noch etwas hängt
         state.isErasing = true;
         beginStroke();
         eraseAt(e);
@@ -570,6 +581,7 @@ function initKeyboardEvents() {
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
       if (closeTopModal()) return;
+      if (isRotating()) { stopRotating(false); info('Drehung verworfen'); return; }
       if (shapeStart || state.shape.cells.length) {
         shapeStart = null;
         state.shape.cells = [];
@@ -585,8 +597,14 @@ function initKeyboardEvents() {
     // Undo/Redo — auch bei Fokus außerhalb von Formularfeldern.
     if ((e.ctrlKey || e.metaKey) && !e.altKey) {
       const k = e.key.toLowerCase();
-      if (k === 'z' && !e.shiftKey) { e.preventDefault(); undo(); return; }
-      if (k === 'y' || (k === 'z' && e.shiftKey)) { e.preventDefault(); redo(); return; }
+      if (k === 'z' && !e.shiftKey) { e.preventDefault(); stopRotating(false); commitFloat(); undo(); return; }
+      if (k === 'y' || (k === 'z' && e.shiftKey)) { e.preventDefault(); stopRotating(false); commitFloat(); redo(); return; }
+    }
+
+    if (e.key === 'Enter' && isRotating() && !isTypingTarget(e.target)) {
+      stopRotating(true);
+      info('Drehung übernommen');
+      return;
     }
 
     if (isTypingTarget(e.target) || anyModalOpen()) return;
@@ -751,8 +769,8 @@ function initToolbar() {
   $('bg-dark-btn').addEventListener('click', () => setBg('dark'));
   $('bg-bw-btn').addEventListener('click', () => setBg('bw'));
 
-  $('undo-btn').addEventListener('click', () => undo());
-  $('redo-btn').addEventListener('click', () => redo());
+  $('undo-btn').addEventListener('click', () => { stopRotating(false); commitFloat(); undo(); });
+  $('redo-btn').addEventListener('click', () => { stopRotating(false); commitFloat(); redo(); });
 
   $('fullscreen-btn').addEventListener('click', () => {
     if (document.body.classList.contains('editor-fullscreen')) exitFullscreen();
@@ -796,6 +814,87 @@ function initPalettePanel() {
 }
 
 // ────────────────────────────────────────────────────────────────────
+// Referenz-Ebene — zweiter Sprite als Vorlage
+// ────────────────────────────────────────────────────────────────────
+// Bearbeitet wird immer nur der aktive Sprite. Die Ebene liegt bloß darunter
+// (oder darüber) und hilft beim Abpausen und beim Übertragen von Teilen.
+function renderRefSelect() {
+  const sel = $('ref-select');
+  if (!sel) return;
+  const others = listSprites().filter(sp => sp.id !== state.curSprite);
+
+  sel.innerHTML = '';
+  const none = document.createElement('option');
+  none.value = '';
+  none.textContent = others.length ? 'keine' : 'kein zweiter Sprite';
+  sel.appendChild(none);
+
+  for (const sp of others) {
+    const o = document.createElement('option');
+    o.value = sp.id;
+    o.textContent = `${sp.name} (${sp.grid[0].length}×${sp.grid.length})`;
+    if (sp.id === state.refSprite) o.selected = true;
+    sel.appendChild(o);
+  }
+  sel.disabled = !others.length;
+
+  const active = !!state.refSprite && state.refSprite !== state.curSprite;
+  $('ref-controls').hidden = !active;
+  $('ref-note').hidden = !active;
+  $('ref-visible-btn').classList.toggle('is-off', !state.refVisible);
+  $('ref-visible-btn').setAttribute('aria-pressed', String(state.refVisible));
+  $('ref-front-btn').classList.toggle('is-active', state.refFront);
+  $('ref-front-btn').setAttribute('aria-pressed', String(state.refFront));
+  $('ref-front-btn').textContent = state.refFront ? 'davor' : 'dahinter';
+  $('ref-opacity').value = Math.round(state.refOpacity * 100);
+}
+
+function initRefLayer() {
+  $('ref-select').addEventListener('change', () => {
+    state.refSprite = $('ref-select').value || null;
+    renderRefSelect();
+    renderEditor();
+    saveState();
+    const sp = state.refSprite ? sprites[state.refSprite] : null;
+    info(sp ? `Ebene: „${sp.name}“ liegt ${state.refFront ? 'darüber' : 'darunter'}` : 'Ebene aus');
+  });
+
+  $('ref-visible-btn').addEventListener('click', () => {
+    state.refVisible = !state.refVisible;
+    renderRefSelect();
+    renderEditor();
+    saveState();
+  });
+
+  $('ref-front-btn').addEventListener('click', () => {
+    state.refFront = !state.refFront;
+    renderRefSelect();
+    renderEditor();
+    saveState();
+  });
+
+  $('ref-opacity').addEventListener('input', () => {
+    state.refOpacity = Number($('ref-opacity').value) / 100;
+    renderEditor();
+  });
+  $('ref-opacity').addEventListener('change', saveState);
+
+  // Rollentausch: der bearbeitete Sprite wird zur Ebene und umgekehrt.
+  // Damit lässt sich zwischen zwei Sprites hin- und herarbeiten.
+  $('ref-swap-btn').addEventListener('click', () => {
+    const other = state.refSprite;
+    if (!other || !sprites[other]) return;
+    stopRotating(true);
+    commitFloat();
+    const previous = state.curSprite;
+    state.refSprite = previous;
+    selectSprite(other);
+    renderRefSelect();
+    info(`Getauscht — „${sprites[other].name}“ wird bearbeitet, „${sprites[previous].name}“ liegt als Ebene`);
+  });
+}
+
+// ────────────────────────────────────────────────────────────────────
 // Bild-Panel — spiegeln, drehen, zuschneiden, Größe
 // ────────────────────────────────────────────────────────────────────
 // Zeigt im Badge an, worauf die Aktionen gerade wirken, und hält die
@@ -811,7 +910,72 @@ function syncImagePanel() {
   }
 }
 
+// Regler für die freie Drehung. Die Sitzung beginnt beim ersten Zupfen und
+// endet mit Übernehmen oder Verwerfen — dazwischen ist alles nur Vorschau.
+function initRotateSlider() {
+  const slider = $('rotate-free');
+  const num = $('rotate-free-num');
+  const actions = $('rotate-actions');
+
+  const reset = () => {
+    slider.value = 0;
+    num.value = 0;
+    actions.hidden = true;
+  };
+
+  const preview = deg => {
+    if (!getSprite()) return;
+    if (!isRotating() && !beginFreeRotate()) return;
+    const r = previewFreeRotate(deg);
+    actions.hidden = false;
+    if (r) {
+      info(`${r.scope} um ${deg}° gedreht — ${r.w}×${r.h}` +
+        (r.scope === 'Sprite' ? ' · Ecken außerhalb der Fläche fallen weg' : ' · Übernehmen oder Verwerfen'));
+    }
+  };
+
+  slider.addEventListener('input', () => {
+    num.value = slider.value;
+    preview(Number(slider.value));
+  });
+  num.addEventListener('change', () => {
+    const deg = Math.max(-180, Math.min(180, Number(num.value) || 0));
+    num.value = deg;
+    slider.value = deg;
+    preview(deg);
+  });
+
+  $('rotate-apply-btn').addEventListener('click', () => {
+    const scope = applyFreeRotate();
+    if (scope) info(`${scope} gedreht — übernommen`);
+    reset();
+    updateSelectionUI();
+  });
+  $('rotate-cancel-btn').addEventListener('click', () => {
+    if (cancelFreeRotate()) info('Drehung verworfen');
+    reset();
+    updateSelectionUI();
+  });
+
+  // Von außen aufrufbar, wenn etwas anderes die Sitzung beendet.
+  resetRotateUI = reset;
+}
+
+// Wird von initRotateSlider gesetzt — bricht eine laufende Dreh-Sitzung ab.
+let resetRotateUI = () => {};
+
+function stopRotating(applyIt) {
+  if (!isRotating()) return;
+  if (applyIt) applyFreeRotate(); else cancelFreeRotate();
+  resetRotateUI();
+}
+
 function initImagePanel() {
+  // Jede andere Bild-Aktion schreibt eine laufende Drehung erst fest.
+  ['flip-h-btn', 'flip-v-btn', 'rotate-btn', 'trim-btn', 'center-btn',
+   'resize-btn', 'scale-up-btn', 'scale-down-btn'].forEach(id =>
+    $(id).addEventListener('click', () => stopRotating(true), true));
+
   $('flip-h-btn').addEventListener('click', () => {
     const scope = flip('h');
     if (scope) info(`${scope} waagerecht gespiegelt`);
@@ -957,7 +1121,11 @@ function initTopbar() {
   $('help-close').addEventListener('click', () => help.classList.remove('open'));
   help.addEventListener('click', e => { if (e.target === help) help.classList.remove('open'); });
 
-  window.addEventListener('beforeunload', forceSaveBeforeUnload);
+  window.addEventListener('beforeunload', () => {
+    stopRotating(true);
+    commitFloat(); // schwebender Inhalt darf nicht mit dem Tab verschwinden
+    forceSaveBeforeUnload();
+  });
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -997,6 +1165,8 @@ function initOutputPanel() {
 
   $('clear-grid-btn').addEventListener('click', () => {
     if (!getSprite()) return;
+    stopRotating(false);
+    commitFloat();
     showConfirmToast('Alle Pixel dieses Sprites löschen?', () => {
       recordOp(clearCurrentGrid);
       renderAll();
@@ -1177,6 +1347,7 @@ function syncUiFromState() {
   $('shape-fill-btn').setAttribute('aria-pressed', String(state.shapeFill));
   updateMirrorUI();
   syncImagePanel();
+  renderRefSelect();
   updateToolUI();
 }
 
@@ -1195,7 +1366,9 @@ function init() {
   initTopbar();
   initToolbar();
   initPalettePanel();
+  initRefLayer();
   initImagePanel();
+  initRotateSlider();
   initCleanupPanel();
   initTemplate();
   initTemplatePanel();

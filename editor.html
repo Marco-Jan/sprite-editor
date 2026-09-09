@@ -30,8 +30,10 @@
   <!-- ══ Kopfzeile ══ -->
   <header id="topbar">
     <div class="brand">
-      <img class="brand-mark" src="assets/icon.svg" alt="" width="18" height="18">
-      <span class="brand-name">Sprite&nbsp;Editor</span>
+      <a class="brand-link" href="index.html" title="Zur Startseite">
+        <img class="brand-mark" src="assets/icon.svg" alt="" width="18" height="18">
+        <span class="brand-name">Sprite&nbsp;Editor</span>
+      </a>
     </div>
     <span id="doc-title" class="doc-title"></span>
     <span id="save-indicator" class="save-indicator">gespeichert</span>
@@ -62,6 +64,23 @@
           <button class="btn btn--primary btn--block" id="new-sprite-btn">+ Neuer Sprite</button>
           <input type="search" id="sprite-search" class="input" placeholder="Sprite suchen…" autocomplete="off">
           <div id="sprite-list" class="sprite-list"></div>
+
+          <div class="layer-box">
+            <div class="field field--inline">
+              <span class="field-label">Ebene</span>
+              <select id="ref-select" class="input input--sm"
+                      title="Zweiter Sprite als halbdurchsichtige Vorlage — bearbeitet wird weiter der aktive"></select>
+              <button class="icon-btn" id="ref-visible-btn" title="Ebene ein-/ausblenden" aria-pressed="true">👁</button>
+            </div>
+            <div class="field field--inline" id="ref-controls" hidden>
+              <input type="range" id="ref-opacity" min="5" max="100" value="45" title="Deckkraft der Ebene">
+              <button class="btn" id="ref-front-btn" aria-pressed="false" title="Ebene über den aktiven Sprite legen">davor</button>
+              <button class="btn" id="ref-swap-btn" title="Ebene und aktiven Sprite tauschen">Tauschen</button>
+            </div>
+            <p class="field-note" id="ref-note" hidden>
+              Kopieren geht mit <b>Strg+C</b> hier und <b>Strg+V</b> im anderen Sprite.
+            </p>
+          </div>
         </div>
       </section>
 
@@ -350,6 +369,20 @@
             <button class="btn" id="rotate-btn" title="90° im Uhrzeigersinn drehen">↻ 90°</button>
           </div>
 
+          <div class="field">
+            <div class="field-controls">
+              <span class="field-label">Frei drehen</span>
+              <input type="range" id="rotate-free" min="-180" max="180" step="1" value="0"
+                     title="Beliebiger Winkel — mit Auswahl dreht sich nur sie">
+              <input type="number" id="rotate-free-num" class="input input--num" min="-180" max="180" value="0">
+              <span class="field-unit">°</span>
+            </div>
+            <div class="btn-row" id="rotate-actions" hidden>
+              <button class="btn btn--primary" id="rotate-apply-btn" title="Winkel übernehmen (Enter)">Übernehmen</button>
+              <button class="btn" id="rotate-cancel-btn" title="Zurück auf 0° (Esc)">Verwerfen</button>
+            </div>
+          </div>
+
           <div class="btn-row">
             <button class="btn" id="trim-btn" title="Leeren Rand rundherum abschneiden">Zuschneiden</button>
             <button class="btn" id="center-btn" title="Inhalt mittig setzen">Zentrieren</button>
@@ -576,7 +609,8 @@
       <div><b>Auswahl</b> (<span class="kbd">A</span>) zieht ein Rechteck auf.</div>
       <div><b>Lasso</b> (<span class="kbd">L</span>) umfährt eine freie Form; beim Loslassen wird sie geschlossen und alles darin gehört dazu — auch bei krakeliger Linie.</div>
       <div><b>Farbwahl</b> (<span class="kbd">K</span>) nimmt die zusammenhängende ähnliche Fläche unter dem Klick; die <i>Toleranz</i> bestimmt, wie viel mitgeht.</div>
-      <div>In die Auswahl fassen und ziehen → der Bereich wird <b>ausgeschnitten und verschoben</b>; loslassen setzt ihn ab.</div>
+      <div>In die Auswahl fassen und ziehen → der Bereich wird <b>ausgeschnitten</b> und <b>schwebt</b>. Er bleibt in der Luft, bis du ihn absetzt — solange lässt er sich beliebig oft verschieben, drehen und spiegeln, ohne dass darunter etwas kaputtgeht.</div>
+      <div><b>Abgesetzt</b> wird beim Abwählen (<span class="kbd">Esc</span>), bei einer neuen Auswahl, beim Werkzeug- oder Sprite-Wechsel — oder automatisch beim Schließen des Tabs.</div>
       <div><span class="kbd">Alt</span>+Ziehen lässt das Original stehen — man verschiebt eine <b>Kopie</b>.</div>
       <div>Feinarbeit mit den <b>Pfeiltasten</b>: ein Pixel pro Druck. <b>Füllen</b> färbt die ganze Auswahl in der aktuellen Farbe.</div>
       <div>Beim Absetzen überschreiben nur gefüllte Pixel; transparente Stellen lassen den Untergrund stehen.</div>
@@ -590,6 +624,17 @@
       <div><b>Zuschneiden</b> schneidet den leeren Rand weg, <b>Zentrieren</b> rückt den Inhalt in die Mitte.</div>
       <div><b>Größe</b> ändert die Fläche, ohne zu skalieren; der Anker bestimmt, wohin der alte Inhalt rutscht.</div>
       <div><b>×2 / ÷2</b> skaliert hart (Nearest Neighbor) — Pixel bleiben Pixel, beim Halbieren fällt jedes zweite weg.</div>
+      <div><b>Frei drehen</b> nimmt jeden Winkel. Der Regler zeigt eine Vorschau; <b>Übernehmen</b> (<span class="kbd">Enter</span>) schreibt sie fest, <b>Verwerfen</b> (<span class="kbd">Esc</span>) geht zurück auf 0°.</div>
+      <div>Jede Vorschau wird vom <i>Original</i> gerechnet, nicht vom zuletzt gedrehten Bild — dreimal am Regler ziehen verwäscht die Form also nicht.</div>
+      <div>Bei einer Auswahl wächst der Rahmen mit, damit nichts abgeschnitten wird. Beim ganzen Sprite bleibt die Fläche gleich, Ecken außerhalb fallen weg.</div>
+    </div>
+
+    <h3 class="help-h">Ebene — mit zwei Sprites arbeiten</h3>
+    <div class="help-list">
+      <div>Unter der Sprite-Liste lässt sich ein <b>zweiter Sprite als Ebene</b> einblenden: halbdurchsichtig, oben links ausgerichtet, mit eigener Palette.</div>
+      <div>Bearbeitet wird immer nur der aktive Sprite — die Ebene ist reine Vorlage. <b>👁</b> blendet sie aus, der Regler stellt die Deckkraft, <b>dahinter/davor</b> legt sie unter oder über das Bild (zum Abpausen von Konturen).</div>
+      <div><b>Tauschen</b> vertauscht die Rollen: die Ebene wird bearbeitet, der bisherige Sprite wird zur Ebene.</div>
+      <div>Teile übertragen: im einen Sprite auswählen und <span class="kbd">Strg</span>+<span class="kbd">C</span>, zum anderen wechseln, <span class="kbd">Strg</span>+<span class="kbd">V</span>. Das Eingefügte schwebt und lässt sich erst hinschieben, bevor es liegt.</div>
     </div>
 
     <h3 class="help-h">Schablone</h3>
@@ -646,6 +691,7 @@
       <div class="sc-row"><b>Pfeiltasten</b><span>Auswahl pixelweise verschieben</span></div>
       <div class="sc-row"><b>Strg + A / C / X / V</b><span>Alles · Kopieren · Ausschneiden · Einfügen</span></div>
       <div class="sc-row"><b>Entf</b><span>Auswahl leeren</span></div>
+      <div class="sc-row"><b>Enter</b><span>Drehung übernehmen</span></div>
       <div class="sc-row"><b>Strg + Z</b><span>Rückgängig</span></div>
       <div class="sc-row"><b>Strg + Y</b><span>Wiederholen</span></div>
       <div class="sc-row"><b>Esc</b><span>Auswahl aufheben, Dialog oder Vollbild schließen</span></div>
