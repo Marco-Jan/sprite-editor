@@ -529,8 +529,8 @@
         <li class="tool">
           <h3>Foto als Vorlage</h3>
           <p>
-            Bild laden, darüberlegen, per Median-Cut auf N Farben reduzieren. Die
-            Bildfarben lassen sich als editierbare Palette übernehmen.
+            Foto laden, darüberlegen, auf wenige Farben eindampfen. Die Farben aus dem
+            Bild werden zu deiner Palette.
           </p>
           <p class="tool-meta">Dazu: Hintergrund entfernen, glätten, Outline ziehen.</p>
         </li>
@@ -545,10 +545,10 @@
         <li class="tool">
           <h3>Alle zusammen</h3>
           <p>
-            Das Spritesheet packt alle Sprites in gleich große Zellen und schreibt einen
-            JSON-Atlas daneben.
+            Alle Sprites wandern in ein Bild, gleich groß nebeneinander — plus eine
+            Liste, wo welcher sitzt.
           </p>
-          <p class="tool-meta">Der Atlas nennt Name, Palette und die echte Lage jedes Frames.</p>
+          <p class="tool-meta">Damit liest jede Engine sie direkt ein.</p>
         </li>
       </ul>
     </div>
@@ -561,30 +561,33 @@
     <p class="eyebrow"><span class="st-num">05</span> Export</p>
     <h2 id="h-export">Und dann darf es gehen.</h2>
     <p class="section-lead">
-      Acht Code-Formate, jedes mit den Farben darin und für sich allein benutzbar.
-      Keins braucht eine zweite Datei daneben.
+      Speichern kannst du als <b>Bild</b> — oder als fertigen Code für dein Projekt.
+      Beides mit einem Klick, die Farben sind immer mit dabei.
+    </p>
+
+    <ul class="formats formats--image">
+      <li class="fmt"><span class="fmt-ext">.png</span><h3>Bild</h3><p>Mit transparentem Hintergrund, 1× bis 32× vergrößert</p></li>
+      <li class="fmt"><span class="fmt-ext">.pdf</span><h3>PDF</h3><p>Zum Drucken oder Weitergeben</p></li>
+      <li class="fmt"><span class="fmt-ext">.png</span><h3>Spritesheet</h3><p>Alle Sprites in einem Bild, mit Liste wo welcher sitzt</p></li>
+    </ul>
+
+    <p class="section-lead section-lead--sub">
+      Für Entwickler kommt der Sprite auch als Code heraus — acht Formate, jedes
+      für sich allein benutzbar.
     </p>
 
     <ul class="formats">
-      <li class="fmt"><span class="fmt-ext">.ts</span><h3>TypeScript</h3><p><code>number[][]</code> plus <code>Record&lt;number, string&gt;</code></p></li>
-      <li class="fmt"><span class="fmt-ext">.js</span><h3>JavaScript</h3><p>Dasselbe als ES-Modul, ohne Typen</p></li>
-      <li class="fmt"><span class="fmt-ext">.json</span><h3>JSON</h3><p>Sprachneutral, für eigene Pipelines und Engines</p></li>
-      <li class="fmt"><span class="fmt-ext">.svg</span><h3>SVG</h3><p>Vektor, skaliert verlustfrei, direkt einbindbar</p></li>
-      <li class="fmt"><span class="fmt-ext">.css</span><h3>CSS</h3><p>Der Sprite als <code>box-shadow</code> auf einem Element</p></li>
-      <li class="fmt"><span class="fmt-ext">.h</span><h3>C-Header</h3><p><code>uint8</code>-Indizes für Mikrocontroller und LED-Matrix</p></li>
-      <li class="fmt"><span class="fmt-ext">.py</span><h3>Python</h3><p>Dict und Liste für Pygame, Pillow, Skripte</p></li>
-      <li class="fmt"><span class="fmt-ext">.txt</span><h3>Text-Raster</h3><p>Ein Zeichen pro Pixel plus Legende, gut für Diffs</p></li>
+      <li class="fmt"><span class="fmt-ext">.ts</span><h3>TypeScript</h3><p>Zahlenraster plus Farbliste, fertig getypt</p></li>
+      <li class="fmt"><span class="fmt-ext">.js</span><h3>JavaScript</h3><p>Dasselbe ohne Typen, direkt importierbar</p></li>
+      <li class="fmt"><span class="fmt-ext">.json</span><h3>JSON</h3><p>Liest jede Sprache und jede Engine</p></li>
+      <li class="fmt"><span class="fmt-ext">.svg</span><h3>SVG</h3><p>Bleibt in jeder Größe scharf, direkt einbindbar</p></li>
+      <li class="fmt"><span class="fmt-ext">.css</span><h3>CSS</h3><p>Der Sprite als reines CSS, ganz ohne Bilddatei</p></li>
+      <li class="fmt"><span class="fmt-ext">.h</span><h3>C-Header</h3><p>Für Mikrocontroller und LED-Matrix</p></li>
+      <li class="fmt"><span class="fmt-ext">.py</span><h3>Python</h3><p>Für Pygame, Pillow und eigene Skripte</p></li>
+      <li class="fmt"><span class="fmt-ext">.txt</span><h3>Text-Raster</h3><p>Ein Zeichen pro Pixel — zum Draufschauen</p></li>
     </ul>
 
     <div class="export-extras">
-      <div class="extra">
-        <h3>Als Bild</h3>
-        <p class="chips">
-          <span class="chip-tag">PNG, transparent</span>
-          <span class="chip-tag">PDF</span>
-          <span class="chip-tag">Spritesheet + JSON-Atlas</span>
-        </p>
-      </div>
       <div class="extra">
         <h3>Und wieder zurück</h3>
         <p class="chips">
@@ -593,8 +596,7 @@
           <span class="chip-tag chip-tag--in">JSON</span>
         </p>
         <p class="tool-meta">
-          Diese drei kommen verlustfrei wieder herein. Der Import wertet keinen Code
-          aus, er liest den Text gegen eine Zeichen-Whitelist.
+          Diese drei kannst du auch wieder einlesen — nichts geht dabei verloren.
         </p>
       </div>
     </div>

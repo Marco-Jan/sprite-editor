@@ -12,6 +12,18 @@
    ══════════════════════════════════════════════════════════════════ */
 
 /* ── 1 · Tokens ─────────────────────────────────────────────────── */
+/* ── Pixelschrift ────────────────────────────────────────────────
+   Selbst erzeugt (tools/make_font.py) und im Projekt abgelegt — kein
+   Google Fonts, kein Nachladen von aussen, keine fremde Lizenz.
+   Die Glyphen sind achsenparallele Rechtecke auf einem 5x7-Raster. */
+@font-face {
+  font-family: 'Sprite Pixel';
+  src: url("assets/landing/pixel.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   color-scheme: dark;
 
@@ -66,6 +78,7 @@
   --on-primary: #221a12;
 
   --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --pixel: 'Sprite Pixel', ui-monospace, monospace;
   --mono: ui-monospace, 'Cascadia Code', Consolas, 'SF Mono', monospace;
 
   --fs-label: 0.6875rem;
@@ -118,16 +131,29 @@ h1, h2, h3 {
   font-weight: 700;
   text-wrap: balance;
 }
-h1 { font-size: var(--fs-h1); line-height: 0.98; letter-spacing: -0.04em; }
-h2 { font-size: var(--fs-h2); line-height: 1.1;  letter-spacing: -0.025em; }
-h3 { font-size: var(--fs-h3); line-height: 1.3;  letter-spacing: -0.01em; }
-
-/* Die Station, in der es um Zahlen geht, spricht Mono. */
-.h2--mono {
-  font-family: var(--mono);
-  font-weight: 600;
-  letter-spacing: -0.02em;
+/* Die grossen Ueberschriften tragen die Pixelschrift. Feste Stufen statt
+   clamp(): bei einer Bitmap-Schrift muss die Groesse ein Vielfaches von 8px
+   sein, sonst faellt ein Rasterfeld auf Bruchteile eines Bildschirmpixels
+   und die Kanten verwaschen. */
+h1, h2 {
+  font-family: var(--pixel);
+  font-weight: 400;
+  -webkit-font-smoothing: none;
 }
+h1 { font-size: 64px; line-height: 1.15; letter-spacing: 0.02em; }
+h2 { font-size: 40px; line-height: 1.2;  letter-spacing: 0.02em; }
+h3 { font-size: var(--fs-h3); line-height: 1.3; letter-spacing: -0.01em; }
+
+@media (max-width: 940px) {
+  h1 { font-size: 40px; }
+  h2 { font-size: 32px; }
+}
+@media (max-width: 560px) {
+  h1 { font-size: 32px; }
+  h2 { font-size: 24px; }
+}
+
+.h2--mono { letter-spacing: 0.02em; }
 
 p  { margin: 0; }
 ul, ol, dl, dd { margin: 0; padding: 0; }
@@ -297,7 +323,13 @@ kbd {
     var(--surface-1);
   border-block: 1px solid var(--line);
 }
-.band--warm > * { max-width: var(--page); margin-inline: auto; }
+/* Die Kinder brauchen dieselbe Breite wie in einem normalen .band — dort
+   greift zusaetzlich der seitliche Innenabstand. Ohne das Abziehen stand
+   dieser Abschnitt weiter links als alle anderen. */
+.band--warm > * {
+  max-width: calc(var(--page) - var(--gutter) * 2);
+  margin-inline: auto;
+}
 
 /* ── 5 · Kopfzeile ──────────────────────────────────────────────── */
 .topbar {
@@ -386,9 +418,10 @@ kbd {
     linear-gradient(to bottom, rgba(16, 14, 26, 0.5) 0%, rgba(16, 14, 26, 0) 30%);
 }
 
-/* Alle waagerecht laufenden Ebenen teilen diese Basis. Der Versatz
-   entsteht ueber background-position, die Kacheln sind nahtlos
-   (die Skyline ist dafuer gespiegelt verdoppelt). */
+/* Alle Kulissenbaender teilen diese Basis. Skyline und Baeume stehen
+   bewusst still: sie fuellen die halbe Breite, und ein dauerndes
+   Seitwaertsziehen nimmt beim Lesen den Blick mit. Nur die Wolken ziehen
+   noch, so langsam dass es beim Lesen nicht auffaellt. */
 .layer {
   position: absolute;
   left: 0;
@@ -411,7 +444,8 @@ kbd {
   opacity: 0.5;
   filter: brightness(1.15) sepia(0.55) saturate(1.7) hue-rotate(-12deg);
   animation-name: driftClouds;
-  animation-duration: 190s;
+  animation-duration: 620s;   /* gut zehn Minuten je Durchlauf: sichtbar
+                                 nur, wenn man hinsieht */
 }
 /* Gegen einen hellen Horizont gehoert die Stadt als dunkle Silhouette —
    abgedunkelt und ins Violette gezogen, statt grau davorzustehen. */
@@ -422,8 +456,6 @@ kbd {
   background-size: 640px 204px;
   opacity: 0.85;
   filter: brightness(0.42) saturate(0.5) sepia(0.4) hue-rotate(215deg);
-  animation-name: driftSkyline;
-  animation-duration: 240s;
 }
 .layer--deco-far {
   bottom: 34px;
@@ -433,8 +465,6 @@ kbd {
   opacity: 0.62;
   filter: brightness(0.5) saturate(0.75) sepia(0.3) hue-rotate(-8deg);
   transform: scaleX(-1);
-  animation-name: driftDecoFar;
-  animation-duration: 150s;
 }
 .layer--deco-near {
   bottom: 22px;
@@ -442,8 +472,6 @@ kbd {
   background-image: url("assets/landing/deco-band.png");
   background-size: 680px 152px;
   filter: saturate(1.1) sepia(0.12);
-  animation-name: driftDecoNear;
-  animation-duration: 96s;
 }
 
 .scene-ground {
@@ -478,7 +506,7 @@ kbd {
   object-fit: contain;
   image-rendering: pixelated;
   animation-duration: var(--flap, 0.42s);
-  animation-timing-function: steps(2, jump-none);
+  animation-timing-function: steps(1);
   animation-iteration-count: infinite;
 }
 /* Zwei eigene Keyframe-Saetze statt animation-direction: reverse —
@@ -865,6 +893,17 @@ kbd {
 .fmt h3 { font-size: var(--fs-sm); }
 .fmt p { color: var(--text-dim); font-size: var(--fs-xs); line-height: 1.55; }
 
+/* Die drei Bild-Formate stehen vor den Code-Formaten: das ist der Weg, den
+   die meisten gehen. Eigene Reihe, damit sie nicht in der Achterliste
+   untergehen. */
+.formats--image {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  margin-bottom: var(--sp-6);
+}
+.formats--image .fmt-ext { color: var(--primary); border-color: var(--primary-line); }
+
+.section-lead--sub { margin-top: var(--sp-6); }
+
 .export-extras {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
@@ -989,13 +1028,12 @@ kbd {
 /* Endlose Baender. Die Weite entspricht genau einer Kachel, darum
    springt der Ruecksprung nicht sichtbar. */
 @keyframes driftClouds   { from { background-position-x: 0; } to { background-position-x: -900px; } }
-@keyframes driftSkyline  { from { background-position-x: 0; } to { background-position-x: -640px; } }
-@keyframes driftDecoFar  { from { background-position-x: 0; } to { background-position-x: -340px; } }
-@keyframes driftDecoNear { from { background-position-x: 0; } to { background-position-x: -680px; } }
-
 /* Fluegelschlag: zwei Frames, harter Wechsel ueber opacity. */
-@keyframes flapFrameA { from { opacity: 1; } to { opacity: 0; } }
-@keyframes flapFrameB { from { opacity: 0; } to { opacity: 1; } }
+/* Harter Schnitt in der Mitte. Ein Verlauf von 1 nach 0 liesse beide Frames
+   kurz gleichzeitig durchscheinen — der Vogel wirkte dann beim Fluegelschlag
+   grau statt schwarz. */
+@keyframes flapFrameA { 0%, 49.999% { opacity: 1; } 50%, 100% { opacity: 0; } }
+@keyframes flapFrameB { 0%, 49.999% { opacity: 0; } 50%, 100% { opacity: 1; } }
 
 /* Der Vogel zieht durch und laesst sich danach lange nicht blicken.
    Das Auf und Ab ist kein Schmuck: ohne es gleitet er wie auf einer
