@@ -19,7 +19,11 @@
 //
 // Abgesetzt wird automatisch, sobald man etwas anderes tut: neue Auswahl,
 // Werkzeugwechsel, Abwählen, Sprite-Wechsel, Undo, Tab schließen.
-import { state, selection, getGrid, getSprite, getPal, clearSelection } from './state.js';
+//
+// `selection.owner` hält fest, aus welchem Sprite der Inhalt stammt. Ohne das
+// würde er in dem Sprite landen, der beim Absetzen gerade offen ist — beim
+// Arbeiten mit einer Ebene also im falschen.
+import { state, sprites, selection, getGrid, getSprite, getPal, clearSelection } from './state.js';
 import { renderEditor, renderSpriteList, updateOutput, cellFromEventClamped } from './render.js';
 import { saveState } from './storage.js';
 import { beginStroke, commitStroke, recordOp } from './history.js';
@@ -86,8 +90,10 @@ function clearSel(grid, r, mask) {
 
 // Zellen ins Grid stempeln — transparente Zellen lassen den Untergrund stehen.
 // Die Maske steckt hier schon drin: außerhalb von ihr sind die Zellen 0.
+// Die Maße kommen aus dem übergebenen Grid, nicht vom aktiven Sprite: beim
+// Absetzen kann das ein anderer sein, und der darf andere Maße haben.
 function stampCells(grid, cells, ox, oy) {
-  const { W, H } = gridSize();
+  const H = grid.length, W = grid[0].length;
   let n = 0;
   for (let y = 0; y < cells.length; y++) for (let x = 0; x < cells[y].length; x++) {
     const v = cells[y][x];
@@ -134,16 +140,24 @@ export function ensureFloating(copy = false) {
   if (!r || !getSprite()) return false;
   beginStroke(); // ein Undo-Schritt für die ganze Schwebe-Sitzung
   selection.float = readSel(getGrid(), r, selection.mask);
+  selection.owner = state.curSprite;
   if (!copy) clearSel(getGrid(), r, selection.mask);
   afterChange();
   return true;
 }
 
-// Schwebenden Inhalt ins Grid schreiben. Die Auswahl selbst bleibt bestehen.
+// Schwebenden Inhalt absetzen — immer in den Sprite, aus dem er kam, auch
+// wenn inzwischen ein anderer offen ist.
 export function commitFloat() {
   if (!selection.float) return false;
-  stampCells(getGrid(), selection.float, selection.rect.x, selection.rect.y);
+  const target = sprites[selection.owner];
+  const cells = selection.float;
+  const { x, y } = selection.rect;
   selection.float = null;
+  selection.owner = null;
+
+  // Ist der Quell-Sprite inzwischen gelöscht, gibt es nichts mehr zu füllen.
+  if (target) stampCells(target.grid, cells, x, y);
   commitStroke();
   afterChange();
   return true;
@@ -445,6 +459,7 @@ export function cutSelection() {
   if (selection.float) {
     // Hängt schon in der Luft — wegwerfen genügt, das Grid ist dort leer.
     selection.float = null;
+    selection.owner = null;
     commitStroke();
   } else {
     recordOp(() => { clearSel(getGrid(), selection.rect, selection.mask); });
@@ -459,6 +474,7 @@ export function deleteSelection() {
   if (selection.float) {
     n = countCells(selection.float);
     selection.float = null;
+    selection.owner = null;
     commitStroke();
   } else {
     recordOp(() => { n = clearSel(getGrid(), selection.rect, selection.mask); });
@@ -487,6 +503,7 @@ export function pasteClipboard() {
   selection.rect = { x, y, w, h };
   selection.mask = clipboard.mask ? clipboard.mask.map(row => [...row]) : null;
   selection.float = clipboard.cells.map(row => [...row]);
+  selection.owner = state.curSprite;
   afterChange();
   return countCells(selection.float);
 }

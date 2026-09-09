@@ -10,12 +10,16 @@ import { renderAll, fillPaletteSelect } from './render.js';
 import { saveState } from './storage.js';
 import { showInfoToast } from './toast.js';
 import { clearHistory } from './history.js';
+import { commitFloat } from './selection.js';
 
 // ────────────────────────────────────────────────────────────────────
 // Auswahl
 // ────────────────────────────────────────────────────────────────────
 export function selectSprite(id) {
   if (!sprites[id] || state.curSprite === id) return;
+  // Schwebender Inhalt gehört in den Sprite, den wir gerade verlassen —
+  // erst absetzen, dann wechseln. Sonst wäre er weg.
+  commitFloat();
   clearSelection(); // Auswahl gehört zum Grid, das wir gerade verlassen
   state.curSprite = id;
   renderAll();
@@ -39,6 +43,7 @@ export function duplicateSprite(id) {
     palette: src.palette,
     grid: dc(src.grid),
   });
+  commitFloat();
   clearSelection();
   state.curSprite = newId;
   renderAll();
@@ -48,6 +53,7 @@ export function duplicateSprite(id) {
 
 export function deleteSprite(id) {
   if (!sprites[id]) return;
+  commitFloat(); // in einen anderen Sprite gehobener Inhalt darf nicht verfallen
   clearSelection();
   delete sprites[id];
   if (state.curSprite === id) {

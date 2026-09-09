@@ -98,6 +98,7 @@ export function rotate90() {
     return 'Auswahl';
   }
 
+  commitFloat(); // erst absetzen, sonst verfällt der Inhalt beim Abwählen
   recordOp(() => { sp.grid = rotateRows(sp.grid); });
   clearSelection();
   done();

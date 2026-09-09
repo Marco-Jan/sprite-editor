@@ -168,6 +168,11 @@ bei jeder weiteren Drehung alles mitnehmen und ausstanzen, worüber sie gerade l
 Abgesetzt wird automatisch, sobald du etwas anderes tust: neue Auswahl, Abwählen (`Esc`),
 Werkzeug- oder Sprite-Wechsel, Undo, Tab schließen.
 
+Der schwebende Inhalt merkt sich, aus **welchem** Sprite er stammt (`selection.owner`),
+und landet beim Absetzen immer dort — auch wenn inzwischen ein anderer Sprite offen ist.
+Ohne das würde er beim Arbeiten mit einer Ebene im falschen Bild landen oder ganz
+verschwinden.
+
 ---
 
 ## Ebene — mit zwei Sprites arbeiten

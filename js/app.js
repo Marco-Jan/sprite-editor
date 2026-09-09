@@ -90,6 +90,8 @@ function syncHistoryButtons() {
   if (r) r.disabled = !canRedo();
 }
 historyCallbacks.onChange = syncHistoryButtons;
+// Nach einem Undo passt eine Auswahl nicht mehr zum Bild — weg damit. Ein
+// schwebender Inhalt wurde vorher schon abgesetzt (siehe Undo-Bindings).
 historyCallbacks.onRestore = () => { clearSelection(); renderAll(); saveState(); };
 
 // ────────────────────────────────────────────────────────────────────
@@ -249,7 +251,7 @@ function setTool(tool) {
   if (!isSelectTool(tool)) commitFloat();
   // Beim Wechsel weg von den Auswahl-Werkzeugen verschwindet auch die Auswahl —
   // ein Rahmen, den kein Werkzeug mehr anfassen kann, verwirrt nur.
-  if (!isSelectTool(tool) && isSelectTool(state.tool)) clearSelection();
+  if (!isSelectTool(tool) && isSelectTool(state.tool)) { commitFloat(); clearSelection(); }
   // Eine halb gezogene Form gehoert zum alten Werkzeug.
   shapeStart = null;
   state.shape.cells = [];
