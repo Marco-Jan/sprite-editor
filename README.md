@@ -49,8 +49,14 @@ Eine Palette ist ein Mapping **Index → Hex-Farbe**. Index `0` ist immer transp
 | 5 | Outline / Kontur |
 | 6–9 | Akzent A · Highlight · Akzent B · Akzent C |
 
-**Eingebaut**: `graustufen`, `golden`, `braun`, `kohle`, `creme`, `schiefer`, `orange`,
-`tinte`, `schnee` — reine Farbschemata, schreibgeschützt.
+**Eingebaut, neutral**: `graustufen`, `golden`, `braun`, `kohle`, `creme`, `schiefer`,
+`orange`, `tinte`, `schnee` — reine Farbschemata, schreibgeschützt.
+
+**Eingebaut, Helden**: `blitz`, `klempner`, `igel`, `held`, `roboter`, `puff`, `geist`,
+`ninja` — Farbschemata im Geist bekannter Spiel- und Comicfiguren. Die Töne sind so
+gewählt, dass die Figur wiedererkennbar wird; die Namen sind beschreibend statt
+geliehen. Alle neun Slots sind belegt, und jede Kontur hebt sich vom mittleren Ton
+mindestens 3:1 ab — sonst verschwindet sie beim Zeichnen.
 
 **Eigene Paletten**: über `+ Palette` neu anlegen oder mit `Kopie bearbeiten` aus einer
 eingebauten ableiten. Danach sind die Swatches rechts direkt anklickbar — eine
