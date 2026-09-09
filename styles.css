@@ -464,7 +464,10 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   display: flex;
   flex-direction: column;
   gap: var(--sp-2);
-  padding: 0 var(--sp-3) var(--sp-3);
+  /* Oben braucht es eigenen Abstand: der Kopf hat zwar Innenabstand, der
+     endet aber mit seiner Hintergrundflaeche direkt an der Kante. Ohne das
+     klebt das erste Bedienelement an der Ueberschrift. */
+  padding: var(--sp-3) var(--sp-3) var(--sp-3);
 }
 .panel.collapsed .panel-body { display: none; }
 
