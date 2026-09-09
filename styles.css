@@ -543,8 +543,22 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 .code-in  { height: 190px; }
 .code-out:focus, .code-in:focus { outline: none; border-color: var(--accent); }
 
-.export-row { display: flex; align-items: center; gap: var(--sp-2); }
-.export-row .btn { flex: 1; }
+/* Die Zeile trug PNG, PDF und Spritesheet nebeneinander — in der schmalen
+   Spalte lief der letzte Knopf aus dem Panel heraus. Jetzt darf sie
+   umbrechen, und die Knoepfe duerfen unter ihre Wunschbreite schrumpfen
+   (ohne min-width:0 verweigert ein Flex-Kind das Kleinerwerden). */
+.export-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.export-row .btn {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+}
+.export-row .field { flex: 1 1 100%; }
 
 /* ── 6 · Bühne ──────────────────────────────────────────────────── */
 #stage {

@@ -1,0 +1,57 @@
+# Sprite Editor
+
+> Pixel-Art-Editor, der komplett im Browser läuft. Kein Build, keine
+> Anmeldung, keine Cloud — die Arbeit bleibt im localStorage des Nutzers.
+> Sprites lassen sich als Bild oder in acht Code-Formaten exportieren.
+> Kostenlos, MIT-Lizenz, Quelltext offen.
+
+Der Editor ist reines Frontend: HTML, CSS und ES-Module ohne Bundler. Weil
+ES-Module HTTP brauchen, funktioniert ein Aufruf über `file://` nicht.
+
+## Seiten
+
+- [Startseite](https://marco-jan.github.io/sprite-editor/): Was der Editor kann, in fünf Stationen erzählt.
+- [Editor](https://marco-jan.github.io/sprite-editor/editor.html): Die Anwendung selbst.
+
+## Was der Editor kann
+
+- Zeichnen: Stift, Pinsel, Spray, Füllen, Radierer, Zauberstab. Formen als
+  Linie, Rechteck und Ellipse mit Live-Vorschau. Symmetrie über zwei Achsen.
+- Auswahl: Rechteck, Lasso (freie Form) und Farbauswahl. Der gewählte
+  Bereich wird ausgeschnitten und schwebt, bis er abgesetzt wird — er lässt
+  sich verschieben, frei drehen, spiegeln und kopieren, ohne den Untergrund
+  zu beschädigen.
+- Paletten: index-basiert. Index 0 ist immer transparent, 1 bis 9 sind frei
+  belegbar. Eine Farbe zu ändern färbt alle Pixel mit diesem Index sofort um.
+  Neun Schemata sind eingebaut, eigene lassen sich anlegen.
+- Foto-Vorlage: Bild laden, darüberlegen, per Median-Cut auf wenige Farben
+  reduzieren, Bildfarben als Palette übernehmen, Hintergrund entfernen,
+  glätten, Outline ziehen.
+- Ebene: ein zweiter Sprite lässt sich halbdurchsichtig einblenden — zum
+  Abpausen und um Teile zwischen Sprites zu übertragen.
+- Bild: spiegeln, drehen (auch frei um beliebige Winkel), auf den Inhalt
+  zuschneiden, zentrieren, Fläche ändern, hart skalieren.
+- Undo und Redo pro Strich, Auto-Save, Tastenkürzel für jedes Werkzeug.
+
+## Export
+
+- Als Bild: PNG mit Transparenz (1× bis 32×), PDF, sowie ein Spritesheet
+  aller Sprites mit begleitender JSON-Liste der Positionen.
+- Als Code: TypeScript, JavaScript, JSON, SVG, CSS (box-shadow), C-Header
+  für Mikrocontroller, Python und ein Text-Raster. Jedes Format enthält die
+  Farben und ist für sich allein benutzbar.
+- Zurück in den Editor kommen TypeScript, JavaScript und JSON — verlustfrei.
+  Der Import wertet keinen Code aus, er prüft den Text gegen eine
+  Zeichen-Whitelist.
+
+## Technisches
+
+- Kein Konto, kein Server, keine Telemetrie. Nichts wird hochgeladen.
+- Speicherort ist der localStorage des Browsers; für Sicherungen schreibt
+  „Projekt sichern" eine JSON-Datei.
+- Einzige Ausnahme beim Offline-Betrieb: der PDF-Export lädt seine
+  Bibliothek beim ersten Aufruf nach.
+
+## Quelltext
+
+- [GitHub](https://github.com/Marco-Jan/sprite-editor): MIT-Lizenz.
