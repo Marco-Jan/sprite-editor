@@ -944,28 +944,78 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 }
 
 /* Toast */
+/* ── Rückfrage und Hinweis ──────────────────────────────────────
+   Vorher sahen beide gleich aus: ein kleiner Kasten unten mit 12px-Text.
+   Eine Rückfrage wurde dadurch leicht übersehen — und wer sie übersieht,
+   wartet auf etwas, das nie passiert. Jetzt trägt die Rückfrage die
+   Aufmerksamkeit, die sie verlangt, und der Hinweis bleibt beiläufig. */
 #confirm-toast {
-  display: flex;
+  display: none;
   position: fixed;
-  bottom: var(--sp-5);
-  left: 50%;
   z-index: 200;
+}
+#confirm-toast.visible { display: flex; }
+
+#confirm-toast-box {
+  display: flex;
   align-items: center;
   gap: var(--sp-4);
-  max-width: min(560px, calc(100vw - 32px));
-  padding: var(--sp-3) var(--sp-4);
   border: 1px solid var(--line-strong);
   border-radius: var(--r-lg);
   background: var(--surface-2);
   box-shadow: var(--shadow-lg);
-  opacity: 0;
-  transform: translate(-50%, 16px);
-  pointer-events: none;
-  transition: opacity 0.18s, transform 0.18s;
 }
-#confirm-toast.visible { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
-#confirm-toast-msg { flex: 1; font-size: var(--fs-md); line-height: 1.5; color: var(--text); }
+#confirm-toast-msg { margin: 0; flex: 1; color: var(--text); }
 #confirm-toast-btns { display: flex; gap: var(--sp-2); flex-shrink: 0; }
+
+/* ── Rückfrage: mittig, abgedunkelter Hintergrund, nicht zu übersehen ── */
+#confirm-toast.is-confirm {
+  inset: 0;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-4);
+  background: rgba(8, 8, 12, 0.62);
+  animation: confirmIn 0.14s ease-out;
+}
+#confirm-toast.is-confirm #confirm-toast-box {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--sp-5);
+  width: min(420px, 100%);
+  padding: var(--sp-5);
+  animation: confirmBoxIn 0.16s ease-out;
+}
+#confirm-toast.is-confirm #confirm-toast-msg {
+  font-size: var(--fs-xl);
+  line-height: 1.45;
+}
+#confirm-toast.is-confirm #confirm-toast-btns { justify-content: flex-end; }
+#confirm-toast.is-confirm .btn { padding: 9px 18px; font-size: var(--fs-lg); }
+
+/* ── Hinweis: unten, beiläufig, verschwindet von selbst ── */
+#confirm-toast.is-info {
+  bottom: var(--sp-5);
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: min(560px, calc(100vw - 32px));
+  animation: infoIn 0.18s ease-out;
+}
+#confirm-toast.is-info #confirm-toast-box {
+  padding: var(--sp-4) var(--sp-5);
+}
+#confirm-toast.is-info #confirm-toast-msg {
+  font-size: var(--fs-lg);
+  line-height: 1.5;
+}
+
+@keyframes confirmIn    { from { opacity: 0; } to { opacity: 1; } }
+@keyframes confirmBoxIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: none; } }
+@keyframes infoIn       { from { opacity: 0; transform: translate(-50%, 12px); }
+                          to   { opacity: 1; transform: translate(-50%, 0); } }
+
+@media (prefers-reduced-motion: reduce) {
+  #confirm-toast, #confirm-toast-box { animation: none; }
+}
 
 /* ── 9 · Vollbild ───────────────────────────────────────────────── */
 body.editor-fullscreen #topbar,

@@ -724,12 +724,16 @@
   </div>
 </div>
 
-<!-- Bestätigungs-Toast -->
-<div id="confirm-toast" role="alertdialog" aria-live="assertive">
-  <span id="confirm-toast-msg"></span>
-  <div id="confirm-toast-btns">
-    <button class="btn" id="confirm-toast-cancel">Abbrechen</button>
-    <button class="btn btn--danger" id="confirm-toast-ok">Löschen</button>
+<!-- Rückfrage und Hinweis teilen sich ein Element, sehen aber verschieden
+     aus: eine Rückfrage verlangt eine Antwort und legt sich deshalb mittig
+     über die Seite, ein Hinweis bleibt unten und geht von selbst wieder. -->
+<div id="confirm-toast" role="alertdialog" aria-live="assertive" aria-labelledby="confirm-toast-msg">
+  <div id="confirm-toast-box">
+    <p id="confirm-toast-msg"></p>
+    <div id="confirm-toast-btns">
+      <button class="btn" id="confirm-toast-cancel">Abbrechen</button>
+      <button class="btn btn--danger" id="confirm-toast-ok">Löschen</button>
+    </div>
   </div>
 </div>
 
