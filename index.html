@@ -4,6 +4,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Sprite Editor</title>
+  <meta name="description" content="Pixel-Art-Editor mit Foto-Vorlage — Sprites malen, Paletten bauen, als Code oder Bild exportieren. Läuft komplett im Browser.">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#121214">
+
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="alternate icon" href="assets/favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="manifest" href="site.webmanifest">
+  <meta name="apple-mobile-web-app-title" content="Sprites">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Sprite Editor">
+  <meta property="og:description" content="Pixel-Art-Editor mit Foto-Vorlage — malen, Paletten bauen, als Code oder Bild exportieren.">
+  <meta property="og:image" content="assets/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -13,7 +30,7 @@
   <!-- ══ Kopfzeile ══ -->
   <header id="topbar">
     <div class="brand">
-      <span class="brand-mark" aria-hidden="true"></span>
+      <img class="brand-mark" src="assets/icon.svg" alt="" width="18" height="18">
       <span class="brand-name">Sprite&nbsp;Editor</span>
     </div>
     <span id="doc-title" class="doc-title"></span>
@@ -55,14 +72,20 @@
         </div>
         <div class="panel-body">
 
+          <label class="field field--inline">
+            <span class="field-label">Format</span>
+            <select id="output-format" class="input input--sm" aria-describedby="output-format-hint"></select>
+          </label>
+          <p class="field-note" id="output-format-hint"></p>
+
           <div class="btn-row">
             <button class="btn" id="copy-btn">Kopieren</button>
-            <button class="btn" id="save-ts-btn">.ts speichern</button>
+            <button class="btn" id="save-code-btn">.ts speichern</button>
             <button class="btn btn--accent" id="import-btn">Import…</button>
             <button class="btn btn--danger-soft" id="clear-grid-btn" title="Alle Pixel dieses Sprites löschen">Leeren</button>
           </div>
 
-          <label class="check">
+          <label class="check" id="include-palette-label">
             <input type="checkbox" id="export-include-palette">
             <span>Palette in den Code schreiben</span>
           </label>
@@ -130,6 +153,7 @@
           <button class="tool-btn" data-tool="fill"   aria-pressed="false" title="Füllen — Flood-Fill (F)"><span class="tool-ico">◍</span><span class="tool-name">Füllen</span></button>
           <button class="tool-btn" data-tool="eraser" aria-pressed="false" title="Radierer (E)"><span class="tool-ico">⌫</span><span class="tool-name">Radierer</span></button>
           <button class="tool-btn" data-tool="wand"   aria-pressed="false" title="Zauberstab — ähnliche Fläche löschen (W)"><span class="tool-ico">✦</span><span class="tool-name">Zauberstab</span></button>
+          <button class="tool-btn" data-tool="select" aria-pressed="false" title="Auswahl — Bereich aufziehen, ausschneiden und verschieben (A)"><span class="tool-ico">⬚</span><span class="tool-name">Auswahl</span></button>
         </div>
 
         <div class="tool-sep" aria-hidden="true"></div>
@@ -160,6 +184,18 @@
           <input type="range" id="tolerance-slider" min="0" max="100" value="25">
           <span id="tolerance-val" class="field-value">25%</span>
         </label>
+
+        <div class="tool-group" id="select-group" hidden>
+          <span class="field-label">Auswahl</span>
+          <div class="btn-group">
+            <button class="btn" id="sel-all-btn"    title="Alles auswählen (Strg+A)">Alles</button>
+            <button class="btn" id="sel-cut-btn"    title="Ausschneiden (Strg+X)">Ausschneiden</button>
+            <button class="btn" id="sel-copy-btn"   title="Kopieren (Strg+C)">Kopieren</button>
+            <button class="btn" id="sel-paste-btn"  title="Einfügen (Strg+V)">Einfügen</button>
+            <button class="btn btn--danger-soft" id="sel-delete-btn" title="Auswahl leeren (Entf)">Leeren</button>
+            <button class="btn" id="sel-none-btn"   title="Auswahl aufheben (Esc)">Aufheben</button>
+          </div>
+        </div>
       </div>
 
       <div id="quick-palette" role="group" aria-label="Farb-Schnellwahl"></div>
@@ -450,6 +486,18 @@
       <div><b>Füllen</b> — zusammenhängende gleiche Fläche.</div>
       <div><b>Radierer</b> — setzt auf transparent.</div>
       <div><b>Zauberstab</b> — löscht zusammenhängende <i>ähnliche</i> Fläche; <i>Toleranz</i> steuert, wie viel Abweichung mitgeht.</div>
+      <div><b>Auswahl</b> — Bereich aufziehen und als Ganzes verschieben, kopieren oder löschen.</div>
+    </div>
+
+    <h3 class="help-h">Auswahl verschieben</h3>
+    <div class="help-list">
+      <div>Werkzeug <b>Auswahl</b> (<span class="kbd">A</span>) wählen und mit gedrückter Maustaste ein Rechteck aufziehen.</div>
+      <div>In die Auswahl fassen und ziehen → der Bereich wird <b>ausgeschnitten und verschoben</b>; loslassen setzt ihn ab.</div>
+      <div><span class="kbd">Alt</span>+Ziehen lässt das Original stehen — man verschiebt eine <b>Kopie</b>.</div>
+      <div>Feinarbeit mit den <b>Pfeiltasten</b>: ein Pixel pro Druck.</div>
+      <div>Beim Absetzen überschreiben nur gefüllte Pixel; transparente Stellen lassen den Untergrund stehen.</div>
+      <div>Was über den Rand hinausgeschoben wird, geht verloren — <span class="kbd">Strg</span>+<span class="kbd">Z</span> holt alles zurück.</div>
+      <div>Ein Klick neben die Auswahl (oder <span class="kbd">Esc</span>) hebt sie auf.</div>
     </div>
 
     <h3 class="help-h">Schablone</h3>
@@ -472,8 +520,17 @@
 
     <h3 class="help-h">Import &amp; Export</h3>
     <div class="help-list">
-      <div><b>Import</b> liest <code>number[][]</code> aus Text oder Datei. Ein mitgelieferter Palettenblock wird als eigene Palette angelegt und zugewiesen.</div>
-      <div><b>Code-Feld</b> erzeugt den TypeScript-Export. Freie Pipetten-Farben werden als Indizes oberhalb der Palette gesichert — der Round-Trip ist verlustfrei.</div>
+      <div><b>Import</b> liest <code>number[][]</code> aus Text oder Datei — TypeScript, JavaScript und JSON. Ein mitgelieferter Palettenblock wird als eigene Palette angelegt und zugewiesen.</div>
+      <div><b>Code-Feld</b> erzeugt den Export im gewählten <b>Format</b>. Freie Pipetten-Farben werden als Indizes oberhalb der Palette gesichert — bei TS, JS und JSON ist der Round-Trip verlustfrei.</div>
+      <div class="help-formats">
+        <div><b>TypeScript</b> / <b>JavaScript</b> — <code>number[][]</code> plus Palette, mit oder ohne Typen.</div>
+        <div><b>JSON</b> — sprachneutral für eigene Pipelines, Engines und Tools.</div>
+        <div><b>SVG</b> — fertige Vektorgrafik, skaliert verlustfrei; gleiche Farbe nebeneinander wird zu einem Rechteck zusammengefasst.</div>
+        <div><b>CSS</b> — der Sprite als <code>box-shadow</code> auf einem einzigen Element, ganz ohne Bilddatei.</div>
+        <div><b>C-Header</b> — <code>uint8</code>-Indizes plus <code>uint32</code>-Palette für Mikrocontroller und LED-Matrizen.</div>
+        <div><b>Python</b> — Dict und Liste für Pygame, Pillow oder eigene Skripte.</div>
+        <div><b>Text-Raster</b> — ein Zeichen pro Pixel mit Legende; praktisch für Diffs und Doku.</div>
+      </div>
       <div><b>PNG / PDF</b> exportieren transparent; mit <i>Farb-Legende</i> wird die Palette ins Bild gerendert.</div>
       <div><b>Projekt sichern / Öffnen</b> schreibt alle Sprites und Paletten in eine JSON-Datei.</div>
     </div>
@@ -487,10 +544,15 @@
       <div class="sc-row"><b>Shift + Links + Ziehen</b><span>Schablone verschieben</span></div>
       <div class="sc-row"><b>Shift + Rechtsklick</b><span>Schablonen-Pipette</span></div>
       <div class="sc-row"><b>0 – 9</b><span>Farb-Index wählen</span></div>
-      <div class="sc-row"><b>P B S F E W</b><span>Stift · Pinsel · Spray · Füllen · Radierer · Zauberstab</span></div>
+      <div class="sc-row"><b>P B S F E W A</b><span>Stift · Pinsel · Spray · Füllen · Radierer · Zauberstab · Auswahl</span></div>
+      <div class="sc-row"><b>Ziehen in der Auswahl</b><span>Bereich ausschneiden und verschieben</span></div>
+      <div class="sc-row"><b>Alt + Ziehen</b><span>Kopie verschieben (Original bleibt)</span></div>
+      <div class="sc-row"><b>Pfeiltasten</b><span>Auswahl pixelweise verschieben</span></div>
+      <div class="sc-row"><b>Strg + A / C / X / V</b><span>Alles · Kopieren · Ausschneiden · Einfügen</span></div>
+      <div class="sc-row"><b>Entf</b><span>Auswahl leeren</span></div>
       <div class="sc-row"><b>Strg + Z</b><span>Rückgängig</span></div>
       <div class="sc-row"><b>Strg + Y</b><span>Wiederholen</span></div>
-      <div class="sc-row"><b>Esc</b><span>Dialog oder Vollbild schließen</span></div>
+      <div class="sc-row"><b>Esc</b><span>Auswahl aufheben, Dialog oder Vollbild schließen</span></div>
     </div>
   </div>
 </div>

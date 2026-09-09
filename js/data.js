@@ -8,6 +8,20 @@
 // Deep-Copy Helper für Grids (2D-Arrays).
 export function dc(a) { return a.map(r => [...r]); }
 
+// ────────────────────────────────────────────────────────────────────
+// Eine Grid-Zelle → CSS-Farbe (oder null = nichts zeichnen).
+//   0          → transparent
+//   1-9        → Palette-Index
+//   "#RRGGBB"  → freie Farbe (Pipette / Rohfarben-Trace)
+// Liegt hier unten, weil sowohl das Rendering als auch die Code-Erzeugung
+// sie brauchen — so bleibt der Abhängigkeitsgraph zyklenfrei.
+// ────────────────────────────────────────────────────────────────────
+export function cellToColor(c, palette) {
+  if (c === 0) return null;
+  if (typeof c === 'string' && c[0] === '#') return c;
+  return palette[c] || null;
+}
+
 // Höchster belegbarer Palette-Index. 0 = transparent, 1..MAX_IDX = Farben.
 export const MAX_IDX = 9;
 

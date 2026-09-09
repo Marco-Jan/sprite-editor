@@ -2,16 +2,16 @@
 // APP — Haupt-Entry: Init + Event-Bindings + Wiring zwischen Modulen
 // ════════════════════════════════════════════════════════════════════
 import {
-  state, sprites, customPalettes,
+  state, sprites, customPalettes, selection,
   getGrid, getSprite, getPal, getMaxIdx, getPaletteName,
-  createSprite, uniquePaletteName,
+  createSprite, uniquePaletteName, clearSelection, isInSelection,
 } from './state.js';
 import { COLOR_LABELS_SHORT, DEFAULT_PALETTE } from './data.js';
 import { showConfirmToast, showInfoToast } from './toast.js';
 import {
   renderAll, renderEditor, renderSpriteList, syncColorActive, updateOutput,
-  cellFromEvent, cellToColor, paintCell, paintBrush, paintSpray, floodFill,
-  fillPaletteSelect, renderCallbacks, tsIdentifier,
+  cellFromEvent, cellFromEventClamped, cellToColor, paintCell, paintBrush, paintSpray, floodFill,
+  fillPaletteSelect, renderCallbacks,
 } from './render.js';
 import {
   saveState, loadState, clearStorage, forceSaveBeforeUnload, saveToFile, loadFromFile,
@@ -36,10 +36,16 @@ import {
 } from './spritefx.js';
 import { initExport } from './export.js';
 import { parseTsSprite } from './tsimport.js';
+import { CODE_FORMATS, getFormat, codeFilename } from './codegen.js';
 import {
   beginStroke, commitStroke, recordOp, undo, redo,
   canUndo, canRedo, clearHistory, historyCallbacks,
 } from './history.js';
+import {
+  startMarquee, updateMarquee, startMove, updateMove, endSelectionPointer,
+  selectAll, deselect, nudgeSelection, selectionInfo,
+  copySelection, cutSelection, pasteClipboard, deleteSelection, hasClipboard,
+} from './selection.js';
 
 const $ = id => document.getElementById(id);
 
@@ -74,7 +80,7 @@ function syncHistoryButtons() {
   if (r) r.disabled = !canRedo();
 }
 historyCallbacks.onChange = syncHistoryButtons;
-historyCallbacks.onRestore = () => { renderAll(); saveState(); };
+historyCallbacks.onRestore = () => { clearSelection(); renderAll(); saveState(); };
 
 // ────────────────────────────────────────────────────────────────────
 // SCHABLONE ÜBERNEHMEN — Auto-Trace ins Grid
@@ -220,8 +226,12 @@ function applyTool(x, y) {
 }
 
 function setTool(tool) {
+  // Beim Wechsel weg vom Auswahl-Werkzeug verschwindet auch die Auswahl —
+  // ein Rahmen, den kein Werkzeug mehr anfassen kann, verwirrt nur.
+  if (tool !== 'select' && state.tool === 'select') clearSelection();
   state.tool = tool;
   updateToolUI();
+  renderEditor();
   saveState();
 }
 
@@ -238,6 +248,20 @@ function updateToolUI() {
   $('brush-size-group').hidden = !hasSize;
   $('strength-group').hidden   = !hasSize;
   $('tolerance-group').hidden  = !isWand;
+  $('select-group').hidden     = state.tool !== 'select';
+  if (state.tool !== 'select') $('editor-canvas-wrap').classList.remove('is-move');
+  updateSelectionUI();
+}
+
+// Auswahl-Buttons scharf schalten, je nachdem was gerade möglich ist.
+function updateSelectionUI() {
+  const has = !!selection.rect;
+  ['sel-cut-btn', 'sel-copy-btn', 'sel-delete-btn', 'sel-none-btn'].forEach(id => {
+    const b = $(id);
+    if (b) b.disabled = !has;
+  });
+  const paste = $('sel-paste-btn');
+  if (paste) paste.disabled = !hasClipboard();
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -281,10 +305,14 @@ function updateBrushCursor(e) {
   el.hidden = false;
 }
 
+// Statuszeile unter dem Canvas.
+function info(msg) {
+  const el = $('info-bar');
+  if (el) el.textContent = msg;
+}
+
 function initCanvasEvents() {
   const canvas = $('editor-canvas');
-  const infoBar = $('info-bar');
-  const info = msg => { infoBar.textContent = msg; };
 
   canvas.addEventListener('pointerdown', e => {
     // Pointer einfangen → move/up feuern weiter, auch außerhalb des Canvas.
@@ -312,6 +340,16 @@ function initCanvasEvents() {
     // ── Shift+Links mit Schablone = verschieben ──
     if (e.shiftKey && tplLoaded()) { startTplDrag(e); return; }
 
+    // ── Auswahl anfassen (vor der Pipette, damit Alt+Ziehen kopiert) ──
+    if (state.tool === 'select') {
+      const c = cellFromEventClamped(e);
+      if (isInSelection(c.x, c.y)) {
+        startMove(e, e.altKey);
+        info(selectionInfo(e.altKey ? 'Kopie ziehen' : 'Verschieben'));
+        return;
+      }
+    }
+
     // ── Alt+Links = Pipette auf das Grid ──
     if (e.altKey) {
       const c = cellFromEvent(e);
@@ -323,6 +361,13 @@ function initCanvasEvents() {
           ? `Pipette: freie Farbe ${v}`
           : `Pipette: Index ${v} — ${COLOR_LABELS_SHORT[v] || ''}`);
       }
+      return;
+    }
+
+    // ── Auswahl aufziehen ──
+    if (state.tool === 'select') {
+      startMarquee(e);
+      info(selectionInfo('Aufziehen'));
       return;
     }
 
@@ -357,10 +402,18 @@ function initCanvasEvents() {
       return;
     }
 
+    if (selection.mode === 'marquee') { updateMarquee(e); info(selectionInfo('Aufziehen')); return; }
+    if (selection.mode === 'move')    { updateMove(e);    info(selectionInfo('Verschieben')); return; }
+
     updateBrushCursor(e);
 
     const c = cellFromEvent(e);
     if (!c) return;
+
+    // Zeiger über der Auswahl → Verschiebe-Cursor.
+    if (state.tool === 'select') {
+      $('editor-canvas-wrap').classList.toggle('is-move', isInSelection(c.x, c.y));
+    }
     const cur = getGrid()[c.y][c.x];
     const val = typeof cur === 'string' ? cur : `Index ${cur}`;
     info(e.altKey
@@ -374,6 +427,11 @@ function initCanvasEvents() {
 
   const endPointer = () => {
     if (tplDragging()) endTplDrag();
+    if (selection.mode) {
+      endSelectionPointer();
+      info(selectionInfo());
+      updateSelectionUI();
+    }
     if (state.isDrawing || state.isErasing) commitStroke();
     state.isDrawing = false;
     state.isErasing = false;
@@ -388,7 +446,7 @@ function initCanvasEvents() {
 // ────────────────────────────────────────────────────────────────────
 // Tastatur
 // ────────────────────────────────────────────────────────────────────
-const TOOL_KEYS = { p: 'pencil', b: 'brush', s: 'spray', f: 'fill', e: 'eraser', w: 'wand' };
+const TOOL_KEYS = { p: 'pencil', b: 'brush', s: 'spray', f: 'fill', e: 'eraser', w: 'wand', a: 'select' };
 
 function isTypingTarget(el) {
   return el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable);
@@ -408,6 +466,7 @@ function initKeyboardEvents() {
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
       if (closeTopModal()) return;
+      if (deselect()) { updateSelectionUI(); info('Auswahl aufgehoben'); return; }
       if (document.body.classList.contains('editor-fullscreen')) { exitFullscreen(); return; }
     }
     if (e.key === 'Alt') $('editor-canvas-wrap').classList.add('is-eyedrop');
@@ -420,6 +479,49 @@ function initKeyboardEvents() {
     }
 
     if (isTypingTarget(e.target) || anyModalOpen()) return;
+
+    // ── Auswahl: Zwischenablage ──
+    if ((e.ctrlKey || e.metaKey) && !e.altKey) {
+      const k = e.key.toLowerCase();
+      if (k === 'a') {
+        e.preventDefault();
+        setTool('select'); selectAll(); updateSelectionUI();
+        info(selectionInfo('Alles gewählt'));
+      } else if (k === 'c' && selection.rect) {
+        e.preventDefault();
+        info(`${copySelection()} Pixel in die Zwischenablage kopiert`);
+        updateSelectionUI();
+      } else if (k === 'x' && selection.rect) {
+        e.preventDefault();
+        info(`Ausgeschnitten — ${cutSelection()} Pixel. Mit Strg+V wieder einfügen.`);
+        updateSelectionUI();
+      } else if (k === 'v') {
+        e.preventDefault();
+        if (!hasClipboard()) info('Zwischenablage ist leer — erst kopieren oder ausschneiden.');
+        else {
+          setTool('select');
+          info(`Eingefügt — ${pasteClipboard()} Pixel. Zum Verschieben hineinziehen.`);
+          updateSelectionUI();
+        }
+      }
+      return; // andere Strg-Kombis gehören dem Browser
+    }
+
+    // ── Auswahl: verschieben / leeren ──
+    if (selection.rect) {
+      const step = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
+      if (step) {
+        e.preventDefault();
+        nudgeSelection(step[0], step[1]);
+        info(selectionInfo('Verschoben'));
+        return;
+      }
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        e.preventDefault();
+        info(`Auswahl geleert — ${deleteSelection()} Pixel`);
+        return;
+      }
+    }
 
     if (e.key >= '0' && e.key <= '9') {
       const idx = Number(e.key);
@@ -476,6 +578,14 @@ function exitFullscreen() {
 function initToolbar() {
   document.querySelectorAll('.tool-btn').forEach(btn =>
     btn.addEventListener('click', () => setTool(btn.dataset.tool)));
+
+  const selAction = (id, fn) => $(id).addEventListener('click', () => { fn(); updateSelectionUI(); });
+  selAction('sel-all-btn',    () => { selectAll(); info(selectionInfo('Alles gewählt')); });
+  selAction('sel-cut-btn',    () => { info(`Ausgeschnitten — ${cutSelection()} Pixel`); });
+  selAction('sel-copy-btn',   () => { info(`${copySelection()} Pixel kopiert`); });
+  selAction('sel-paste-btn',  () => { info(`Eingefügt — ${pasteClipboard()} Pixel. Zum Verschieben hineinziehen.`); });
+  selAction('sel-delete-btn', () => { info(`Auswahl geleert — ${deleteSelection()} Pixel`); });
+  selAction('sel-none-btn',   () => { deselect(); info('Auswahl aufgehoben'); });
 
   document.querySelectorAll('.brush-sz').forEach(btn =>
     btn.addEventListener('click', () => {
@@ -654,6 +764,7 @@ function initTopbar() {
 // Code-Panel: kopieren, .ts speichern, Grid leeren
 // ────────────────────────────────────────────────────────────────────
 function initOutputPanel() {
+  initFormatSelect();
   $('export-include-palette').addEventListener('change', () => { updateOutput(); saveState(); });
 
   $('copy-btn').addEventListener('click', async () => {
@@ -673,11 +784,11 @@ function initOutputPanel() {
     setTimeout(() => { btn.textContent = label; btn.classList.remove('is-ok'); }, 1600);
   });
 
-  $('save-ts-btn').addEventListener('click', async () => {
-    const sp = getSprite();
-    if (!sp) return;
-    const filename = `${tsIdentifier(sp.name)}.ts`;
-    const blob = new Blob([$('output-textarea').value], { type: 'text/plain;charset=utf-8' });
+  $('save-code-btn').addEventListener('click', async () => {
+    if (!getSprite()) return;
+    const fmt = getFormat(state.outputFormat);
+    const filename = codeFilename(state.outputFormat);
+    const blob = new Blob([$('output-textarea').value], { type: `${fmt.mime};charset=utf-8` });
     const result = await saveBlob(blob, filename);
     showInfoToast(result.fallback
       ? `„${filename}“ wurde heruntergeladen (Standard-Download-Ordner).`
@@ -692,6 +803,53 @@ function initOutputPanel() {
       saveState();
     }, 'Leeren');
   });
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Ausgabeformat des Code-Felds
+// ────────────────────────────────────────────────────────────────────
+const FORMAT_HINTS = {
+  ts:   'number[][] mit Typen — der Klassiker für TypeScript-Projekte.',
+  js:   'Dasselbe ohne Typen, als ES-Modul.',
+  json: 'Sprachneutral — für eigene Pipelines, Engines und Tools.',
+  svg:  'Fertige Vektorgrafik: skaliert verlustfrei, direkt einbindbar.',
+  css:  'Ein einziges Element, per box-shadow gepixelt — braucht kein Bild.',
+  c:    'Palette + Indizes als uint8-Array — für Mikrocontroller und LED-Matrizen.',
+  py:   'Dict + Liste — für Pygame, Pillow oder eigene Skripte.',
+  txt:  'Zeichenraster mit Legende — gut für Diffs, Doku und schnelles Draufschauen.',
+};
+
+function syncFormatUI() {
+  const fmt = getFormat(state.outputFormat);
+  $('save-code-btn').textContent = `.${fmt.ext} speichern`;
+  $('save-code-btn').title = `Als ${fmt.label}-Datei speichern`;
+
+  // Die Palette-Option gibt es nur, wo sie etwas ändert — bei SVG, CSS und
+  // Text stecken die Farben ohnehin direkt im Ergebnis.
+  $('include-palette-label').hidden = !fmt.palOption;
+
+  const hint = FORMAT_HINTS[state.outputFormat] || '';
+  $('output-format-hint').textContent = fmt.reimport
+    ? `${hint} Lässt sich wieder importieren.`
+    : hint;
+}
+
+function initFormatSelect() {
+  const sel = $('output-format');
+  for (const [key, fmt] of Object.entries(CODE_FORMATS)) {
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = fmt.label;
+    sel.appendChild(opt);
+  }
+  sel.value = state.outputFormat;
+  sel.addEventListener('change', () => {
+    state.outputFormat = sel.value;
+    syncFormatUI();
+    updateOutput();
+    saveState();
+  });
+  syncFormatUI();
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -813,6 +971,8 @@ function syncUiFromState() {
   $('bg-bw-btn').classList.toggle('is-active', state.editorBg === 'bw');
   document.querySelectorAll('.brush-sz').forEach(b =>
     b.classList.toggle('is-active', Number(b.dataset.size) === state.brushSize));
+  const fmtSel = $('output-format');
+  if (fmtSel) { fmtSel.value = state.outputFormat; syncFormatUI(); }
   updateToolUI();
 }
 

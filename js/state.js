@@ -23,14 +23,44 @@ export const state = {
   curSprite:     null,     // id in `sprites`, null solange keiner existiert
   curColor:      1,        // Zahl = Palette-Index | String "#RRGGBB" = freie Farbe
   cellSize:      16,
-  tool:          'pencil', // 'pencil' | 'brush' | 'spray' | 'fill' | 'eraser' | 'wand'
+  tool:          'pencil', // 'pencil' | 'brush' | 'spray' | 'fill' | 'eraser' | 'wand' | 'select'
   brushSize:     1,        // Kantenlänge / Radius in Zellen
   brushStrength: 80,       // 1–100 — Brush/Eraser: Dichte, Spray: Pixel/Event
   wandTolerance: 25,       // 0–100 % — Zauberstab: Farb-Ähnlichkeitsschwelle
   isDrawing:     false,
   isErasing:     false,
   editorBg:      'dark',   // 'dark' | 'bw'
+  outputFormat:  'ts',     // Schlüssel aus CODE_FORMATS (codegen.js)
 };
+
+// ────────────────────────────────────────────────────────────────────
+// AUSWAHL — rechteckiger Bereich zum Ausschneiden/Verschieben
+// ────────────────────────────────────────────────────────────────────
+// `rect` ist die Wahrheit über Position und Größe — auch während eines
+// Verschiebens (dann wandert rect mit dem Zeiger). `float` hält die
+// herausgelösten Zellen, solange sie in der Luft hängen: das Grid ist an
+// der Quelle bereits leer, gezeichnet wird der Block aus `float`.
+// Bewusst nicht persistiert — eine Auswahl überlebt keinen Reload.
+export const selection = {
+  rect:  null,   // {x, y, w, h} in Grid-Zellen
+  float: null,   // 2D-Array der schwebenden Zellen | null
+  mode:  null,   // null | 'marquee' (aufziehen) | 'move' (verschieben)
+  anchor: null,  // {x,y} — Startecke beim Aufziehen
+  grab:  null,   // {dx,dy} — Griffversatz innerhalb der Auswahl beim Ziehen
+};
+
+export function clearSelection() {
+  selection.rect = null;
+  selection.float = null;
+  selection.mode = null;
+  selection.anchor = null;
+  selection.grab = null;
+}
+
+export function isInSelection(x, y) {
+  const r = selection.rect;
+  return !!r && x >= r.x && y >= r.y && x < r.x + r.w && y < r.y + r.h;
+}
 
 // ────────────────────────────────────────────────────────────────────
 // Sprite-Helpers

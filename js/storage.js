@@ -59,6 +59,7 @@ function buildPayload() {
       cellSize:  state.cellSize,
       editorBg:  state.editorBg,
       tool:      state.tool,
+      outputFormat: state.outputFormat,
       fullscreen: document.body.classList.contains('editor-fullscreen'),
       panels: collectPanelStates(),
     },
@@ -154,6 +155,7 @@ function applyPayload(payload) {
     if (ui.cellSize) state.cellSize = ui.cellSize;
     if (ui.editorBg) state.editorBg = ui.editorBg;
     if (ui.tool) state.tool = ui.tool;
+    if (ui.outputFormat) state.outputFormat = ui.outputFormat;
     applyPanelStates(ui.panels);
 
     return { loaded: true, migrated, note, fullscreen: !!ui.fullscreen };

@@ -3,7 +3,7 @@
 // ════════════════════════════════════════════════════════════════════
 import {
   state, sprites, createSprite, selectFirstSprite, emptyGrid,
-  getSprite, makeSpriteId, listSprites,
+  getSprite, makeSpriteId, listSprites, clearSelection,
 } from './state.js';
 import { DEFAULT_PALETTE, dc } from './data.js';
 import { renderAll, fillPaletteSelect } from './render.js';
@@ -16,6 +16,7 @@ import { clearHistory } from './history.js';
 // ────────────────────────────────────────────────────────────────────
 export function selectSprite(id) {
   if (!sprites[id] || state.curSprite === id) return;
+  clearSelection(); // Auswahl gehört zum Grid, das wir gerade verlassen
   state.curSprite = id;
   renderAll();
   saveState();
@@ -38,6 +39,7 @@ export function duplicateSprite(id) {
     palette: src.palette,
     grid: dc(src.grid),
   });
+  clearSelection();
   state.curSprite = newId;
   renderAll();
   saveState();
@@ -46,6 +48,7 @@ export function duplicateSprite(id) {
 
 export function deleteSprite(id) {
   if (!sprites[id]) return;
+  clearSelection();
   delete sprites[id];
   if (state.curSprite === id) {
     selectFirstSprite();

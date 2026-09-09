@@ -271,6 +271,20 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   text-align: right;
 }
 .field-unit { font-size: var(--fs-xs); color: var(--text-dim); }
+.help-formats {
+  display: grid;
+  gap: var(--sp-1);
+  margin-top: var(--sp-1);
+  padding-left: var(--sp-3);
+  border-left: 2px solid var(--line);
+  color: var(--text-muted);
+}
+.field-note {
+  margin: 0;
+  font-size: var(--fs-xs);
+  line-height: 1.45;
+  color: var(--text-dim);
+}
 
 /* Badges + Meldungen */
 .badge {
@@ -330,10 +344,9 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 }
 .brand { display: flex; align-items: center; gap: var(--sp-2); }
 .brand-mark {
-  width: 14px; height: 14px;
-  border-radius: 3px;
-  background:
-    linear-gradient(135deg, var(--accent) 0 50%, var(--primary) 50% 100%);
+  width: 18px; height: 18px;
+  border-radius: 4px;
+  display: block;
 }
 .brand-name {
   font-size: var(--fs-lg);
@@ -660,6 +673,11 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 #editor-canvas-wrap.is-eyedrop,
 #editor-canvas-wrap[data-tool="eraser"],
 #editor-canvas-wrap[data-tool="wand"] { cursor: cell; }
+#editor-canvas-wrap[data-tool="select"] { cursor: crosshair; }
+#editor-canvas-wrap[data-tool="select"].is-move { cursor: move; }
+
+/* Auswahl-Buttons in der Werkzeugleiste — kompakter als normale Buttons */
+#select-group .btn { padding: 5px 8px; }
 
 #template-overlay {
   position: absolute;

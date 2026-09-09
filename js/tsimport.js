@@ -84,7 +84,9 @@ function extractGrid(text) {
 // gefahrlos und robuster als das Zerlegen des Objekt-Literals.
 function extractPalette(text) {
   const out = {};
-  const re = /(?:^|[{,\s])(\d{1,3})\s*:\s*['"]\s*(#?[0-9a-fA-F]{3,8})\s*['"]/g;
+  // Der Index darf auch in Anführungszeichen stehen — so liest der Parser
+  // den JSON-Export ("1": "#aabbcc") genauso wie den TS-Block (1: '#aabbcc').
+  const re = /(?:^|[{,\s])['"]?(\d{1,3})['"]?\s*:\s*['"]\s*(#?[0-9a-fA-F]{3,8})\s*['"]/g;
   let m;
   while ((m = re.exec(text))) {
     const idx = Number(m[1]);
@@ -99,6 +101,9 @@ function extractName(text) {
   // Bevorzugt die Deklaration, die auf ein Array zeigt.
   const m = text.match(/(?:export\s+)?(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*(?::[^=]*)?=\s*\[/);
   if (m) return m[1];
+  // JSON-Export: { "name": "Held", … }
+  const j = text.match(/["']name["']\s*:\s*["']([^"']+)["']/);
+  if (j) return j[1];
   const p = text.match(/(?:export\s+)?(?:const|let|var)\s+([A-Za-z_$][\w$]*)_PALETTE\b/);
   return p ? p[1] : null;
 }
