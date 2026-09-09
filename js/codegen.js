@@ -6,11 +6,13 @@
 // oberhalb der Palette. Damit ist jedes Format in sich geschlossen —
 // wer den Text kopiert, hat auch die Farben dabei.
 //
-// Zurück in den Editor kommen TypeScript, JavaScript und JSON (der Parser
-// in tsimport.js liest alle drei). Die übrigen Formate sind Einbahnstraßen
-// für die Weiterverwendung außerhalb.
+// Alle acht Formate kommen auch wieder herein — tsimport.js erkennt sie am
+// Inhalt. TypeScript, JavaScript, JSON, Python und C-Header behalten dabei
+// ihre Farb-Nummern; SVG, CSS und Text-Raster kennen keine Indizes, dort
+// werden die Farben beim Import neu durchnummeriert.
 import { getSprite, getPal, getMaxIdx } from './state.js';
 import { cellToColor } from './data.js';
+import { t, tn } from './i18n.js';
 
 // Umlaute und ß ausschreiben, statt sie zu Unterstrichen zu zerlegen —
 // „Held Grün“ soll HELD_GRUEN heißen und nicht HELD_GR_N.
@@ -106,11 +108,10 @@ function buildJsLike(d, withPalette, typed) {
   let out = '';
   if (d.hasRaw) {
     const n = d.entries.filter(([i]) => i > d.maxIdx).length;
-    out += `// ${n} freie ${n === 1 ? 'Farbe wurde' : 'Farben wurden'} als `
-         + `${n === 1 ? 'Index' : 'Indizes'} ${d.maxIdx + 1}+ gesichert (verlustfrei)\n`;
+    out += tn('gen.freeSaved', n, { from: d.maxIdx + 1 }) + '\n';
   }
   if (wantPal) {
-    out += `// Palette „${d.sp.palette}“\n`
+    out += t('gen.palette', { name: d.sp.palette }) + '\n'
          + `export const ${d.id}_PALETTE${t(': Record<number, string>')} = {\n`
          + d.entries.map(([i, hex]) => `  ${i}: '${hex}',`).join('\n')
          + '\n};\n\n';
@@ -169,15 +170,15 @@ function buildCss(d) {
     if (col) shadows.push(`    ${x}px ${y}px 0 ${col}`);
   }
   const cls = slug(d.name);
-  return `/* ${d.name} — ${d.W}×${d.H}. Benutzung: <div class="${cls}"></div>\n`
-    + `   Ein einziges 1×1-Element, hochskaliert. --px stellt die Pixelgröße. */\n`
+  return t('gen.cssUsage', { name: d.name, w: d.W, h: d.H, cls }) + '\n'
+    + t('gen.cssHint') + '\n'
     + `.${cls} {\n`
     + '  --px: 8;\n'
     + '  width: 1px;\n'
     + '  height: 1px;\n'
     + '  transform: scale(var(--px));\n'
     + '  transform-origin: 0 0;\n'
-    + `  margin: 0 ${(d.W - 1)}px ${(d.H - 1)}px 0; /* Platz für die Skalierung */\n`
+    + `  margin: 0 ${(d.W - 1)}px ${(d.H - 1)}px 0; ${t('gen.cssMargin')}\n`
     + '  box-shadow:\n'
     + shadows.join(',\n')
     + ';\n}';
@@ -196,8 +197,8 @@ function buildCHeader(d) {
   }
   const body = d.idxGrid.map(r => '  ' + r.map(v => String(v).padStart(2, ' ')).join(', ') + ',').join('\n');
 
-  return `// ${d.name} — ${d.W}×${d.H}, ${d.entries.length} Farben\n`
-    + `// Index 0 ist transparent; Farben als 0xRRGGBB.\n`
+  return t('gen.cHead', { name: d.name, w: d.W, h: d.H, n: d.entries.length }) + '\n'
+    + t('gen.cNote') + '\n'
     + `#ifndef ${guard}\n#define ${guard}\n\n`
     + '#include <stdint.h>\n\n'
     + `#define ${d.id}_WIDTH  ${d.W}\n`
@@ -214,7 +215,7 @@ function buildCHeader(d) {
 function buildPython(d) {
   const pal = d.entries.map(([i, hex]) => `    ${i}: "${hex}",`).join('\n');
   const body = d.idxGrid.map(r => `    [${r.join(', ')}],`).join('\n');
-  return `# ${d.name} — ${d.W}×${d.H}. Index 0 ist transparent.\n`
+  return t('gen.pyHead', { name: d.name, w: d.W, h: d.H }) + '\n'
     + `${d.id}_PALETTE = {\n${pal}\n}\n\n`
     + `${d.id} = [\n${body}\n]\n`;
 }
@@ -228,7 +229,7 @@ function buildText(d) {
   const body = d.idxGrid.map(r => r.map(v => TXT_CHARS[v] || '?').join('')).join('\n');
   const legend = d.entries.map(([i, hex]) => `  ${TXT_CHARS[i] || '?'} = ${hex}  (Index ${i})`).join('\n');
   return `${d.name} — ${d.W}×${d.H}\n\n${body}\n\n`
-    + `Legende ('.' = transparent):\n${legend}\n`;
+    + `${t('gen.txtLegend')}\n${legend}\n`;
 }
 
 // ────────────────────────────────────────────────────────────────────

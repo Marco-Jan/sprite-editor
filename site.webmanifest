@@ -3,7 +3,7 @@
   "short_name": "Sprites",
   "description": "Pixel-Art-Editor mit Foto-Vorlage — Sprites malen, Paletten bauen, als Code oder Bild exportieren.",
   "lang": "de",
-  "start_url": "./",
+  "start_url": "./editor.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",

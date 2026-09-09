@@ -1,0 +1,12 @@
+# Sprite Editor
+# Alles darf gelesen werden — die Seite ist ein offenes Werkzeug.
+
+User-agent: *
+Allow: /
+
+# Arbeitsdateien, die in einem Suchergebnis niemand braucht.
+Disallow: /tools/
+Disallow: /js/
+Disallow: /assets/sprites/
+
+Sitemap: https://marco-jan.github.io/sprite-editor/sitemap.xml

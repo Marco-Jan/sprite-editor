@@ -10,12 +10,17 @@ import { renderAll, fillPaletteSelect } from './render.js';
 import { saveState } from './storage.js';
 import { showInfoToast } from './toast.js';
 import { clearHistory } from './history.js';
+import { commitFloat } from './selection.js';
+import { t } from './i18n.js';
 
 // ────────────────────────────────────────────────────────────────────
 // Auswahl
 // ────────────────────────────────────────────────────────────────────
 export function selectSprite(id) {
   if (!sprites[id] || state.curSprite === id) return;
+  // Schwebender Inhalt gehört in den Sprite, den wir gerade verlassen —
+  // erst absetzen, dann wechseln. Sonst wäre er weg.
+  commitFloat();
   clearSelection(); // Auswahl gehört zum Grid, das wir gerade verlassen
   state.curSprite = id;
   renderAll();
@@ -26,7 +31,7 @@ export function selectSprite(id) {
 // Erzeugen — auch beim allerersten Start (leeres Projekt)
 // ────────────────────────────────────────────────────────────────────
 export function createDefaultSprite() {
-  const id = createSprite({ name: 'Sprite 1', size: 24, palette: DEFAULT_PALETTE });
+  const id = createSprite({ name: t('list.defaultName'), size: 24, palette: DEFAULT_PALETTE });
   state.curSprite = id;
   return id;
 }
@@ -35,19 +40,21 @@ export function duplicateSprite(id) {
   const src = sprites[id];
   if (!src) return;
   const newId = createSprite({
-    name: src.name + ' Kopie',
+    name: src.name + t('list.copySuffix'),
     palette: src.palette,
     grid: dc(src.grid),
   });
+  commitFloat();
   clearSelection();
   state.curSprite = newId;
   renderAll();
   saveState();
-  showInfoToast(`„${sprites[newId].name}“ angelegt.`);
+  showInfoToast(t('sprite.created', { name: sprites[newId].name }));
 }
 
 export function deleteSprite(id) {
   if (!sprites[id]) return;
+  commitFloat(); // in einen anderen Sprite gehobener Inhalt darf nicht verfallen
   clearSelection();
   delete sprites[id];
   if (state.curSprite === id) {
@@ -99,7 +106,7 @@ export function initNewSpriteModal() {
 
   create.addEventListener('click', () => {
     const name = nameInp.value.trim();
-    if (!name) { showInfoToast('Bitte einen Namen eingeben.'); nameInp.focus(); return; }
+    if (!name) { showInfoToast(t('sprite.needName')); nameInp.focus(); return; }
 
     const size = Number(sizeSel.value) || 24;
     const palette = palSel.value || DEFAULT_PALETTE;
@@ -129,18 +136,23 @@ export function initNewSpriteModal() {
 // Namensvorschlag: "Sprite N" mit der nächsten freien Nummer.
 function suggestName() {
   const taken = new Set(Object.values(sprites).map(s => s.name));
+  const prefix = t('list.namePrefix');
   let i = Object.keys(sprites).length + 1;
-  while (taken.has('Sprite ' + i)) i++;
-  return 'Sprite ' + i;
+  while (taken.has(prefix + i)) i++;
+  return prefix + i;
 }
 
 // Vorlagen-Dropdown mit den vorhandenen Sprites füllen.
 function fillSpriteTemplateSelect(sel) {
-  sel.innerHTML = '<option value="">— Leeres Grid —</option>';
+  sel.innerHTML = '';
+  const none = document.createElement('option');
+  none.value = '';
+  none.textContent = t('sprite.emptyGrid');
+  sel.appendChild(none);
   listSprites().forEach(sp => {
     const opt = document.createElement('option');
     opt.value = sp.id;
-    opt.textContent = `${sp.name} (${sp.grid[0].length}×${sp.grid.length})`;
+    opt.textContent = t('sprite.option', { name: sp.name, w: sp.grid[0].length, h: sp.grid.length });
     sel.appendChild(opt);
   });
 }
@@ -176,7 +188,7 @@ export function initRenameModal() {
     const sp = sprites[_renameId];
     if (!sp) { close(); return; }
     const name = inp.value.trim();
-    if (!name) { showInfoToast('Bitte einen Namen eingeben.'); return; }
+    if (!name) { showInfoToast(t('sprite.needName')); return; }
     sp.name = name;
     close();
     renderAll();

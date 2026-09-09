@@ -34,6 +34,14 @@ export const state = {
   mirror:        'off',    // 'off' | 'x' (senkrechte Achse) | 'y' | 'both'
   shapeFill:     false,    // Rechteck/Ellipse gefüllt statt nur Kontur
 
+  // Referenz-Ebene: ein zweiter Sprite, der halbdurchsichtig mitgezeichnet
+  // wird. Zum Abpausen und um Teile von einem Sprite in den anderen zu
+  // übernehmen — bearbeitet wird immer nur der aktive Sprite.
+  refSprite:     null,     // id in `sprites` | null
+  refVisible:    true,
+  refOpacity:    0.45,     // 0.05 – 1
+  refFront:      false,    // true = über dem aktiven Sprite
+
   // Vorschau der Formen-Werkzeuge zwischen pointerdown und pointerup.
   // Liegt hier, damit renderEditor sie ohne Umweg zeichnen kann.
   shape: { cells: [], color: 0 },
@@ -54,16 +62,21 @@ export const selection = {
   rect:  null,   // {x, y, w, h} in Grid-Zellen (Bounding-Box)
   mask:  null,   // null | boolean[h][w] relativ zu rect
   float: null,   // 2D-Array der schwebenden Zellen | null
+  owner: null,   // aus WELCHEM Sprite `float` gehoben wurde
   mode:  null,   // null | 'marquee' | 'lasso' | 'move'
   anchor: null,  // {x,y} — Startecke beim Aufziehen
   grab:  null,   // {dx,dy} — Griffversatz innerhalb der Auswahl beim Ziehen
   path:  null,   // Stützpunkte der Lasso-Spur, solange gezogen wird
 };
 
+// Auswahl vergessen. Wirft einen schwebenden Inhalt WEG — Aufrufer müssen
+// ihn vorher mit commitFloat() absetzen, sonst fehlt er hinterher im Bild.
+// Wer sich da nicht sicher ist, nimmt deselect() aus selection.js.
 export function clearSelection() {
   selection.rect = null;
   selection.mask = null;
   selection.float = null;
+  selection.owner = null;
   selection.mode = null;
   selection.anchor = null;
   selection.grab = null;

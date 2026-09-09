@@ -128,6 +128,29 @@ code { font-family: var(--mono); font-size: 0.95em; color: var(--accent); }
 .btn.is-ok { background: var(--primary-bg); color: var(--primary); border-color: var(--primary-line); }
 .btn.is-set { border-color: var(--primary-line); color: var(--primary); }
 
+/* Sprachumschalter (DE / EN) — bewusst schmaler als ein .btn, damit er
+   in der vollen Knopfleiste nicht wie eine Aktion aussieht. */
+.lang-switch {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+.lang-btn {
+  appearance: none;
+  padding: 6px 8px;
+  border: 0;
+  background: var(--surface-2);
+  color: var(--text-dim, var(--text-muted));
+  font: 700 var(--fs-xs, var(--fs-sm))/1 var(--font);
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.lang-btn + .lang-btn { border-inline-start: 1px solid var(--line); }
+.lang-btn:hover { background: var(--surface-3); color: var(--text); }
+.lang-btn.is-active { background: var(--surface-4); color: var(--text); }
+
 .btn-group { display: inline-flex; gap: 2px; }
 .btn-group .btn { border-radius: 0; }
 .btn-group .btn:first-child { border-radius: var(--r-md) 0 0 var(--r-md); }
@@ -263,6 +286,15 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   color: var(--text-dim);
 }
 .field-controls { display: flex; align-items: center; gap: var(--sp-2); }
+/* In den schmalen Spalten darf keine Zeile herauslaufen: umbrechen erlauben
+   und den Kindern das Schrumpfen gestatten. Ohne min-width:0 verweigert ein
+   Flex-Kind das Kleinerwerden unter seine Inhaltsbreite. */
+.rail .field--inline,
+.rail .field-controls { flex-wrap: wrap; }
+.rail .field--inline > *,
+.rail .field-controls > * { min-width: 0; }
+.rail .field-controls .input--sm { flex: 1 1 6rem; }
+.rail .field-controls .btn { flex: 1 1 auto; white-space: nowrap; }
 .field-value {
   min-width: 38px;
   font-family: var(--mono);
@@ -279,6 +311,18 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   border-left: 2px solid var(--line);
   color: var(--text-muted);
 }
+.layer-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--line);
+}
+.layer-box select { flex: 1; min-width: 0; }
+.layer-box input[type="range"] { flex: 1; min-width: 60px; }
+.layer-box .btn { padding: 4px 8px; }
+.icon-btn.is-off { opacity: 0.35; }
 .field-note {
   margin: 0;
   font-size: var(--fs-xs);
@@ -348,6 +392,14 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   border-radius: 4px;
   display: block;
 }
+.brand-link {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: inherit;
+  text-decoration: none;
+}
+.brand-link:hover .brand-name { color: var(--accent); }
 .brand-name {
   font-size: var(--fs-lg);
   font-weight: 700;
@@ -435,7 +487,10 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   display: flex;
   flex-direction: column;
   gap: var(--sp-2);
-  padding: 0 var(--sp-3) var(--sp-3);
+  /* Oben braucht es eigenen Abstand: der Kopf hat zwar Innenabstand, der
+     endet aber mit seiner Hintergrundflaeche direkt an der Kante. Ohne das
+     klebt das erste Bedienelement an der Ueberschrift. */
+  padding: var(--sp-3) var(--sp-3) var(--sp-3);
 }
 .panel.collapsed .panel-body { display: none; }
 
@@ -523,8 +578,22 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 .code-in  { height: 190px; }
 .code-out:focus, .code-in:focus { outline: none; border-color: var(--accent); }
 
-.export-row { display: flex; align-items: center; gap: var(--sp-2); }
-.export-row .btn { flex: 1; }
+/* Die Zeile trug PNG, PDF und Spritesheet nebeneinander — in der schmalen
+   Spalte lief der letzte Knopf aus dem Panel heraus. Jetzt darf sie
+   umbrechen, und die Knoepfe duerfen unter ihre Wunschbreite schrumpfen
+   (ohne min-width:0 verweigert ein Flex-Kind das Kleinerwerden). */
+.export-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.export-row .btn {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+}
+.export-row .field { flex: 1 1 100%; }
 
 /* ── 6 · Bühne ──────────────────────────────────────────────────── */
 #stage {
@@ -834,6 +903,11 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 .modal-head { display: flex; align-items: center; gap: var(--sp-2); }
 .modal-head .modal-title { flex: 1; }
 .modal-title { font-size: var(--fs-xl); font-weight: 700; }
+.modal-intro--sub {
+  margin-top: calc(var(--sp-2) * -1);
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+}
 .modal-intro { font-size: var(--fs-sm); line-height: 1.6; color: var(--text-muted); }
 
 .form-row { display: flex; flex-direction: column; gap: var(--sp-1); }
@@ -893,28 +967,78 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 }
 
 /* Toast */
+/* ── Rückfrage und Hinweis ──────────────────────────────────────
+   Vorher sahen beide gleich aus: ein kleiner Kasten unten mit 12px-Text.
+   Eine Rückfrage wurde dadurch leicht übersehen — und wer sie übersieht,
+   wartet auf etwas, das nie passiert. Jetzt trägt die Rückfrage die
+   Aufmerksamkeit, die sie verlangt, und der Hinweis bleibt beiläufig. */
 #confirm-toast {
-  display: flex;
+  display: none;
   position: fixed;
-  bottom: var(--sp-5);
-  left: 50%;
   z-index: 200;
+}
+#confirm-toast.visible { display: flex; }
+
+#confirm-toast-box {
+  display: flex;
   align-items: center;
   gap: var(--sp-4);
-  max-width: min(560px, calc(100vw - 32px));
-  padding: var(--sp-3) var(--sp-4);
   border: 1px solid var(--line-strong);
   border-radius: var(--r-lg);
   background: var(--surface-2);
   box-shadow: var(--shadow-lg);
-  opacity: 0;
-  transform: translate(-50%, 16px);
-  pointer-events: none;
-  transition: opacity 0.18s, transform 0.18s;
 }
-#confirm-toast.visible { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
-#confirm-toast-msg { flex: 1; font-size: var(--fs-md); line-height: 1.5; color: var(--text); }
+#confirm-toast-msg { margin: 0; flex: 1; color: var(--text); }
 #confirm-toast-btns { display: flex; gap: var(--sp-2); flex-shrink: 0; }
+
+/* ── Rückfrage: mittig, abgedunkelter Hintergrund, nicht zu übersehen ── */
+#confirm-toast.is-confirm {
+  inset: 0;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-4);
+  background: rgba(8, 8, 12, 0.62);
+  animation: confirmIn 0.14s ease-out;
+}
+#confirm-toast.is-confirm #confirm-toast-box {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--sp-5);
+  width: min(420px, 100%);
+  padding: var(--sp-5);
+  animation: confirmBoxIn 0.16s ease-out;
+}
+#confirm-toast.is-confirm #confirm-toast-msg {
+  font-size: var(--fs-xl);
+  line-height: 1.45;
+}
+#confirm-toast.is-confirm #confirm-toast-btns { justify-content: flex-end; }
+#confirm-toast.is-confirm .btn { padding: 9px 18px; font-size: var(--fs-lg); }
+
+/* ── Hinweis: unten, beiläufig, verschwindet von selbst ── */
+#confirm-toast.is-info {
+  bottom: var(--sp-5);
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: min(560px, calc(100vw - 32px));
+  animation: infoIn 0.18s ease-out;
+}
+#confirm-toast.is-info #confirm-toast-box {
+  padding: var(--sp-4) var(--sp-5);
+}
+#confirm-toast.is-info #confirm-toast-msg {
+  font-size: var(--fs-lg);
+  line-height: 1.5;
+}
+
+@keyframes confirmIn    { from { opacity: 0; } to { opacity: 1; } }
+@keyframes confirmBoxIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: none; } }
+@keyframes infoIn       { from { opacity: 0; transform: translate(-50%, 12px); }
+                          to   { opacity: 1; transform: translate(-50%, 0); } }
+
+@media (prefers-reduced-motion: reduce) {
+  #confirm-toast, #confirm-toast-box { animation: none; }
+}
 
 /* ── 9 · Vollbild ───────────────────────────────────────────────── */
 body.editor-fullscreen #topbar,
@@ -949,4 +1073,75 @@ body.editor-fullscreen #workspace { grid-template-columns: 1fr; }
 
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
+}
+
+/* ── Sprachumschalter ────────────────────────────────────────────
+   Pixel-Optik: harte Kanten, kein Rundungsradius, ein versetzter
+   Schatten statt Verlauf. Die Flaggen sind winzige Rastergrafiken
+   (tools/make_flags.py) und werden ganzzahlig auf 2x hochskaliert,
+   damit jedes Quellpixel auf genau vier Bildschirmpixel faellt.
+   Als CSS-Verlauf gezeichnet waeren die Diagonalen des Union Jack
+   weichgezeichnet — in einer Pixel-Oberflaeche faellt das auf. */
+.lang-switch {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  background: var(--surface-1);
+  border: 2px solid var(--line);
+}
+
+.lang-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-dim);
+  font: 700 var(--fs-sm)/1 var(--mono);
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: color 0.12s, background 0.12s;
+}
+
+/* Die Flagge selbst. 30x18 = 2x der 15x9-Vorlage. */
+.lang-btn::before {
+  content: "";
+  width: 30px;
+  height: 18px;
+  background-repeat: no-repeat;
+  background-size: 30px 18px;
+  image-rendering: pixelated;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55);
+  /* Inaktiv zurueckgenommen, damit die aktive Sprache heraussticht — aber
+     nicht so weit, dass der Union Jack zu einem grauen Fleck wird. */
+  filter: saturate(0.6) brightness(0.82);
+  transition: filter 0.12s;
+}
+.lang-btn[data-lang="de"]::before { background-image: url("assets/flag-de.png"); }
+.lang-btn[data-lang="at"]::before { background-image: url("assets/flag-at.png"); }
+.lang-btn[data-lang="en"]::before { background-image: url("assets/flag-en.png"); }
+
+.lang-btn:hover { color: var(--text-muted); background: var(--surface-2); }
+.lang-btn:hover::before { filter: saturate(0.7) brightness(0.9); }
+
+.lang-btn.is-active {
+  background: var(--surface-3);
+  border-color: var(--line-strong);
+  color: var(--text);
+  /* Versetzter harter Schatten — sieht aus wie eine gedrueckte Taste. */
+  box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.35);
+}
+.lang-btn.is-active::before { filter: none; }
+
+.lang-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Auf schmalen Fenstern reicht die Flagge — das Kuerzel steht ohnehin
+   im title-Attribut und in aria-label. */
+@media (max-width: 700px) {
+  .lang-btn { padding: 4px 6px; font-size: 0; gap: 0; letter-spacing: 0; }
 }

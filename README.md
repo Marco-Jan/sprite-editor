@@ -15,7 +15,8 @@ ES-Module brauchen HTTP — `file://` funktioniert nicht:
 python -m http.server
 ```
 
-Dann `http://localhost:8000/` öffnen. PDF-Export lädt jsPDF vom CDN und braucht dafür
+Dann `http://localhost:8000/` öffnen — das ist die Startseite, der Editor liegt unter
+`editor.html`. PDF-Export lädt jsPDF vom CDN und braucht dafür
 einmalig Internet; alles andere läuft offline.
 
 ---
@@ -48,8 +49,14 @@ Eine Palette ist ein Mapping **Index → Hex-Farbe**. Index `0` ist immer transp
 | 5 | Outline / Kontur |
 | 6–9 | Akzent A · Highlight · Akzent B · Akzent C |
 
-**Eingebaut**: `graustufen`, `golden`, `braun`, `kohle`, `creme`, `schiefer`, `orange`,
-`tinte`, `schnee` — reine Farbschemata, schreibgeschützt.
+**Eingebaut, neutral**: `graustufen`, `golden`, `braun`, `kohle`, `creme`, `schiefer`,
+`orange`, `tinte`, `schnee` — reine Farbschemata, schreibgeschützt.
+
+**Eingebaut, Helden**: `blitz`, `klempner`, `igel`, `held`, `roboter`, `puff`, `geist`,
+`ninja` — Farbschemata im Geist bekannter Spiel- und Comicfiguren. Die Töne sind so
+gewählt, dass die Figur wiedererkennbar wird; die Namen sind beschreibend statt
+geliehen. Alle neun Slots sind belegt, und jede Kontur hebt sich vom mittleren Ton
+mindestens 3:1 ab — sonst verschwindet sie beim Zeichnen.
 
 **Eigene Paletten**: über `+ Palette` neu anlegen oder mit `Kopie bearbeiten` aus einer
 eingebauten ableiten. Danach sind die Swatches rechts direkt anklickbar — eine
@@ -91,8 +98,24 @@ Flächen spart das den Löwenanteil der Dateigröße.
 
 ### Import
 
-`Import…` liest sowohl eingefügten Text als auch eine Datei (`.ts`, `.js`, `.json`, `.txt`).
-Erkannt werden:
+**Alles, was der Editor schreibt, liest er auch wieder ein.** Das Format wird am Inhalt
+erkannt, nicht an der Dateiendung — Einfügen aus der Zwischenablage geht also genauso wie
+eine Datei.
+
+| Format | Kommt zurück |
+|---|---|
+| TypeScript, JavaScript, JSON, Python, C-Header | verlustfrei, auch die Farb-Nummern |
+| SVG, CSS, Text-Raster | Bild identisch, Farben neu durchnummeriert |
+
+Die drei letzten kennen keine Palette-Indizes — dort werden die Farben in der Reihenfolge
+ihres Auftretens neu vergeben. Das Bild ist danach dasselbe, nur die Nummern können sich
+verschoben haben.
+
+Die Parser sind nachsichtig und lesen auch von Hand geschriebene Dateien: SVG ohne
+`viewBox`, dreistellige Hex-Farben, `box-shadow` ohne Unschärfe-Wert oder mit negativen
+Versätzen, C-Header ohne Palettenblock, Text-Raster ohne Legende.
+
+Aus dem `number[][]`-Zweig (TS/JS/JSON/Python) werden erkannt:
 
 - das `number[][]`-Grid (auch mit abschließenden Kommas, ungleich langen Zeilen, Hex-Strings)
 - ein Palettenblock in beliebiger Schreibweise (`'#abc'`, `"#AABBCC"`, mit oder ohne `Record<…>`)
@@ -142,8 +165,8 @@ Drei Wege zur selben Sache — ein Bereich, den man als Ganzes bewegt:
   *Toleranz* steuert, wie viel mitgeht. Derselbe Bereich, den der Zauberstab löschen
   würde — nur eben als Auswahl.
 
-- **In die Auswahl fassen und ziehen** schneidet den Bereich aus und verschiebt ihn;
-  Loslassen setzt ihn ab. Der ganze Zug ist *ein* Undo-Schritt.
+- **In die Auswahl fassen und ziehen** schneidet den Bereich aus. Er **schwebt** dann,
+  bis du ihn absetzt (siehe unten). Die ganze Sitzung ist *ein* Undo-Schritt.
 - **`Alt` + Ziehen** lässt das Original stehen — man verschiebt eine Kopie.
 - **Pfeiltasten** schieben pixelweise, **Füllen** färbt die ganze Auswahl um.
 - **`Strg`+`X` / `C` / `V`** schneiden aus, kopieren, fügen ein; die Zwischenablage
@@ -153,6 +176,41 @@ Drei Wege zur selben Sache — ein Bereich, den man als Ganzes bewegt:
 Beim Absetzen überschreiben nur gefüllte Pixel — transparente Stellen des Blocks lassen
 den Untergrund stehen. Was über den Rand hinausgeschoben wird, ist weg (`Strg`+`Z` holt es
 zurück).
+
+### Der schwebende Inhalt
+
+Sobald eine Auswahl bewegt, gedreht oder gespiegelt wird, wird ihr Inhalt **einmal** aus
+dem Grid gehoben; die Quelle bleibt leer. Ab da passiert alles nur noch am schwebenden
+Puffer — das Grid wird erst beim Absetzen wieder angefasst.
+
+Das ist nicht Kosmetik, sondern nötig: würde nach jeder Bewegung gestempelt und beim
+nächsten Schritt neu aus dem Grid gelesen, läse man den Untergrund mit. Die Auswahl würde
+bei jeder weiteren Drehung alles mitnehmen und ausstanzen, worüber sie gerade liegt.
+
+Abgesetzt wird automatisch, sobald du etwas anderes tust: neue Auswahl, Abwählen (`Esc`),
+Werkzeug- oder Sprite-Wechsel, Undo, Tab schließen.
+
+Der schwebende Inhalt merkt sich, aus **welchem** Sprite er stammt (`selection.owner`),
+und landet beim Absetzen immer dort — auch wenn inzwischen ein anderer Sprite offen ist.
+Ohne das würde er beim Arbeiten mit einer Ebene im falschen Bild landen oder ganz
+verschwinden.
+
+---
+
+## Ebene — mit zwei Sprites arbeiten
+
+Unter der Sprite-Liste lässt sich ein **zweiter Sprite als Ebene** einblenden:
+halbdurchsichtig, oben links ausgerichtet, mit seiner eigenen Palette. Bearbeitet wird
+immer nur der aktive Sprite — die Ebene ist reine Vorlage.
+
+- **👁** blendet sie aus, der Regler stellt die Deckkraft.
+- **dahinter / davor** legt sie unter oder über das Bild (davor hilft beim Abpausen von
+  Konturen).
+- **Tauschen** vertauscht die Rollen: die Ebene wird bearbeitet, der bisherige Sprite
+  wird zur Ebene.
+
+Teile übertragen: im einen Sprite auswählen, `Strg`+`C`, zum anderen wechseln, `Strg`+`V`.
+Das Eingefügte schwebt und lässt sich erst hinschieben, bevor es liegt.
 
 ---
 
@@ -166,12 +224,19 @@ gerade.
 |---|---|
 | ↔ / ↕ Spiegeln | Waagerecht bzw. senkrecht; die Lasso-Form spiegelt mit |
 | ↻ 90° | Dreht im Uhrzeigersinn; bei nicht-quadratischen Sprites tauschen Breite und Höhe |
+| Frei drehen | Beliebiger Winkel mit Vorschau — `Enter` übernimmt, `Esc` verwirft |
 | Zuschneiden | Schneidet den leeren Rand rundherum weg |
 | Zentrieren | Rückt den Inhalt in die Mitte der Fläche |
 | Größe | Ändert die Fläche ohne zu skalieren; Anker bestimmt, wohin der Inhalt rutscht |
 | ×2 / ÷2 | Hartes Skalieren (Nearest Neighbor) — Pixel bleiben Pixel |
 
 Alles ist ein einzelner Undo-Schritt, auch wenn dabei das ganze Grid ausgetauscht wird.
+
+Die freie Drehung rechnet per Rückwärts-Abbildung mit Nearest Neighbor — es wird nichts
+gemischt, jede Zelle behält ihren Palette-Index. Jede Vorschau geht vom **Original** aus,
+nicht vom zuletzt gedrehten Ergebnis; dreimal am Regler ziehen verwäscht die Form also
+nicht. Bei einer Auswahl wächst der Rahmen mit, damit nichts abgeschnitten wird; beim
+ganzen Sprite bleibt die Fläche gleich und Ecken außerhalb fallen weg.
 
 ---
 
@@ -207,6 +272,7 @@ Die Schablone überlebt einen Reload (eigener localStorage-Key).
 | Pfeiltasten | Auswahl pixelweise verschieben |
 | `Strg+A` / `C` / `X` / `V` | Alles wählen · Kopieren · Ausschneiden · Einfügen |
 | `Entf` | Auswahl leeren |
+| `Enter` | Drehung übernehmen |
 | `Strg+Z` / `Strg+Y` | Rückgängig / Wiederholen |
 | `Esc` | Auswahl aufheben, Dialog oder Vollbild schließen |
 
@@ -245,8 +311,10 @@ Ein Toast fasst nach der Migration zusammen, was passiert ist.
 
 ```
 sprite-editor/
-├── index.html          ← Struktur, keine Inline-Styles
-├── styles.css          ← Token-System + Komponenten
+├── index.html          ← Landingpage (Einstieg)
+├── landing.css         ← Styles der Landingpage
+├── editor.html         ← der Editor selbst, keine Inline-Styles
+├── styles.css          ← Token-System + Komponenten (Editor)
 ├── site.webmanifest    ← PWA-Manifest (Name, Farben, Icons)
 ├── assets/             ← Logos: icon.svg, favicon(.ico|-16|-32|-48), apple-touch,
 │                          icon-192/512, icon-maskable-512, og-image
@@ -302,6 +370,9 @@ state.js
 
 - `file://` geht nicht — ES-Module brauchen HTTP.
 - Eine Auswahl ist bewusst flüchtig: sie überlebt weder Reload noch Sprite-Wechsel.
+- Ein schwebender Auswahl-Inhalt wird beim Schließen des Tabs abgesetzt. Stürzt der
+  Browser mittendrin ab, ist die letzte Bewegung verloren — das Loch im Bild sieht man
+  aber, solange etwas schwebt.
 - Die Zwischenablage der Auswahl liegt im Speicher, nicht in der System-Zwischenablage —
   `Strg`+`C` im Editor kopiert also keine Pixel in andere Programme.
 - Inkognito-Modus verliert alles beim Tab-Schließen.

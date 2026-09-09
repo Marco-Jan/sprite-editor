@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title data-i18n="meta.title">Editor — Sprite Editor</title>
+  <meta name="description" data-i18n-attr="content:meta.desc" content="Pixel-Art-Editor mit Foto-Vorlage — Sprites malen, Paletten bauen, als Code oder Bild exportieren. Läuft komplett im Browser.">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#121214">
+
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="alternate icon" href="assets/favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="manifest" href="site.webmanifest">
+  <meta name="apple-mobile-web-app-title" content="Sprites">
+
+  <link rel="canonical" href="https://marco-jan.github.io/sprite-editor/editor.html">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Sprite Editor">
+  <meta property="og:locale" data-i18n-attr="content:meta.locale" content="de_DE">
+  <meta property="og:url" content="https://marco-jan.github.io/sprite-editor/editor.html">
+  <meta property="og:title" data-i18n-attr="content:meta.ogTitle" content="Editor — Sprite Editor">
+  <meta property="og:description" data-i18n-attr="content:meta.ogDesc" content="Pixel-Art-Editor mit Foto-Vorlage — malen, Paletten bauen, als Code oder Bild exportieren.">
+  <meta property="og:image" content="https://marco-jan.github.io/sprite-editor/assets/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" data-i18n-attr="content:meta.ogAlt" content="Sprite Editor — Pixel-Treppe in Grün und Blau neben dem Schriftzug.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" data-i18n-attr="content:meta.ogTitle" content="Editor — Sprite Editor">
+  <meta name="twitter:description" data-i18n-attr="content:meta.ogDesc" content="Pixel-Art-Editor mit Foto-Vorlage — malen, Paletten bauen, als Code oder Bild exportieren.">
+  <meta name="twitter:image" content="https://marco-jan.github.io/sprite-editor/assets/og-image.png">
+
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- Sprache früh setzen, damit die Oberfläche nicht erst deutsch aufblitzt
+       und dann umspringt. Der Body bleibt versteckt, bis js/i18n.js übersetzt
+       hat; die Notbremse unten holt ihn zur Not auch ohne Übersetzung zurück. -->
+  <style>html[data-i18n-pending] body { visibility: hidden; }</style>
+  <script>
+  (function () {
+    try {
+      var k = 'sprite_editor_lang', v = null;
+      try { v = localStorage.getItem(k); } catch (e) {}
+      if (v !== 'de' && v !== 'en') {
+        v = (navigator.language || 'de').toLowerCase().indexOf('de') === 0 ? 'de' : 'en';
+      }
+      var h = document.documentElement;
+      h.lang = v;
+      h.setAttribute('data-lang', v);
+      if (v !== 'de') {
+        h.setAttribute('data-i18n-pending', '');
+        setTimeout(function () { h.removeAttribute('data-i18n-pending'); }, 1500);
+      }
+    } catch (e) {}
+  })();
+  </script>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ══ Kopfzeile ══ -->
+  <header id="topbar">
+    <div class="brand">
+      <a class="brand-link" href="index.html" data-i18n-attr="title:tb.home" title="Zur Startseite">
+        <img class="brand-mark" src="assets/icon.svg" alt="" width="18" height="18">
+        <span class="brand-name">Sprite&nbsp;Editor</span>
+      </a>
+    </div>
+    <span id="doc-title" class="doc-title"></span>
+    <span id="save-indicator" class="save-indicator" data-i18n="tb.saved">gespeichert</span>
+
+    <div class="topbar-actions">
+      <button class="btn" id="help-btn" data-i18n="tb.help" data-i18n-attr="title:tb.helpTitle" title="Hilfe &amp; Erklärungen">Hilfe</button>
+      <button class="btn" id="save-dir-btn" data-i18n="tb.dir" data-i18n-attr="title:tb.dirTitle" title="Speicherort für Dateien wählen — wird gemerkt">Speicherort</button>
+      <button class="btn" id="save-file-btn" data-i18n="tb.save" data-i18n-attr="title:tb.saveTitle" title="Projekt als JSON-Datei sichern">Projekt sichern</button>
+      <button class="btn" id="load-file-btn" data-i18n="tb.open" data-i18n-attr="title:tb.openTitle" title="Projekt aus JSON-Datei laden">Öffnen</button>
+      <input type="file" id="load-file-input" accept=".json,application/json" hidden>
+      <button class="btn btn--danger" id="clear-storage-btn" data-i18n="tb.reset" data-i18n-attr="title:tb.resetTitle" title="Alles zurücksetzen">Zurücksetzen</button>
+      <div class="lang-switch" role="group" aria-label="Sprache / Language">
+        <button type="button" class="lang-btn" data-lang="de" lang="de" title="Deutsch" aria-label="Deutsch">DE</button>
+        <button type="button" class="lang-btn" data-lang="at" lang="de-AT" title="Österreichisch" aria-label="Österreichisch">AT</button>
+        <button type="button" class="lang-btn" data-lang="en" lang="en" title="English" aria-label="English">EN</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══ Arbeitsfläche ══ -->
+  <div id="workspace">
+
+    <!-- ── Linke Spalte ── -->
+    <aside id="rail-left" class="rail">
+
+      <section class="panel" data-panel="sprites">
+        <div class="panel-head">
+          <h2 class="panel-title" data-i18n="sp.title">Sprites</h2>
+          <span class="panel-badge" id="sprite-count"></span>
+          <button class="panel-toggle" type="button" aria-expanded="true"></button>
+        </div>
+        <div class="panel-body">
+          <button class="btn btn--primary btn--block" id="new-sprite-btn" data-i18n="sp.new">+ Neuer Sprite</button>
+          <input type="search" id="sprite-search" class="input" data-i18n-attr="placeholder:sp.search" placeholder="Sprite suchen…" autocomplete="off">
+          <div id="sprite-list" class="sprite-list"></div>
+
+          <div class="layer-box">
+            <div class="field field--inline">
+              <span class="field-label" data-i18n="sp.layer">Ebene</span>
+              <select id="ref-select" class="input input--sm" data-i18n-attr="title:sp.refTitle"
+                      title="Zweiter Sprite als halbdurchsichtige Vorlage — bearbeitet wird weiter der aktive"></select>
+              <button class="icon-btn" id="ref-visible-btn" data-i18n-attr="title:sp.refToggle" title="Ebene ein-/ausblenden" aria-pressed="true">👁</button>
+            </div>
+            <div class="field field--inline" id="ref-controls" hidden>
+              <input type="range" id="ref-opacity" min="5" max="100" value="45" data-i18n-attr="title:sp.refOpacity" title="Deckkraft der Ebene">
+              <button class="btn" id="ref-front-btn" aria-pressed="false" data-i18n-attr="title:sp.refFrontTitle" title="Ebene über den aktiven Sprite legen">davor</button>
+              <button class="btn" id="ref-swap-btn" data-i18n="sp.refSwap" data-i18n-attr="title:sp.refSwapTitle" title="Ebene und aktiven Sprite tauschen">Tauschen</button>
+            </div>
+            <p class="field-note" id="ref-note" data-i18n-html="sp.refNote" hidden>
+              Kopieren geht mit <b>Strg+C</b> hier und <b>Strg+V</b> im anderen Sprite.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" data-panel="output">
+        <div class="panel-head">
+          <h2 class="panel-title" data-i18n="out.title">Code &amp; Export</h2>
+          <button class="panel-toggle" type="button" aria-expanded="true"></button>
+        </div>
+        <div class="panel-body">
+
+          <label class="field field--inline">
+            <span class="field-label" data-i18n="out.format">Format</span>
+            <select id="output-format" class="input input--sm" aria-describedby="output-format-hint"></select>
+          </label>
+          <p class="field-note" id="output-format-hint"></p>
+
+          <div class="btn-row">
+            <button class="btn" id="copy-btn" data-i18n="out.copy">Kopieren</button>
+            <button class="btn" id="save-code-btn">.ts speichern</button>
+            <button class="btn btn--accent" id="import-btn" data-i18n="out.import">Import…</button>
+            <button class="btn btn--danger-soft" id="clear-grid-btn" data-i18n="out.clear" data-i18n-attr="title:out.clearTitle" title="Alle Pixel dieses Sprites löschen">Leeren</button>
+          </div>
+
+          <label class="check" id="include-palette-label">
+            <input type="checkbox" id="export-include-palette">
+            <span data-i18n="out.includePal">Palette in den Code schreiben</span>
+          </label>
+
+          <textarea id="output-textarea" class="code-out" readonly spellcheck="false"></textarea>
+
+          <div class="export-row">
+            <label class="field field--inline">
+              <span class="field-label" data-i18n="out.scale">Skalierung</span>
+              <select id="export-scale" class="input input--sm">
+                <option value="1">1×</option>
+                <option value="4">4×</option>
+                <option value="8" selected>8×</option>
+                <option value="16">16×</option>
+                <option value="32">32×</option>
+              </select>
+            </label>
+            <button class="btn" id="export-png-btn">PNG</button>
+            <button class="btn" id="export-pdf-btn">PDF</button>
+            <button class="btn" id="export-sheet-btn" data-i18n="out.sheet" data-i18n-attr="title:out.sheetTitle"
+                    title="Alle Sprites in einem Bild — plus JSON-Atlas mit Namen und Koordinaten">Spritesheet</button>
+          </div>
+
+          <label class="check" data-i18n-attr="title:out.legendTitle" title="Bettet eine Farb-Legende ins Bild ein, damit die Farbwerte nicht verloren gehen">
+            <input type="checkbox" id="export-embed-palette" checked>
+            <span data-i18n="out.legend">Farb-Legende ins Bild</span>
+          </label>
+
+        </div>
+      </section>
+
+    </aside>
+
+    <!-- ── Mitte: Bühne ── -->
+    <main id="stage">
+
+      <div id="stage-head">
+        <div class="stage-ident">
+          <h1 id="stage-title" class="stage-title">Editor</h1>
+          <span id="stage-dims" class="stage-dims"></span>
+        </div>
+
+        <div class="stage-head-right">
+          <div class="btn-group">
+            <button class="btn" id="undo-btn" data-i18n-attr="title:stage.undo" title="Rückgängig (Strg+Z)" disabled>↶</button>
+            <button class="btn" id="redo-btn" data-i18n-attr="title:stage.redo" title="Wiederholen (Strg+Y)" disabled>↷</button>
+          </div>
+          <div class="btn-group" role="group" data-i18n-attr="aria-label:stage.bgGroup" aria-label="Editor-Hintergrund">
+            <button class="btn is-active" id="bg-dark-btn" data-i18n="stage.bgDark" data-i18n-attr="title:stage.bgDarkTitle" title="Dunkler Hintergrund">Dunkel</button>
+            <button class="btn" id="bg-bw-btn" data-i18n="stage.bgLight" data-i18n-attr="title:stage.bgLightTitle" title="Heller Hintergrund">Hell</button>
+          </div>
+          <label class="field field--inline">
+            <span class="field-label" data-i18n="stage.zoom">Zoom</span>
+            <input type="range" id="cell-size" min="4" max="32" value="16">
+            <span id="cell-size-val" class="field-value">16px</span>
+          </label>
+          <button class="btn" id="fullscreen-btn" title="Vollbild (Esc zum Schließen)">⤢ Vollbild</button>
+        </div>
+      </div>
+
+      <!-- Werkzeugleiste — eine einzige, auch im Vollbild -->
+      <div id="toolbar">
+        <div class="tool-group" role="group" data-i18n-attr="aria-label:tool.groupPaint" aria-label="Malwerkzeuge">
+          <button class="tool-btn is-active" data-tool="pencil" aria-pressed="true" data-i18n-attr="title:tool.pencilTitle" title="Stift — einzelne Pixel (P)"><span class="tool-ico">✎</span><span class="tool-name" data-i18n="tool.pencil">Stift</span></button>
+          <button class="tool-btn" data-tool="brush"  aria-pressed="false" data-i18n-attr="title:tool.brushTitle" title="Pinsel — Fläche, Stärke = Dichte (B)"><span class="tool-ico">🖌</span><span class="tool-name" data-i18n="tool.brush">Pinsel</span></button>
+          <button class="tool-btn" data-tool="spray"  aria-pressed="false" data-i18n-attr="title:tool.sprayTitle" title="Spray — zufällige Pixel (S)"><span class="tool-ico">✳</span><span class="tool-name" data-i18n="tool.spray">Spray</span></button>
+          <button class="tool-btn" data-tool="fill"   aria-pressed="false" data-i18n-attr="title:tool.fillTitle" title="Füllen — Flood-Fill (F)"><span class="tool-ico">◍</span><span class="tool-name" data-i18n="tool.fill">Füllen</span></button>
+          <button class="tool-btn" data-tool="eraser" aria-pressed="false" data-i18n-attr="title:tool.eraserTitle" title="Radierer (E)"><span class="tool-ico">⌫</span><span class="tool-name" data-i18n="tool.eraser">Radierer</span></button>
+          <button class="tool-btn" data-tool="wand"   aria-pressed="false" data-i18n-attr="title:tool.wandTitle" title="Zauberstab — ähnliche Fläche löschen (W)"><span class="tool-ico">✦</span><span class="tool-name" data-i18n="tool.wand">Zauberstab</span></button>
+        </div>
+
+        <div class="tool-sep" aria-hidden="true"></div>
+
+        <div class="tool-group" role="group" data-i18n-attr="aria-label:tool.groupShapes" aria-label="Formen">
+          <button class="tool-btn" data-tool="line"    aria-pressed="false" data-i18n-attr="title:tool.lineTitle" title="Linie ziehen (I)"><span class="tool-ico">╱</span><span class="tool-name" data-i18n="tool.line">Linie</span></button>
+          <button class="tool-btn" data-tool="rect"    aria-pressed="false" data-i18n-attr="title:tool.rectTitle" title="Rechteck ziehen (R)"><span class="tool-ico">▭</span><span class="tool-name" data-i18n="tool.rect">Rechteck</span></button>
+          <button class="tool-btn" data-tool="ellipse" aria-pressed="false" data-i18n-attr="title:tool.ellipseTitle" title="Ellipse ziehen (O)"><span class="tool-ico">◯</span><span class="tool-name" data-i18n="tool.ellipse">Ellipse</span></button>
+        </div>
+
+        <div class="tool-sep" aria-hidden="true"></div>
+
+        <div class="tool-group" role="group" data-i18n-attr="aria-label:tool.groupSelect" aria-label="Auswahl">
+          <button class="tool-btn" data-tool="select" aria-pressed="false" data-i18n-attr="title:tool.marqueeTitle" title="Rechteck-Auswahl — aufziehen, ausschneiden, verschieben (A)"><span class="tool-ico">⬚</span><span class="tool-name" data-i18n="tool.marquee">Auswahl</span></button>
+          <button class="tool-btn" data-tool="lasso"  aria-pressed="false" data-i18n-attr="title:tool.lassoTitle" title="Lasso — Form frei umfahren, wird beim Loslassen geschlossen (L)"><span class="tool-ico">➰</span><span class="tool-name" data-i18n="tool.lasso">Lasso</span></button>
+          <button class="tool-btn" data-tool="magic"  aria-pressed="false" data-i18n-attr="title:tool.colorSelTitle" title="Farbauswahl — zusammenhängende ähnliche Fläche wählen, Toleranz steuert wie viel mitgeht (K)"><span class="tool-ico">✧</span><span class="tool-name" data-i18n="tool.colorSel">Farbwahl</span></button>
+        </div>
+
+        <div class="tool-sep" aria-hidden="true"></div>
+
+        <div class="tool-group" id="mirror-group" role="group" data-i18n-attr="aria-label:tool.mirror" aria-label="Symmetrie">
+          <span class="field-label" data-i18n="tool.mirror">Symmetrie</span>
+          <div class="btn-group">
+            <button class="btn" id="mirror-x-btn" aria-pressed="false" data-i18n-attr="title:tool.mirrorX" title="Senkrechte Achse — was links entsteht, entsteht auch rechts">↔</button>
+            <button class="btn" id="mirror-y-btn" aria-pressed="false" data-i18n-attr="title:tool.mirrorY" title="Waagerechte Achse — oben und unten gespiegelt">↕</button>
+          </div>
+        </div>
+
+        <div class="tool-sep" aria-hidden="true"></div>
+
+        <div class="tool-group" id="brush-size-group" hidden>
+          <span class="field-label" data-i18n="tool.size">Größe</span>
+          <div class="size-btns">
+            <button class="brush-sz is-active" data-size="1">1</button>
+            <button class="brush-sz" data-size="2">2</button>
+            <button class="brush-sz" data-size="3">3</button>
+            <button class="brush-sz" data-size="4">4</button>
+            <button class="brush-sz" data-size="5">5</button>
+            <button class="brush-sz" data-size="6">6</button>
+            <button class="brush-sz" data-size="7">7</button>
+            <button class="brush-sz" data-size="8">8</button>
+            <button class="brush-sz" data-size="9">9</button>
+          </div>
+        </div>
+
+        <label class="field field--inline" id="strength-group" hidden>
+          <span class="field-label" data-i18n="tool.strength">Stärke</span>
+          <input type="range" id="strength-slider" min="1" max="100" value="80">
+          <span id="strength-val" class="field-value">80%</span>
+        </label>
+
+        <label class="field field--inline" id="tolerance-group" hidden>
+          <span class="field-label" data-i18n="tool.tolerance">Toleranz</span>
+          <input type="range" id="tolerance-slider" min="0" max="100" value="25">
+          <span id="tolerance-val" class="field-value">25%</span>
+        </label>
+
+        <div class="tool-group" id="shape-group" hidden>
+          <button class="btn" id="shape-fill-btn" aria-pressed="false" data-i18n="tool.shapeFill" data-i18n-attr="title:tool.shapeFillTitle"
+                  title="Rechteck und Ellipse gefüllt statt nur als Kontur zeichnen">Gefüllt</button>
+        </div>
+
+        <div class="tool-group" id="select-group" hidden>
+          <span class="field-label" data-i18n="tool.selLabel">Auswahl</span>
+          <div class="btn-group">
+            <button class="btn" id="sel-all-btn"    data-i18n="tool.selAll"    data-i18n-attr="title:tool.selAllTitle"    title="Alles auswählen (Strg+A)">Alles</button>
+            <button class="btn" id="sel-cut-btn"    data-i18n="tool.selCut"    data-i18n-attr="title:tool.selCutTitle"    title="Ausschneiden (Strg+X)">Ausschneiden</button>
+            <button class="btn" id="sel-copy-btn"   data-i18n="tool.selCopy"   data-i18n-attr="title:tool.selCopyTitle"   title="Kopieren (Strg+C)">Kopieren</button>
+            <button class="btn" id="sel-paste-btn"  data-i18n="tool.selPaste"  data-i18n-attr="title:tool.selPasteTitle"  title="Einfügen (Strg+V)">Einfügen</button>
+            <button class="btn" id="sel-fill-btn"   data-i18n="tool.selFill"   data-i18n-attr="title:tool.selFillTitle"   title="Auswahl mit der aktuellen Farbe füllen">Füllen</button>
+            <button class="btn btn--danger-soft" id="sel-delete-btn" data-i18n="tool.selDelete" data-i18n-attr="title:tool.selDeleteTitle" title="Auswahl leeren (Entf)">Leeren</button>
+            <button class="btn" id="sel-none-btn"   data-i18n="tool.selNone"   data-i18n-attr="title:tool.selNoneTitle"   title="Auswahl aufheben (Esc)">Aufheben</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="quick-palette" role="group" data-i18n-attr="aria-label:tool.quickPal" aria-label="Farb-Schnellwahl"></div>
+
+      <div id="editor-canvas-area">
+        <div id="editor-canvas-wrap">
+          <canvas id="editor-canvas"></canvas>
+          <img id="template-overlay" alt="" hidden>
+          <div id="brush-cursor" hidden></div>
+        </div>
+      </div>
+
+      <div id="info-bar" role="status" aria-live="polite"></div>
+
+    </main>
+
+    <!-- ── Rechte Spalte ── -->
+    <aside id="rail-right" class="rail">
+
+      <section class="panel" data-panel="palette">
+        <div class="panel-head">
+          <h2 class="panel-title" data-i18n="pal.title">Farben</h2>
+          <span class="badge badge--builtin" id="palette-origin">eingebaut</span>
+          <button class="panel-toggle" type="button" aria-expanded="true"></button>
+        </div>
+        <div class="panel-body">
+
+          <button type="button" id="current-color" class="current-color" data-i18n-attr="title:pal.currentTitle" title="Klicken — freien Farbwähler öffnen">
+            <span class="cc-swatch is-transparent"></span>
+            <span class="cc-info">
+              <span class="cc-label">Aktuelle Farbe</span>
+              <span class="cc-hex">—</span>
+            </span>
+            <span class="cc-pick" aria-hidden="true">◈</span>
+            <input type="color" id="free-color-picker" class="hidden-color-input" data-i18n-attr="aria-label:pal.freePicker" aria-label="Freie Farbe wählen">
+          </button>
+
+          <div class="palette-picker">
+            <select id="palette-select" class="input" data-i18n-attr="aria-label:pal.select" aria-label="Palette wählen"></select>
+            <button class="icon-btn" id="palette-edit-btn" data-i18n-attr="title:pal.edit" title="Palette bearbeiten" hidden>✎</button>
+            <button class="icon-btn is-danger" id="palette-del-btn" data-i18n-attr="title:pal.del" title="Palette löschen" hidden>×</button>
+          </div>
+
+          <input type="search" id="palette-search" class="input input--sm" data-i18n-attr="placeholder:pal.search" placeholder="Palette suchen…" autocomplete="off">
+
+          <div class="btn-row">
+            <button class="btn btn--primary" id="palette-add-btn" data-i18n="pal.add" data-i18n-attr="title:pal.addTitle" title="Neue eigene Palette anlegen">+ Palette</button>
+            <button class="btn" id="palette-fork-btn" data-i18n="pal.fork" data-i18n-attr="title:pal.forkTitle" title="Diese eingebaute Palette als eigene Kopie anlegen — dann ist sie änderbar">Kopie bearbeiten</button>
+          </div>
+          <button class="btn btn--accent btn--block" id="palette-from-image-btn" data-i18n="pal.fromImage" data-i18n-attr="title:pal.fromImageTitle"
+                  title="Die Farben des aktuellen Bildes als editierbare Palette übernehmen">Bild → Palette</button>
+
+          <p class="panel-hint" id="palette-hint"></p>
+
+          <div id="palette-items" class="color-list"></div>
+        </div>
+      </section>
+
+      <section class="panel collapsed" data-panel="template">
+        <div class="panel-head">
+          <h2 class="panel-title" data-i18n="tpl.title">Schablone</h2>
+          <button class="panel-toggle" type="button" aria-expanded="false"></button>
+        </div>
+        <div class="panel-body">
+          <input type="file" id="template-file" accept="image/*" class="file-input">
+
+          <label class="field">
+            <span class="field-label" data-i18n="tpl.opacity">Deckkraft</span>
+            <span class="field-controls">
+              <input type="range" id="template-opacity" min="0" max="100" value="50">
+              <input type="number" id="template-opacity-num" class="input input--num" min="0" max="100" value="50">
+              <span class="field-unit">%</span>
+            </span>
+          </label>
+
+          <label class="field">
+            <span class="field-label" data-i18n="tpl.size">Größe</span>
+            <span class="field-controls">
+              <input type="range" id="template-scale" min="10" max="200" value="100">
+              <input type="number" id="template-scale-num" class="input input--num" min="10" max="200" value="100">
+              <span class="field-unit">%</span>
+            </span>
+          </label>
+
+          <div class="btn-row">
+            <button class="btn" id="template-center" data-i18n="tpl.center" hidden>Zentrieren</button>
+            <button class="btn btn--danger-soft" id="template-clear" data-i18n="tpl.clear" hidden>Entfernen</button>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn btn--accent" id="template-trace" data-i18n="tpl.trace" data-i18n-attr="title:tpl.traceTitle" hidden
+                    title="Schablonenfarben auf die aktuelle Palette einrasten">Auf Palette</button>
+            <button class="btn" id="template-trace-raw" data-i18n="tpl.traceRaw" data-i18n-attr="title:tpl.traceRawTitle" hidden
+                    title="Schablonenfarben als freie Pixel übernehmen — fotorealistisch">Rohfarben</button>
+          </div>
+
+          <div class="field field--inline" id="tpl-quant-row" hidden>
+            <span class="field-label" data-i18n="tpl.reduce">Reduzieren auf</span>
+            <input type="number" id="trace-colors" class="input input--num" min="2" max="64" value="8">
+            <span class="field-unit" data-i18n="tpl.colors">Farben</span>
+            <button class="btn btn--primary" id="template-trace-quant" data-i18n="tpl.apply" data-i18n-attr="title:tpl.applyTitle"
+                    title="Schablone abtasten und Farben auf N dominante Töne reduzieren (Median-Cut)">Übernehmen</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel collapsed" data-panel="image">
+        <div class="panel-head">
+          <h2 class="panel-title" data-i18n="img.title">Bild</h2>
+          <span class="badge" id="image-scope">Sprite</span>
+          <button class="panel-toggle" type="button" aria-expanded="false"></button>
+        </div>
+        <div class="panel-body">
+          <p class="field-note" data-i18n="img.note">Mit Auswahl wirken Spiegeln und Drehen nur auf sie, sonst auf den ganzen Sprite.</p>
+
+          <div class="btn-row">
+            <button class="btn" id="flip-h-btn" data-i18n="img.flipH" data-i18n-attr="title:img.flipHTitle" title="Waagerecht spiegeln">↔ Spiegeln</button>
+            <button class="btn" id="flip-v-btn" data-i18n="img.flipV" data-i18n-attr="title:img.flipVTitle" title="Senkrecht spiegeln">↕ Spiegeln</button>
+            <button class="btn" id="rotate-btn" data-i18n-attr="title:img.rot90Title" title="90° im Uhrzeigersinn drehen">↻ 90°</button>
+          </div>
+
+          <div class="field">
+            <div class="field-controls">
+              <span class="field-label" data-i18n="img.rotFree">Frei drehen</span>
+              <input type="range" id="rotate-free" min="-180" max="180" step="1" value="0" data-i18n-attr="title:img.rotFreeTitle"
+                     title="Beliebiger Winkel — mit Auswahl dreht sich nur sie">
+              <input type="number" id="rotate-free-num" class="input input--num" min="-180" max="180" value="0">
+              <span class="field-unit">°</span>
+            </div>
+            <div class="btn-row" id="rotate-actions" hidden>
+              <button class="btn btn--primary" id="rotate-apply-btn" data-i18n="img.rotApply" data-i18n-attr="title:img.rotApplyTitle" title="Winkel übernehmen (Enter)">Übernehmen</button>
+              <button class="btn" id="rotate-cancel-btn" data-i18n="img.rotCancel" data-i18n-attr="title:img.rotCancelTitle" title="Zurück auf 0° (Esc)">Verwerfen</button>
+            </div>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn" id="trim-btn" data-i18n="img.trim" data-i18n-attr="title:img.trimTitle" title="Leeren Rand rundherum abschneiden">Zuschneiden</button>
+            <button class="btn" id="center-btn" data-i18n="img.center" data-i18n-attr="title:img.centerTitle" title="Inhalt mittig setzen">Zentrieren</button>
+          </div>
+
+          <!-- Sechs Bedienelemente passen nicht in eine Zeile der schmalen
+               Spalte. Deshalb gestapelt: Maße oben, Anker und Aktion darunter. -->
+          <div class="field">
+            <span class="field-label" data-i18n="img.size">Größe</span>
+            <div class="field-controls">
+              <input type="number" id="resize-w" class="input input--num" min="1" max="256" data-i18n-attr="title:img.width" title="Breite in Pixeln">
+              <span class="field-unit">×</span>
+              <input type="number" id="resize-h" class="input input--num" min="1" max="256" data-i18n-attr="title:img.height" title="Höhe in Pixeln">
+              <span class="field-unit">px</span>
+            </div>
+            <div class="field-controls">
+              <select id="resize-anchor" class="input input--sm" data-i18n-attr="title:img.anchorTitle" title="Wohin der alte Inhalt rutscht">
+                <option value="center" data-i18n="img.anchorCenter">mittig</option>
+                <option value="topleft" data-i18n="img.anchorTopLeft">oben links</option>
+              </select>
+              <button class="btn" id="resize-btn" data-i18n="img.resize">Anwenden</button>
+            </div>
+          </div>
+
+          <div class="field field--inline">
+            <span class="field-label" data-i18n="img.scale">Skalieren</span>
+            <div class="btn-group">
+              <button class="btn" id="scale-up-btn" data-i18n-attr="title:img.scaleUpTitle" title="Auf das Doppelte vergrößern (Pixel bleiben hart)">×2</button>
+              <button class="btn" id="scale-down-btn" data-i18n-attr="title:img.scaleDownTitle" title="Auf die Hälfte verkleinern — Details gehen verloren">÷2</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel collapsed" data-panel="cleanup">
+        <div class="panel-head">
+          <h2 class="panel-title" data-i18n="cln.title">Aufräumen</h2>
+          <button class="panel-toggle" type="button" aria-expanded="false"></button>
+        </div>
+        <div class="panel-body">
+          <div class="field field--inline">
+            <span class="field-label" data-i18n="cln.bg">Hintergrund</span>
+            <input type="number" id="bg-tolerance" class="input input--num" min="0" max="100" value="25">
+            <span class="field-unit">%</span>
+          </div>
+          <button class="btn btn--block" id="bg-remove-btn" data-i18n="cln.bgRemove" data-i18n-attr="title:cln.bgRemoveTitle"
+                  title="Vom Bildrand her zusammenhängende, ähnlich gefärbte Flächen löschen">Hintergrund entfernen</button>
+
+          <button class="btn btn--block" id="despeckle-btn" data-i18n="cln.despeckle" data-i18n-attr="title:cln.despeckleTitle"
+                  title="Einzelne Streupixel auf die Mehrheitsfarbe der Nachbarn setzen">Glätten</button>
+
+          <div class="field field--inline">
+            <span class="field-label" data-i18n="cln.outline">Outline</span>
+            <input type="color" id="outline-color" value="#1a1a1a" data-i18n-attr="title:cln.outlineColor" title="Outline-Farbe">
+            <select id="outline-thickness" class="input input--sm" data-i18n-attr="title:cln.outlineThick" title="Dicke der Kante">
+              <option value="1">1 px</option>
+              <option value="2">2 px</option>
+              <option value="3">3 px</option>
+            </select>
+            <button class="btn" id="outline-btn" data-i18n="cln.outlineApply">Anwenden</button>
+          </div>
+        </div>
+      </section>
+
+    </aside>
+
+  </div>
+</div>
+
+<!-- ══════════════════ Modale ══════════════════ -->
+
+<!-- Neuer Sprite -->
+<div id="new-modal-overlay" class="modal-overlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="new-modal-title">
+    <h2 class="modal-title" id="new-modal-title" data-i18n="mod.newTitle">Neuer Sprite</h2>
+
+    <label class="form-row">
+      <span class="form-label" data-i18n="mod.name">Name</span>
+      <input type="text" id="new-name" class="input" maxlength="40" data-i18n-attr="placeholder:mod.namePh" placeholder="z.B. Held, Baum, Icon">
+    </label>
+
+    <label class="form-row">
+      <span class="form-label" data-i18n="mod.palette">Farbpalette</span>
+      <select id="new-palette" class="input"></select>
+    </label>
+
+    <label class="form-row">
+      <span class="form-label" data-i18n="mod.size">Größe</span>
+      <select id="new-size" class="input">
+        <option value="16">16 × 16</option>
+        <option value="24" selected>24 × 24</option>
+        <option value="32">32 × 32</option>
+        <option value="40">40 × 40</option>
+        <option value="48">48 × 48</option>
+        <option value="56">56 × 56</option>
+        <option value="64">64 × 64</option>
+        <option value="80">80 × 80</option>
+        <option value="96">96 × 96</option>
+        <option value="128">128 × 128</option>
+      </select>
+    </label>
+
+    <label class="form-row">
+      <span class="form-label" data-i18n-html="mod.template">Vorlage <span class="form-note">(optional — Kopie eines vorhandenen Sprites)</span></span>
+      <select id="new-template" class="input"></select>
+    </label>
+
+    <div class="modal-actions">
+      <button class="btn" id="new-modal-cancel" data-i18n="mod.cancel">Abbrechen</button>
+      <button class="btn btn--primary" id="new-modal-create" data-i18n="mod.create">Erstellen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sprite umbenennen -->
+<div id="rename-modal-overlay" class="modal-overlay">
+  <div class="modal modal--sm" role="dialog" aria-modal="true" aria-labelledby="rename-modal-title">
+    <h2 class="modal-title" id="rename-modal-title" data-i18n="mod.renameTitle">Sprite umbenennen</h2>
+    <label class="form-row">
+      <span class="form-label" data-i18n="mod.name">Name</span>
+      <input type="text" id="rename-input" class="input" maxlength="40">
+    </label>
+    <div class="modal-actions">
+      <button class="btn" id="rename-modal-cancel" data-i18n="mod.cancel">Abbrechen</button>
+      <button class="btn btn--primary" id="rename-modal-ok" data-i18n="mod.renameSave">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Palette anlegen / bearbeiten -->
+<div id="pal-modal-overlay" class="modal-overlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="pal-modal-title">
+    <h2 class="modal-title" id="pal-modal-title">Neue Palette</h2>
+
+    <label class="form-row">
+      <span class="form-label" data-i18n="mod.name">Name</span>
+      <input type="text" id="pal-name" class="input" maxlength="30" data-i18n-attr="placeholder:mod.palNamePh" placeholder="z.B. neon, pastell, dark">
+    </label>
+
+    <label class="form-row" id="pal-source-row">
+      <span class="form-label" data-i18n-html="mod.palSource">Basis <span class="form-note">(Farben übernehmen)</span></span>
+      <select id="pal-source" class="input"></select>
+    </label>
+
+    <div class="form-row">
+      <span class="form-label" data-i18n="mod.palColors">Farben</span>
+      <div id="pal-color-rows" class="pal-rows"></div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn" id="pal-modal-cancel" data-i18n="mod.cancel">Abbrechen</button>
+      <button class="btn btn--primary" id="pal-modal-create">Erstellen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Import -->
+<div id="import-modal-overlay" class="modal-overlay">
+  <div class="modal modal--lg" role="dialog" aria-modal="true" aria-labelledby="import-modal-title">
+    <h2 class="modal-title" id="import-modal-title" data-i18n="mod.impTitle">Sprite importieren</h2>
+    <p class="modal-intro" data-i18n-html="mod.impIntro">
+      Datei wählen oder Text einfügen — der Editor liest <b>alle Formate, die er auch
+      schreibt</b>. Das Format wird am Inhalt erkannt, die Dateiendung ist egal.
+    </p>
+    <p class="modal-intro modal-intro--sub" data-i18n="mod.impIntro2">
+      TypeScript, JavaScript, JSON, Python und C-Header bringen die Farb-Nummern mit und
+      kommen unverändert zurück. SVG, CSS und Text-Raster kennen keine Nummern — dort
+      bleibt das Bild gleich, die Farben werden neu durchnummeriert.
+    </p>
+
+    <div class="btn-row">
+      <button class="btn" id="import-file-btn" data-i18n="mod.impFile">Datei wählen</button>
+      <input type="file" id="import-file-input"
+             accept=".ts,.tsx,.js,.jsx,.mjs,.json,.py,.svg,.css,.h,.hpp,.c,.txt,.text,image/svg+xml,text/plain" hidden>
+    </div>
+
+    <textarea id="import-textarea" class="code-in" spellcheck="false" data-i18n-attr="placeholder:mod.impPh"
+              placeholder="Hier einfügen — zum Beispiel:&#10;&#10;export const HELD: number[][] = [&#10;  [0,1,2],&#10;];&#10;&#10;… oder ein SVG, ein box-shadow-Block, ein C-Header&#10;oder ein Text-Raster."></textarea>
+
+    <p id="import-preview" class="msg msg--ok" hidden></p>
+    <p id="import-error" class="msg msg--error" hidden></p>
+
+    <label class="check" id="import-use-palette-label">
+      <input type="checkbox" id="import-use-palette" checked>
+      <span data-i18n="mod.impUsePal">Palette aus der Datei übernehmen und dem Sprite zuweisen</span>
+    </label>
+
+    <div class="modal-actions">
+      <button class="btn" id="import-modal-cancel" data-i18n="mod.cancel">Abbrechen</button>
+      <button class="btn" id="import-modal-current" data-i18n="mod.impCurrent" data-i18n-attr="title:mod.impCurrentTitle" title="Überschreibt das Grid des aktuellen Sprites">In aktuellen Sprite</button>
+      <button class="btn btn--primary" id="import-modal-new" data-i18n="mod.impNew">Als neuen Sprite</button>
+    </div>
+  </div>
+</div>
+
+<!-- Hilfe -->
+<div id="help-modal-overlay" class="modal-overlay">
+  <div class="modal modal--lg modal--scroll" role="dialog" aria-modal="true" aria-labelledby="help-title">
+    <div class="modal-head">
+      <h2 class="modal-title" id="help-title" data-i18n="help.title">Hilfe</h2>
+      <button class="icon-btn" id="help-close" data-i18n-attr="title:help.close" title="Schließen">×</button>
+    </div>
+
+    <p class="modal-intro" data-i18n-html="help.intro">
+      Pixel-Editor mit Foto-Vorlage. Du malst frei — oder paust ein Foto als <b>Schablone</b> ab
+      und lässt es automatisch zu einem sauberen Sprite verarbeiten.
+    </p>
+
+    <h3 class="help-h" data-i18n="help.h.palettes">Farbpaletten</h3>
+    <div class="help-list" data-i18n-html="help.palettes">
+      <div>Eine Palette bildet <b>Index → Farbe</b> ab. <b>0</b> ist immer transparent, <b>1–9</b> sind frei belegbar.</div>
+      <div>Konvention (kein Zwang): <b>1–4</b> eine Tonleiter hell → dunkel, <b>5</b> die Kontur, <b>6–9</b> Akzente.</div>
+      <div>Jeder Sprite merkt sich seine eigene Palette. Farbe ändern färbt alle Pixel mit diesem Index sofort um.</div>
+      <div>Eingebaute Paletten sind schreibgeschützt — <b>Kopie bearbeiten</b> macht eine änderbare eigene daraus.</div>
+    </div>
+
+    <h3 class="help-h" data-i18n="help.h.tools">Werkzeuge</h3>
+    <div class="help-list" data-i18n-html="help.tools">
+      <div><b>Stift</b> — einzelne Pixel.</div>
+      <div><b>Pinsel</b> — Fläche; <i>Stärke</i> = Dichte, <i>Größe</i> = Kantenlänge.</div>
+      <div><b>Spray</b> — zufällige Pixel; <i>Stärke</i> = Menge pro Ereignis.</div>
+      <div><b>Füllen</b> — zusammenhängende gleiche Fläche.</div>
+      <div><b>Radierer</b> — setzt auf transparent.</div>
+      <div><b>Zauberstab</b> — löscht zusammenhängende <i>ähnliche</i> Fläche; <i>Toleranz</i> steuert, wie viel Abweichung mitgeht.</div>
+      <div><b>Linie · Rechteck · Ellipse</b> — aufziehen, die Vorschau zeigt das Ergebnis, Loslassen zeichnet. <i>Gefüllt</i> schaltet zwischen Kontur und Fläche.</div>
+      <div><b>Auswahl · Lasso · Farbwahl</b> — drei Wege zur selben Sache: ein Bereich, den man als Ganzes bewegt.</div>
+    </div>
+
+    <h3 class="help-h" data-i18n="help.h.mirror">Symmetrie</h3>
+    <div class="help-list" data-i18n-html="help.mirror">
+      <div>Die beiden Knöpfe <b>↔</b> und <b>↕</b> in der Werkzeugleiste spiegeln jeden Strich an der Mittelachse — beide zusammen ergeben vier Spiegelungen.</div>
+      <div>Gilt für Stift, Pinsel, Spray, Füllen und die Formen. Die Achsen werden als gestrichelte Linien eingeblendet.</div>
+    </div>
+
+    <h3 class="help-h" data-i18n="help.h.selection">Auswahl: ausschneiden und verschieben</h3>
+    <div class="help-list" data-i18n-html="help.selection">
+      <div><b>Auswahl</b> (<span class="kbd">A</span>) zieht ein Rechteck auf.</div>
+      <div><b>Lasso</b> (<span class="kbd">L</span>) umfährt eine freie Form; beim Loslassen wird sie geschlossen und alles darin gehört dazu — auch bei krakeliger Linie.</div>
+      <div><b>Farbwahl</b> (<span class="kbd">K</span>) nimmt die zusammenhängende ähnliche Fläche unter dem Klick; die <i>Toleranz</i> bestimmt, wie viel mitgeht.</div>
+      <div>In die Auswahl fassen und ziehen → der Bereich wird <b>ausgeschnitten</b> und <b>schwebt</b>. Er bleibt in der Luft, bis du ihn absetzt — solange lässt er sich beliebig oft verschieben, drehen und spiegeln, ohne dass darunter etwas kaputtgeht.</div>
+      <div><b>Abgesetzt</b> wird beim Abwählen (<span class="kbd">Esc</span>), bei einer neuen Auswahl, beim Werkzeug- oder Sprite-Wechsel — oder automatisch beim Schließen des Tabs.</div>
+      <div><span class="kbd">Alt</span>+Ziehen lässt das Original stehen — man verschiebt eine <b>Kopie</b>.</div>
+      <div>Feinarbeit mit den <b>Pfeiltasten</b>: ein Pixel pro Druck. <b>Füllen</b> färbt die ganze Auswahl in der aktuellen Farbe.</div>
+      <div>Beim Absetzen überschreiben nur gefüllte Pixel; transparente Stellen lassen den Untergrund stehen.</div>
+      <div>Was über den Rand hinausgeschoben wird, geht verloren — <span class="kbd">Strg</span>+<span class="kbd">Z</span> holt alles zurück.</div>
+      <div>Ein Klick neben die Auswahl (oder <span class="kbd">Esc</span>) hebt sie auf.</div>
+    </div>
+
+    <h3 class="help-h" data-i18n="help.h.image">Bild</h3>
+    <div class="help-list" data-i18n-html="help.image">
+      <div><b>Spiegeln</b> und <b>Drehen</b> wirken auf die Auswahl, wenn es eine gibt — sonst auf den ganzen Sprite. Das Abzeichen im Panel sagt, worauf gerade.</div>
+      <div><b>Zuschneiden</b> schneidet den leeren Rand weg, <b>Zentrieren</b> rückt den Inhalt in die Mitte.</div>
+      <div><b>Größe</b> ändert die Fläche, ohne zu skalieren; der Anker bestimmt, wohin der alte Inhalt rutscht.</div>
+      <div><b>×2 / ÷2</b> skaliert hart (Nearest Neighbor) — Pixel bleiben Pixel, beim Halbieren fällt jedes zweite weg.</div>
+      <div><b>Frei drehen</b> nimmt jeden Winkel. Der Regler zeigt eine Vorschau; <b>Übernehmen</b> (<span class="kbd">Enter</span>) schreibt sie fest, <b>Verwerfen</b> (<span class="kbd">Esc</span>) geht zurück auf 0°.</div>
+      <div>Jede Vorschau wird vom <i>Original</i> gerechnet, nicht vom zuletzt gedrehten Bild — dreimal am Regler ziehen verwäscht die Form also nicht.</div>
+      <div>Bei einer Auswahl wächst der Rahmen mit, damit nichts abgeschnitten wird. Beim ganzen Sprite bleibt die Fläche gleich, Ecken außerhalb fallen weg.</div>
+    </div>
+
+    <h3 class="help-h" data-i18n="help.h.layer">Ebene — mit zwei Sprites arbeiten</h3>
+    <div class="help-list" data-i18n-html="help.layer">
+      <div>Unter der Sprite-Liste lässt sich ein <b>zweiter Sprite als Ebene</b> einblenden: halbdurchsichtig, oben links ausgerichtet, mit eigener Palette.</div>
+      <div>Bearbeitet wird immer nur der aktive Sprite — die Ebene ist reine Vorlage. <b>👁</b> blendet sie aus, der Regler stellt die Deckkraft, <b>dahinter/davor</b> legt sie unter oder über das Bild (zum Abpausen von Konturen).</div>
+      <div><b>Tauschen</b> vertauscht die Rollen: die Ebene wird bearbeitet, der bisherige Sprite wird zur Ebene.</div>
+      <div>Teile übertragen: im einen Sprite auswählen und <span class="kbd">Strg</span>+<span class="kbd">C</span>, zum anderen wechseln, <span class="kbd">Strg</span>+<span class="kbd">V</span>. Das Eingefügte schwebt und lässt sich erst hinschieben, bevor es liegt.</div>
+    </div>
+
+    <h3 class="help-h" data-i18n="help.h.stencil">Schablone</h3>
+    <div class="help-list" data-i18n-html="help.stencil">
+      <div>Bild laden, mit <span class="kbd">Shift</span>+Linksklick ziehen verschieben, Deckkraft und Größe per Regler.</div>
+      <div><span class="kbd">Shift</span> halten → Schablone voll in den Vordergrund.</div>
+      <div><span class="kbd">Shift</span>+Rechtsklick → Schablonen-Pipette (exakte Farbe aus dem Bild).</div>
+      <div>Bleibt nach einem Reload erhalten.</div>
+    </div>
+
+    <h3 class="help-h" data-i18n="help.h.photo">Foto → Sprite</h3>
+    <ol class="help-ol" data-i18n-html="help.photo">
+      <li>Foto als Schablone laden und übers Grid legen</li>
+      <li><b>Reduzieren auf ~8 Farben</b> übernehmen</li>
+      <li><b>Bild → Palette</b> — die Farben werden zur editierbaren Palette</li>
+      <li><b>Hintergrund entfernen</b> (oder Zauberstab)</li>
+      <li><b>Glätten</b>, dann <b>Outline</b> drüber</li>
+      <li>Reste von Hand mit Stift und Radierer säubern</li>
+    </ol>
+
+    <h3 class="help-h" data-i18n="help.h.io">Import &amp; Export</h3>
+    <div class="help-list" data-i18n-html="help.io">
+      <div><b>Import</b> liest <code>number[][]</code> aus Text oder Datei — TypeScript, JavaScript und JSON. Ein mitgelieferter Palettenblock wird als eigene Palette angelegt und zugewiesen.</div>
+      <div><b>Code-Feld</b> erzeugt den Export im gewählten <b>Format</b>. Freie Pipetten-Farben werden als Indizes oberhalb der Palette gesichert — bei TS, JS und JSON ist der Round-Trip verlustfrei.</div>
+      <div class="help-formats">
+        <div><b>TypeScript</b> / <b>JavaScript</b> — <code>number[][]</code> plus Palette, mit oder ohne Typen.</div>
+        <div><b>JSON</b> — sprachneutral für eigene Pipelines, Engines und Tools.</div>
+        <div><b>SVG</b> — fertige Vektorgrafik, skaliert verlustfrei; gleiche Farbe nebeneinander wird zu einem Rechteck zusammengefasst.</div>
+        <div><b>CSS</b> — der Sprite als <code>box-shadow</code> auf einem einzigen Element, ganz ohne Bilddatei.</div>
+        <div><b>C-Header</b> — <code>uint8</code>-Indizes plus <code>uint32</code>-Palette für Mikrocontroller und LED-Matrizen.</div>
+        <div><b>Python</b> — Dict und Liste für Pygame, Pillow oder eigene Skripte.</div>
+        <div><b>Text-Raster</b> — ein Zeichen pro Pixel mit Legende; praktisch für Diffs und Doku.</div>
+      </div>
+      <div><b>PNG / PDF</b> exportieren transparent; mit <i>Farb-Legende</i> wird die Palette ins Bild gerendert.</div>
+      <div><b>Spritesheet</b> packt alle Sprites in gleich große Zellen und legt einen JSON-Atlas mit Namen und Koordinaten daneben — so lesen Engines es direkt ein.</div>
+      <div><b>Projekt sichern / Öffnen</b> schreibt alle Sprites und Paletten in eine JSON-Datei.</div>
+    </div>
+
+    <h3 class="help-h" data-i18n="help.h.keys">Tastenkürzel</h3>
+    <div class="help-shortcuts" data-i18n-html="help.keys">
+      <div class="sc-row"><b>Klick</b><span>Malen</span></div>
+      <div class="sc-row"><b>Rechtsklick</b><span>Löschen (gedrückt halten = durchgehend)</span></div>
+      <div class="sc-row"><b>Alt + Klick</b><span>Pipette auf das Grid</span></div>
+      <div class="sc-row"><b>Shift halten</b><span>Schablone in den Vordergrund</span></div>
+      <div class="sc-row"><b>Shift + Links + Ziehen</b><span>Schablone verschieben</span></div>
+      <div class="sc-row"><b>Shift + Rechtsklick</b><span>Schablonen-Pipette</span></div>
+      <div class="sc-row"><b>0 – 9</b><span>Farb-Index wählen</span></div>
+      <div class="sc-row"><b>P B S F E W</b><span>Stift · Pinsel · Spray · Füllen · Radierer · Zauberstab</span></div>
+      <div class="sc-row"><b>I R O</b><span>Linie · Rechteck · Ellipse</span></div>
+      <div class="sc-row"><b>A L K</b><span>Auswahl · Lasso · Farbwahl</span></div>
+      <div class="sc-row"><b>Strg + Mausrad</b><span>Zoomen</span></div>
+      <div class="sc-row"><b>Ziehen in der Auswahl</b><span>Bereich ausschneiden und verschieben</span></div>
+      <div class="sc-row"><b>Alt + Ziehen</b><span>Kopie verschieben (Original bleibt)</span></div>
+      <div class="sc-row"><b>Pfeiltasten</b><span>Auswahl pixelweise verschieben</span></div>
+      <div class="sc-row"><b>Strg + A / C / X / V</b><span>Alles · Kopieren · Ausschneiden · Einfügen</span></div>
+      <div class="sc-row"><b>Entf</b><span>Auswahl leeren</span></div>
+      <div class="sc-row"><b>Enter</b><span>Drehung übernehmen</span></div>
+      <div class="sc-row"><b>Strg + Z</b><span>Rückgängig</span></div>
+      <div class="sc-row"><b>Strg + Y</b><span>Wiederholen</span></div>
+      <div class="sc-row"><b>Esc</b><span>Auswahl aufheben, Dialog oder Vollbild schließen</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- Rückfrage und Hinweis teilen sich ein Element, sehen aber verschieden
+     aus: eine Rückfrage verlangt eine Antwort und legt sich deshalb mittig
+     über die Seite, ein Hinweis bleibt unten und geht von selbst wieder. -->
+<div id="confirm-toast" role="alertdialog" aria-live="assertive" aria-labelledby="confirm-toast-msg">
+  <div id="confirm-toast-box">
+    <p id="confirm-toast-msg"></p>
+    <div id="confirm-toast-btns">
+      <button class="btn" id="confirm-toast-cancel" data-i18n="mod.confirmCancel">Abbrechen</button>
+      <button class="btn btn--danger" id="confirm-toast-ok">Löschen</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script type="module" src="js/app.js"></script>
+
+</body>
+</html>

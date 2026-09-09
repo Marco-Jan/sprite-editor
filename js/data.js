@@ -25,29 +25,11 @@ export function cellToColor(c, palette) {
 // Höchster belegbarer Palette-Index. 0 = transparent, 1..MAX_IDX = Farben.
 export const MAX_IDX = 9;
 
-// Semantische Bedeutung der Palette-Indizes (UI-Labels).
-// 1–4 sind die "Tonleiter" (hell → dunkel) eines Materials, 5 die Kontur,
-// 6–9 freie Akzente. Das ist eine Konvention, keine technische Vorgabe —
-// jeder Index kann jede Farbe tragen.
-export const COLOR_LABELS = {
-  0: 'Transparent',
-  1: 'Ton 1 — hellster',
-  2: 'Ton 2',
-  3: 'Ton 3',
-  4: 'Ton 4 — dunkelster',
-  5: 'Outline / Kontur',
-  6: 'Akzent A',
-  7: 'Highlight',
-  8: 'Akzent B',
-  9: 'Akzent C',
-};
-
-// Kurzform der Labels für enge Stellen (Quick-Palette-Tooltip).
-export const COLOR_LABELS_SHORT = {
-  0: 'Transparent',
-  1: 'Ton 1', 2: 'Ton 2', 3: 'Ton 3', 4: 'Ton 4',
-  5: 'Outline', 6: 'Akzent A', 7: 'Highlight', 8: 'Akzent B', 9: 'Akzent C',
-};
+// Die Beschriftungen der Palette-Indizes sind Oberflächentext und stehen
+// deshalb zweisprachig in i18n.js — colorLabel(i) und colorLabelShort(i).
+// Gemeint ist: 1–4 die "Tonleiter" (hell → dunkel) eines Materials, 5 die
+// Kontur, 6–9 freie Akzente. Das ist eine Konvention, keine technische
+// Vorgabe — jeder Index kann jede Farbe tragen.
 
 // Trennstrich in der Palette-Anzeige nach diesem Index (Töne | Details).
 export const PALETTE_GROUP_SPLIT = 4;
@@ -66,6 +48,24 @@ export const BUILTIN_PALETTES = {
   orange:     { 1:'#FFE090', 2:'#F0A838', 3:'#D07820', 4:'#A05010', 5:'#1A1828', 6:'#FFB0C8', 7:'#FFFFFF', 8:'#66BB44', 9:'#B86020' },
   tinte:      { 1:'#686868', 2:'#484848', 3:'#2A2A2A', 4:'#181818', 5:'#1A1828', 6:'#FFB0C8', 7:'#FFFFFF', 8:'#FFDD44', 9:'#111111' },
   schnee:     { 1:'#FFFFFF', 2:'#F0F0F8', 3:'#DCDCE8', 4:'#B8B8CC', 5:'#1A1828', 6:'#FFB0C8', 7:'#FFFFFF', 8:'#88CCFF', 9:'#D0D0E0' },
+
+  // ── Helden ────────────────────────────────────────────────────────
+  // Farbschemata im Geist bekannter Spiel- und Comicfiguren: die Toene
+  // sind so gewaehlt, dass die Figur wiedererkennbar wird, die Namen
+  // sind beschreibend statt geliehen.
+  // Aufbau wie oben: 1-4 Tonleiter hell zu dunkel, 5 Kontur, 6-9 Akzente.
+  // Jede Kontur hebt sich vom mittleren Ton mindestens 3:1 ab, sonst
+  // verschwindet sie beim Zeichnen.
+  blitz:      { 1:'#FFF6BC', 2:'#FFE14A', 3:'#EFBE12', 4:'#A87608', 5:'#2B1C05', 6:'#E8453C', 7:'#FFFFFF', 8:'#7A4A12', 9:'#120C04' },
+  klempner:   { 1:'#FF9A8E', 2:'#E8453C', 3:'#B4271F', 4:'#701410', 5:'#1C1216', 6:'#2A4FBF', 7:'#FFD9B0', 8:'#F5C518', 9:'#16307A' },
+  igel:       { 1:'#8FC2FF', 2:'#3C7DE8', 3:'#2450B4', 4:'#132C64', 5:'#080E1F', 6:'#E8453C', 7:'#FFFFFF', 8:'#F0C9A0', 9:'#101820' },
+  held:       { 1:'#B4E88A', 2:'#6FBF3C', 3:'#42862A', 4:'#254E16', 5:'#111E0B', 6:'#F0C9A0', 7:'#FFFFFF', 8:'#8A5A28', 9:'#F5C518' },
+  roboter:    { 1:'#D2EFFF', 2:'#71C6F5', 3:'#2E7FD4', 4:'#153F76', 5:'#091524', 6:'#F5C518', 7:'#FFFFFF', 8:'#E8453C', 9:'#22304A' },
+  puff:       { 1:'#FFDCE9', 2:'#FF9EC4', 3:'#DE5E97', 4:'#93305C', 5:'#2A0E1C', 6:'#E8453C', 7:'#FFFFFF', 8:'#5B2440', 9:'#7A2848' },
+  geist:      { 1:'#E4D2FF', 2:'#B98CF0', 3:'#8452C4', 4:'#4E2B7A', 5:'#180C28', 6:'#7CF5C0', 7:'#FFFFFF', 8:'#F5C518', 9:'#2E1848' },
+  // Tonleiter bewusst heller als bei kohle/tinte — sonst verschwindet
+  // die fast schwarze Kontur in den dunklen Toenen.
+  ninja:      { 1:'#A2A8BA', 2:'#727A90', 3:'#464D60', 4:'#282D3A', 5:'#07080C', 6:'#E8453C', 7:'#FFFFFF', 8:'#F0C9A0', 9:'#0E1018' },
 };
 
 // Palette, die neue Sprites bekommen wenn nichts anderes gewählt wurde.

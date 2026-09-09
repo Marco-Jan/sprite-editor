@@ -8,6 +8,7 @@ import { DEFAULT_PALETTE, completePalette } from './data.js';
 import { saveBlob } from './filesystem.js';
 import { showInfoToast } from './toast.js';
 import { migrateV1 } from './migrate.js';
+import { t } from './i18n.js';
 
 const STORAGE_KEY = 'wb_sprite_tester_v1'; // Key bleibt — Migration passiert im Payload
 const SCHEMA_VERSION = 2;
@@ -62,6 +63,10 @@ function buildPayload() {
       outputFormat: state.outputFormat,
       mirror:    state.mirror,
       shapeFill: state.shapeFill,
+      refSprite:  state.refSprite,
+      refVisible: state.refVisible,
+      refOpacity: state.refOpacity,
+      refFront:   state.refFront,
       fullscreen: document.body.classList.contains('editor-fullscreen'),
       panels: collectPanelStates(),
     },
@@ -83,7 +88,7 @@ function writeNow() {
     flashSaved();
   } catch (e) {
     console.warn('Sprite-Editor: Speichern fehlgeschlagen', e);
-    showInfoToast('Speichern fehlgeschlagen — localStorage voll? (Limit ~5 MB)');
+    showInfoToast(t('file.saveFailed'));
   }
 }
 
@@ -160,6 +165,11 @@ function applyPayload(payload) {
     if (ui.outputFormat) state.outputFormat = ui.outputFormat;
     if (ui.mirror) state.mirror = ui.mirror;
     if (typeof ui.shapeFill === 'boolean') state.shapeFill = ui.shapeFill;
+    // Die Ebene nur übernehmen, wenn es den Sprite noch gibt.
+    state.refSprite = ui.refSprite && sprites[ui.refSprite] ? ui.refSprite : null;
+    if (typeof ui.refVisible === 'boolean') state.refVisible = ui.refVisible;
+    if (ui.refOpacity) state.refOpacity = ui.refOpacity;
+    if (typeof ui.refFront === 'boolean') state.refFront = ui.refFront;
     applyPanelStates(ui.panels);
 
     return { loaded: true, migrated, note, fullscreen: !!ui.fullscreen };
@@ -196,8 +206,9 @@ export async function saveToFile() {
   const result = await saveBlob(blob, filename);
   flashSaved();
   showInfoToast(result.fallback
-    ? `„${filename}“ wurde heruntergeladen (Standard-Download-Ordner). Tipp: Mit „Speicherort“ einen festen Ordner wählen.`
-    : `„${filename}“ gespeichert${result.dir ? ` in „${result.dir}“` : ''}.`);
+    ? t('file.downloadedTip', { name: filename })
+    : (result.dir ? t('file.savedIn', { name: filename, dir: result.dir })
+                  : t('file.saved', { name: filename })));
 }
 
 // JSON-Projektdatei einlesen. Wird validiert und (nach Migration beim nächsten
@@ -214,9 +225,9 @@ export function loadFromFile(file, onError) {
       localStorage.setItem(STORAGE_KEY, e.target.result);
       location.reload();
     } catch {
-      if (onError) onError('Ungültige Datei — das ist kein Sprite-Projekt.');
+      if (onError) onError(t('file.badProject'));
     }
   };
-  reader.onerror = () => { if (onError) onError('Datei konnte nicht gelesen werden.'); };
+  reader.onerror = () => { if (onError) onError(t('file.readFailed')); };
   reader.readAsText(file);
 }

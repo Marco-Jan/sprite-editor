@@ -7,6 +7,7 @@ import { cellToColor } from './render.js';
 import { showInfoToast } from './toast.js';
 import { saveBlob } from './filesystem.js';
 import { flashSaved } from './storage.js';
+import { t } from './i18n.js';
 
 // Sauberer Sprite-Render auf neuen Canvas (ohne Grid-Linien, ohne Schachbrett).
 // Hintergrund bleibt transparent (default-state des Canvas).
@@ -94,7 +95,7 @@ function renderLegendCanvas(colors, minWidth) {
     ctx.textBaseline = 'top';
     ctx.font = `bold ${fontPx}px monospace`;
     ctx.fillStyle = '#d0d0d0';
-    ctx.fillText(`Palette — ${colors.length} Farben`, pad, pad);
+    ctx.fillText(t('exp.legendTitle', { n: colors.length }), pad, pad);
 
     ctx.font = `${fontPx}px monospace`;
     colors.forEach((col, i) => {
@@ -127,7 +128,7 @@ function renderLegendCanvas(colors, minWidth) {
   ctx.textBaseline = 'top';
   ctx.font = `bold ${fontPx}px monospace`;
   ctx.fillStyle = '#d0d0d0';
-  ctx.fillText(`Palette — ${sorted.length} Farben (nach Farbton sortiert)`, pad, pad);
+  ctx.fillText(t('exp.legendSorted', { n: sorted.length }), pad, pad);
 
   sorted.forEach((col, i) => {
     const cx = pad + (i % cols) * (cell + gap);
@@ -179,10 +180,11 @@ function canvasToPngBlob(canvas) {
 function reportSaved(result, filename) {
   flashSaved(); // kurzes "gespeichert"-Aufblitzen oben rechts
   if (result.fallback) {
-    showInfoToast(`„${filename}“ wurde heruntergeladen (in den Standard-Download-Ordner). ` +
-      `Tipp: Mit „📁 Speicherort“ einen festen Ordner wählen.`);
+    showInfoToast(t('file.downloadedTipIcon', { name: filename }));
   } else {
-    showInfoToast(`✅ „${filename}“ gespeichert${result.dir ? ` in „${result.dir}“` : ''}.`);
+    showInfoToast(result.dir
+      ? t('file.savedInOk', { name: filename, dir: result.dir })
+      : t('file.savedOk', { name: filename }));
   }
 }
 
@@ -252,7 +254,7 @@ export function initExport() {
   document.getElementById('export-sheet-btn').addEventListener('click', async () => {
     const scale = Number(scaleSel.value) || 8;
     const sheet = buildSheet(scale);
-    if (!sheet) { showInfoToast('Keine Sprites zum Zusammenpacken.'); return; }
+    if (!sheet) { showInfoToast(t('exp.noSprites')); return; }
 
     const base = (getSprite()?.name || 'sprites').replace(/[^a-zA-Z0-9_-]/g, '_') || 'sprites';
     const pngName = `${base}_sheet.png`;
@@ -264,13 +266,16 @@ export function initExport() {
     await saveBlob(jsonBlob, jsonName);
 
     flashSaved();
-    showInfoToast(`Spritesheet mit ${sheet.count} Sprites gespeichert — „${pngName}“ und „${jsonName}“` +
-      (pngResult.fallback ? ' (im Download-Ordner).' : pngResult.dir ? ` in „${pngResult.dir}“.` : '.'));
+    showInfoToast(t('exp.sheetSaved', {
+      n: sheet.count, png: pngName, json: jsonName,
+      where: pngResult.fallback ? t('exp.sheetDownload')
+           : pngResult.dir ? t('exp.sheetIn', { dir: pngResult.dir }) : '.',
+    }));
   });
 
   document.getElementById('export-pdf-btn').addEventListener('click', async () => {
     if (!window.jspdf || !window.jspdf.jsPDF) {
-      showInfoToast('PDF-Library noch nicht geladen — kurz warten und nochmal versuchen (Internet erforderlich).');
+      showInfoToast(t('exp.pdfMissing'));
       return;
     }
     const scale = Number(scaleSel.value) || 8;
