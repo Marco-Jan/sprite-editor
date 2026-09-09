@@ -6,9 +6,10 @@
 // oberhalb der Palette. Damit ist jedes Format in sich geschlossen —
 // wer den Text kopiert, hat auch die Farben dabei.
 //
-// Zurück in den Editor kommen TypeScript, JavaScript und JSON (der Parser
-// in tsimport.js liest alle drei). Die übrigen Formate sind Einbahnstraßen
-// für die Weiterverwendung außerhalb.
+// Alle acht Formate kommen auch wieder herein — tsimport.js erkennt sie am
+// Inhalt. TypeScript, JavaScript, JSON, Python und C-Header behalten dabei
+// ihre Farb-Nummern; SVG, CSS und Text-Raster kennen keine Indizes, dort
+// werden die Farben beim Import neu durchnummeriert.
 import { getSprite, getPal, getMaxIdx } from './state.js';
 import { cellToColor } from './data.js';
 

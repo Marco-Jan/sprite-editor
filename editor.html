@@ -556,17 +556,23 @@
   <div class="modal modal--lg" role="dialog" aria-modal="true" aria-labelledby="import-modal-title">
     <h2 class="modal-title" id="import-modal-title">Sprite importieren</h2>
     <p class="modal-intro">
-      Fügt ein <code>number[][]</code>-Array ein — aus dem Code-Feld oder direkt aus deinem Projekt.
-      Steht im Text auch ein <code>Record&lt;number, string&gt;</code>-Palettenblock, wird die Palette mit übernommen.
+      Datei wählen oder Text einfügen — der Editor liest <b>alle Formate, die er auch
+      schreibt</b>. Das Format wird am Inhalt erkannt, die Dateiendung ist egal.
+    </p>
+    <p class="modal-intro modal-intro--sub">
+      TypeScript, JavaScript, JSON, Python und C-Header bringen die Farb-Nummern mit und
+      kommen unverändert zurück. SVG, CSS und Text-Raster kennen keine Nummern — dort
+      bleibt das Bild gleich, die Farben werden neu durchnummeriert.
     </p>
 
     <div class="btn-row">
-      <button class="btn" id="import-file-btn">Datei wählen (.ts / .js / .json / .txt)</button>
-      <input type="file" id="import-file-input" accept=".ts,.tsx,.js,.jsx,.json,.txt,text/plain" hidden>
+      <button class="btn" id="import-file-btn">Datei wählen</button>
+      <input type="file" id="import-file-input"
+             accept=".ts,.tsx,.js,.jsx,.mjs,.json,.py,.svg,.css,.h,.hpp,.c,.txt,.text,image/svg+xml,text/plain" hidden>
     </div>
 
     <textarea id="import-textarea" class="code-in" spellcheck="false"
-              placeholder="export const HELD_PALETTE: Record<number, string> = {&#10;  1: '#F5D98A',&#10;};&#10;&#10;export const HELD: number[][] = [&#10;  [0,1,2],&#10;];"></textarea>
+              placeholder="Hier einfügen — zum Beispiel:&#10;&#10;export const HELD: number[][] = [&#10;  [0,1,2],&#10;];&#10;&#10;… oder ein SVG, ein box-shadow-Block, ein C-Header&#10;oder ein Text-Raster."></textarea>
 
     <p id="import-preview" class="msg msg--ok" hidden></p>
     <p id="import-error" class="msg msg--error" hidden></p>

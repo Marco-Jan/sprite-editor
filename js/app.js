@@ -1250,7 +1250,9 @@ function initImport() {
     const r = parseTsSprite(ta.value);
     if (!r.ok) { setError(r.error); return null; }
 
-    const parts = [`${r.stats.w}×${r.stats.h} Pixel`];
+    const parts = [];
+    if (r.stats.format && r.stats.format !== 'Array') parts.push(r.stats.format);
+    parts.push(`${r.stats.w}×${r.stats.h} Pixel`);
     if (r.stats.paletteCount) parts.push(`Palette mit ${r.stats.paletteCount} Farben`);
     else parts.push('keine Palette gefunden');
     if (r.stats.restored) parts.push(`${r.stats.restored} freie Farb-Pixel wiederhergestellt`);

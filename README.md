@@ -98,8 +98,24 @@ Flächen spart das den Löwenanteil der Dateigröße.
 
 ### Import
 
-`Import…` liest sowohl eingefügten Text als auch eine Datei (`.ts`, `.js`, `.json`, `.txt`).
-Erkannt werden:
+**Alles, was der Editor schreibt, liest er auch wieder ein.** Das Format wird am Inhalt
+erkannt, nicht an der Dateiendung — Einfügen aus der Zwischenablage geht also genauso wie
+eine Datei.
+
+| Format | Kommt zurück |
+|---|---|
+| TypeScript, JavaScript, JSON, Python, C-Header | verlustfrei, auch die Farb-Nummern |
+| SVG, CSS, Text-Raster | Bild identisch, Farben neu durchnummeriert |
+
+Die drei letzten kennen keine Palette-Indizes — dort werden die Farben in der Reihenfolge
+ihres Auftretens neu vergeben. Das Bild ist danach dasselbe, nur die Nummern können sich
+verschoben haben.
+
+Die Parser sind nachsichtig und lesen auch von Hand geschriebene Dateien: SVG ohne
+`viewBox`, dreistellige Hex-Farben, `box-shadow` ohne Unschärfe-Wert oder mit negativen
+Versätzen, C-Header ohne Palettenblock, Text-Raster ohne Legende.
+
+Aus dem `number[][]`-Zweig (TS/JS/JSON/Python) werden erkannt:
 
 - das `number[][]`-Grid (auch mit abschließenden Kommas, ungleich langen Zeilen, Hex-Strings)
 - ein Palettenblock in beliebiger Schreibweise (`'#abc'`, `"#AABBCC"`, mit oder ohne `Record<…>`)
