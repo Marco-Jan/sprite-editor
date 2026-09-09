@@ -1,0 +1,366 @@
+// ════════════════════════════════════════════════════════════════════
+// I18N-AT — österreichische Fassung (Spaß-Sprache)
+// ════════════════════════════════════════════════════════════════════
+// Eigene Datei, damit i18n.js nicht weiter anwächst.
+//
+// Hier stehen nur die Einträge, die wirklich anders klingen. Alles andere
+// fällt in i18n.js automatisch auf Deutsch zurück — genau richtig, denn
+// auch in Österreich schreibt man Hochdeutsch mit Dialekt-Einschlag und
+// nicht durchgehend Mundart.
+//
+// Vier Grenzen, damit es Spaß macht und benutzbar bleibt:
+//   1. Fachbegriffe bleiben: Sprite, Palette, Index, Export, PNG, Undo.
+//      Wer das Werkzeug bedienen will, muss die Wörter wiederfinden.
+//   2. Tastenkürzel bleiben unverändert — sie hängen an den deutschen
+//      Anfangsbuchstaben (S = Spray, F = Füllen, …).
+//   3. Palettennamen sind Datenwerte und werden nirgends übersetzt.
+//   4. Die `gen.*`-Schlüssel bleiben aus: das sind die Kommentare IM
+//      erzeugten Code. Dialekt in einer exportierten .ts-Datei will
+//      niemand im Projekt liegen haben.
+
+// ── Statisches DOM ──────────────────────────────────────────────────
+export const STATIC_AT = {
+  // ── Meta ──
+  'meta.title':   'Editor — Sprite Editor',
+  'meta.desc':    'Pixel-Art-Editor mit Foto-Vorlog — Sprites moin, Paletten baun, ois Code oder Buidl außageben. Rennt komplett im Browser.',
+  'meta.locale':  'de_AT',
+  'meta.ogTitle': 'Editor — Sprite Editor',
+  'meta.ogDesc':  'Pixel-Art-Editor mit Foto-Vorlog — moin, Paletten baun, ois Code oder Buidl außageben.',
+
+  // ── Kopfzeile ──
+  'tb.home':       'Zruck auf d’Startseitn',
+  'tb.saved':      'gsichert',
+  'tb.help':       'Hüfe',
+  'tb.helpTitle':  'Hüfe und Erklärungen',
+  'tb.dir':        'Speicherort',
+  'tb.dirTitle':   'An Ordner fürs Speichern aussuachn — wird gmerkt',
+  'tb.save':       'Projekt sichern',
+  'tb.saveTitle':  'Des Projekt ois JSON-Datei sichern',
+  'tb.open':       'Aufmochn',
+  'tb.openTitle':  'A Projekt aus ana JSON-Datei laden',
+  'tb.reset':      'Olles z’ruck',
+  'tb.resetTitle': 'Olles zrucksetzn',
+  'tb.langLabel':  'Sproch',
+
+  // ── Werkzeuge ──
+  'tool.groupPaint':   'Moiwerkzeig',
+  'tool.pencil':       'Stift',
+  'tool.pencilTitle':  'Stift — anzelne Pixel (P)',
+  'tool.brush':        'Pinsl',
+  'tool.brushTitle':   'Pinsl — a Flächn, Stärke = wia dicht (B)',
+  'tool.spray':        'Spray',
+  'tool.sprayTitle':   'Spray — zfällige Pixel (S)',
+  'tool.fill':         'Aufülln',
+  'tool.fillTitle':    'Aufülln — de ganze zammhängende Flächn (F)',
+  'tool.eraser':       'Radiergummi',
+  'tool.eraserTitle':  'Radiergummi (E)',
+  'tool.wand':         'Zauberstaberl',
+  'tool.wandTitle':    'Zauberstaberl — ähnliche Flächn weghaun (W)',
+
+  'tool.groupShapes':  'Formen',
+  'tool.line':         'Linie',
+  'tool.lineTitle':    'A Linie ziagn (I)',
+  'tool.rect':         'Viereck',
+  'tool.rectTitle':    'A Viereck ziagn (R)',
+  'tool.ellipse':      'Ellipse',
+  'tool.ellipseTitle': 'An Ellipse ziagn (O)',
+
+  'tool.groupSelect':   'Auswoi',
+  'tool.marquee':       'Auswoi',
+  'tool.marqueeTitle':  'Viereck-Auswoi — aufziagn, ausschneidn, umeschiabn (A)',
+  'tool.lasso':         'Lasso',
+  'tool.lassoTitle':    'Lasso — a Form freihändig umfoahn, beim Auslassn wird’s zuagmocht (L)',
+  'tool.colorSel':      'Farbwoi',
+  'tool.colorSelTitle': 'Farbwoi — zammhängende ähnliche Flächn nehma; d’Toleranz sogt, wia vü mitgeht (K)',
+
+  'tool.mirror':  'Symmetrie',
+  'tool.mirrorX': 'Senkrechte Achsn — wos links entsteht, entsteht a rechts',
+  'tool.mirrorY': 'Waagrechte Achsn — obn und untn gspiaglt',
+
+  'tool.size':           'Gressn',
+  'tool.strength':       'Stärke',
+  'tool.tolerance':      'Toleranz',
+  'tool.shapeFill':      'Ausgfüllt',
+  'tool.shapeFillTitle': 'Viereck und Ellipse ausgfüllt statt nur d’Umrandung',
+
+  'tool.selLabel':       'Auswoi',
+  'tool.selAll':         'Olles',
+  'tool.selAllTitle':    'Olles auswöhn (Strg+A)',
+  'tool.selCut':         'Ausschneidn',
+  'tool.selCutTitle':    'Ausschneidn (Strg+X)',
+  'tool.selCopy':        'Kopiern',
+  'tool.selCopyTitle':   'Kopiern (Strg+C)',
+  'tool.selPaste':       'Einehaun',
+  'tool.selPasteTitle':  'Einehaun (Strg+V)',
+  'tool.selFill':        'Aufülln',
+  'tool.selFillTitle':   'D’Auswoi mit da aktuelln Farb aufülln',
+  'tool.selDelete':      'Ausleern',
+  'tool.selDeleteTitle': 'D’Auswoi ausleern (Entf)',
+  'tool.selNone':        'Aufhebn',
+  'tool.selNoneTitle':   'D’Auswoi auslassn (Esc)',
+  'tool.quickPal':       'Schnöll-Farbwoi',
+
+  // ── Sprite-Panel ──
+  'sp.title':         'Sprites',
+  'sp.new':           '+ A neicher Sprite',
+  'sp.search':        'Sprite suachn…',
+  'sp.layer':         'Ebene',
+  'sp.refTitle':      'A zweiter Sprite ois halbdurchsichtige Vorlog — bearbeit wird weiter da aktive',
+  'sp.refToggle':     'Ebene herzagn oder wegtuan',
+  'sp.refOpacity':    'Wia durchsichtig d’Ebene is',
+  'sp.refFront':      'davor',
+  'sp.refFrontTitle': 'D’Ebene über’n aktivn Sprite legn',
+  'sp.refSwap':       'Tauschn',
+  'sp.refSwapTitle':  'D’Ebene und den aktivn Sprite tauschn',
+  'sp.refNote':       'Kopiern geht mit <b>Strg+C</b> do und <b>Strg+V</b> im andern Sprite.',
+
+  // ── Code & Export ──
+  'out.title':      'Code & Export',
+  'out.copy':       'Kopiern',
+  'out.import':     'Einelesn…',
+  'out.clear':      'Ausleern',
+  'out.clearTitle': 'Olle Pixel von dem Sprite weghaun',
+  'out.includePal': 'D’Palettn in den Code schreibn',
+  'out.scale':      'Gressn',
+  'out.legend':     'Farb-Legende ins Buidl',
+
+  // ── Bühne ──
+  'stage.undo':       'Zruck (Strg+Z)',
+  'stage.redo':       'Doch wieder (Strg+Y)',
+  'stage.bgGroup':    'Hintagrund vom Editor',
+  'stage.bgDark':     'Dunkl',
+  'stage.bgDarkTitle': 'Dunkla Hintagrund',
+  'stage.bgLight':    'Hö',
+  'stage.bgLightTitle': 'Höller Hintagrund',
+  'stage.full':       '⤢ Vollbüd',
+  'stage.fullTitle':  'Vollbüd (mit Esc wieder außa)',
+
+  // ── Farb-Panel ──
+  'pal.title':          'Farben',
+  'pal.builtin':        'eingebaut',
+  'pal.current':        'Aktuelle Farb',
+  'pal.currentTitle':   'Anklickn — freier Farbwöhler geht auf',
+  'pal.freePicker':     'A freie Farb aussuachn',
+  'pal.select':         'A Palettn aussuachn',
+  'pal.edit':           'Palettn bearbeitn',
+  'pal.del':            'Palettn weghaun',
+  'pal.search':         'Palettn suachn…',
+  'pal.add':            '+ Palettn',
+  'pal.addTitle':       'A neie eigene Palettn anlegn',
+  'pal.fork':           'Kopie bearbeitn',
+  'pal.fromImage':      'Buidl → Palettn',
+  'pal.fromImageTitle': 'Aus de Farben vom aktuelln Buidl a bearbeitbare Palettn mochn',
+
+  // ── Schablone ──
+  'tpl.title':    'Schablone',
+  'tpl.opacity':  'Deckkraft',
+  'tpl.size':     'Gressn',
+  'tpl.center':   'Zentriern',
+  'tpl.clear':    'Weghaun',
+  'tpl.trace':    'Auf d’Palettn',
+  'tpl.traceRaw': 'Rohfarben',
+  'tpl.reduce':   'Owe auf',
+  'tpl.colors':   'Farben',
+  'tpl.apply':    'Übernehma',
+
+  // ── Bild-Panel ──
+  'img.title':          'Buidl',
+  'img.note':           'Mit ana Auswoi wirkn Spiagln und Drahn nur auf sie, sonst auf’n ganzn Sprite.',
+  'img.flipH':          '↔ Spiagln',
+  'img.flipHTitle':     'Waagrecht spiagln',
+  'img.flipV':          '↕ Spiagln',
+  'img.flipVTitle':     'Senkrecht spiagln',
+  'img.rot90Title':     'Um 90° im Uhrzeigersinn drahn',
+  'img.rotFree':        'Frei drahn',
+  'img.rotFreeTitle':   'Jeder Winkl — mit ana Auswoi draht sich nur de',
+  'img.rotApply':       'Übernehma',
+  'img.rotApplyTitle':  'Den Winkl übernehma (Enter)',
+  'img.rotCancel':      'Weghaun',
+  'img.rotCancelTitle': 'Zruck auf 0° (Esc)',
+  'img.trim':           'Zuaschneidn',
+  'img.trimTitle':      'Den laarn Rand rundumadum wegschneidn',
+  'img.center':         'Zentriern',
+  'img.centerTitle':    'Den Inhalt in d’Mitte gebn',
+  'img.size':           'Gressn',
+  'img.width':          'Breitn in Pixeln',
+  'img.height':         'Höh in Pixeln',
+  'img.anchorTitle':    'Wo da oide Inhalt hinkummt',
+  'img.anchorCenter':   'mittig',
+  'img.anchorTopLeft':  'obn links',
+  'img.resize':         'Anwendn',
+  'img.scale':          'Skaliern',
+  'img.scaleUpTitle':   'Doppelt so groß (d’Pixel bleibn hart)',
+  'img.scaleDownTitle': 'Auf d’Hälfte owe — Details san dann weg',
+
+  // ── Aufräumen ──
+  'cln.title':        'Zammraman',
+  'cln.bg':           'Hintagrund',
+  'cln.bgRemove':     'Hintagrund weghaun',
+  'cln.despeckle':    'Glattmochn',
+  'cln.outline':      'Umrandung',
+  'cln.outlineColor': 'Farb vo da Umrandung',
+  'cln.outlineThick': 'Wia dick d’Kantn is',
+  'cln.outlineApply': 'Anwendn',
+
+  // ── Modale ──
+  'mod.newTitle':      'A neicher Sprite',
+  'mod.name':          'Nom',
+  'mod.namePh':        'z. B. hö, baam, symbol',
+  'mod.palette':       'Farbpalettn',
+  'mod.size':          'Gressn',
+  'mod.cancel':        'Lossmas',
+  'mod.create':        'Anlegn',
+  'mod.renameTitle':   'Sprite umbenenna',
+  'mod.renameSave':    'Sichern',
+  'mod.palTitle':      'Neie Palettn',
+  'mod.palColors':     'Farben',
+  'mod.impTitle':      'Sprite einelesn',
+  'mod.impFile':       'A Datei aussuachn',
+  'mod.impCurrent':    'In den aktivn Sprite',
+  'mod.impNew':        'Ois neicher Sprite',
+  'mod.confirmCancel': 'Lossmas',
+  'mod.confirmOk':     'Weghaun',
+};
+
+// ── Laufzeit-Texte ──────────────────────────────────────────────────
+export const MSG_AT = {
+  // Palette-Beschriftungen
+  'color.label.0': 'Durchsichtig',
+  'color.label.1': 'Ton 1 — da höllste',
+  'color.label.4': 'Ton 4 — da dunklaste',
+  'color.label.5': 'Umrandung / Kontur',
+  'color.short.0': 'Durchsichtig',
+  'color.short.5': 'Umrandung',
+
+  // Sprite-Liste
+  'list.rename':      'Umbenenna',
+  'list.duplicate':   'Verdoppln',
+  'list.delete':      'Weghaun',
+  'list.empty':       'No kane Sprites. Leg obn an an.',
+  'list.noMatch':     'Ka Sprite passt zu „{q}“.',
+  'list.noSprite':    'Ka Sprite',
+  'list.copySuffix':  ' Kopie',
+
+  // Sprites
+  'sprite.confirmDelete': 'Sprite „{name}“ wirklich weghaun?',
+  'sprite.created':       '„{name}“ is angelegt.',
+  'sprite.needName':      'Bitte an Nom eingebn.',
+  'sprite.emptyGrid':     '— Laares Grid —',
+  'sprite.confirmClear':  'Olle Pixel von dem Sprite weghaun?',
+  'sprite.clearOk':       'Ausleern',
+
+  // Auswahl
+  'sel.none':        'Ka Auswoi',
+  'sel.lassoPrefix': 'Form ziagn',
+  'sel.rect':        '{prefix}Auswoi {w}×{h} bei ({x}, {y})',
+  'sel.floating':    ' · schwebt',
+  'sel.all':         'Olles gwöhlt',
+  'sel.dropped':     'Auswoi aufghom',
+  'sel.copied':      '{n} Pixel in d’Zwischenablog kopiert',
+  'sel.copiedShort': '{n} Pixel kopiert',
+  'sel.cut':         'Ausgschnittn — {n} Pixel. Mit Strg+V wieder einehaun.',
+  'sel.cutShort':    'Ausgschnittn — {n} Pixel',
+  'sel.clipEmpty':   'D’Zwischenablog is laar — zerst kopiern oder ausschneidn.',
+  'sel.pasted':      'Einghaut — {n} Pixel. Zum Umeschiabn einezahn.',
+  'sel.erased':      'Auswoi ausgleert — {n} Pixel',
+  'sel.filled':      'Auswoi aufgfüllt — {n} Pixel',
+
+  // Statuszeile
+  'info.dragCopy':     'Kopie ziagn',
+  'info.move':         'Umeschiabn',
+  'info.moved':        'Umeghaut',
+  'info.marquee':      'Aufziagn',
+  'info.pickFree':     'Pipettn: freie Farb {hex}',
+  'info.pickIndex':    'Pipettn: Index {i} — {label}',
+  'info.lassoStart':   'Form umfoahn — beim Auslassn wird’s zuagmocht',
+  'info.colorSel':     'Farbwoi: {n} Pixel{extra}',
+  'info.colorSelNone': 'Farbwoi: nix troffn — Toleranz aufedrahn?',
+  'info.shapeStart':   '{shape} ziagn — Start ({x}, {y})',
+  'info.wandDeleted':  'Zauberstaberl: {n} Pixel weg',
+  'info.wandNone':     'Zauberstaberl: nix weg — Toleranz aufedrahn?',
+  'info.suffixPaint':  ' → moin',
+  'info.suffixErase':  ' → weghaun',
+  'info.drawn':        '{n} Pixel gmoit',
+  'info.drawnNone':    'Nix gmoit',
+  'info.mirrorOff':    'Symmetrie aus',
+  'info.tplOutside':   'Schablone: danebn druckt',
+  'info.tplTransp':    'Schablone: durchsichtiga Bereich',
+
+  // Paletten
+  'pal.origin.custom':  'eigene',
+  'pal.origin.builtin': 'eingebaut',
+  'pal.hint.custom':    'Swatch anklickn zum Ändern — s’Buidl färbt sich glei um.',
+  'pal.hint.builtin':   'Eingebaute Palettn san schreibgschützt. „Kopie bearbeitn“ mocht’s änderbar.',
+  'pal.swatchTitle':    'Farb ändern',
+  'pal.groupBuiltin':   'Eingebaut',
+  'pal.groupCustom':    'Eigene',
+  'pal.currentErase':   'Radiern (Index 0)',
+  'pal.currentFree':    'Freie Farb',
+  'pal.transparent':    'durchsichtig',
+  'pal.optCurrent':     '— aktuelle Palettn —',
+  'pal.optCustomSuffix': '{name} (eigene)',
+  'pal.colorAria':      'Farb {i}',
+  'pal.modalEdit':      'Palettn „{name}“ bearbeitn',
+  'pal.modalNew':       'Neie Palettn',
+  'pal.modalSave':      'Sichern',
+  'pal.modalCreate':    'Anlegn',
+  'pal.needName':       'Bitte an Nom eingebn.',
+  'pal.exists':         'Palettn „{name}“ gibt’s scho — drüberschreibn?',
+  'pal.overwrite':      'Drüberschreibn',
+  'pal.confirmDelete':  'Palettn „{name}“ wirklich weghaun?{extra}',
+  'pal.forked':         'Palettn „{name}“ angelegt — d’Farb-Swatches rechts san jetzt änderbar.',
+
+  // Ebene
+  'ref.none':      'kane',
+  'ref.noSecond':  'ka zweiter Sprite',
+  'ref.front':     'davor',
+  'ref.behind':    'dahinta',
+  'ref.on':        'Ebene: „{name}“ liegt {pos}',
+  'ref.posFront':  'drüber',
+  'ref.posBehind': 'drunta',
+  'ref.off':       'Ebene aus',
+  'ref.swapped':   'Tauscht — „{now}“ wird bearbeit, „{before}“ liegt ois Ebene.',
+
+  // Drehen und Verwandeln
+  'rot.discarded':  'Drahung weghaut',
+  'rot.applied':    'Drahung übernommen',
+  'rot.shapeDrop':  'Form weghaut',
+  'rot.preview':    '{scope} um {deg}° draht — {w}×{h}',
+  'rot.done':       '{scope} draht — übernommen',
+  'tf.flipH':       '{scope} waagrecht gspiaglt',
+  'tf.flipV':       '{scope} senkrecht gspiaglt',
+  'tf.rot90':       '{scope} um 90° draht',
+  'tf.trimmed':     'Zuagschnittn auf {w}×{h}.',
+  'tf.centered':    'Inhalt mittig gsetzt.',
+  'tf.resized':     'Gressn is jetzt {w}×{h}{lost}.',
+  'tf.confirmShrink': 'Kleiner mochn? Wos ned mehr eineposst, wird wegschnittn.',
+  'tf.shrinkOk':    'Ändern',
+  'tf.scaledUp':    'Auf {w}×{h} vagreßert.',
+  'tf.scaledDown':  'Auf {w}×{h} vakleinert.',
+  'tf.confirmHalve': 'Hoibiern? Jedes zweite Pixel foit weg.',
+  'tf.halveOk':     'Hoibiern',
+
+  // Schablone
+  'tpl.needSprite':  'Zerst amoi an Sprite anlegn.',
+  'tpl.needTpl':     'Zerst amoi a Schablone laden.',
+  'tpl.noColors':    'Kane Farben in da Schablone gfunden.',
+  'tpl.traced':      'Schablone übernommen — {n} Pixel ({mode}).',
+  'tpl.imageEmpty':  'S’Buidl is laar — zerst moin oder a Schablone übernehma.',
+
+  // Import
+  'imp.detected':     'Erkannt: ',
+  'imp.paletteNone':  'kane Palettn gfunden',
+  'imp.name':         'Nom „{name}“',
+  'imp.nothing':      'Nix einghaut.',
+  'imp.donePlain':    'Einelesn passt. (Kane Palettn im Text gfunden — d’Farben bleibn wia eigstöllt.)',
+
+  // Dateien
+  'file.resetOk':      'Z’rucksetzn',
+  'file.confirmReset': 'Olles z’ruck? Sprites und eigene Palettn san dann weg.',
+  'file.saved':        '„{name}“ gsichert.',
+  'file.savedIn':      '„{name}“ gsichert in „{dir}“.',
+  'file.badProject':   'Ungültige Datei — des is ka Sprite-Projekt.',
+  'file.readFailed':   'Datei hot ned glesn werdn kenna.',
+  'file.copied':       '✓ Kopiert',
+  'file.saveAs':       '.{ext} sichern',
+};

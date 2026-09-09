@@ -18,6 +18,7 @@
 // in der Reihenfolge ihres Auftretens neu durchnummeriert (siehe
 // gridFromColors) — inhaltlich gleich, die Nummern können sich verschieben.
 import { MAX_IDX } from './data.js';
+import { t } from './i18n.js';
 
 // ── Hex normalisieren: #abc → #aabbcc, Großbuchstaben → klein ──
 function normalizeHex(h) {
@@ -155,7 +156,7 @@ function emptyColors(w, h) {
 function parseSvg(text) {
   const vb = text.match(/viewBox\s*=\s*["']\s*0\s+0\s+([\d.]+)\s+([\d.]+)/i);
   const rects = [...text.matchAll(/<rect\b[^>]*>/gi)].map(m => m[0]);
-  if (!rects.length) return { ok: false, error: 'SVG erkannt, aber kein <rect> darin gefunden.' };
+  if (!rects.length) return { ok: false, error: t('imp.errSvgNoRect') };
 
   const attr = (tag, name) => {
     const m = tag.match(new RegExp(name + '\\s*=\\s*["\']([^"\']*)', 'i'));
@@ -176,11 +177,11 @@ function parseSvg(text) {
     maxX = Math.max(maxX, x + w);
     maxY = Math.max(maxY, y + h);
   }
-  if (!items.length) return { ok: false, error: 'SVG erkannt, aber kein <rect> mit Füllfarbe gefunden.' };
+  if (!items.length) return { ok: false, error: t('imp.errSvgNoFill') };
 
   const W = Math.max(1, vb ? Math.round(Number(vb[1])) : maxX);
   const H = Math.max(1, vb ? Math.round(Number(vb[2])) : maxY);
-  if (W > 512 || H > 512) return { ok: false, error: `SVG ist ${W}×${H} groß — das Raster wäre zu fein.` };
+  if (W > 512 || H > 512) return { ok: false, error: t('imp.errSvgBig', { w: W, h: H }) };
 
   const colors = emptyColors(W, H);
   for (const r of items) {
@@ -198,7 +199,7 @@ function parseSvg(text) {
 // darf fehlen, wie ihn viele von Hand geschriebene Sprites weglassen.
 function parseCss(text) {
   const block = text.match(/box-shadow\s*:([\s\S]*?);/i);
-  if (!block) return { ok: false, error: 'Kein box-shadow-Block gefunden.' };
+  if (!block) return { ok: false, error: t('imp.errCssNoBlock') };
 
   // Nach den beiden Versaetzen duerfen Unschaerfe und Spreizung folgen —
   // mit oder ohne Einheit. Unser eigener Export schreibt dort eine nackte 0.
@@ -215,10 +216,10 @@ function parseCss(text) {
     if (x > maxX) maxX = x;
     if (y > maxY) maxY = y;
   }
-  if (!pts.length) return { ok: false, error: 'box-shadow gefunden, aber keine Pixel darin gelesen.' };
+  if (!pts.length) return { ok: false, error: t('imp.errCssNoPixel') };
 
   const W = maxX - minX + 1, H = maxY - minY + 1;
-  if (W > 512 || H > 512) return { ok: false, error: `Das ergäbe ${W}×${H} Pixel — zu groß.` };
+  if (W > 512 || H > 512) return { ok: false, error: t('imp.errCssBig', { w: W, h: H }) };
 
   const colors = emptyColors(W, H);
   for (const p of pts) colors[p.y - minY][p.x - minX] = p.hex;
@@ -231,9 +232,9 @@ function parseCss(text) {
 function parseCHeader(text) {
   const wm = text.match(/#define\s+\w*_?WIDTH\s+(\d+)/i);
   const hm = text.match(/#define\s+\w*_?HEIGHT\s+(\d+)/i);
-  if (!wm || !hm) return { ok: false, error: 'C-Header ohne _WIDTH und _HEIGHT — Maße unbekannt.' };
+  if (!wm || !hm) return { ok: false, error: t('imp.errCNoSize') };
   const W = Number(wm[1]), H = Number(hm[1]);
-  if (!W || !H || W > 512 || H > 512) return { ok: false, error: `Maße ${W}×${H} sind nicht brauchbar.` };
+  if (!W || !H || W > 512 || H > 512) return { ok: false, error: t('imp.errCBadSize', { w: W, h: H }) };
 
   const palBlock = text.match(/_PALETTE\s*\[[^\]]*\]\s*=\s*\{([\s\S]*?)\}/i);
   const palette = {};
@@ -249,10 +250,10 @@ function parseCHeader(text) {
   }
 
   const dataBlock = text.match(/_DATA\s*\[[^\]]*\]\s*=\s*\{([\s\S]*?)\}/i);
-  if (!dataBlock) return { ok: false, error: 'C-Header ohne _DATA-Feld — keine Pixel gefunden.' };
+  if (!dataBlock) return { ok: false, error: t('imp.errCNoData') };
   const flat = [...dataBlock[1].matchAll(/\d+/g)].map(m => Number(m[0]));
   if (flat.length < W * H) {
-    return { ok: false, error: `_DATA hat ${flat.length} Werte, für ${W}×${H} braucht es ${W * H}.` };
+    return { ok: false, error: t('imp.errCShort', { have: flat.length, w: W, h: H, need: W * H }) };
   }
 
   const grid = [];
@@ -295,10 +296,10 @@ function parseTextRaster(text) {
     else flush();
   }
   flush();
-  if (!best) return { ok: false, error: 'Kein Zeichenraster gefunden (gleich lange Zeilen aus . und 1-9).' };
+  if (!best) return { ok: false, error: t('imp.errTxtNoGrid') };
 
   const H = best.length, W = best[0].length;
-  if (W > 512 || H > 512) return { ok: false, error: `Raster ist ${W}×${H} — zu groß.` };
+  if (W > 512 || H > 512) return { ok: false, error: t('imp.errTxtBig', { w: W, h: H }) };
 
   const grid = [];
   const palette = {};
@@ -343,7 +344,7 @@ const FORMAT_LABEL = {
 };
 
 export function parseTsSprite(text) {
-  if (!text || !text.trim()) return { ok: false, error: 'Nichts eingefügt.' };
+  if (!text || !text.trim()) return { ok: false, error: t('imp.nothing') };
 
   // Die vier bildhaften Formate haben ihren eigenen Weg; sie liefern Grid
   // und Palette bereits fertig und brauchen die Index-Wiederherstellung
@@ -378,7 +379,7 @@ export function parseTsSprite(text) {
 
   const grid = extractGrid(text);
   if (!grid) {
-    return { ok: false, error: 'Kein gültiges number[][]-Array gefunden. Erwartet wird [[0,1,…], …].' };
+    return { ok: false, error: t('imp.errNoArray') };
   }
 
   const all = extractPalette(text);

@@ -25,29 +25,11 @@ export function cellToColor(c, palette) {
 // Höchster belegbarer Palette-Index. 0 = transparent, 1..MAX_IDX = Farben.
 export const MAX_IDX = 9;
 
-// Semantische Bedeutung der Palette-Indizes (UI-Labels).
-// 1–4 sind die "Tonleiter" (hell → dunkel) eines Materials, 5 die Kontur,
-// 6–9 freie Akzente. Das ist eine Konvention, keine technische Vorgabe —
-// jeder Index kann jede Farbe tragen.
-export const COLOR_LABELS = {
-  0: 'Transparent',
-  1: 'Ton 1 — hellster',
-  2: 'Ton 2',
-  3: 'Ton 3',
-  4: 'Ton 4 — dunkelster',
-  5: 'Outline / Kontur',
-  6: 'Akzent A',
-  7: 'Highlight',
-  8: 'Akzent B',
-  9: 'Akzent C',
-};
-
-// Kurzform der Labels für enge Stellen (Quick-Palette-Tooltip).
-export const COLOR_LABELS_SHORT = {
-  0: 'Transparent',
-  1: 'Ton 1', 2: 'Ton 2', 3: 'Ton 3', 4: 'Ton 4',
-  5: 'Outline', 6: 'Akzent A', 7: 'Highlight', 8: 'Akzent B', 9: 'Akzent C',
-};
+// Die Beschriftungen der Palette-Indizes sind Oberflächentext und stehen
+// deshalb zweisprachig in i18n.js — colorLabel(i) und colorLabelShort(i).
+// Gemeint ist: 1–4 die "Tonleiter" (hell → dunkel) eines Materials, 5 die
+// Kontur, 6–9 freie Akzente. Das ist eine Konvention, keine technische
+// Vorgabe — jeder Index kann jede Farbe tragen.
 
 // Trennstrich in der Palette-Anzeige nach diesem Index (Töne | Details).
 export const PALETTE_GROUP_SPLIT = 4;

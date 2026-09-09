@@ -8,6 +8,7 @@ import { DEFAULT_PALETTE, completePalette } from './data.js';
 import { saveBlob } from './filesystem.js';
 import { showInfoToast } from './toast.js';
 import { migrateV1 } from './migrate.js';
+import { t } from './i18n.js';
 
 const STORAGE_KEY = 'wb_sprite_tester_v1'; // Key bleibt — Migration passiert im Payload
 const SCHEMA_VERSION = 2;
@@ -87,7 +88,7 @@ function writeNow() {
     flashSaved();
   } catch (e) {
     console.warn('Sprite-Editor: Speichern fehlgeschlagen', e);
-    showInfoToast('Speichern fehlgeschlagen — localStorage voll? (Limit ~5 MB)');
+    showInfoToast(t('file.saveFailed'));
   }
 }
 
@@ -205,8 +206,9 @@ export async function saveToFile() {
   const result = await saveBlob(blob, filename);
   flashSaved();
   showInfoToast(result.fallback
-    ? `„${filename}“ wurde heruntergeladen (Standard-Download-Ordner). Tipp: Mit „Speicherort“ einen festen Ordner wählen.`
-    : `„${filename}“ gespeichert${result.dir ? ` in „${result.dir}“` : ''}.`);
+    ? t('file.downloadedTip', { name: filename })
+    : (result.dir ? t('file.savedIn', { name: filename, dir: result.dir })
+                  : t('file.saved', { name: filename })));
 }
 
 // JSON-Projektdatei einlesen. Wird validiert und (nach Migration beim nächsten
@@ -223,9 +225,9 @@ export function loadFromFile(file, onError) {
       localStorage.setItem(STORAGE_KEY, e.target.result);
       location.reload();
     } catch {
-      if (onError) onError('Ungültige Datei — das ist kein Sprite-Projekt.');
+      if (onError) onError(t('file.badProject'));
     }
   };
-  reader.onerror = () => { if (onError) onError('Datei konnte nicht gelesen werden.'); };
+  reader.onerror = () => { if (onError) onError(t('file.readFailed')); };
   reader.readAsText(file);
 }

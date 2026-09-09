@@ -12,6 +12,7 @@
 // alte Projekt-JSONs auch später noch geladen werden können.
 
 import { DEFAULT_PALETTE, completePalette } from './data.js';
+import { t, tn } from './i18n.js';
 
 // Die alten Built-in-Sprites werden NICHT übernommen — es sei denn, sie wurden
 // bearbeitet. Erkennung über eine Prüfsumme der Original-Grids: stimmt sie
@@ -110,10 +111,10 @@ export function migrateV1(old) {
   }
 
   if (rescued) {
-    notes.push(`${rescued} bearbeitete${rescued === 1 ? 'r' : ''} Alt-Sprite${rescued === 1 ? '' : 's'} übernommen`);
+    notes.push(tn('mig.rescued', rescued));
   }
   const palCount = Object.keys(customPalettes).length;
-  if (palCount) notes.push(`${palCount} eigene Palette${palCount === 1 ? '' : 'n'} übernommen`);
+  if (palCount) notes.push(tn('mig.palettes', palCount));
 
   // ── 4. Aktiven Sprite bestimmen ──
   const oldType = old.ui?.curType || '';
@@ -141,8 +142,6 @@ export function migrateV1(old) {
         panels: null, // Panel-Keys haben sich geändert → Defaults nehmen
       },
     },
-    note: notes.length
-      ? `Projekt auf das neue, motiv-freie Palettensystem umgestellt — ${notes.join(', ')}. Unveränderte Hund/Katze-Vorlagen wurden entfernt.`
-      : null,
+    note: notes.length ? t('mig.note', { notes: notes.join(', ') }) : null,
   };
 }

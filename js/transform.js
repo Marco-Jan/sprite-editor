@@ -18,6 +18,7 @@ import { renderAll, renderEditor } from './render.js';
 import { saveState } from './storage.js';
 import { recordOp, beginStroke, commitStroke } from './history.js';
 import { ensureFloating, commitFloat } from './selection.js';
+import { t } from './i18n.js';
 
 // ────────────────────────────────────────────────────────────────────
 // Kleine Helfer
@@ -259,8 +260,8 @@ export function trimToContent() {
   if (!sp) return null;
   commitFloat(); // was noch in der Luft hängt, gehört ins Bild
   const b = contentBounds(sp.grid);
-  if (!b) return { ok: false, reason: 'leer' };
-  if (b.w === sp.grid[0].length && b.h === sp.grid.length) return { ok: false, reason: 'nichts abzuschneiden' };
+  if (!b) return { ok: false, reason: 'empty' };
+  if (b.w === sp.grid[0].length && b.h === sp.grid.length) return { ok: false, reason: 'nothing' };
 
   recordOp(() => {
     sp.grid = Array.from({ length: b.h }, (_, y) =>
@@ -279,12 +280,12 @@ export function centerContent() {
   if (!sp) return null;
   commitFloat(); // was noch in der Luft hängt, gehört ins Bild
   const b = contentBounds(sp.grid);
-  if (!b) return { ok: false, reason: 'leer' };
+  if (!b) return { ok: false, reason: 'empty' };
 
   const H = sp.grid.length, W = sp.grid[0].length;
   const dx = Math.round((W - b.w) / 2) - b.x;
   const dy = Math.round((H - b.h) / 2) - b.y;
-  if (!dx && !dy) return { ok: false, reason: 'schon mittig' };
+  if (!dx && !dy) return { ok: false, reason: 'centered' };
 
   recordOp(() => {
     const out = emptyRows(W, H);
@@ -313,7 +314,7 @@ export function resizeCanvas(newW, newH, anchor = 'center') {
   const W = sp.grid[0].length, H = sp.grid.length;
   newW = Math.max(1, Math.min(256, Math.round(newW) || W));
   newH = Math.max(1, Math.min(256, Math.round(newH) || H));
-  if (newW === W && newH === H) return { ok: false, reason: 'unverändert' };
+  if (newW === W && newH === H) return { ok: false, reason: 'unchanged' };
 
   const dx = anchor === 'center' ? Math.round((newW - W) / 2) : 0;
   const dy = anchor === 'center' ? Math.round((newH - H) / 2) : 0;
@@ -344,8 +345,8 @@ export function scaleSprite(factor) {
   commitFloat();
   const W = sp.grid[0].length, H = sp.grid.length;
   const newW = Math.round(W * factor), newH = Math.round(H * factor);
-  if (newW < 1 || newH < 1) return { ok: false, reason: 'zu klein' };
-  if (newW > 256 || newH > 256) return { ok: false, reason: 'über 256 Pixel' };
+  if (newW < 1 || newH < 1) return { ok: false, reason: 'tooSmall' };
+  if (newW > 256 || newH > 256) return { ok: false, reason: 'tooBig' };
 
   recordOp(() => {
     sp.grid = Array.from({ length: newH }, (_, y) =>
@@ -358,6 +359,12 @@ export function scaleSprite(factor) {
 }
 
 // Für die Statuszeile: worauf würde eine Aktion gerade wirken?
+// Die internen Marker bleiben 'Auswahl'/'Sprite' — nur die Anzeige übersetzt.
 export function scopeLabel() {
-  return hasSelection() ? 'Auswahl' : 'Sprite';
+  return scopeLabelFor(hasSelection() ? 'Auswahl' : 'Sprite');
+}
+
+// Interner Marker → angezeigte Beschriftung.
+export function scopeLabelFor(scope) {
+  return t(scope === 'Auswahl' ? 'scope.selection' : 'scope.sprite');
 }

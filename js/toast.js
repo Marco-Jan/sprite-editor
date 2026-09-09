@@ -13,6 +13,8 @@
 // Die Tastatur wird in der Capture-Phase abgefangen und dort gestoppt:
 // solange eine Rückfrage offen ist, dürfen die Werkzeug-Kürzel aus app.js
 // nicht mitfeuern.
+import { t } from './i18n.js';
+
 let _cleanup = null;
 
 // Wie lange ein Hinweis stehen bleibt. Längere Texte brauchen länger —
@@ -104,8 +106,8 @@ function _show(msg, okLabel, isConfirm, onConfirm) {
 }
 
 // Bestätigung mit Abbrechen — onConfirm läuft nur bei Zustimmung.
-export function showConfirmToast(msg, onConfirm, okLabel = 'Löschen') {
-  _show(msg, okLabel, true, onConfirm);
+export function showConfirmToast(msg, onConfirm, okLabel = null) {
+  _show(msg, okLabel || t('list.delete'), true, onConfirm);
 }
 
 // Reine Meldung — verschwindet von selbst.

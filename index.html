@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Sprite Editor — Pixel-Art im Browser</title>
-  <meta name="description" content="Pixel-Art-Editor für den Browser: zeichnen, Paletten bauen, Fotos als Vorlage abpausen und in acht Code-Formaten exportieren. Kein Build, keine Anmeldung, alles bleibt lokal.">
+  <title data-i18n="meta.title">Sprite Editor — Pixel-Art im Browser</title>
+  <meta name="description" data-i18n-attr="content:meta.desc" content="Pixel-Art-Editor für den Browser: zeichnen, Paletten bauen, Fotos als Vorlage abpausen und in acht Code-Formaten exportieren. Kein Build, keine Anmeldung, alles bleibt lokal.">
   <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#121214">
 
@@ -20,20 +20,44 @@
 
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Sprite Editor">
-  <meta property="og:locale" content="de_DE">
+  <meta property="og:locale" data-i18n-attr="content:meta.locale" content="de_DE">
   <meta property="og:url" content="https://marco-jan.github.io/sprite-editor/">
-  <meta property="og:title" content="Sprite Editor — Pixel-Art im Browser">
-  <meta property="og:description" content="Vom leeren Raster zum fertigen Sprite. Zeichnen, Paletten bauen, exportieren — alles im Browser, nichts wird hochgeladen.">
+  <meta property="og:title" data-i18n-attr="content:meta.ogTitle" content="Sprite Editor — Pixel-Art im Browser">
+  <meta property="og:description" data-i18n-attr="content:meta.ogDesc" content="Vom leeren Raster zum fertigen Sprite. Zeichnen, Paletten bauen, exportieren — alles im Browser, nichts wird hochgeladen.">
   <meta property="og:image" content="https://marco-jan.github.io/sprite-editor/assets/og-image.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="Sprite Editor — Pixel-Treppe in Grün und Blau neben dem Schriftzug.">
+  <meta property="og:image:alt" data-i18n-attr="content:meta.ogAlt" content="Sprite Editor — Pixel-Treppe in Grün und Blau neben dem Schriftzug.">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Sprite Editor — Pixel-Art im Browser">
-  <meta name="twitter:description" content="Zeichnen, Paletten bauen, exportieren — alles im Browser, nichts wird hochgeladen.">
+  <meta name="twitter:title" data-i18n-attr="content:meta.ogTitle" content="Sprite Editor — Pixel-Art im Browser">
+  <meta name="twitter:description" data-i18n-attr="content:meta.twDesc" content="Zeichnen, Paletten bauen, exportieren — alles im Browser, nichts wird hochgeladen.">
   <meta name="twitter:image" content="https://marco-jan.github.io/sprite-editor/assets/og-image.png">
 
   <link rel="stylesheet" href="landing.css">
+
+  <!-- Sprache früh setzen, damit die Seite nicht erst deutsch aufblitzt und
+       dann umspringt. Ohne JS passiert hier nichts: die Seite bleibt deutsch
+       und vollständig lesbar. -->
+  <style>html[data-i18n-pending] body { visibility: hidden; }</style>
+  <script>
+  (function () {
+    try {
+      var k = 'sprite_editor_lang', v = null;
+      try { v = localStorage.getItem(k); } catch (e) {}
+      if (v !== 'de' && v !== 'en') {
+        v = (navigator.language || 'de').toLowerCase().indexOf('de') === 0 ? 'de' : 'en';
+      }
+      var h = document.documentElement;
+      h.lang = v;
+      h.setAttribute('data-lang', v);
+      if (v !== 'de') {
+        h.setAttribute('data-i18n-pending', '');
+        // Notbremse: lieber deutsch zeigen als eine leere Seite.
+        setTimeout(function () { h.removeAttribute('data-i18n-pending'); }, 1500);
+      }
+    } catch (e) {}
+  })();
+  </script>
 
   <!-- Strukturierte Daten: sagt Suchmaschinen, dass hier eine kostenlose
        Web-Anwendung steht, und nicht bloss ein Artikel darueber. -->
@@ -72,7 +96,7 @@
 </head>
 <body>
 
-<a class="skip" href="#inhalt">Zum Inhalt springen</a>
+<a class="skip" href="#inhalt" data-i18n="nav.skip">Zum Inhalt springen</a>
 
 <!-- ══ Kopfzeile — der Knopf ist ab der ersten Sekunde erreichbar ══ -->
 <header class="topbar">
@@ -81,14 +105,14 @@
       <img class="brand-mark" src="assets/icon.svg" alt="" width="22" height="22">
       <span class="brand-name">Sprite&nbsp;Editor</span>
     </span>
-    <nav class="topnav" aria-label="Stationen">
-      <a href="#pixel">Pixel</a>
-      <a href="#farbe">Farbe</a>
-      <a href="#werkzeug">Werkzeug</a>
-      <a href="#szene">Szene</a>
-      <a href="#export">Export</a>
+    <nav class="topnav" data-i18n-attr="aria-label:nav.aria" aria-label="Stationen">
+      <a href="#pixel" data-i18n="nav.pixel">Pixel</a>
+      <a href="#farbe" data-i18n="nav.color">Farbe</a>
+      <a href="#werkzeug" data-i18n="nav.tools">Werkzeug</a>
+      <a href="#szene" data-i18n="nav.scene">Szene</a>
+      <a href="#export" data-i18n="nav.export">Export</a>
     </nav>
-    <a class="btn btn--primary btn--sm" href="editor.html">Editor öffnen</a>
+    <a class="btn btn--primary btn--sm" href="editor.html" data-i18n="nav.open">Editor öffnen</a>
   </div>
 </header>
 
@@ -103,26 +127,36 @@
       <div class="scene-sky"></div>
       <div class="layer layer--clouds"></div>
       <div class="layer layer--skyline"></div>
+      <!-- Der Streifen Wiese gibt dem Hund unten rechts Boden unter die
+           Pfoten. Liegt ueber der Skyline, aber unter dem Lese-Schleier. -->
+      <div class="scene-ground"></div>
       <div class="scene-scrim"></div>
       <div class="bird bird--hero">
         <img src="assets/landing/bird-a.png" alt="" width="17" height="7">
         <img src="assets/landing/bird-b.png" alt="" width="17" height="7">
       </div>
+
+      <!-- Unten auf der Wiese, mittig auf der rechten Drittel-Linie (66,7 %).
+           .actor-face zentriert sich per translateX(-50%), --x ist also
+           die Mitte des Hundes, nicht seine linke Kante. -->
+      <div class="actor actor--hero" style="--x:66.7%; --base:14px; --bob-dur:3.4s">
+        <span class="actor-face"><img class="actor-body" src="assets/landing/dog-cream.png" alt="" width="53" height="55"></span>
+      </div>
     </div>
 
     <div class="stage-inner hero-grid">
       <div class="hero-text">
-        <p class="eyebrow">Sprite&nbsp;Editor · Pixel-Art im Browser</p>
-        <h1>Fang klein an.</h1>
-        <p class="lead">
+        <p class="eyebrow" data-i18n="hero.eyebrow">Sprite&nbsp;Editor · Pixel-Art im Browser</p>
+        <h1 data-i18n="hero.h1">Fang klein an.</h1>
+        <p class="lead" data-i18n="hero.lead">
           Ein leeres Raster, eine Handvoll Farben, und du malst los. Der Editor läuft
           komplett im Browser — kein Build, kein Konto, keine Cloud.
         </p>
         <div class="cta-row">
-          <a class="btn btn--primary btn--lg" href="editor.html">Editor öffnen</a>
-          <a class="btn btn--ghost" href="#pixel">Erst mal zuschauen</a>
+          <a class="btn btn--primary btn--lg" href="editor.html" data-i18n="nav.open">Editor öffnen</a>
+          <a class="btn btn--ghost" href="#pixel" data-i18n="hero.watch">Erst mal zuschauen</a>
         </div>
-        <p class="note">
+        <p class="note" data-i18n-html="hero.note">
           Deine Pixel bleiben im <code>localStorage</code> auf deinem Rechner.
           Nichts wird hochgeladen.
         </p>
@@ -135,9 +169,9 @@
        01 — Der erste Pixel
        ═══════════════════════════════════════════════════════════ -->
   <section class="band" id="pixel" aria-labelledby="h-pixel">
-    <p class="eyebrow"><span class="st-num">01</span> Der erste Pixel</p>
-    <h2 id="h-pixel" class="h2--mono">So entsteht ein Sprite.</h2>
-    <p class="section-lead">
+    <p class="eyebrow" data-i18n-html="s1.eyebrow"><span class="st-num">01</span> Der erste Pixel</p>
+    <h2 id="h-pixel" class="h2--mono" data-i18n="s1.h2">So entsteht ein Sprite.</h2>
+    <p class="section-lead" data-i18n="s1.lead">
       Erst die Kontur, dann das Fell, dann die Augen. Ein Sprite entsteht Feld für
       Feld — und daneben wächst der Code mit, den du am Ende mitnimmst.
     </p>
@@ -146,7 +180,7 @@
 
       <figure class="demo-cell">
         <div class="paint-canvas">
-        <svg class="paint-art" viewBox="0 0 18 17" role="img"
+        <svg class="paint-art" viewBox="0 0 18 17" role="img" data-i18n-attr="aria-label:s1.artAlt"
              aria-label="Ein Pixel-Hundegesicht, das Feld für Feld entsteht: erst die Kontur, dann Fell, Augen und Schnauze.">
           <rect style="--i:0" x="0" y="4" width="1" height="1" fill="#2b1a12"/>
           <rect style="--i:1" x="1" y="3" width="1" height="1" fill="#2b1a12"/>
@@ -415,7 +449,7 @@
         </svg>
           <span class="brush" aria-hidden="true"></span>
         </div>
-        <figcaption>Pixel für Pixel, wie im Editor</figcaption>
+        <figcaption data-i18n="s1.caption">Pixel für Pixel, wie im Editor</figcaption>
       </figure>
 
       <div class="demo-code">
@@ -431,7 +465,7 @@
   <span class="n1">1</span>: <span class="s">'#6ed49a'</span>, <span class="n2">2</span>: <span class="s">'#6ec9b3'</span>, <span class="n3">3</span>: <span class="s">'#6ebecc'</span>,
   <span class="n4">4</span>: <span class="s">'#6eb3e5'</span>, <span class="n5">5</span>: <span class="s">'#6ea8fe'</span>,
 };</code></pre>
-        <p class="demo-cap">
+        <p class="demo-cap" data-i18n-html="s1.demoCap">
           So verlässt der fertige Sprite den Editor.
           <span class="fc-dim">Beispiel, auf fünf Zeilen gekürzt.</span>
         </p>
@@ -443,12 +477,12 @@
        02 — Farbe
        ═══════════════════════════════════════════════════════════ -->
   <section class="band band--warm" id="farbe" aria-labelledby="h-farbe">
-    <p class="eyebrow"><span class="st-num">02</span> Farbe</p>
-    <h2 id="h-farbe">Und dann kippst du die Palette um.</h2>
+    <p class="eyebrow" data-i18n-html="s2.eyebrow"><span class="st-num">02</span> Farbe</p>
+    <h2 id="h-farbe" data-i18n="s2.h2">Und dann kippst du die Palette um.</h2>
 
     <div class="swap">
       <div class="swap-demo">
-        <svg class="sprite recolor" viewBox="0 0 8 8" role="img"
+        <svg class="sprite recolor" viewBox="0 0 8 8" role="img" data-i18n-attr="aria-label:s2.artAlt"
              aria-label="Dieselbe Treppe, die fortlaufend zwischen drei Farbpaletten wechselt: kühles Blaugrün, warme Brauntöne, Waldgrün.">
           <rect class="c1" x="5" y="1" width="1" height="1"/>
           <rect class="c1" x="6" y="1" width="1" height="1"/>
@@ -462,7 +496,7 @@
           <rect class="c5" x="2" y="5" width="1" height="1"/>
         </svg>
 
-        <ol class="swatches" aria-label="Die Paletten-Indizes 0 bis 5; Index 0 ist transparent.">
+        <ol class="swatches" data-i18n-attr="aria-label:s2.swatchAria" aria-label="Die Paletten-Indizes 0 bis 5; Index 0 ist transparent.">
           <li class="swatch swatch--transparent"><span class="chip"></span><span class="idx">0</span></li>
           <li class="swatch"><span class="chip c1"></span><span class="idx">1</span></li>
           <li class="swatch"><span class="chip c2"></span><span class="idx">2</span></li>
@@ -473,11 +507,11 @@
       </div>
 
       <div class="swap-text">
-        <p class="section-lead">
+        <p class="section-lead" data-i18n="s2.lead">
           Das Raster speichert nur die Zahlen. Änderst du eine Farbe, färben sich alle
           Pixel mit diesem Index sofort mit um — ohne dass du ein Pixel anfasst.
         </p>
-        <ul class="facts">
+        <ul class="facts" data-i18n-html="s2.facts">
           <li><span class="fact-key">Index 0</span> ist immer transparent, <span class="fact-key">1–9</span> belegst du frei.</li>
           <li><span class="fact-key">Neun Schemata</span> sind eingebaut, eigene legst du daneben an.</li>
           <li><span class="fact-key">Jeder Sprite</span> merkt sich seine eigene Palette.</li>
@@ -490,14 +524,14 @@
        03 — Werkzeug
        ═══════════════════════════════════════════════════════════ -->
   <section class="band" id="werkzeug" aria-labelledby="h-werkzeug">
-    <p class="eyebrow"><span class="st-num">03</span> Werkzeug</p>
-    <h2 id="h-werkzeug">Alles, was die Hand braucht.</h2>
-    <p class="section-lead">
+    <p class="eyebrow" data-i18n-html="s3.eyebrow"><span class="st-num">03</span> Werkzeug</p>
+    <h2 id="h-werkzeug" data-i18n="s3.h2">Alles, was die Hand braucht.</h2>
+    <p class="section-lead" data-i18n="s3.lead">
       Undo greift pro Strich, Auto-Save läuft nebenher, und für jedes Werkzeug gibt es
       eine Taste. Die Maus muss die Leiste nicht suchen.
     </p>
 
-    <ul class="tools">
+    <ul class="tools" data-i18n-html="s3.tools">
       <li class="tool">
         <h3>Malen</h3>
         <p class="keys-row"><kbd>P</kbd><kbd>B</kbd><kbd>S</kbd><kbd>F</kbd><kbd>E</kbd><kbd>W</kbd></p>
@@ -536,9 +570,9 @@
        ═══════════════════════════════════════════════════════════ -->
   <section id="szene" aria-labelledby="h-szene">
     <div class="band band--flush">
-      <p class="eyebrow"><span class="st-num">04</span> Szene</p>
-      <h2 id="h-szene">Ein Sprite kommt selten allein.</h2>
-      <p class="section-lead">
+      <p class="eyebrow" data-i18n-html="s4.eyebrow"><span class="st-num">04</span> Szene</p>
+      <h2 id="h-szene" data-i18n="s4.h2">Ein Sprite kommt selten allein.</h2>
+      <p class="section-lead" data-i18n="s4.lead">
         Irgendwann sind es viele: eine Figur, ihr Hund, ein Vogel, ein Busch. Der Editor
         hält sie alle nebeneinander und hilft, sie zusammenzubringen.
       </p>
@@ -572,7 +606,7 @@
     </div>
 
     <div class="band band--flush">
-      <ul class="tools tools--three">
+      <ul class="tools tools--three" data-i18n-html="s4.cards">
         <li class="tool">
           <h3>Foto als Vorlage</h3>
           <p>
@@ -605,25 +639,25 @@
        05 — Export
        ═══════════════════════════════════════════════════════════ -->
   <section class="band" id="export" aria-labelledby="h-export">
-    <p class="eyebrow"><span class="st-num">05</span> Export</p>
-    <h2 id="h-export">Und dann darf es gehen.</h2>
-    <p class="section-lead">
+    <p class="eyebrow" data-i18n-html="s5.eyebrow"><span class="st-num">05</span> Export</p>
+    <h2 id="h-export" data-i18n="s5.h2">Und dann darf es gehen.</h2>
+    <p class="section-lead" data-i18n-html="s5.lead">
       Speichern kannst du als <b>Bild</b> — oder als fertigen Code für dein Projekt.
       Beides mit einem Klick, die Farben sind immer mit dabei.
     </p>
 
-    <ul class="formats formats--image">
+    <ul class="formats formats--image" data-i18n-html="s5.imageFormats">
       <li class="fmt"><span class="fmt-ext">.png</span><h3>Bild</h3><p>Mit transparentem Hintergrund, 1× bis 32× vergrößert</p></li>
       <li class="fmt"><span class="fmt-ext">.pdf</span><h3>PDF</h3><p>Zum Drucken oder Weitergeben</p></li>
       <li class="fmt"><span class="fmt-ext">.png</span><h3>Spritesheet</h3><p>Alle Sprites in einem Bild, mit Liste wo welcher sitzt</p></li>
     </ul>
 
-    <p class="section-lead section-lead--sub">
+    <p class="section-lead section-lead--sub" data-i18n="s5.subLead">
       Für Entwickler kommt der Sprite auch als Code heraus — acht Formate, jedes
       für sich allein benutzbar.
     </p>
 
-    <ul class="formats">
+    <ul class="formats" data-i18n-html="s5.codeFormats">
       <li class="fmt"><span class="fmt-ext">.ts</span><h3>TypeScript</h3><p>Zahlenraster plus Farbliste, fertig getypt</p></li>
       <li class="fmt"><span class="fmt-ext">.js</span><h3>JavaScript</h3><p>Dasselbe ohne Typen, direkt importierbar</p></li>
       <li class="fmt"><span class="fmt-ext">.json</span><h3>JSON</h3><p>Liest jede Sprache und jede Engine</p></li>
@@ -636,13 +670,13 @@
 
     <div class="export-extras">
       <div class="extra">
-        <h3>Und wieder zurück</h3>
+        <h3 data-i18n="s5.backH3">Und wieder zurück</h3>
         <p class="chips">
           <span class="chip-tag chip-tag--in">TypeScript</span>
           <span class="chip-tag chip-tag--in">JavaScript</span>
           <span class="chip-tag chip-tag--in">JSON</span>
         </p>
-        <p class="tool-meta">
+        <p class="tool-meta" data-i18n="s5.backNote">
           Diese drei kannst du auch wieder einlesen — nichts geht dabei verloren.
         </p>
       </div>
@@ -657,21 +691,17 @@
       <div class="scene-sky"></div>
       <div class="layer layer--clouds"></div>
       <div class="layer layer--skyline"></div>
-      <div class="scene-ground"></div>
       <div class="scene-scrim"></div>
-      <div class="actor" style="--x:86%; --h:110px; --base:14px; --bob-dur:3.1s">
-        <span class="actor-face"><img class="actor-body" src="assets/landing/dog-cream.png" alt="" width="53" height="55"></span>
-      </div>
     </div>
 
     <div class="stage-inner closer-inner">
-      <h2 id="h-closer">Das Raster ist noch leer.</h2>
-      <p class="lead">
+      <h2 id="h-closer" data-i18n="end.h2">Das Raster ist noch leer.</h2>
+      <p class="lead" data-i18n="end.lead">
         Kein Konto, kein Server, keine Kosten. Der Editor öffnet sich und wartet auf
         deinen ersten Pixel.
       </p>
-      <a class="btn btn--primary btn--lg" href="editor.html">Editor öffnen</a>
-      <p class="note">Einmal geladen, läuft die Seite auch offline weiter.</p>
+      <a class="btn btn--primary btn--lg" href="editor.html" data-i18n="nav.open">Editor öffnen</a>
+      <p class="note" data-i18n="end.note">Einmal geladen, läuft die Seite auch offline weiter.</p>
     </div>
   </section>
 
@@ -684,18 +714,18 @@
       <img src="assets/icon.svg" alt="" width="18" height="18">
       <span>Sprite&nbsp;Editor</span>
     </p>
-    <p class="foot-note">
-      ES-Module brauchen HTTP: <code>file://</code> funktioniert nicht. Lokal etwa mit
-      <code>python -m http.server</code> starten und über <code>localhost</code> aufrufen.
+    <p class="foot-note" data-i18n-html="foot.note">
       Die Pixel-Art in der Kulisse stammt aus dem eigenen Stream-Overlay.
     </p>
     <p class="foot-meta">
-      <a href="editor.html">Editor öffnen</a>
+      <a href="editor.html" data-i18n="nav.open">Editor öffnen</a>
       <span aria-hidden="true">·</span>
-      <span>MIT-Lizenz</span>
+      <span data-i18n="foot.license">MIT-Lizenz</span>
     </p>
   </div>
 </footer>
+
+<script src="js/landing-i18n.js"></script>
 
 </body>
 </html>

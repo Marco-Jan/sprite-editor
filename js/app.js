@@ -6,7 +6,10 @@ import {
   getGrid, getSprite, getPal, getMaxIdx, getPaletteName, listSprites,
   createSprite, uniquePaletteName, clearSelection, isInSelection,
 } from './state.js';
-import { COLOR_LABELS_SHORT, DEFAULT_PALETTE } from './data.js';
+import { DEFAULT_PALETTE } from './data.js';
+import {
+  t, tn, colorLabelShort, applyStatic, initLangSwitch, onLangChange,
+} from './i18n.js';
 import { showConfirmToast, showInfoToast } from './toast.js';
 import {
   renderAll, renderEditor, renderSpriteList, syncColorActive, updateOutput,
@@ -48,7 +51,7 @@ import {
   copySelection, cutSelection, pasteClipboard, deleteSelection, hasClipboard,
 } from './selection.js';
 import {
-  flip, rotate90, trimToContent, centerContent, resizeCanvas, scaleSprite, scopeLabel,
+  flip, rotate90, trimToContent, centerContent, resizeCanvas, scaleSprite, scopeLabel, scopeLabelFor,
   beginFreeRotate, previewFreeRotate, applyFreeRotate, cancelFreeRotate, isRotating,
 } from './transform.js';
 
@@ -72,13 +75,13 @@ renderCallbacks.onImageToPalette   = imageToPalette;
 
 renderCallbacks.onDeleteSprite = id => {
   const name = sprites[id]?.name || id;
-  showConfirmToast(`Sprite „${name}“ wirklich löschen?`, () => deleteSprite(id));
+  showConfirmToast(t('sprite.confirmDelete', { name }), () => deleteSprite(id));
 };
 
 renderCallbacks.onDeletePalette = name => {
   const used = Object.values(sprites).filter(s => s.palette === name).length;
-  const extra = used ? ` ${used} Sprite${used === 1 ? '' : 's'} nutzen sie gerade.` : '';
-  showConfirmToast(`Palette „${name}“ wirklich löschen?${extra}`, () => deleteCustomPalette(name));
+  const extra = used ? tn('pal.usedBy', used) : '';
+  showConfirmToast(t('pal.confirmDelete', { name, extra }), () => deleteCustomPalette(name));
 };
 
 // ────────────────────────────────────────────────────────────────────
@@ -116,13 +119,13 @@ const TRACE_ALPHA_MIN = 32; // darunter gilt ein Schablonen-Pixel als transparen
 // mode 'raw'      → freie Hex-Pixel (fotorealistisch)
 // mode 'quantize' → per Median-Cut auf n dominante Töne reduzieren
 function applyTemplateTrace(mode, n) {
-  if (!getSprite()) { showInfoToast('Erst einen Sprite anlegen.'); return; }
-  if (!tplLoaded() || !tplHasOffscreen()) { showInfoToast('Erst eine Schablone laden.'); return; }
+  if (!getSprite()) { showInfoToast(t('tpl.needSprite')); return; }
+  if (!tplLoaded() || !tplHasOffscreen()) { showInfoToast(t('tpl.needTpl')); return; }
 
   const grid = getGrid();
   const H = grid.length, W = grid[0].length;
   const sampled = sampleTemplateGrid(W, H);
-  if (!sampled) { showInfoToast('Schablone konnte nicht abgetastet werden.'); return; }
+  if (!sampled) { showInfoToast(t('tpl.sampleFail')); return; }
 
   const pal = getPal();
   const maxIdx = getMaxIdx();
@@ -135,7 +138,7 @@ function applyTemplateTrace(mode, n) {
       if (c && c.a >= TRACE_ALPHA_MIN) px.push(c);
     }
     qpal = medianCut(px, Math.max(2, Math.min(64, n || 8)));
-    if (!qpal.length) { showInfoToast('Keine Farben in der Schablone gefunden.'); return; }
+    if (!qpal.length) { showInfoToast(t('tpl.noColors')); return; }
   }
 
   let painted = 0;
@@ -154,10 +157,12 @@ function applyTemplateTrace(mode, n) {
   });
 
   renderAll();
-  const lbl = mode === 'palette' ? 'Palette' : mode === 'quantize' ? `${qpal.length} Farben` : 'Rohfarben';
+  const lbl = mode === 'palette' ? t('tpl.modePalette')
+            : mode === 'quantize' ? t('tpl.modeQuant', { n: qpal.length })
+            : t('tpl.modeRaw');
   showInfoToast(painted
-    ? `Schablone übernommen — ${painted} Pixel (${lbl}).`
-    : 'Keine Pixel geändert — Schablone über dem Grid positionieren?');
+    ? t('tpl.traced', { n: painted, mode: lbl })
+    : t('tpl.tracedNone'));
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -175,7 +180,7 @@ function nearestRgbIndex(rgb, list) {
 
 function imageToPalette() {
   const sp = getSprite();
-  if (!sp) { showInfoToast('Erst einen Sprite anlegen.'); return; }
+  if (!sp) { showInfoToast(t('tpl.needSprite')); return; }
 
   const grid = sp.grid;
   const pal  = getPal(); // aktuelle (alte) Palette zum Auflösen der Indizes
@@ -191,7 +196,7 @@ function imageToPalette() {
     px.push(hexToRgb(hex));
   }
   if (!px.length) {
-    showInfoToast('Das Bild ist leer — erst malen oder eine Schablone übernehmen.');
+    showInfoToast(t('tpl.imageEmpty'));
     return;
   }
 
@@ -217,7 +222,7 @@ function imageToPalette() {
   sp.palette = name;
   renderAll();
   saveState();
-  showInfoToast(`Palette „${name}“ erstellt — ${colors.length} Farben. Rechts direkt editierbar, das Bild färbt sich live um.`);
+  showInfoToast(t('pal.fromImage', { name, n: colors.length }));
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -302,8 +307,8 @@ function toggleMirror(axis) {
   renderEditor();
   saveState();
   info(state.mirror === 'off'
-    ? 'Symmetrie aus'
-    : `Symmetrie: ${state.mirror === 'both' ? 'beide Achsen' : state.mirror === 'x' ? 'senkrechte Achse' : 'waagerechte Achse'}`);
+    ? t('info.mirrorOff')
+    : t('info.mirrorOn', { axes: t(`axes.${state.mirror === 'both' ? 'both' : state.mirror}`) }));
 }
 
 // Auswahl-Buttons scharf schalten, je nachdem was gerade möglich ist.
@@ -362,7 +367,7 @@ function updateBrushCursor(e) {
 // Startpunkt der gerade gezogenen Form (null = keine Form im Gange).
 let shapeStart = null;
 
-const SHAPE_LABELS = { line: 'Linie', rect: 'Rechteck', ellipse: 'Ellipse' };
+const shapeLabel = tool => t(`shape.${tool}`);
 
 // Statuszeile unter dem Canvas.
 function info(msg) {
@@ -382,9 +387,9 @@ function initCanvasEvents() {
       e.preventDefault();
       if (e.shiftKey && tplLoaded() && tplHasOffscreen()) {
         const r = doTemplatePipette(e);
-        if (r.status === 'outside')          info('Schablone: außerhalb des Bildes geklickt');
-        else if (r.status === 'transparent') info('Schablone: transparenter Bereich');
-        else                                 info(`Schablonen-Pipette: ${r.hex}`);
+        if (r.status === 'outside')          info(t('info.tplOutside'));
+        else if (r.status === 'transparent') info(t('info.tplTransp'));
+        else                                 info(t('info.tplPipette', { hex: r.hex }));
       } else {
         commitFloat(); // sonst radiert man in ein Loch, unter dem noch etwas hängt
         state.isErasing = true;
@@ -405,7 +410,7 @@ function initCanvasEvents() {
       const c = cellFromEventClamped(e);
       if (isInSelection(c.x, c.y)) {
         startMove(e, e.altKey);
-        info(selectionInfo(e.altKey ? 'Kopie ziehen' : 'Verschieben'));
+        info(selectionInfo(t(e.altKey ? 'info.dragCopy' : 'info.move')));
         return;
       }
     }
@@ -418,8 +423,8 @@ function initCanvasEvents() {
         syncColorActive();
         const v = state.curColor;
         info(typeof v === 'string'
-          ? `Pipette: freie Farbe ${v}`
-          : `Pipette: Index ${v} — ${COLOR_LABELS_SHORT[v] || ''}`);
+          ? t('info.pickFree', { hex: v })
+          : t('info.pickIndex', { i: v, label: colorLabelShort(v) }));
       }
       return;
     }
@@ -427,19 +432,19 @@ function initCanvasEvents() {
     // ── Auswahl aufziehen / lassoen / nach Farbe wählen ──
     if (state.tool === 'select') {
       startMarquee(e);
-      info(selectionInfo('Aufziehen'));
+      info(selectionInfo(t('info.marquee')));
       return;
     }
     if (state.tool === 'lasso') {
       startLasso(e);
-      info('Form umfahren — Loslassen schließt sie');
+      info(t('info.lassoStart'));
       return;
     }
     if (state.tool === 'magic') {
       const n = selectByColor(e);
       updateSelectionUI();
-      info(n ? `Farbauswahl: ${n} Pixel${selection.rect ? ' · ' + selectionInfo() : ''}`
-             : 'Farbauswahl: nichts getroffen — Toleranz erhöhen?');
+      info(n ? t('info.colorSel', { n, extra: selection.rect ? ' · ' + selectionInfo() : '' })
+             : t('info.colorSelNone'));
       return;
     }
 
@@ -450,7 +455,7 @@ function initCanvasEvents() {
       state.shape.color = state.curColor;
       state.shape.cells = shapeCells(state.tool, c, c);
       renderEditor();
-      info(`${SHAPE_LABELS[state.tool]} ziehen — Start (${c.x}, ${c.y})`);
+      info(t('info.shapeStart', { shape: shapeLabel(state.tool), x: c.x, y: c.y }));
       return;
     }
 
@@ -466,7 +471,7 @@ function initCanvasEvents() {
         let removed = 0;
         recordOp(() => { removed = magicWandDelete(getGrid(), getPal(), c.x, c.y, state.wandTolerance); });
         if (removed) renderAll();
-        info(removed ? `Zauberstab: ${removed} Pixel gelöscht` : 'Zauberstab: nichts gelöscht — Toleranz erhöhen?');
+        info(removed ? t('info.wandDeleted', { n: removed }) : t('info.wandNone'));
       }
       return;
     }
@@ -481,20 +486,20 @@ function initCanvasEvents() {
     if (tplDragging()) {
       updateTplDrag(e);
       const o = getTplOffset();
-      info(`Schablone verschieben: x=${o.x}px y=${o.y}px`);
+      info(t('info.tplMove', { x: o.x, y: o.y }));
       return;
     }
 
-    if (selection.mode === 'marquee') { updateMarquee(e); info(selectionInfo('Aufziehen')); return; }
+    if (selection.mode === 'marquee') { updateMarquee(e); info(selectionInfo(t('info.marquee'))); return; }
     if (selection.mode === 'lasso')   { updateLasso(e);   info(selectionInfo()); return; }
-    if (selection.mode === 'move')    { updateMove(e);    info(selectionInfo('Verschieben')); return; }
+    if (selection.mode === 'move')    { updateMove(e);    info(selectionInfo(t('info.move'))); return; }
 
     if (shapeStart) {
       const c = cellFromEventClamped(e);
       state.shape.cells = shapeCells(state.tool, shapeStart, c);
       renderEditor();
       const w = Math.abs(c.x - shapeStart.x) + 1, h = Math.abs(c.y - shapeStart.y) + 1;
-      info(`${SHAPE_LABELS[state.tool]} ${w}×${h} — ${state.shape.cells.length} Pixel`);
+      info(t('info.shapeDrag', { shape: shapeLabel(state.tool), w, h, n: state.shape.cells.length }));
       return;
     }
 
@@ -508,12 +513,12 @@ function initCanvasEvents() {
       $('editor-canvas-wrap').classList.toggle('is-move', isInSelection(c.x, c.y));
     }
     const cur = getGrid()[c.y][c.x];
-    const val = typeof cur === 'string' ? cur : `Index ${cur}`;
+    const val = typeof cur === 'string' ? cur : t('info.index', { i: cur });
     info(e.altKey
-      ? `Pipette — (${c.x}, ${c.y}) · ${val}`
-      : `(${c.x}, ${c.y}) · ${val}`
-        + (state.isDrawing ? ' → malen' : '')
-        + (state.isErasing ? ' → löschen' : ''));
+      ? t('info.pipetteAt', { x: c.x, y: c.y, val })
+      : t('info.at', { x: c.x, y: c.y, val })
+        + (state.isDrawing ? t('info.suffixPaint') : '')
+        + (state.isErasing ? t('info.suffixErase') : ''));
     if (state.isDrawing && !e.altKey) applyTool(c.x, c.y);
     if (state.isErasing) eraseAt(e);
   });
@@ -524,7 +529,7 @@ function initCanvasEvents() {
       shapeStart = null;
       let n = 0;
       recordOp(() => { n = commitShape(); });
-      info(n ? `${n} Pixel gezeichnet` : 'Nichts gezeichnet');
+      info(n ? t('info.drawn', { n }) : t('info.drawnNone'));
     }
     if (selection.mode) {
       endSelectionPointer();
@@ -583,15 +588,15 @@ function initKeyboardEvents() {
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
       if (closeTopModal()) return;
-      if (isRotating()) { stopRotating(false); info('Drehung verworfen'); return; }
+      if (isRotating()) { stopRotating(false); info(t('rot.discarded')); return; }
       if (shapeStart || state.shape.cells.length) {
         shapeStart = null;
         state.shape.cells = [];
         renderEditor();
-        info('Form verworfen');
+        info(t('rot.shapeDrop'));
         return;
       }
-      if (deselect()) { updateSelectionUI(); info('Auswahl aufgehoben'); return; }
+      if (deselect()) { updateSelectionUI(); info(t('sel.dropped')); return; }
       if (document.body.classList.contains('editor-fullscreen')) { exitFullscreen(); return; }
     }
     if (e.key === 'Alt') $('editor-canvas-wrap').classList.add('is-eyedrop');
@@ -605,7 +610,7 @@ function initKeyboardEvents() {
 
     if (e.key === 'Enter' && isRotating() && !isTypingTarget(e.target)) {
       stopRotating(true);
-      info('Drehung übernommen');
+      info(t('rot.applied'));
       return;
     }
 
@@ -617,21 +622,21 @@ function initKeyboardEvents() {
       if (k === 'a') {
         e.preventDefault();
         setTool('select'); selectAll(); updateSelectionUI();
-        info(selectionInfo('Alles gewählt'));
+        info(selectionInfo(t('sel.all')));
       } else if (k === 'c' && selection.rect) {
         e.preventDefault();
-        info(`${copySelection()} Pixel in die Zwischenablage kopiert`);
+        info(t('sel.copied', { n: copySelection() }));
         updateSelectionUI();
       } else if (k === 'x' && selection.rect) {
         e.preventDefault();
-        info(`Ausgeschnitten — ${cutSelection()} Pixel. Mit Strg+V wieder einfügen.`);
+        info(t('sel.cut', { n: cutSelection() }));
         updateSelectionUI();
       } else if (k === 'v') {
         e.preventDefault();
-        if (!hasClipboard()) info('Zwischenablage ist leer — erst kopieren oder ausschneiden.');
+        if (!hasClipboard()) info(t('sel.clipEmpty'));
         else {
           setTool('select');
-          info(`Eingefügt — ${pasteClipboard()} Pixel. Zum Verschieben hineinziehen.`);
+          info(t('sel.pasted', { n: pasteClipboard() }));
           updateSelectionUI();
         }
       }
@@ -644,12 +649,12 @@ function initKeyboardEvents() {
       if (step) {
         e.preventDefault();
         nudgeSelection(step[0], step[1]);
-        info(selectionInfo('Verschoben'));
+        info(selectionInfo(t('info.moved')));
         return;
       }
       if (e.key === 'Delete' || e.key === 'Backspace') {
         e.preventDefault();
-        info(`Auswahl geleert — ${deleteSelection()} Pixel`);
+        info(t('sel.erased', { n: deleteSelection() }));
         return;
       }
     }
@@ -671,14 +676,17 @@ function initKeyboardEvents() {
 // ────────────────────────────────────────────────────────────────────
 // Panels (auf-/zuklappen) — generisch über [data-panel]
 // ────────────────────────────────────────────────────────────────────
+const panelSyncs = [];
+
 function initPanels() {
   document.querySelectorAll('[data-panel] .panel-toggle').forEach(btn => {
     const panel = btn.closest('[data-panel]');
     const sync = () => {
       const collapsed = panel.classList.contains('collapsed');
       btn.setAttribute('aria-expanded', String(!collapsed));
-      btn.title = collapsed ? 'Aufklappen' : 'Zuklappen';
+      btn.title = t(collapsed ? 'panel.expand' : 'panel.collapse');
     };
+    panelSyncs.push(sync);
     btn.addEventListener('click', () => {
       panel.classList.toggle('collapsed');
       sync();
@@ -688,19 +696,27 @@ function initPanels() {
   });
 }
 
+function syncPanelTitles() { panelSyncs.forEach(fn => fn()); }
+
 // ────────────────────────────────────────────────────────────────────
 // Vollbild
 // ────────────────────────────────────────────────────────────────────
+function syncFullscreenBtn() {
+  const btn = $('fullscreen-btn');
+  if (!btn) return;
+  const on = document.body.classList.contains('editor-fullscreen');
+  btn.textContent = t(on ? 'full.exit' : 'full.enter');
+  btn.title       = t(on ? 'full.exitTitle' : 'full.enterTitle');
+}
+
 function enterFullscreen() {
   document.body.classList.add('editor-fullscreen');
-  $('fullscreen-btn').textContent = '⤡ Beenden';
-  $('fullscreen-btn').title = 'Vollbild verlassen (Esc)';
+  syncFullscreenBtn();
 }
 
 function exitFullscreen() {
   document.body.classList.remove('editor-fullscreen');
-  $('fullscreen-btn').textContent = '⤢ Vollbild';
-  $('fullscreen-btn').title = 'Vollbild (Esc zum Schließen)';
+  syncFullscreenBtn();
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -721,13 +737,13 @@ function initToolbar() {
   });
 
   const selAction = (id, fn) => $(id).addEventListener('click', () => { fn(); updateSelectionUI(); });
-  selAction('sel-all-btn',    () => { selectAll(); info(selectionInfo('Alles gewählt')); });
-  selAction('sel-cut-btn',    () => { info(`Ausgeschnitten — ${cutSelection()} Pixel`); });
-  selAction('sel-copy-btn',   () => { info(`${copySelection()} Pixel kopiert`); });
-  selAction('sel-paste-btn',  () => { info(`Eingefügt — ${pasteClipboard()} Pixel. Zum Verschieben hineinziehen.`); });
-  selAction('sel-delete-btn', () => { info(`Auswahl geleert — ${deleteSelection()} Pixel`); });
-  selAction('sel-fill-btn',   () => { info(`Auswahl gefüllt — ${fillSelection()} Pixel`); });
-  selAction('sel-none-btn',   () => { deselect(); info('Auswahl aufgehoben'); });
+  selAction('sel-all-btn',    () => { selectAll(); info(selectionInfo(t('sel.all'))); });
+  selAction('sel-cut-btn',    () => { info(t('sel.cutShort',    { n: cutSelection() })); });
+  selAction('sel-copy-btn',   () => { info(t('sel.copiedShort', { n: copySelection() })); });
+  selAction('sel-paste-btn',  () => { info(t('sel.pasted',      { n: pasteClipboard() })); });
+  selAction('sel-delete-btn', () => { info(t('sel.erased',      { n: deleteSelection() })); });
+  selAction('sel-fill-btn',   () => { info(t('sel.filled',      { n: fillSelection() })); });
+  selAction('sel-none-btn',   () => { deselect(); info(t('sel.dropped')); });
 
   document.querySelectorAll('.brush-sz').forEach(btn =>
     btn.addEventListener('click', () => {
@@ -828,13 +844,13 @@ function renderRefSelect() {
   sel.innerHTML = '';
   const none = document.createElement('option');
   none.value = '';
-  none.textContent = others.length ? 'keine' : 'kein zweiter Sprite';
+  none.textContent = t(others.length ? 'ref.none' : 'ref.noSecond');
   sel.appendChild(none);
 
   for (const sp of others) {
     const o = document.createElement('option');
     o.value = sp.id;
-    o.textContent = `${sp.name} (${sp.grid[0].length}×${sp.grid.length})`;
+    o.textContent = t('sprite.option', { name: sp.name, w: sp.grid[0].length, h: sp.grid.length });
     if (sp.id === state.refSprite) o.selected = true;
     sel.appendChild(o);
   }
@@ -847,7 +863,7 @@ function renderRefSelect() {
   $('ref-visible-btn').setAttribute('aria-pressed', String(state.refVisible));
   $('ref-front-btn').classList.toggle('is-active', state.refFront);
   $('ref-front-btn').setAttribute('aria-pressed', String(state.refFront));
-  $('ref-front-btn').textContent = state.refFront ? 'davor' : 'dahinter';
+  $('ref-front-btn').textContent = t(state.refFront ? 'ref.front' : 'ref.behind');
   $('ref-opacity').value = Math.round(state.refOpacity * 100);
 }
 
@@ -858,7 +874,9 @@ function initRefLayer() {
     renderEditor();
     saveState();
     const sp = state.refSprite ? sprites[state.refSprite] : null;
-    info(sp ? `Ebene: „${sp.name}“ liegt ${state.refFront ? 'darüber' : 'darunter'}` : 'Ebene aus');
+    info(sp
+      ? t('ref.on', { name: sp.name, pos: t(state.refFront ? 'ref.posFront' : 'ref.posBehind') })
+      : t('ref.off'));
   });
 
   $('ref-visible-btn').addEventListener('click', () => {
@@ -892,7 +910,7 @@ function initRefLayer() {
     state.refSprite = previous;
     selectSprite(other);
     renderRefSelect();
-    info(`Getauscht — „${sprites[other].name}“ wird bearbeitet, „${sprites[previous].name}“ liegt als Ebene`);
+    info(t('ref.swapped', { now: sprites[other].name, before: sprites[previous].name }));
   });
 }
 
@@ -931,8 +949,8 @@ function initRotateSlider() {
     const r = previewFreeRotate(deg);
     actions.hidden = false;
     if (r) {
-      info(`${r.scope} um ${deg}° gedreht — ${r.w}×${r.h}` +
-        (r.scope === 'Sprite' ? ' · Ecken außerhalb der Fläche fallen weg' : ' · Übernehmen oder Verwerfen'));
+      info(t('rot.preview', { scope: scopeLabelFor(r.scope), deg, w: r.w, h: r.h }) +
+        t(r.scope === 'Sprite' ? 'rot.lossHint' : 'rot.applyHint'));
     }
   };
 
@@ -949,12 +967,12 @@ function initRotateSlider() {
 
   $('rotate-apply-btn').addEventListener('click', () => {
     const scope = applyFreeRotate();
-    if (scope) info(`${scope} gedreht — übernommen`);
+    if (scope) info(t('rot.done', { scope: scopeLabelFor(scope) }));
     reset();
     updateSelectionUI();
   });
   $('rotate-cancel-btn').addEventListener('click', () => {
-    if (cancelFreeRotate()) info('Drehung verworfen');
+    if (cancelFreeRotate()) info(t('rot.discarded'));
     reset();
     updateSelectionUI();
   });
@@ -980,30 +998,31 @@ function initImagePanel() {
 
   $('flip-h-btn').addEventListener('click', () => {
     const scope = flip('h');
-    if (scope) info(`${scope} waagerecht gespiegelt`);
+    if (scope) info(t('tf.flipH', { scope: scopeLabelFor(scope) }));
     syncImagePanel();
   });
   $('flip-v-btn').addEventListener('click', () => {
     const scope = flip('v');
-    if (scope) info(`${scope} senkrecht gespiegelt`);
+    if (scope) info(t('tf.flipV', { scope: scopeLabelFor(scope) }));
     syncImagePanel();
   });
   $('rotate-btn').addEventListener('click', () => {
     const scope = rotate90();
-    if (scope) info(`${scope} um 90° gedreht`);
+    if (scope) info(t('tf.rot90', { scope: scopeLabelFor(scope) }));
     syncImagePanel();
   });
 
   $('trim-btn').addEventListener('click', () => {
     const r = trimToContent();
     if (!r) return;
-    showInfoToast(r.ok ? `Zugeschnitten auf ${r.w}×${r.h}.` : `Nicht zugeschnitten — ${r.reason}.`);
+    showInfoToast(r.ok ? t('tf.trimmed', { w: r.w, h: r.h })
+                       : t('tf.trimFail', { reason: t(`reason.${r.reason}`) }));
     syncImagePanel();
   });
   $('center-btn').addEventListener('click', () => {
     const r = centerContent();
     if (!r) return;
-    showInfoToast(r.ok ? 'Inhalt mittig gesetzt.' : `Nicht verschoben — ${r.reason}.`);
+    showInfoToast(r.ok ? t('tf.centered') : t('tf.centerFail', { reason: t(`reason.${r.reason}`) }));
   });
 
   $('resize-btn').addEventListener('click', () => {
@@ -1014,28 +1033,30 @@ function initImagePanel() {
       const r = resizeCanvas(w, h, anchor);
       if (!r) return;
       showInfoToast(r.ok
-        ? `Größe jetzt ${r.w}×${r.h}${r.lost ? ` — ${r.lost} Pixel abgeschnitten` : ''}.`
-        : `Größe unverändert — ${r.reason}.`);
+        ? t('tf.resized', { w: r.w, h: r.h, lost: r.lost ? t('tf.resizeLost', { n: r.lost }) : '' })
+        : t('tf.resizeFail', { reason: t(`reason.${r.reason}`) }));
       syncImagePanel();
     };
     // Verkleinern kann Pixel kosten — vorher fragen.
     const sp = getSprite();
     if (sp && (w < sp.grid[0].length || h < sp.grid.length)) {
-      showConfirmToast('Kleiner machen? Was nicht mehr hineinpasst, wird abgeschnitten.', apply, 'Ändern');
+      showConfirmToast(t('tf.confirmShrink'), apply, t('tf.shrinkOk'));
     } else apply();
   });
 
   $('scale-up-btn').addEventListener('click', () => {
     const r = scaleSprite(2);
-    if (r) showInfoToast(r.ok ? `Auf ${r.w}×${r.h} vergrößert.` : `Nicht skaliert — ${r.reason}.`);
+    if (r) showInfoToast(r.ok ? t('tf.scaledUp', { w: r.w, h: r.h })
+                              : t('tf.scaleFail', { reason: t(`reason.${r.reason}`) }));
     syncImagePanel();
   });
   $('scale-down-btn').addEventListener('click', () => {
-    showConfirmToast('Halbieren? Jedes zweite Pixel fällt weg.', () => {
+    showConfirmToast(t('tf.confirmHalve'), () => {
       const r = scaleSprite(0.5);
-      if (r) showInfoToast(r.ok ? `Auf ${r.w}×${r.h} verkleinert.` : `Nicht skaliert — ${r.reason}.`);
+      if (r) showInfoToast(r.ok ? t('tf.scaledDown', { w: r.w, h: r.h })
+                                : t('tf.scaleFail', { reason: t(`reason.${r.reason}`) }));
       syncImagePanel();
-    }, 'Halbieren');
+    }, t('tf.halveOk'));
   });
 }
 
@@ -1048,14 +1069,14 @@ function initCleanupPanel() {
     let n = 0;
     recordOp(() => { n = autoRemoveBackground(getGrid(), getPal(), tol); });
     if (n) renderAll();
-    showInfoToast(n ? `Hintergrund entfernt — ${n} Pixel.` : 'Nichts entfernt — Toleranz erhöhen?');
+    showInfoToast(n ? t('cln.bgRemoved', { n }) : t('cln.bgNone'));
   });
 
   $('despeckle-btn').addEventListener('click', () => {
     let n = 0;
     recordOp(() => { n = despeckleGrid(getGrid()); });
     if (n) renderAll();
-    showInfoToast(n ? `Geglättet — ${n} Pixel angepasst.` : 'Nichts zu glätten gefunden.');
+    showInfoToast(n ? t('cln.despeckled', { n }) : t('cln.despeckleNone'));
   });
 
   $('outline-btn').addEventListener('click', () => {
@@ -1064,7 +1085,7 @@ function initCleanupPanel() {
     let n = 0;
     recordOp(() => { n = outlineGrid(getGrid(), col, th); });
     if (n) renderAll();
-    showInfoToast(n ? `Outline gezeichnet — ${n} Pixel.` : 'Keine Outline nötig — Sprite leer?');
+    showInfoToast(n ? t('cln.outlined', { n }) : t('cln.outlineNone'));
   });
 }
 
@@ -1082,23 +1103,27 @@ function initTemplatePanel() {
 // ────────────────────────────────────────────────────────────────────
 // Kopfzeile: Projekt speichern/laden, Speicherort, Reset, Hilfe
 // ────────────────────────────────────────────────────────────────────
+// Wird von initTopbar gesetzt, sobald es den Knopf gibt.
+let syncSaveDirBtn = () => {};
+
 function initTopbar() {
   const saveDirBtn = $('save-dir-btn');
   if (!supportsFsAccess()) {
     saveDirBtn.hidden = true; // Browser ohne API → Download-Fallback
   } else {
+    let dirName = null;
     const refresh = name => {
-      saveDirBtn.title = name
-        ? `Speicherort: ${name} — klicken zum Ändern`
-        : 'Speicherort für PNG/PDF/Dateien wählen — wird gemerkt';
-      saveDirBtn.classList.toggle('is-set', !!name);
+      dirName = name || null;
+      saveDirBtn.title = dirName ? t('file.dirSet', { name: dirName }) : t('file.dirUnset');
+      saveDirBtn.classList.toggle('is-set', !!dirName);
     };
+    syncSaveDirBtn = () => refresh(dirName);
     getStoredDirName().then(refresh);
     saveDirBtn.addEventListener('click', async () => {
       const dir = await pickSaveDirectory();
       if (dir) {
         refresh(dir.name);
-        showInfoToast(`Speicherort gesetzt: „${dir.name}“. PNG, PDF und Dateien landen ab jetzt hier.`);
+        showInfoToast(t('file.dirPicked', { name: dir.name }));
       }
     });
   }
@@ -1114,8 +1139,7 @@ function initTopbar() {
   });
 
   $('clear-storage-btn').addEventListener('click', () => {
-    showConfirmToast('Alles zurücksetzen? Sprites und eigene Paletten gehen verloren.',
-      clearStorage, 'Zurücksetzen');
+    showConfirmToast(t('file.confirmReset'), clearStorage, t('file.resetOk'));
   });
 
   const help = $('help-modal-overlay');
@@ -1145,11 +1169,11 @@ function initOutputPanel() {
     } catch {
       // Clipboard-API kann blockiert sein (kein HTTPS o.ä.) — Auswahl als Fallback.
       ta.select();
-      showInfoToast('Zwischenablage nicht verfügbar — Text ist markiert, mit Strg+C kopieren.');
+      showInfoToast(t('file.clipboardOff'));
       return;
     }
     const label = btn.textContent;
-    btn.textContent = '✓ Kopiert';
+    btn.textContent = t('file.copied');
     btn.classList.add('is-ok');
     setTimeout(() => { btn.textContent = label; btn.classList.remove('is-ok'); }, 1600);
   });
@@ -1161,49 +1185,40 @@ function initOutputPanel() {
     const blob = new Blob([$('output-textarea').value], { type: `${fmt.mime};charset=utf-8` });
     const result = await saveBlob(blob, filename);
     showInfoToast(result.fallback
-      ? `„${filename}“ wurde heruntergeladen (Standard-Download-Ordner).`
-      : `„${filename}“ gespeichert${result.dir ? ` in „${result.dir}“` : ''}.`);
+      ? t('file.downloaded', { name: filename })
+      : (result.dir ? t('file.savedIn', { name: filename, dir: result.dir })
+                    : t('file.saved', { name: filename })));
   });
 
   $('clear-grid-btn').addEventListener('click', () => {
     if (!getSprite()) return;
     stopRotating(false);
     commitFloat();
-    showConfirmToast('Alle Pixel dieses Sprites löschen?', () => {
+    showConfirmToast(t('sprite.confirmClear'), () => {
       recordOp(clearCurrentGrid);
       renderAll();
       saveState();
-    }, 'Leeren');
+    }, t('sprite.clearOk'));
   });
 }
 
 // ────────────────────────────────────────────────────────────────────
 // Ausgabeformat des Code-Felds
 // ────────────────────────────────────────────────────────────────────
-const FORMAT_HINTS = {
-  ts:   'number[][] mit Typen — der Klassiker für TypeScript-Projekte.',
-  js:   'Dasselbe ohne Typen, als ES-Modul.',
-  json: 'Sprachneutral — für eigene Pipelines, Engines und Tools.',
-  svg:  'Fertige Vektorgrafik: skaliert verlustfrei, direkt einbindbar.',
-  css:  'Ein einziges Element, per box-shadow gepixelt — braucht kein Bild.',
-  c:    'Palette + Indizes als uint8-Array — für Mikrocontroller und LED-Matrizen.',
-  py:   'Dict + Liste — für Pygame, Pillow oder eigene Skripte.',
-  txt:  'Zeichenraster mit Legende — gut für Diffs, Doku und schnelles Draufschauen.',
-};
+// Ein Satz je Format — die Texte selbst stehen zweisprachig in i18n.js.
+function formatHint(key) { return t(`fmt.${key}`); }
 
 function syncFormatUI() {
   const fmt = getFormat(state.outputFormat);
-  $('save-code-btn').textContent = `.${fmt.ext} speichern`;
-  $('save-code-btn').title = `Als ${fmt.label}-Datei speichern`;
+  $('save-code-btn').textContent = t('file.saveAs', { ext: fmt.ext });
+  $('save-code-btn').title = t('file.saveAsTitle', { label: fmt.label });
 
   // Die Palette-Option gibt es nur, wo sie etwas ändert — bei SVG, CSS und
   // Text stecken die Farben ohnehin direkt im Ergebnis.
   $('include-palette-label').hidden = !fmt.palOption;
 
-  const hint = FORMAT_HINTS[state.outputFormat] || '';
-  $('output-format-hint').textContent = fmt.reimport
-    ? `${hint} Lässt sich wieder importieren.`
-    : hint;
+  const hint = formatHint(state.outputFormat);
+  $('output-format-hint').textContent = fmt.reimport ? t('fmt.reimport', { hint }) : hint;
 }
 
 function initFormatSelect() {
@@ -1252,14 +1267,14 @@ function initImport() {
 
     const parts = [];
     if (r.stats.format && r.stats.format !== 'Array') parts.push(r.stats.format);
-    parts.push(`${r.stats.w}×${r.stats.h} Pixel`);
-    if (r.stats.paletteCount) parts.push(`Palette mit ${r.stats.paletteCount} Farben`);
-    else parts.push('keine Palette gefunden');
-    if (r.stats.restored) parts.push(`${r.stats.restored} freie Farb-Pixel wiederhergestellt`);
-    if (r.name) parts.push(`Name „${r.name}“`);
-    okEl.textContent = 'Erkannt: ' + parts.join(' · ')
+    parts.push(t('imp.size', { w: r.stats.w, h: r.stats.h }));
+    if (r.stats.paletteCount) parts.push(t('imp.paletteWith', { n: r.stats.paletteCount }));
+    else parts.push(t('imp.paletteNone'));
+    if (r.stats.restored) parts.push(t('imp.restored', { n: r.stats.restored }));
+    if (r.name) parts.push(t('imp.name', { name: r.name }));
+    okEl.textContent = t('imp.detected') + parts.join(' · ')
       + (r.stats.unknown.length
-        ? ` — Achtung: Index ${r.stats.unknown.join(', ')} kommt im Grid vor, fehlt aber in der Palette.`
+        ? t('imp.unknown', { list: r.stats.unknown.join(', ') })
         : '');
     okEl.hidden = false;
 
@@ -1290,14 +1305,14 @@ function initImport() {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = ev => { ta.value = ev.target.result; preview(); };
-    reader.onerror = () => setError('Datei konnte nicht gelesen werden.');
+    reader.onerror = () => setError(t('file.readFailed'));
     reader.readAsText(file);
   });
 
   // Gemeinsamer Pfad für "in aktuellen Sprite" und "als neuen Sprite".
   const doImport = asNew => {
     const r = preview();
-    if (!r) { if (!ta.value.trim()) setError('Nichts eingefügt.'); return; }
+    if (!r) { if (!ta.value.trim()) setError(t('imp.nothing')); return; }
 
     // Palette anlegen (falls gewünscht und vorhanden).
     let palName = null;
@@ -1307,7 +1322,7 @@ function initImport() {
 
     if (asNew || !getSprite()) {
       const id = createSprite({
-        name: r.name || 'Import',
+        name: r.name || t('imp.fallbackName'),
         palette: palName || getSprite()?.palette || DEFAULT_PALETTE,
         grid: r.grid,
       });
@@ -1322,9 +1337,7 @@ function initImport() {
     close();
     renderAll();
     saveState();
-    showInfoToast(palName
-      ? `Import fertig — Palette „${palName}“ übernommen und zugewiesen.`
-      : 'Import fertig. (Keine Palette im Text gefunden — Farben bleiben wie eingestellt.)');
+    showInfoToast(palName ? t('imp.doneWithPal', { name: palName }) : t('imp.donePlain'));
   };
 
   $('import-modal-current').addEventListener('click', () => doImport(false));
@@ -1358,7 +1371,30 @@ function syncUiFromState() {
 // ────────────────────────────────────────────────────────────────────
 // INIT
 // ────────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────────
+// Sprachwechsel im laufenden Betrieb
+// ────────────────────────────────────────────────────────────────────
+// Das statische DOM hat i18n.js schon umgestellt; hier kommt alles nach,
+// was JavaScript selbst schreibt. Der Sprite-Zustand wird dabei nicht
+// angefasst — es wird nur neu beschriftet und neu gezeichnet.
+function relabelUi() {
+  syncPanelTitles();
+  syncFullscreenBtn();
+  syncFormatUI();
+  syncSaveDirBtn();
+  renderRefSelect();
+  syncImagePanel();
+  updateToolUI();
+  renderAll();
+  info(''); // die alte Statuszeile stünde sonst in der alten Sprache da
+}
+
 function init() {
+  // Zuerst übersetzen: der Body ist so lange versteckt (siehe editor.html).
+  applyStatic();
+  initLangSwitch();
+  onLangChange(relabelUi);
+
   const loaded = loadState();
 
   // Leeres Projekt (erster Start oder Migration hat nichts gerettet) →

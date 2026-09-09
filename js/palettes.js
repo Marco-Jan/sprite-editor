@@ -6,7 +6,8 @@ import {
   getSprite, getPaletteName, getPaletteByName, getAllPaletteOptions,
   paletteExists, isCustomPalette, uniquePaletteName,
 } from './state.js';
-import { BUILTIN_PALETTES, COLOR_LABELS, MAX_IDX, DEFAULT_PALETTE, NEW_PALETTE_DEFAULTS, completePalette } from './data.js';
+import { BUILTIN_PALETTES, MAX_IDX, DEFAULT_PALETTE, NEW_PALETTE_DEFAULTS, completePalette } from './data.js';
+import { t, tn, colorLabel } from './i18n.js';
 import { renderAll } from './render.js';
 import { saveState } from './storage.js';
 import { showConfirmToast, showInfoToast } from './toast.js';
@@ -34,7 +35,7 @@ export function forkCurrentPalette() {
   if (sp) sp.palette = name;
   renderAll();
   saveState();
-  showInfoToast(`Palette „${name}“ angelegt — die Farb-Swatches rechts sind jetzt änderbar.`);
+  showInfoToast(t('pal.forked', { name }));
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -52,7 +53,7 @@ export function deleteCustomPalette(name) {
   renderAll();
   saveState();
   if (affected) {
-    showInfoToast(`Palette gelöscht — ${affected} Sprite${affected === 1 ? '' : 's'} auf „${DEFAULT_PALETTE}“ gesetzt.`);
+    showInfoToast(tn('pal.deleted', affected, { fallback: DEFAULT_PALETTE }));
   }
 }
 
@@ -68,17 +69,17 @@ export function openPaletteModal(editName) {
 
   if (editName && customPalettes[editName]) {
     _editName = editName;
-    heading.textContent = `Palette „${editName}“ bearbeiten`;
+    heading.textContent = t('pal.modalEdit', { name: editName });
     nameInp.value = editName;
     srcRow.hidden = true;
-    createBtn.textContent = 'Speichern';
+    createBtn.textContent = t('pal.modalSave');
     buildPaletteColorRows(customPalettes[editName]);
   } else {
     _editName = null;
-    heading.textContent = 'Neue Palette';
+    heading.textContent = t('pal.modalNew');
     nameInp.value = uniquePaletteName('meine_palette');
     srcRow.hidden = false;
-    createBtn.textContent = 'Erstellen';
+    createBtn.textContent = t('pal.modalCreate');
     refreshPaletteSourceSelect();
     buildPaletteColorRows(getPaletteByName(getPaletteName()));
   }
@@ -91,11 +92,15 @@ export function openPaletteModal(editName) {
 // Dropdown "Basis-Palette" mit allen verfügbaren Paletten füllen.
 function refreshPaletteSourceSelect() {
   const src = document.getElementById('pal-source');
-  src.innerHTML = '<option value="">— aktuelle Palette —</option>';
+  src.innerHTML = '';
+  const none = document.createElement('option');
+  none.value = '';
+  none.textContent = t('pal.optCurrent');
+  src.appendChild(none);
   getAllPaletteOptions().forEach(o => {
     const opt = document.createElement('option');
     opt.value = o.name;
-    opt.textContent = o.isCustom ? `${o.name} (eigene)` : o.name;
+    opt.textContent = o.isCustom ? t('pal.optCustomSuffix', { name: o.name }) : o.name;
     src.appendChild(opt);
   });
 }
@@ -111,8 +116,8 @@ function buildPaletteColorRows(sourcePalette) {
     row.className = 'pal-color-row';
     row.innerHTML =
       `<span class="pal-idx">${i}</span>` +
-      `<input type="color" data-idx="${i}" value="${def}" aria-label="Farbe ${i}">` +
-      `<span class="pal-name">${COLOR_LABELS[i] || '—'}</span>` +
+      `<input type="color" data-idx="${i}" value="${def}" aria-label="${t('pal.colorAria', { i })}">` +
+      `<span class="pal-name">${colorLabel(i) || '—'}</span>` +
       `<span class="pal-hex">${def}</span>`;
     const input = row.querySelector('input');
     const hex = row.querySelector('.pal-hex');
@@ -134,11 +139,11 @@ export function initPaletteModal() {
 
   document.getElementById('pal-modal-create').addEventListener('click', () => {
     const raw = document.getElementById('pal-name').value.trim();
-    if (!raw) { showInfoToast('Bitte einen Namen eingeben.'); return; }
+    if (!raw) { showInfoToast(t('pal.needName')); return; }
     const name = raw.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
 
     if (BUILTIN_PALETTES[name]) {
-      showInfoToast(`„${name}“ ist eine eingebaute Palette — bitte einen anderen Namen wählen.`);
+      showInfoToast(t('pal.isBuiltin', { name }));
       return;
     }
 
@@ -165,8 +170,8 @@ export function initPaletteModal() {
 
     // Kollision mit einer anderen bestehenden eigenen Palette?
     if (customPalettes[name] && name !== _editName) {
-      showConfirmToast(`Palette „${name}“ existiert schon — überschreiben?`,
-        () => commit(name, _editName), 'Überschreiben');
+      showConfirmToast(t('pal.exists', { name }),
+        () => commit(name, _editName), t('pal.overwrite'));
       return;
     }
     commit(name, _editName);

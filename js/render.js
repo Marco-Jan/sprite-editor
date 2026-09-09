@@ -9,7 +9,8 @@ import {
   getGrid, getSprite, getPal, getPaletteName, getMaxIdx,
   getAllPaletteOptions, isCustomPalette, listSprites, getPaletteByName,
 } from './state.js';
-import { COLOR_LABELS, COLOR_LABELS_SHORT, PALETTE_GROUP_SPLIT, cellToColor } from './data.js';
+import { PALETTE_GROUP_SPLIT, cellToColor } from './data.js';
+import { t, colorLabel, colorLabelShort } from './i18n.js';
 import { buildCode, tsIdentifier } from './codegen.js';
 
 // Weiterreichen, damit bestehende Importe aus render.js gültig bleiben.
@@ -68,11 +69,11 @@ export function renderSpriteList() {
   if (searchEl) searchEl.hidden = all.length < 6 && !q;
 
   if (!all.length) {
-    list.innerHTML = '<p class="empty-note">Noch keine Sprites. Leg oben einen an.</p>';
+    list.innerHTML = `<p class="empty-note">${esc(t('list.empty'))}</p>`;
     return;
   }
   if (!shown.length) {
-    list.innerHTML = `<p class="empty-note">Kein Sprite passt zu „${esc(q)}“.</p>`;
+    list.innerHTML = `<p class="empty-note">${esc(t('list.noMatch', { q }))}</p>`;
     return;
   }
 
@@ -80,7 +81,7 @@ export function renderSpriteList() {
     const card = document.createElement('div');
     card.className = 'sprite-card' + (sp.id === state.curSprite ? ' is-active' : '');
     card.tabIndex = 0;
-    card.title = `${sp.name} — ${sp.grid[0].length}×${sp.grid.length}, Palette „${sp.palette}“`;
+    card.title = t('list.cardTitle', { name: sp.name, w: sp.grid[0].length, h: sp.grid.length, palette: sp.palette });
 
     const thumb = document.createElement('div');
     thumb.className = 'sprite-thumb';
@@ -94,9 +95,9 @@ export function renderSpriteList() {
 
     const acts = document.createElement('div');
     acts.className = 'sprite-acts';
-    acts.appendChild(iconBtn('✎', 'Umbenennen', e => { e.stopPropagation(); renderCallbacks.onRenameSprite(sp.id); }));
-    acts.appendChild(iconBtn('⧉', 'Duplizieren', e => { e.stopPropagation(); renderCallbacks.onDuplicateSprite(sp.id); }));
-    acts.appendChild(iconBtn('×', 'Löschen', e => { e.stopPropagation(); renderCallbacks.onDeleteSprite(sp.id); }, 'is-danger'));
+    acts.appendChild(iconBtn('✎', t('list.rename'), e => { e.stopPropagation(); renderCallbacks.onRenameSprite(sp.id); }));
+    acts.appendChild(iconBtn('⧉', t('list.duplicate'), e => { e.stopPropagation(); renderCallbacks.onDuplicateSprite(sp.id); }));
+    acts.appendChild(iconBtn('×', t('list.delete'), e => { e.stopPropagation(); renderCallbacks.onDeleteSprite(sp.id); }, 'is-danger'));
 
     card.append(thumb, meta, acts);
     card.addEventListener('click', () => renderCallbacks.onSelectSprite(sp.id));
@@ -302,7 +303,7 @@ export function updateStageTitle() {
   const sp = getSprite();
   const nameEl = document.getElementById('stage-title');
   const dimEl  = document.getElementById('stage-dims');
-  if (nameEl) nameEl.textContent = sp ? sp.name : 'Kein Sprite';
+  if (nameEl) nameEl.textContent = sp ? sp.name : t('list.noSprite');
   if (dimEl) {
     dimEl.textContent = sp ? `${sp.grid[0].length}×${sp.grid.length} · ${sp.palette}` : '';
   }
@@ -535,7 +536,7 @@ export function renderQuickPalette() {
     const el = document.createElement('button');
     el.type = 'button';
     el.className = 'qp-swatch' + (i === state.curColor ? ' is-active' : '') + (i === 0 ? ' is-transparent' : '');
-    el.title = `${i} — ${COLOR_LABELS_SHORT[i] || ''}${color && i !== 0 ? ' · ' + color : ''}  (Taste ${i})`;
+    el.title = t('pal.quickTitle', { i, label: colorLabelShort(i), extra: color && i !== 0 ? ' · ' + color : '' });
     if (i !== 0) el.style.background = color || 'var(--surface-3)';
 
     const idx = document.createElement('span');
@@ -566,8 +567,8 @@ export function updateCurrentColorIndicator() {
   if (state.curColor === 0) {
     sw.style.background = '';
     sw.classList.add('is-transparent');
-    hex.textContent = 'transparent';
-    if (lbl) lbl.textContent = 'Radieren (Index 0)';
+    hex.textContent = t('pal.transparent');
+    if (lbl) lbl.textContent = t('pal.currentErase');
     return;
   }
   sw.classList.remove('is-transparent');
@@ -575,12 +576,12 @@ export function updateCurrentColorIndicator() {
   if (typeof state.curColor === 'string' && state.curColor[0] === '#') {
     sw.style.background = state.curColor;
     hex.textContent = state.curColor;
-    if (lbl) lbl.textContent = 'Freie Farbe';
+    if (lbl) lbl.textContent = t('pal.currentFree');
   } else {
     const color = getPal()[state.curColor] || '#888888';
     sw.style.background = color;
     hex.textContent = color;
-    if (lbl) lbl.textContent = `Index ${state.curColor} — ${COLOR_LABELS_SHORT[state.curColor] || ''}`;
+    if (lbl) lbl.textContent = t('pal.currentIndex', { i: state.curColor, label: colorLabelShort(state.curColor) });
   }
 }
 
@@ -607,8 +608,8 @@ export function fillPaletteSelect(sel, selectedName, filter = '') {
   const opts = getAllPaletteOptions().filter(o => !q || o.name.toLowerCase().includes(q));
 
   const groups = [
-    { label: 'Eingebaut', items: opts.filter(o => !o.isCustom) },
-    { label: 'Eigene',    items: opts.filter(o => o.isCustom) },
+    { label: t('pal.groupBuiltin'), items: opts.filter(o => !o.isCustom) },
+    { label: t('pal.groupCustom'),  items: opts.filter(o => o.isCustom) },
   ];
   for (const g of groups) {
     if (!g.items.length) continue;
@@ -644,15 +645,13 @@ export function renderPalette() {
 
   const badge = document.getElementById('palette-origin');
   if (badge) {
-    badge.textContent = custom ? 'eigene' : 'eingebaut';
+    badge.textContent = custom ? t('pal.origin.custom') : t('pal.origin.builtin');
     badge.className = 'badge ' + (custom ? 'badge--custom' : 'badge--builtin');
   }
 
   const hint = document.getElementById('palette-hint');
   if (hint) {
-    hint.textContent = custom
-      ? 'Swatch anklicken zum Ändern — das Bild färbt sich live um.'
-      : 'Eingebaute Paletten sind schreibgeschützt. „Kopie bearbeiten“ macht sie änderbar.';
+    hint.textContent = custom ? t('pal.hint.custom') : t('pal.hint.builtin');
   }
   document.getElementById('palette-fork-btn')?.toggleAttribute('hidden', custom);
 
@@ -677,7 +676,7 @@ export function renderPalette() {
     text.className = 'color-text';
     text.innerHTML =
       `<span class="color-line"><span class="color-idx">${i}</span>` +
-      `<span class="color-name">${COLOR_LABELS[i] || ''}</span></span>` +
+      `<span class="color-name">${esc(colorLabel(i))}</span></span>` +
       (i !== 0 && color ? `<span class="color-hex">${color}</span>` : '');
 
     item.append(sw, text);
@@ -688,7 +687,7 @@ export function renderPalette() {
       picker.type = 'color';
       picker.className = 'hidden-color-input';
       picker.value = color || '#888888';
-      sw.title = 'Farbe ändern';
+      sw.title = t('pal.swatchTitle');
       sw.addEventListener('click', e => {
         e.stopPropagation();
         picker.value = getPal()[i] || '#888888';

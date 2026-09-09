@@ -28,6 +28,7 @@ import { renderEditor, renderSpriteList, updateOutput, cellFromEventClamped } fr
 import { saveState } from './storage.js';
 import { beginStroke, commitStroke, recordOp } from './history.js';
 import { magicWandRegion } from './spritefx.js';
+import { t } from './i18n.js';
 
 // Zwischenablage — modul-lokal, überlebt Sprite-Wechsel, aber keinen Reload.
 let clipboard = null; // { cells, mask } | null
@@ -511,11 +512,17 @@ export function pasteClipboard() {
 // Text für die Statuszeile.
 export function selectionInfo(prefix = '') {
   if (selection.mode === 'lasso') {
-    return `${prefix || 'Form ziehen'} — ${(selection.path || []).length} Stützpunkte, Loslassen schließt die Form`;
+    return t('sel.lasso', {
+      prefix: prefix || t('sel.lassoPrefix'),
+      n: (selection.path || []).length,
+    });
   }
   const r = selection.rect;
-  if (!r) return 'Keine Auswahl';
-  const head = `${prefix}${prefix ? ' — ' : ''}Auswahl ${r.w}×${r.h} bei (${r.x}, ${r.y})`;
-  const count = selection.mask ? ` · ${maskCount(r, selection.mask)} Pixel` : '';
-  return head + count + (selection.float ? ' · schwebt' : '');
+  if (!r) return t('sel.none');
+  const head = t('sel.rect', {
+    prefix: prefix ? `${prefix} — ` : '',
+    w: r.w, h: r.h, x: r.x, y: r.y,
+  });
+  const count = selection.mask ? t('sel.pixels', { n: maskCount(r, selection.mask) }) : '';
+  return head + count + (selection.float ? t('sel.floating') : '');
 }
