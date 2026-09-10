@@ -101,7 +101,10 @@ function rows(idxGrid, indent = '  ') {
 // TypeScript / JavaScript
 // ────────────────────────────────────────────────────────────────────
 function buildJsLike(d, withPalette, typed) {
-  const t = (x) => (typed ? x : '');
+  // Nur für TypeScript: die Typannotationen. Bewusst NICHT `t` genannt —
+  // das ist die Übersetzungsfunktion, sonst überdeckt der Helfer sie und
+  // der rohe Schlüssel `gen.palette` landet als Kommentar in der Datei.
+  const ty = (x) => (typed ? x : '');
   // Freie Farben ZWINGEN den Palettenblock — ohne ihn wären die Indizes wertlos.
   const wantPal = withPalette || d.hasRaw;
 
@@ -112,11 +115,11 @@ function buildJsLike(d, withPalette, typed) {
   }
   if (wantPal) {
     out += t('gen.palette', { name: d.sp.palette }) + '\n'
-         + `export const ${d.id}_PALETTE${t(': Record<number, string>')} = {\n`
+         + `export const ${d.id}_PALETTE${ty(': Record<number, string>')} = {\n`
          + d.entries.map(([i, hex]) => `  ${i}: '${hex}',`).join('\n')
          + '\n};\n\n';
   }
-  out += `export const ${d.id}${t(': number[][]')} = [\n${rows(d.idxGrid)},\n];`;
+  out += `export const ${d.id}${ty(': number[][]')} = [\n${rows(d.idxGrid)},\n];`;
   return out;
 }
 
