@@ -3,12 +3,13 @@
 // ════════════════════════════════════════════════════════════════════
 // Alles liegt unter EINEM Key. `version` im Payload erlaubt Migrationen,
 // ohne alte Saves zu zerschießen.
-import { state, sprites, customPalettes, selectFirstSprite, paletteExists } from './state.js';
+import { state, sprites, customPalettes, paletteMaterials, selectFirstSprite, paletteExists } from './state.js';
 import { DEFAULT_PALETTE, completePalette } from './data.js';
 import { saveBlob } from './filesystem.js';
 import { showInfoToast } from './toast.js';
 import { migrateV1 } from './migrate.js';
 import { t } from './i18n.js';
+import { MATERIALS } from './gamejson.js';
 
 const STORAGE_KEY = 'wb_sprite_tester_v1'; // Key bleibt — Migration passiert im Payload
 const SCHEMA_VERSION = 2;
@@ -54,6 +55,7 @@ function buildPayload() {
     version: SCHEMA_VERSION,
     sprites,
     customPalettes,
+    paletteMaterials,
     ui: {
       curSprite: state.curSprite,
       curColor:  state.curColor,
@@ -146,6 +148,17 @@ function applyPayload(payload) {
     if (payload.customPalettes && typeof payload.customPalettes === 'object') {
       for (const [name, pal] of Object.entries(payload.customPalettes)) {
         if (pal && typeof pal === 'object') customPalettes[name] = completePalette(pal);
+      }
+    }
+
+    // Materialien nur aus der festen Liste übernehmen — ein unbekannter Name
+    // fiele sonst erst beim Export auf.
+    if (payload.paletteMaterials && typeof payload.paletteMaterials === 'object') {
+      for (const [name, mats] of Object.entries(payload.paletteMaterials)) {
+        if (!mats || typeof mats !== 'object') continue;
+        const clean = {};
+        for (const [i, m] of Object.entries(mats)) if (MATERIALS.includes(m)) clean[i] = m;
+        if (Object.keys(clean).length) paletteMaterials[name] = clean;
       }
     }
 

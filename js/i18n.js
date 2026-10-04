@@ -476,6 +476,7 @@ const STATIC = {
       + '<div class="help-formats">'
       +   '<div><b>TypeScript</b> / <b>JavaScript</b> — <code>number[][]</code> plus palette, with or without types.</div>'
       +   '<div><b>JSON</b> — language-neutral, for your own pipelines, engines and tools.</div>'
+      +   '<div><b>JSON (game)</b> — a flat <code>data</code> array plus a palette with a material per color, versioned — for game engines (e.g. C#).</div>'
       +   '<div><b>SVG</b> — a ready vector graphic, scales losslessly; runs of the same color side by side are merged into one rectangle.</div>'
       +   '<div><b>CSS</b> — the sprite as a <code>box-shadow</code> on a single element, with no image file at all.</div>'
       +   '<div><b>C header</b> — <code>uint8</code> indices plus a <code>uint32</code> palette for microcontrollers and LED matrices.</div>'
@@ -756,6 +757,7 @@ const MSG = {
     'fmt.ts':   'number[][] mit Typen — der Klassiker für TypeScript-Projekte.',
     'fmt.js':   'Dasselbe ohne Typen, als ES-Modul.',
     'fmt.json': 'Sprachneutral — für eigene Pipelines, Engines und Tools.',
+    'fmt.game': 'Flaches data-Array (y · width + x), Palette als #rrggbbaa mit Material je Farbe — für Spiele, z. B. in C#.',
     'fmt.svg':  'Fertige Vektorgrafik: skaliert verlustfrei, direkt einbindbar.',
     'fmt.css':  'Ein einziges Element, per box-shadow gepixelt — braucht kein Bild.',
     'fmt.c':    'Palette + Indizes als uint8-Array — für Mikrocontroller und LED-Matrizen.',
@@ -807,6 +809,21 @@ const MSG = {
     'gen.cNote':        '// Index 0 ist transparent; Farben als 0xRRGGBB.',
     'gen.pyHead':       '# {name} — {w}×{h}. Index 0 ist transparent.',
     'gen.txtLegend':    "Legende ('.' = transparent):",
+
+    // JSON (Spiel)
+    'game.materials':      'Material je Farbe — Palette „{name}“',
+    'game.materialAria':   'Material für Farbe {i}',
+    'game.materialNote':   'Gilt für alle Sprites mit dieser Palette. Index 0 ist immer „empty“, freie Farben bekommen „none“.',
+    'game.exportFailed':   'Export abgebrochen: {reason}',
+    'game.err.version':    'unbekannte Version {version}.',
+    'game.err.size':       'ungültige Größe {w}×{h}.',
+    'game.err.noPalette':  'die Palette ist leer.',
+    'game.err.zeroOpaque': 'Index 0 muss transparent sein, ist aber {color}.',
+    'game.err.badColor':   'ungültige Farbe {color}.',
+    'game.err.badMaterial':'unbekanntes Material „{material}“ bei Index {i}.',
+    'game.err.length':     'data hat {len} Werte, erwartet sind {w} × {h} = {expected}.',
+    'game.err.index':      'Pixel ({x}, {y}) hat Index {value}, gültig ist 0 bis {max}.',
+    'game.err.region':     'Ausschnitt „{name}“ liegt nicht vollständig im Bild.',
   },
 
   en: {
@@ -1033,6 +1050,7 @@ const MSG = {
     'fmt.ts':   'number[][] with types — the classic for TypeScript projects.',
     'fmt.js':   'The same without types, as an ES module.',
     'fmt.json': 'Language-neutral — for your own pipelines, engines and tools.',
+    'fmt.game': 'Flat data array (y · width + x), palette as #rrggbbaa with a material per color — for games, e.g. in C#.',
     'fmt.svg':  'A ready vector graphic: scales losslessly, drops straight in.',
     'fmt.css':  'A single element, pixelled with box-shadow — needs no image.',
     'fmt.c':    'Palette + indices as a uint8 array — for microcontrollers and LED matrices.',
@@ -1081,6 +1099,20 @@ const MSG = {
     'gen.cNote':        '// index 0 is transparent; colors as 0xRRGGBB.',
     'gen.pyHead':       '# {name} — {w}×{h}. Index 0 is transparent.',
     'gen.txtLegend':    "Key ('.' = transparent):",
+
+    'game.materials':      'Material per color — palette “{name}”',
+    'game.materialAria':   'Material for color {i}',
+    'game.materialNote':   'Applies to every sprite using this palette. Index 0 is always “empty”, free colors get “none”.',
+    'game.exportFailed':   'Export aborted: {reason}',
+    'game.err.version':    'unknown version {version}.',
+    'game.err.size':       'invalid size {w}×{h}.',
+    'game.err.noPalette':  'the palette is empty.',
+    'game.err.zeroOpaque': 'index 0 must be transparent but is {color}.',
+    'game.err.badColor':   'invalid color {color}.',
+    'game.err.badMaterial':'unknown material “{material}” at index {i}.',
+    'game.err.length':     'data has {len} values, expected {w} × {h} = {expected}.',
+    'game.err.index':      'pixel ({x}, {y}) has index {value}, valid is 0 to {max}.',
+    'game.err.region':     'region “{name}” does not lie fully inside the image.',
   },
 };
 

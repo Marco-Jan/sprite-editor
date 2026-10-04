@@ -6,12 +6,13 @@
 // oberhalb der Palette. Damit ist jedes Format in sich geschlossen —
 // wer den Text kopiert, hat auch die Farben dabei.
 //
-// Alle acht Formate kommen auch wieder herein — tsimport.js erkennt sie am
-// Inhalt. TypeScript, JavaScript, JSON, Python und C-Header behalten dabei
+// Die acht klassischen Formate kommen auch wieder herein — tsimport.js
+// erkennt sie am Inhalt. „JSON (Spiel)“ (gamejson.js) ist Einbahnstraße. TypeScript, JavaScript, JSON, Python und C-Header behalten dabei
 // ihre Farb-Nummern; SVG, CSS und Text-Raster kennen keine Indizes, dort
 // werden die Farben beim Import neu durchnummeriert.
-import { getSprite, getPal, getMaxIdx } from './state.js';
+import { getSprite, getPal, getMaxIdx, getPalMaterials } from './state.js';
 import { cellToColor } from './data.js';
+import { gameJson, gameName } from './gamejson.js';
 import { t, tn } from './i18n.js';
 
 // Umlaute und ß ausschreiben, statt sie zu Unterstrichen zu zerlegen —
@@ -139,6 +140,22 @@ function buildJson(d) {
 }
 
 // ────────────────────────────────────────────────────────────────────
+// JSON (Spiel) — flaches data-Array + Palette mit Materialien
+// ────────────────────────────────────────────────────────────────────
+// Die Palette kommt immer VOLLSTÄNDIG mit (0..maxIdx), damit dieselbe
+// Palette in jedem Sprite dieselben Indizes hat. Freie Farben folgen dahinter
+// mit ihren Indizes maxIdx+1, … — Material "none", sie haben keinen Slot.
+// Validierungsfehler fliegen als GameJsonError nach oben (updateOutput).
+// Ein Atlas (`sprites`) fehlt: der Editor kennt keine Frames pro Sprite.
+function buildGame(d) {
+  const pal = getPal();
+  const colors = [];
+  for (let i = 1; i <= d.maxIdx; i++) colors.push(pal[i]);
+  for (const [, hex] of d.entries.filter(([i]) => i > d.maxIdx).sort((a, b) => a[0] - b[0])) colors.push(hex);
+  return gameJson({ name: deumlaut(d.name), idxGrid: d.idxGrid, colors, materials: getPalMaterials() });
+}
+
+// ────────────────────────────────────────────────────────────────────
 // SVG — direkt verwendbar, skaliert verlustfrei
 // ────────────────────────────────────────────────────────────────────
 // Waagerechte Läufe gleicher Farbe werden zu einem Rechteck zusammengefasst:
@@ -247,7 +264,10 @@ export const CODE_FORMATS = {
           build: (d, p) => buildJsLike(d, p, false) },
   json: { label: 'JSON',              ext: 'json', mime: 'application/json', reimport: true, palOption: false, upper: false,
           build: buildJson },
-  svg:  { label: 'SVG-Bild',          ext: 'svg',  mime: 'image/svg+xml',  reimport: false, palOption: false, upper: false,
+  game: { label: 'JSON (Spiel)',      ext: 'json', mime: 'application/json', reimport: false, palOption: false, upper: false,
+          materials: true, fileBase: (name) => gameName(deumlaut(name)),
+          build: buildGame },
+  svg: { label: 'SVG-Bild',          ext: 'svg',  mime: 'image/svg+xml',  reimport: false, palOption: false, upper: false,
           build: buildSvg },
   css:  { label: 'CSS (box-shadow)',  ext: 'css',  mime: 'text/css',       reimport: false, palOption: false, upper: false,
           build: buildCss },
@@ -277,6 +297,6 @@ export function buildCode(formatKey, includePalette) {
 export function codeFilename(formatKey) {
   const sp = getSprite();
   const fmt = getFormat(formatKey);
-  const base = fmt.upper ? tsIdentifier(sp?.name) : slug(sp?.name);
+  const base = fmt.fileBase ? fmt.fileBase(sp?.name) : (fmt.upper ? tsIdentifier(sp?.name) : slug(sp?.name));
   return `${base}.${fmt.ext}`;
 }

@@ -12,7 +12,7 @@ import {
 } from './i18n.js';
 import { showConfirmToast, showInfoToast } from './toast.js';
 import {
-  renderAll, renderEditor, renderSpriteList, syncColorActive, updateOutput,
+  renderAll, renderEditor, renderSpriteList, syncColorActive, updateOutput, renderMaterials,
   cellFromEvent, cellFromEventClamped, cellToColor, paintCell, paintBrush, paintSpray, floodFill,
   fillPaletteSelect, renderCallbacks, shapeCells, commitShape,
 } from './render.js';
@@ -1164,6 +1164,7 @@ function initOutputPanel() {
   $('copy-btn').addEventListener('click', async () => {
     const btn = $('copy-btn');
     const ta = $('output-textarea');
+    if (ta.dataset.error) { showInfoToast(ta.dataset.error); return; }
     try {
       await navigator.clipboard.writeText(ta.value);
     } catch {
@@ -1180,6 +1181,7 @@ function initOutputPanel() {
 
   $('save-code-btn').addEventListener('click', async () => {
     if (!getSprite()) return;
+    if ($('output-textarea').dataset.error) { showInfoToast($('output-textarea').dataset.error); return; }
     const fmt = getFormat(state.outputFormat);
     const filename = codeFilename(state.outputFormat);
     const blob = new Blob([$('output-textarea').value], { type: `${fmt.mime};charset=utf-8` });
@@ -1210,6 +1212,7 @@ function formatHint(key) { return t(`fmt.${key}`); }
 
 function syncFormatUI() {
   const fmt = getFormat(state.outputFormat);
+  renderMaterials();
   $('save-code-btn').textContent = t('file.saveAs', { ext: fmt.ext });
   $('save-code-btn').title = t('file.saveAsTitle', { label: fmt.label });
 

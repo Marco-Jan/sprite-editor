@@ -136,6 +136,7 @@
             <select id="output-format" class="input input--sm" aria-describedby="output-format-hint"></select>
           </label>
           <p class="field-note" id="output-format-hint"></p>
+          <div class="material-box" id="material-box" hidden></div>
 
           <div class="btn-row">
             <button class="btn" id="copy-btn" data-i18n="out.copy">Kopieren</button>
@@ -715,6 +716,7 @@
       <div class="help-formats">
         <div><b>TypeScript</b> / <b>JavaScript</b> — <code>number[][]</code> plus Palette, mit oder ohne Typen.</div>
         <div><b>JSON</b> — sprachneutral für eigene Pipelines, Engines und Tools.</div>
+        <div><b>JSON (Spiel)</b> — flaches <code>data</code>-Array plus Palette mit Material je Farbe, versioniert — für Spiele-Engines (z. B. C#).</div>
         <div><b>SVG</b> — fertige Vektorgrafik, skaliert verlustfrei; gleiche Farbe nebeneinander wird zu einem Rechteck zusammengefasst.</div>
         <div><b>CSS</b> — der Sprite als <code>box-shadow</code> auf einem einzigen Element, ganz ohne Bilddatei.</div>
         <div><b>C-Header</b> — <code>uint8</code>-Indizes plus <code>uint32</code>-Palette für Mikrocontroller und LED-Matrizen.</div>

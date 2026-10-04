@@ -78,6 +78,7 @@ für sich allein benutzbar:
 | TypeScript | `.ts` | `number[][]` + `Record<number, string>` — der Klassiker |
 | JavaScript (ESM) | `.js` | Dasselbe ohne Typen |
 | JSON | `.json` | Sprachneutral, für eigene Pipelines und Engines |
+| JSON (Spiel) | `.json` | Flaches `data`-Array, Palette `#rrggbbaa` mit Material je Farbe, versioniert — für Spiele (C#-Loader: [docs/csharp-loader.md](docs/csharp-loader.md)) |
 | SVG-Bild | `.svg` | Vektorgrafik, skaliert verlustfrei, direkt einbindbar |
 | CSS (box-shadow) | `.css` | Der Sprite auf einem einzigen Element, ohne Bilddatei |
 | C-Header | `.h` | `uint8`-Indizes + `uint32`-Palette für Mikrocontroller / LED-Matrix |
@@ -85,6 +86,11 @@ für sich allein benutzbar:
 | Text-Raster | `.txt` | Ein Zeichen pro Pixel plus Legende — für Diffs und Doku |
 
 **Zurück in den Editor** kommen TypeScript, JavaScript und JSON. Der Rest ist Einbahnstraße.
+
+Bei **JSON (Spiel)** erscheint unter dem Format eine Auswahl *Material je Farbe*
+(`sand`, `water`, `stone` …). Sie gilt pro Palette und wird mit dem Projekt gespeichert.
+Vor dem Export wird geprüft (Länge von `data`, Indizes, transparenter Index 0); bei einem
+Fehler steht die Meldung im Code-Feld und Kopieren/Speichern sind gesperrt.
 
 *Palette in den Code schreiben* gibt es nur bei TS und JS — überall sonst stecken die
 Farben ohnehin im Ergebnis.
@@ -318,6 +324,10 @@ sprite-editor/
 ├── site.webmanifest    ← PWA-Manifest (Name, Farben, Icons)
 ├── assets/             ← Logos: icon.svg, favicon(.ico|-16|-32|-48), apple-touch,
 │                          icon-192/512, icon-maskable-512, og-image
+├── docs/
+│   └── csharp-loader.md ← Format „JSON (Spiel)“ + C#-Loader
+├── tests/
+│   └── gamejson.test.js ← Tests für „JSON (Spiel)“: node --test
 ├── tools/
 │   └── make_icons.py   ← erzeugt alles in assets/ neu (nur Standardbibliothek)
 └── js/
@@ -327,6 +337,7 @@ sprite-editor/
     ├── migrate.js      ← v1 (dog/cat) → v2 (generisch)
     ├── render.js       ← alle Render-Funktionen + Mal-Operationen
     ├── codegen.js      ← Code-Formate (TS/JS/JSON/SVG/CSS/C/Python/Text)
+    ├── gamejson.js     ← „JSON (Spiel)“: Materialliste, Aufbau, Validierung (ohne DOM)
     ├── selection.js    ← Auswahl: Rechteck, Lasso, Farbwahl, verschieben, einfügen
     ├── transform.js    ← spiegeln, drehen, zuschneiden, zentrieren, Größe, skalieren
     ├── history.js      ← Undo/Redo pro Strich
@@ -348,7 +359,7 @@ data.js
    ↑
 state.js
    ↑
-   ├─ codegen.js ← (data, state)
+   ├─ codegen.js ← (data, state, gamejson)
    ├─ render.js ← (data, state, codegen)
    ├─ selection.js ← (state, render, storage, history, spritefx)
    ├─ transform.js ← (state, render, storage, history)

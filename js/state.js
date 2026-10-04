@@ -18,6 +18,13 @@ export const sprites = {};
 //   customPalettes['neon'] = { 1:'#…', …, 9:'#…' }
 export const customPalettes = {};
 
+// Material je Palettenfarbe — nur für den Export "JSON (Spiel)".
+// Liegt NEBEN den Paletten statt darin, weil eine Palette überall als
+// reines Index → Hex-Objekt gelesen wird. Gilt auch für eingebaute Paletten.
+//   paletteMaterials['golden'] = { 1: 'sand', 5: 'stone' }
+// Fehlende Einträge bedeuten "none" (siehe MATERIALS in gamejson.js).
+export const paletteMaterials = {};
+
 // UI-Zustand (alles veränderlich)
 export const state = {
   curSprite:     null,     // id in `sprites`, null solange keiner existiert
@@ -160,6 +167,11 @@ export function getPaletteByName(name) {
 // Palette des aktuellen Sprites.
 export function getPal() {
   return getPaletteByName(getSprite()?.palette || DEFAULT_PALETTE);
+}
+
+// Materialien der Palette des aktuellen Sprites (nie null).
+export function getPalMaterials() {
+  return paletteMaterials[getPaletteName()] || {};
 }
 
 // Name der aktuell aktiven Palette.

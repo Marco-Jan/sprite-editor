@@ -5,13 +5,14 @@
 // leben in app.js; nur Handler an dynamisch erzeugten Elementen (Sprite-Karten,
 // Farb-Swatches) werden hier gesetzt und rufen dann renderCallbacks auf.
 import {
-  state, sprites, customPalettes, selection,
+  state, sprites, customPalettes, paletteMaterials, selection,
   getGrid, getSprite, getPal, getPaletteName, getMaxIdx,
   getAllPaletteOptions, isCustomPalette, listSprites, getPaletteByName,
 } from './state.js';
 import { PALETTE_GROUP_SPLIT, cellToColor } from './data.js';
 import { t, colorLabel, colorLabelShort } from './i18n.js';
-import { buildCode, tsIdentifier } from './codegen.js';
+import { buildCode, tsIdentifier, getFormat } from './codegen.js';
+import { MATERIALS, DEFAULT_MATERIAL, GameJsonError } from './gamejson.js';
 
 // Weiterreichen, damit bestehende Importe aus render.js gültig bleiben.
 export { cellToColor, tsIdentifier };
@@ -701,6 +702,7 @@ export function renderPalette() {
         const hexEl = item.querySelector('.color-hex');
         if (hexEl) hexEl.textContent = picker.value;
         renderEditor(); renderQuickPalette(); renderSpriteList(); updateCurrentColorIndicator();
+        renderMaterials(); updateOutput();
         renderCallbacks.onSave();
       });
       item.appendChild(picker);
@@ -720,12 +722,74 @@ export function renderPalette() {
 // ────────────────────────────────────────────────────────────────────
 // OUTPUT — Code-Feld füllen (das Format liefert codegen.js)
 // ────────────────────────────────────────────────────────────────────
+// Scheitert die Validierung (JSON (Spiel)), steht die Meldung im Feld und
+// in data-error — Kopieren und Speichern weigern sich dann (app.js).
 export function updateOutput() {
   const ta = document.getElementById('output-textarea');
   if (!ta) return;
+  delete ta.dataset.error;
   if (!getSprite()) { ta.value = ''; return; }
   const includePalette = document.getElementById('export-include-palette')?.checked;
-  ta.value = buildCode(state.outputFormat, includePalette);
+  try {
+    ta.value = buildCode(state.outputFormat, includePalette);
+  } catch (e) {
+    if (!(e instanceof GameJsonError)) throw e;
+    const msg = t('game.exportFailed', { reason: t(`game.err.${e.code}`, e.params) });
+    ta.dataset.error = msg;
+    ta.value = msg;
+  }
+}
+
+// ────────────────────────────────────────────────────────────────────
+// MATERIALIEN — eine Auswahl pro Palettenfarbe, nur bei "JSON (Spiel)"
+// ────────────────────────────────────────────────────────────────────
+// Gespeichert pro Palettenname in paletteMaterials, also auch für die
+// eingebauten Paletten. Index 0 ist fest "empty" und taucht nicht auf.
+export function renderMaterials() {
+  const box = document.getElementById('material-box');
+  if (!box) return;
+  const show = !!getFormat(state.outputFormat).materials && !!getSprite();
+  box.hidden = !show;
+  if (!show) return;
+
+  const palName = getPaletteName();
+  const pal = getPal();
+  const mats = paletteMaterials[palName] || {};
+  box.innerHTML = `<div class="material-head">${esc(t('game.materials', { name: palName }))}</div>`;
+
+  const list = document.createElement('div');
+  list.className = 'material-rows';
+  for (let i = 1; i <= getMaxIdx(); i++) {
+    const row = document.createElement('label');
+    row.className = 'material-row';
+    row.innerHTML =
+      `<span class="pal-idx">${i}</span>` +
+      `<span class="material-swatch" style="background:${esc(pal[i] || 'transparent')}"></span>`;
+    const sel = document.createElement('select');
+    sel.className = 'input input--sm';
+    sel.setAttribute('aria-label', t('game.materialAria', { i }));
+    for (const m of MATERIALS) {
+      const opt = document.createElement('option');
+      opt.value = m;
+      opt.textContent = m;
+      sel.appendChild(opt);
+    }
+    sel.value = mats[i] || DEFAULT_MATERIAL;
+    sel.addEventListener('change', () => {
+      const target = paletteMaterials[palName] || (paletteMaterials[palName] = {});
+      if (sel.value === DEFAULT_MATERIAL) delete target[i]; else target[i] = sel.value;
+      if (!Object.keys(target).length) delete paletteMaterials[palName];
+      updateOutput();
+      renderCallbacks.onSave();
+    });
+    row.appendChild(sel);
+    list.appendChild(row);
+  }
+  box.appendChild(list);
+  const note = document.createElement('p');
+  note.className = 'field-note';
+  note.textContent = t('game.materialNote');
+  box.appendChild(note);
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -736,6 +800,7 @@ export function renderAll() {
   renderEditor();
   renderPalette();
   renderQuickPalette();
+  renderMaterials();
   updateOutput();
   updateCurrentColorIndicator();
 }

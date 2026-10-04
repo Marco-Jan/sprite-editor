@@ -2,7 +2,7 @@
 // PALETTES — eigene Paletten erstellen, bearbeiten, löschen
 // ════════════════════════════════════════════════════════════════════
 import {
-  sprites, customPalettes,
+  sprites, customPalettes, paletteMaterials,
   getSprite, getPaletteName, getPaletteByName, getAllPaletteOptions,
   paletteExists, isCustomPalette, uniquePaletteName,
 } from './state.js';
@@ -31,6 +31,7 @@ export function forkCurrentPalette() {
   const src = getPaletteName();
   const name = uniquePaletteName(src + '_kopie');
   customPalettes[name] = { ...getPaletteByName(src) };
+  if (paletteMaterials[src]) paletteMaterials[name] = { ...paletteMaterials[src] };
   const sp = getSprite();
   if (sp) sp.palette = name;
   renderAll();
@@ -44,6 +45,7 @@ export function forkCurrentPalette() {
 export function deleteCustomPalette(name) {
   if (!customPalettes[name]) return;
   delete customPalettes[name];
+  delete paletteMaterials[name];
 
   // Sprites, die auf die gelöschte Palette zeigten, auf den Default setzen.
   let affected = 0;
@@ -155,6 +157,10 @@ export function initPaletteModal() {
     const commit = (finalName, oldName) => {
       if (oldName && oldName !== finalName) {
         delete customPalettes[oldName];
+        if (paletteMaterials[oldName]) {
+          paletteMaterials[finalName] = paletteMaterials[oldName];
+          delete paletteMaterials[oldName];
+        }
         // Sprites mitziehen, die auf den alten Namen zeigten.
         for (const sp of Object.values(sprites)) {
           if (sp.palette === oldName) sp.palette = finalName;
