@@ -911,6 +911,8 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 .modal-intro { font-size: var(--fs-sm); line-height: 1.6; color: var(--text-muted); }
 
 .form-row { display: flex; flex-direction: column; gap: var(--sp-1); }
+/* Author-display schlägt das hidden-Attribut — darum explizit ausblenden. */
+.form-row[hidden] { display: none; }
 .form-label { font-size: var(--fs-sm); font-weight: 600; color: var(--text-muted); }
 .form-note { font-weight: 400; color: var(--text-dim); }
 

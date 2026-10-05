@@ -2,7 +2,7 @@
 // SPRITES — anlegen, umbenennen, duplizieren, löschen
 // ════════════════════════════════════════════════════════════════════
 import {
-  state, sprites, createSprite, selectFirstSprite, emptyGrid,
+  state, sprites, createSprite, selectFirstSprite,
   getSprite, makeSpriteId, listSprites, clearSelection,
 } from './state.js';
 import { DEFAULT_PALETTE, dc } from './data.js';
@@ -85,18 +85,28 @@ export function initNewSpriteModal() {
   const sizeSel = document.getElementById('new-size');
   const palSel  = document.getElementById('new-palette');
   const tplSel  = document.getElementById('new-template');
+  const customRow = document.getElementById('new-size-custom');
+  const wInp    = document.getElementById('new-w');
+  const hInp    = document.getElementById('new-h');
   const cancel  = document.getElementById('new-modal-cancel');
   const create  = document.getElementById('new-modal-create');
 
   const open = () => {
     nameInp.value = suggestName();
     sizeSel.value = '24';
+    wInp.value = '24';
+    hInp.value = '24';
+    syncCustomRow();
     fillPaletteSelect(palSel, getSprite()?.palette || DEFAULT_PALETTE);
     fillSpriteTemplateSelect(tplSel);
     overlay.classList.add('open');
     nameInp.focus();
     nameInp.select();
   };
+
+  // Bei "eigene Größe" erscheinen zwei Zahlenfelder; sonst bleibt das Dropdown allein.
+  const syncCustomRow = () => { customRow.hidden = sizeSel.value !== 'custom'; };
+  sizeSel.addEventListener('change', syncCustomRow);
 
   document.getElementById('new-sprite-btn').addEventListener('click', open);
 
@@ -109,29 +119,44 @@ export function initNewSpriteModal() {
     const name = nameInp.value.trim();
     if (!name) { showInfoToast(t('sprite.needName')); nameInp.focus(); return; }
 
-    const size = Number(sizeSel.value) || 24;
+    // Eigene Maße dürfen rechteckig sein; das Dropdown liefert nur Quadrate.
+    let w, h;
+    if (sizeSel.value === 'custom') {
+      w = clampSize(wInp.value);
+      h = clampSize(hInp.value);
+      if (!w || !h) { showInfoToast(t('sprite.needSize')); wInp.focus(); return; }
+    } else {
+      w = h = Number(sizeSel.value) || 24;
+    }
     const palette = palSel.value || DEFAULT_PALETTE;
     const srcId = tplSel.value;
 
     // Vorlage wird zentriert eingesetzt (geclippt wenn größer, gepadded wenn kleiner).
-    let grid = emptyGrid(size);
+    let grid = Array.from({ length: h }, () => Array(w).fill(0));
     if (srcId && sprites[srcId]) {
       const tpl = sprites[srcId].grid;
       const tplH = tpl.length, tplW = tpl[0].length;
-      const ox = Math.floor((size - tplW) / 2);
-      const oy = Math.floor((size - tplH) / 2);
+      const ox = Math.floor((w - tplW) / 2);
+      const oy = Math.floor((h - tplH) / 2);
       for (let y = 0; y < tplH; y++) for (let x = 0; x < tplW; x++) {
         const ty = y + oy, tx = x + ox;
-        if (ty >= 0 && ty < size && tx >= 0 && tx < size) grid[ty][tx] = tpl[y][x];
+        if (ty >= 0 && ty < h && tx >= 0 && tx < w) grid[ty][tx] = tpl[y][x];
       }
     }
 
-    const id = createSprite({ name, size, palette, grid });
+    const id = createSprite({ name, palette, grid });
     state.curSprite = id;
     close();
     renderAll();
     saveState();
   });
+}
+
+// Zahl aus einem Eingabefeld auf 1…256 begrenzen; 0 bedeutet "unbrauchbar".
+function clampSize(v) {
+  const n = Math.floor(Number(v));
+  if (!Number.isFinite(n) || n < 1) return 0;
+  return Math.min(n, 256);
 }
 
 // Namensvorschlag: "Sprite N" mit der nächsten freien Nummer.
