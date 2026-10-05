@@ -374,6 +374,14 @@ const STATIC = {
     'mod.renameTitle':  'Rename sprite',
     'mod.renameSave':   'Save',
 
+    // ── Modal: Grid-Größe ──
+    'mod.sizeTitle':    'Change grid size',
+    'mod.sizeWidth':    'Width',
+    'mod.sizeHeight':   'Height',
+    'mod.sizeAnchor':   'Anchor',
+    'mod.sizeNote':     'Only the canvas grows or shrinks — the pixels keep their size. Anything that no longer fits is cut off.',
+    'mod.sizeSave':     'Change',
+
     // ── Modal: Palette ──
     'mod.palTitle':     'New palette',
     'mod.palNamePh':    'e.g. neon, pastel, dark',
@@ -553,6 +561,7 @@ const MSG = {
     'list.noMatch':      'Kein Sprite passt zu „{q}“.',
     'list.cardTitle':    '{name} — {w}×{h}, Palette „{palette}“',
     'list.rename':       'Umbenennen',
+    'list.resize':       'Grid-Größe ändern',
     'list.duplicate':    'Duplizieren',
     'list.delete':       'Löschen',
     'list.noSprite':     'Kein Sprite',
@@ -686,6 +695,9 @@ const MSG = {
     'tf.trimFail':    'Nicht zugeschnitten — {reason}.',
     'tf.centered':    'Inhalt mittig gesetzt.',
     'tf.centerFail':  'Nicht verschoben — {reason}.',
+    'mod.sizeCurrent':  '„{name}“ ist derzeit {w}×{h} Pixel.',
+    'mod.sizeInvalid':  'Breite und Höhe müssen zwischen 1 und 256 liegen.',
+
     'tf.resized':     'Größe jetzt {w}×{h}{lost}.',
     'tf.resizeLost':  ' — {n} Pixel abgeschnitten',
     'tf.resizeFail':  'Größe unverändert — {reason}.',
@@ -859,6 +871,7 @@ const MSG = {
     'list.noMatch':      'No sprite matches “{q}”.',
     'list.cardTitle':    '{name} — {w}×{h}, palette “{palette}”',
     'list.rename':       'Rename',
+    'list.resize':       'Change grid size',
     'list.duplicate':    'Duplicate',
     'list.delete':       'Delete',
     'list.noSprite':     'No sprite',
@@ -984,6 +997,9 @@ const MSG = {
     'tf.trimFail':    'Not trimmed — {reason}.',
     'tf.centered':    'Content moved to the middle.',
     'tf.centerFail':  'Not moved — {reason}.',
+    'mod.sizeCurrent':  '“{name}” is currently {w}×{h} pixels.',
+    'mod.sizeInvalid':  'Width and height must be between 1 and 256.',
+
     'tf.resized':     'Size is now {w}×{h}{lost}.',
     'tf.resizeLost':  ' — {n} pixels cut off',
     'tf.resizeFail':  'Size unchanged — {reason}.',

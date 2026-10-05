@@ -21,7 +21,7 @@ import {
 } from './storage.js';
 import { supportsFsAccess, pickSaveDirectory, getStoredDirName, saveBlob } from './filesystem.js';
 import {
-  initNewSpriteModal, initRenameModal, openRenameModal,
+  initNewSpriteModal, initRenameModal, openRenameModal, initSizeModal, openSizeModal,
   selectSprite, deleteSprite, duplicateSprite, createDefaultSprite, clearCurrentGrid,
 } from './sprites.js';
 import {
@@ -68,10 +68,12 @@ renderCallbacks.onSelectSprite     = id => {
   renderRefSelect(); // der neue aktive Sprite fällt als Ebene raus
 };
 renderCallbacks.onRenameSprite     = openRenameModal;
+renderCallbacks.onResizeSprite     = openSizeModal;
 renderCallbacks.onDuplicateSprite  = duplicateSprite;
 renderCallbacks.onOpenPaletteModal = openPaletteModal;
 renderCallbacks.onEditPalette      = openPaletteModal;
 renderCallbacks.onImageToPalette   = imageToPalette;
+renderCallbacks.onSyncImagePanel   = () => syncImagePanel();
 
 renderCallbacks.onDeleteSprite = id => {
   const name = sprites[id]?.name || id;
@@ -1417,6 +1419,7 @@ function init() {
   initTemplatePanel();
   initNewSpriteModal();
   initRenameModal();
+  initSizeModal();
   initPaletteModal();
   initExport();
   initOutputPanel();

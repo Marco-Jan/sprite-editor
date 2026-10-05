@@ -212,6 +212,11 @@ export const STATIC_AT = {
   'mod.create':        'Anlegn',
   'mod.renameTitle':   'Sprite umbenenna',
   'mod.renameSave':    'Sichern',
+  'mod.sizeTitle':     'Grid-Gressn umstöhn',
+  'mod.sizeWidth':     'Broad',
+  'mod.sizeHeight':    'Heach',
+  'mod.sizeAnchor':    'Anker',
+  'mod.sizeSave':      'Umstöhn',
   'mod.palTitle':      'Neie Palettn',
   'mod.palColors':     'Farben',
   'mod.impTitle':      'Sprite einelesn',
@@ -234,6 +239,7 @@ export const MSG_AT = {
 
   // Sprite-Liste
   'list.rename':      'Umbenenna',
+  'list.resize':      'Grid-Gressn umstöhn',
   'list.duplicate':   'Verdoppln',
   'list.delete':      'Weghaun',
   'list.empty':       'No kane Sprites. Leg obn an an.',

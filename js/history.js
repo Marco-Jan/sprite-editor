@@ -67,6 +67,22 @@ export function recordOp(fn) {
   commitStroke();
 }
 
+// Wie recordOp(), aber für einen bestimmten Sprite: wenn aus der Sprite-Liste
+// heraus ein gerade NICHT aktiver Sprite geändert wird, liegt der Snapshot von
+// beginStroke() am falschen Grid.
+export function recordOpOn(id, fn) {
+  const grid = gridOf(id);
+  if (!grid) { fn(); return; }
+  const before = dc(grid);
+  fn();
+  const after = gridOf(id);
+  if (!after || gridsEqual(before, after)) return;
+  undoStack.push({ id, before, after: dc(after) });
+  if (undoStack.length > MAX_HISTORY) undoStack.shift();
+  redoStack.length = 0;
+  historyCallbacks.onChange();
+}
+
 function restore(entry, which) {
   // Der Sprite kann inzwischen gelöscht worden sein — Eintrag dann verwerfen.
   if (!sprites[entry.id]) return false;

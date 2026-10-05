@@ -23,12 +23,15 @@ export const renderCallbacks = {
   onSave:            () => {},
   onSelectSprite:    (_id) => {},
   onRenameSprite:    (_id) => {},
+  onResizeSprite:    (_id) => {},
   onDeleteSprite:    (_id) => {},
   onDuplicateSprite: (_id) => {},
   onOpenPaletteModal:() => {},
   onEditPalette:     (_name) => {},
   onDeletePalette:   (_name) => {},
   onImageToPalette:  () => {},
+  // Felder im Bild-Panel an die Maße des aktiven Sprites angleichen.
+  onSyncImagePanel:  () => {},
 };
 
 // SVG-String für eine Sprite-Vorschau (Thumbnails in der Sprite-Liste).
@@ -97,6 +100,7 @@ export function renderSpriteList() {
     const acts = document.createElement('div');
     acts.className = 'sprite-acts';
     acts.appendChild(iconBtn('✎', t('list.rename'), e => { e.stopPropagation(); renderCallbacks.onRenameSprite(sp.id); }));
+    acts.appendChild(iconBtn('⤢', t('list.resize'), e => { e.stopPropagation(); renderCallbacks.onResizeSprite(sp.id); }));
     acts.appendChild(iconBtn('⧉', t('list.duplicate'), e => { e.stopPropagation(); renderCallbacks.onDuplicateSprite(sp.id); }));
     acts.appendChild(iconBtn('×', t('list.delete'), e => { e.stopPropagation(); renderCallbacks.onDeleteSprite(sp.id); }, 'is-danger'));
 
@@ -803,4 +807,5 @@ export function renderAll() {
   renderMaterials();
   updateOutput();
   updateCurrentColorIndicator();
+  renderCallbacks.onSyncImagePanel();
 }

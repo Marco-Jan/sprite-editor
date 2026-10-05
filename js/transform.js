@@ -13,10 +13,10 @@
 // Aktionen auf dem ganzen Sprite laufen durch recordOp() und sind damit ein
 // einzelner Undo-Schritt — auch wenn dabei das Grid komplett getauscht wird:
 // history.js vergleicht die Grids als Ganzes.
-import { selection, getSprite, clearSelection } from './state.js';
+import { selection, sprites, state, getSprite, clearSelection } from './state.js';
 import { renderAll, renderEditor } from './render.js';
 import { saveState } from './storage.js';
-import { recordOp, beginStroke, commitStroke } from './history.js';
+import { recordOp, recordOpOn, beginStroke, commitStroke } from './history.js';
 import { ensureFloating, commitFloat } from './selection.js';
 import { t } from './i18n.js';
 
@@ -308,7 +308,13 @@ export function centerContent() {
 // anchor: 'topleft' | 'center' — wohin der alte Inhalt in der neuen Fläche
 // rutscht. Was nicht mehr hineinpasst, fällt weg.
 export function resizeCanvas(newW, newH, anchor = 'center') {
-  const sp = getSprite();
+  return resizeSpriteCanvas(state.curSprite, newW, newH, anchor);
+}
+
+// Dieselbe Rechnung für einen beliebigen Sprite — aus der Sprite-Liste heraus
+// lässt sich so auch die Größe eines gerade nicht aktiven Sprites ändern.
+export function resizeSpriteCanvas(id, newW, newH, anchor = 'center') {
+  const sp = sprites[id];
   if (!sp) return null;
   commitFloat();
   const W = sp.grid[0].length, H = sp.grid.length;
@@ -320,7 +326,7 @@ export function resizeCanvas(newW, newH, anchor = 'center') {
   const dy = anchor === 'center' ? Math.round((newH - H) / 2) : 0;
 
   let lost = 0;
-  recordOp(() => {
+  recordOpOn(id, () => {
     const out = emptyRows(newW, newH);
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
       const v = sp.grid[y][x];
@@ -331,7 +337,9 @@ export function resizeCanvas(newW, newH, anchor = 'center') {
     }
     sp.grid = out;
   });
-  clearSelection();
+  // Nur die Auswahl im aktiven Sprite ist betroffen — sie würde sonst
+  // außerhalb der neuen Fläche liegen.
+  if (id === state.curSprite) clearSelection();
   done();
   return { ok: true, w: newW, h: newH, lost };
 }

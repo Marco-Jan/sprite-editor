@@ -8,9 +8,10 @@ import {
 import { DEFAULT_PALETTE, dc } from './data.js';
 import { renderAll, fillPaletteSelect } from './render.js';
 import { saveState } from './storage.js';
-import { showInfoToast } from './toast.js';
+import { showInfoToast, showConfirmToast } from './toast.js';
 import { clearHistory } from './history.js';
 import { commitFloat } from './selection.js';
+import { resizeSpriteCanvas } from './transform.js';
 import { t } from './i18n.js';
 
 // ────────────────────────────────────────────────────────────────────
@@ -193,6 +194,70 @@ export function initRenameModal() {
     close();
     renderAll();
     saveState();
+  });
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Grid-Größe-Modal — die Leinwand eines bestehenden Sprites ändern
+// ────────────────────────────────────────────────────────────────────
+// Dieselbe Rechnung wie das Bild-Panel, nur direkt am Sprite aus der Liste:
+// dort steht die Größe, dort will man sie auch ändern.
+let _sizeId = null;
+
+export function openSizeModal(id) {
+  const sp = sprites[id];
+  if (!sp) return;
+  _sizeId = id;
+  const w = sp.grid[0].length, h = sp.grid.length;
+  document.getElementById('size-w').value = w;
+  document.getElementById('size-h').value = h;
+  document.getElementById('size-anchor').value = 'center';
+  document.getElementById('size-modal-current').textContent =
+    t('mod.sizeCurrent', { name: sp.name, w, h });
+  document.getElementById('size-modal-overlay').classList.add('open');
+  const inp = document.getElementById('size-w');
+  inp.focus();
+  inp.select();
+}
+
+export function initSizeModal() {
+  const overlay = document.getElementById('size-modal-overlay');
+  const wInp = document.getElementById('size-w');
+  const hInp = document.getElementById('size-h');
+  const ok = document.getElementById('size-modal-ok');
+  const close = () => { overlay.classList.remove('open'); _sizeId = null; };
+
+  document.getElementById('size-modal-cancel').addEventListener('click', close);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  [wInp, hInp].forEach(inp => inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter') ok.click();
+  }));
+
+  ok.addEventListener('click', () => {
+    const id = _sizeId;
+    const sp = sprites[id];
+    if (!sp) { close(); return; }
+    const w = Number(wInp.value), h = Number(hInp.value);
+    if (!(w >= 1 && w <= 256 && h >= 1 && h <= 256)) {
+      showInfoToast(t('mod.sizeInvalid'));
+      return;
+    }
+    const anchor = document.getElementById('size-anchor').value;
+    const apply = () => {
+      const r = resizeSpriteCanvas(id, w, h, anchor);
+      if (!r) return;
+      showInfoToast(r.ok
+        ? t('tf.resized', { w: r.w, h: r.h, lost: r.lost ? t('tf.resizeLost', { n: r.lost }) : '' })
+        : t('tf.resizeFail', { reason: t(`reason.${r.reason}`) }));
+    };
+    close();
+    // Verkleinern kann Pixel kosten — vorher fragen.
+    if (w < sp.grid[0].length || h < sp.grid.length) {
+      // Einen Tick später: der Rückfrage-Toast setzt den Fokus auf seinen
+      // Bestätigen-Knopf, und ein Enter aus dem Feld würde ihn sonst gleich
+      // mitdrücken — die Rückfrage wäre dann keine.
+      setTimeout(() => showConfirmToast(t('tf.confirmShrink'), apply, t('tf.shrinkOk')), 0);
+    } else apply();
   });
 }
 
