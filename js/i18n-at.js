@@ -220,6 +220,46 @@ export const STATIC_AT = {
   'mod.impNew':        'Ois neicher Sprite',
   'mod.confirmCancel': 'Lossmas',
   'mod.confirmOk':     'Weghaun',
+  'mod.impCurrentTitle': 'Ersetzt den aktivn Sprite mit olle Frames und Ebenen — Strg+Z hoit’n zruck',
+
+  // ── Timeline ──
+  'tl.prev':      'Da Frame davor (,)',
+  'tl.next':      'Da nächste Frame (.)',
+  'tl.play':      'Obspün / Anhoitn (Enter)',
+  'tl.add':       'An laarn Frame dahinter einischiabn',
+  'tl.dup':       'Frame verdoppln',
+  'tl.del':       'Frame weghaun',
+  'tl.onion':     'Onion Skin — da Frame davor (rot) und da nächste (blau) scheinan durch',
+  'tl.dur':       'Wia lang',
+  'tl.durTitle':  'Wia lang der Frame steht — laar = noch FPS',
+  'exp.gifTitle': 'Animation ois GIF — olle Frames, rennt ewig',
+
+  // ── Ebenen ──
+  'ly.add':       'A neiche Ebene über da aktivn',
+  'ly.dup':       'Ebene verdoppln',
+  'ly.merge':     'Noch untn zammlegn — in jedem Frame',
+  'ly.del':       'Ebene weghaun',
+  'ly.note':      'Doppelklick aufn Nom benennt um, ziagn sortiert. Export und Vorschau zeign olle sichtbarn Ebenen übereinand.',
+
+  // ── Hilfslinien ──
+  'gd.show':      'Herzagn',
+  'gd.showTitle': 'Olle Hilfslinien herzagn oder wegtuan (G)',
+  'gd.edit':      'Vaschiabn',
+  'gd.editTitle': 'Linien auf da Zeichenflächn ziagn — dawei wird ned gmoit (Tipp danebn oder Esc hört auf)',
+  'gd.addH':      '+ Waagrecht',
+  'gd.addHTitle': 'A waagrechte Linie in d’Mittn setzn',
+  'gd.addVTitle': 'A senkrechte Linie in d’Mittn setzn',
+  'gd.clear':     'Olle weghaun',
+  'gd.clearTitle': 'Olle freien Linien von dem Sprite weghaun',
+  'gd.figure':    'Figur — Kopfhöhn',
+  'gd.h2':        '2 Köpf — Chibi',
+  'gd.h3':        '3 Köpf — kloa und liab',
+  'gd.h4':        '4 Köpf — kompakte Spüfigur',
+  'gd.h6':        '6 Köpf — Comic, Jugendliche',
+  'gd.h8':        '8 Köpf — klassisch, heldnhoft',
+  'gd.fit':       'An d’Figur anpassn',
+  'gd.fitTitle':  'Obn und untn von da Einteilung aufs Gmoite setzn',
+  'gd.note':      'Nur zum Zeichnen — d’Linien kemman in kan Export. Bei „Vaschiabn“ d’Linien ziagn; a freie Linie außem Buidl ziagn haut s’ weg, a Tipp danebn hört auf.',
 };
 
 // ── Laufzeit-Texte ──────────────────────────────────────────────────
@@ -369,4 +409,34 @@ export const MSG_AT = {
   'file.readFailed':   'Datei hot ned glesn werdn kenna.',
   'file.copied':       '✓ Kopiert',
   'file.saveAs':       '.{ext} sichern',
+
+  // Leisten am Handy
+  'lay.mobilePin':     'Untn anpinnen — bleibt oiwei offn',
+  'lay.mobileUnpin':   'In d’Lodn legn — geht dann per Icon auf',
+
+  // Timeline
+  'tl.frameTitle':     'Frame {i} · {ms} ms — antippn zum Wöhln, ziagn zum Vaschiabn',
+  'tl.lastFrame':      'Da letzte Frame bleibt — a Sprite braucht mindestens oan.',
+
+  // Ebenen
+  'ly.hide':           'Wegtuan',
+  'ly.show':           'Herzagn',
+  'ly.lock':           'Zuasperrn — do wird dann nix gmoit',
+  'ly.unlock':         'Aufsperrn',
+  'ly.rowTitle':       '{name} — antippn wöhlt, ziagn sortiert, Doppelklick benennt um',
+  'ly.lastLayer':      'De letzte Ebene bleibt — a Sprite braucht mindestens oane.',
+  'ly.nothingBelow':   'Unter da untersten Ebene is nix zum Zammlegn.',
+  'ly.lockedInfo':     'Ebene „{name}“ is zuagsperrt — z’erst aufsperrn (Schlossl im Ebenen-Panel).',
+  'ly.hiddenInfo':     'Ebene „{name}“ is weggtuan — z’erst herzagn (Aug im Ebenen-Panel).',
+
+  // Hilfslinien (die Marken stehn direkt auf da Zeichenflächn)
+  'gd.navel':          'Nabl',
+  'gd.hip':            'Hüftn',
+  'gd.knee':           'Knia',
+  'gd.editInfo':       'Hilfslinien vaschiabn: Linie packn und ziagn, außem Buidl ziagn haut s’ weg. Tipp danebn oder Esc hört auf.',
+  'gd.removed':        'Hilfslinie is weg.',
+
+  // Export / Import
+  'exp.gifTooMany':    'A GIF packt höchstens 255 Farben — der Sprite hot {n}. Z’erst mit „Bild → Palette …“ weniger mochn.',
+  'imp.errGame':       'JSON (Spiel) erkannt, oba {reason}',
 };

@@ -53,6 +53,7 @@ const PRECACHE = [
   'js/i18n-at.js',
   'js/i18n.js',
   'js/icons.js',
+  'js/landing-fx.js',
   'js/landing-i18n.js',
   'js/layers.js',
   'js/layout.js',

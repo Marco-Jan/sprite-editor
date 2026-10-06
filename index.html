@@ -151,6 +151,13 @@
           Ein leeres Raster, eine Handvoll Farben, und du malst los. Der Editor läuft
           komplett im Browser — kein Build, kein Konto, keine Cloud.
         </p>
+        <ul class="hero-chips" data-i18n-html="hero.chips">
+          <li>Frames &amp; GIF</li>
+          <li>Ebenen</li>
+          <li>9 Code-Formate</li>
+          <li>Läuft offline</li>
+          <li>Kein Konto</li>
+        </ul>
         <div class="cta-row">
           <a class="btn btn--primary btn--lg" href="editor.html" data-i18n="nav.open">Editor öffnen</a>
           <!-- Nur sichtbar, wenn der Browser die Installation anbietet (js/pwa.js). -->
@@ -564,6 +571,21 @@
         <p class="keys-row"><kbd>Strg</kbd><kbd>Z</kbd></p>
         <p>Spiegeln, drehen, auf den Inhalt zuschneiden, zentrieren, Fläche ändern, hart skalieren.</p>
       </li>
+      <li class="tool">
+        <h3>Animation</h3>
+        <p class="keys-row"><kbd>,</kbd><kbd>.</kbd><kbd>Enter</kbd></p>
+        <p>Frames in einer Timeline, Onion Skin, abspielen mit eigenem Tempo je Frame.</p>
+      </li>
+      <li class="tool">
+        <h3>Ebenen</h3>
+        <p class="keys-row"><kbd>+</kbd><kbd>⧉</kbd><kbd>⤓</kbd></p>
+        <p>Übereinander malen, ausblenden, sperren, Deckkraft — exportiert wird, was du siehst.</p>
+      </li>
+      <li class="tool">
+        <h3>Hilfslinien</h3>
+        <p class="keys-row"><kbd>G</kbd></p>
+        <p>Freie Linien und Figuren-Proportionen von Chibi bis Held — nur zum Zeichnen, nie im Export.</p>
+      </li>
     </ul>
   </section>
 
@@ -595,13 +617,13 @@
           <img src="assets/landing/bird-b.png" alt="" width="17" height="7">
         </div>
 
-        <div class="actor actor--walk" style="--x:26%; --face:-1; --range:140px; --walk-dur:34s; --h:116px; --base:12px">
+        <div class="actor actor--walk actor--dog1" style="--x:26%; --face:-1; --range:140px; --walk-dur:34s; --h:116px; --base:12px">
           <span class="actor-face"><img class="actor-body" src="assets/landing/dog-brown.png" alt="" width="52" height="58"></span>
         </div>
-        <div class="actor" style="--x:58%; --h:78px; --base:18px; --bob-dur:3.4s">
+        <div class="actor actor--cat" style="--x:58%; --h:78px; --base:18px; --bob-dur:3.4s">
           <span class="actor-face"><img class="actor-body" src="assets/landing/cat-gray.png" alt="" width="56" height="39"></span>
         </div>
-        <div class="actor" style="--x:76%; --h:110px; --base:10px; --bob-dur:2.8s; --bob-delay:.7s">
+        <div class="actor actor--dog2" style="--x:76%; --h:110px; --base:10px; --bob-dur:2.8s; --bob-delay:.7s">
           <span class="actor-face"><img class="actor-body" src="assets/landing/dog-cream.png" alt="" width="53" height="55"></span>
         </div>
       </div>
@@ -617,12 +639,10 @@
           </p>
           <p class="tool-meta">Dazu: Hintergrund entfernen, glätten, Outline ziehen.</p>
         </li>
-        <li class="tool">
+        <li class="tool tool--anim">
           <h3>Animation</h3>
-          <p>
-            Frames in einer Timeline, der vorige und nächste scheinen durch. Abspielen
-            direkt im Editor, mit eigenem Tempo für jeden Frame.
-          </p>
+          <div class="filmstrip" aria-hidden="true"><div class="film-frames"><span class="ff"><img src="assets/landing/bird-a.png" alt="" width="17" height="7"></span><span class="ff"><img src="assets/landing/bird-b.png" alt="" width="17" height="7"></span><span class="ff"><img src="assets/landing/bird-a.png" alt="" width="17" height="7"></span><span class="ff"><img src="assets/landing/bird-b.png" alt="" width="17" height="7"></span></div><div class="film-play"><img class="fp-a" src="assets/landing/bird-a.png" alt="" width="17" height="7"><img class="fp-b" src="assets/landing/bird-b.png" alt="" width="17" height="7"></div></div>
+          <p>Frames in einer Timeline, Onion Skin, eigenes Tempo je Frame.</p>
           <p class="tool-meta">Raus als GIF, Spritesheet oder Code.</p>
         </li>
         <li class="tool">
@@ -739,6 +759,7 @@
 </footer>
 
 <script src="js/landing-i18n.js"></script>
+<script src="js/landing-fx.js"></script>
 <script src="js/pwa.js"></script>
 
 </body>

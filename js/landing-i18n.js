@@ -61,6 +61,7 @@
     'hero.h1':      'Pixel art editor for sprites',
     'hero.lead':    'An empty grid, a handful of colors, and off you go. The editor runs entirely in the browser — no build, no account, no cloud.',
     'hero.note':    'Your pixels stay in <code>localStorage</code> on your own machine. Nothing is uploaded — and once opened, the editor works offline too.',
+    'hero.chips':   '<li>Frames &amp; GIF</li><li>Layers</li><li>9 code formats</li><li>Works offline</li><li>No account</li>',
 
     's1.eyebrow':   '<span class="st-num">01</span> The first pixel',
     's1.h2':        'This is how a sprite grows.',
@@ -112,6 +113,21 @@
       +   '<h3>Image</h3>'
       +   '<p class="keys-row"><kbd>Ctrl</kbd><kbd>Z</kbd></p>'
       +   '<p>Flip, rotate, trim to the content, center, resize the canvas, scale hard.</p>'
+      + '</li>'
+      + '<li class="tool">'
+      +   '<h3>Animation</h3>'
+      +   '<p class="keys-row"><kbd>,</kbd><kbd>.</kbd><kbd>Enter</kbd></p>'
+      +   '<p>Frames in a timeline, onion skin, playback with its own pace per frame.</p>'
+      + '</li>'
+      + '<li class="tool">'
+      +   '<h3>Layers</h3>'
+      +   '<p class="keys-row"><kbd>+</kbd><kbd>⧉</kbd><kbd>⤓</kbd></p>'
+      +   '<p>Paint on top of each other, hide, lock, opacity — what you see is what gets exported.</p>'
+      + '</li>'
+      + '<li class="tool">'
+      +   '<h3>Guides</h3>'
+      +   '<p class="keys-row"><kbd>G</kbd></p>'
+      +   '<p>Free lines and figure proportions from chibi to hero — for drawing only, never in the export.</p>'
       + '</li>',
 
     's4.eyebrow':   '<span class="st-num">04</span> Scene',
@@ -123,9 +139,10 @@
       +   '<p>Load a photo, lay it over the grid, boil it down to a few colors. The colors from the image become your palette.</p>'
       +   '<p class="tool-meta">Plus: remove the background, despeckle, draw an outline.</p>'
       + '</li>'
-      + '<li class="tool">'
+      + '<li class="tool tool--anim">'
       +   '<h3>Animation</h3>'
-      +   '<p>Frames in a timeline, with the previous and next one showing through. Play it right in the editor, with its own pace for every frame.</p>'
+      +   '<div class="filmstrip" aria-hidden="true"><div class="film-frames"><span class="ff"><img src="assets/landing/bird-a.png" alt="" width="17" height="7"></span><span class="ff"><img src="assets/landing/bird-b.png" alt="" width="17" height="7"></span><span class="ff"><img src="assets/landing/bird-a.png" alt="" width="17" height="7"></span><span class="ff"><img src="assets/landing/bird-b.png" alt="" width="17" height="7"></span></div><div class="film-play"><img class="fp-a" src="assets/landing/bird-a.png" alt="" width="17" height="7"><img class="fp-b" src="assets/landing/bird-b.png" alt="" width="17" height="7"></div></div>'
+      +   '<p>Frames in a timeline, onion skin, a pace of its own per frame.</p>'
       +   '<p class="tool-meta">Out as a GIF, a spritesheet or code.</p>'
       + '</li>'
       + '<li class="tool">'
@@ -208,6 +225,7 @@
     'nav.langLabel': 'Sproch',
 
     'hero.eyebrow': 'spritebit · Fang kloa an.',
+    'hero.chips':   '<li>Frames &amp; GIF</li><li>Ebenen</li><li>9 Code-Formate</li><li>Rennt a offline</li><li>Ka Konto</li>',
     'hero.h1':      'Pixel Art Editor fia Sprites',
     'hero.lead':    'A laares Raster, a Handvoll Farben, und du moist los. Da Editor rennt komplett im Browser — ka Build, ka Konto, ka Cloud.',
     'hero.note':    'Deine Pixel bleibn im <code>localStorage</code> auf deim Rechner. Es wird nix aufeglodn — und amoi offn, rennt da Editor a offline.',
@@ -229,6 +247,23 @@
     's4.eyebrow':   '<span class="st-num">04</span> Szene',
     's4.h2':        'A Sprite kummt selten alloa.',
     's4.lead':      'Irgendwann san’s vüle: a Figur, ihr Hund, a Vogl, a Buschn. Da Editor hoit sie olle nebnanand und hüft, sie zammzbringa.',
+    's4.cards': ''
+      + '<li class="tool">'
+      +   '<h3>A Foto ois Vorlog</h3>'
+      +   '<p>Foto lodn, drüberlegn, auf a poar Farben eindampfn. D’Farben aus dem Buidl werdn zu deina Palettn.</p>'
+      +   '<p class="tool-meta">Dazua: Hintagrund weg, glätten, Outline ziagn.</p>'
+      + '</li>'
+      + '<li class="tool tool--anim">'
+      +   '<h3>Animation</h3>'
+      +   '<div class="filmstrip" aria-hidden="true"><div class="film-frames"><span class="ff"><img src="assets/landing/bird-a.png" alt="" width="17" height="7"></span><span class="ff"><img src="assets/landing/bird-b.png" alt="" width="17" height="7"></span><span class="ff"><img src="assets/landing/bird-a.png" alt="" width="17" height="7"></span><span class="ff"><img src="assets/landing/bird-b.png" alt="" width="17" height="7"></span></div><div class="film-play"><img class="fp-a" src="assets/landing/bird-a.png" alt="" width="17" height="7"><img class="fp-b" src="assets/landing/bird-b.png" alt="" width="17" height="7"></div></div>'
+      +   '<p>Frames in ana Timeline, Onion Skin, a eigenes Tempo je Frame.</p>'
+      +   '<p class="tool-meta">Außa ois GIF, Spritesheet oder Code.</p>'
+      + '</li>'
+      + '<li class="tool">'
+      +   '<h3>Olle zamm</h3>'
+      +   '<p>Olle Sprites kemman in a Buidl, gleich groß nebnanand — und dazua a Listn, wo welcher hockt.</p>'
+      +   '<p class="tool-meta">Damit liest a jede Engine des glei ein.</p>'
+      + '</li>',
 
     's5.eyebrow':   '<span class="st-num">05</span> Export',
     's5.h2':        'Und dann derf’s geh.',
