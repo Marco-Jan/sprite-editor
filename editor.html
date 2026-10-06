@@ -426,11 +426,12 @@
             <button class="btn btn--danger-soft" id="template-clear" data-i18n="tpl.clear" hidden>Entfernen</button>
           </div>
 
+          <span class="field-label" id="template-trace-head" data-i18n="tpl.traceHead" hidden>Aufs Raster übernehmen</span>
           <div class="btn-row">
             <button class="btn btn--accent" id="template-trace" data-i18n="tpl.trace" data-i18n-attr="title:tpl.traceTitle" hidden
-                    title="Schablonenfarben auf die aktuelle Palette einrasten">Auf Palette</button>
+                    title="Schablone aufs Raster übernehmen — jede Farbe wird zur ähnlichsten Farbe deiner Palette">Palettenfarben</button>
             <button class="btn" id="template-trace-raw" data-i18n="tpl.traceRaw" data-i18n-attr="title:tpl.traceRawTitle" hidden
-                    title="Schablonenfarben als freie Pixel übernehmen — fotorealistisch">Rohfarben</button>
+                    title="Schablone aufs Raster übernehmen — mit den exakten Farben aus dem Bild">Originalfarben</button>
           </div>
 
           <div class="field field--inline" id="tpl-quant-row" hidden>
@@ -438,7 +439,7 @@
             <input type="number" id="trace-colors" class="input input--num" min="2" max="64" value="8">
             <span class="field-unit" data-i18n="tpl.colors">Farben</span>
             <button class="btn btn--primary" id="template-trace-quant" data-i18n="tpl.apply" data-i18n-attr="title:tpl.applyTitle"
-                    title="Schablone abtasten und Farben auf N dominante Töne reduzieren (Median-Cut)">Übernehmen</button>
+                    title="Schablone aufs Raster übernehmen — vorher auf so viele Haupttöne reduziert">Übernehmen</button>
           </div>
         </div>
       </section>

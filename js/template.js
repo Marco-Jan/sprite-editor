@@ -300,7 +300,7 @@ function syncTplStatus() {
 // Über das hidden-Attribut statt inline-display, damit das CSS die
 // Darstellungsart (flex/inline) behält.
 function showTplControls(show) {
-  [tplClear, tplCenterBtn, tplTraceBtn, tplTraceRawBtn, tplQuantRow]
+  [tplClear, tplCenterBtn, tplTraceBtn, tplTraceRawBtn, tplQuantRow, document.getElementById('template-trace-head')]
     .forEach(el => { if (el) el.hidden = !show; });
 }
 

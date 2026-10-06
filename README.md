@@ -103,7 +103,7 @@ ist. Ein Klick auf ein Feld wählt die Farbe zum Malen. Zugewiesen wird per Knop
 Beides ist ein normaler Undo-Schritt.
 
 Daneben kann ein Pixel eine **freie Farbe** tragen: seinen Hex-Wert direkt statt eines
-Index. Die entstehen über die Pipette und beim Abpausen mit „Rohfarben“ oder „N Farben“.
+Index. Die entstehen über die Pipette und beim Übernehmen der Schablone mit „Originalfarben“ oder „Reduzieren auf N Farben“.
 Sie werden ganz normal gespeichert und exportiert. Die häufigsten stehen als kleine Felder
 in der Farbzeile, alle über **„+N Bildfarben“** (nach Häufigkeit sortiert). Von dort lassen
 sie sich **in die Palette aufnehmen**, solange sie in 255 Plätze passen.
@@ -170,7 +170,7 @@ Fehler steht die Meldung im Code-Feld und Kopieren/Speichern sind gesperrt.
 *Palette in den Code schreiben* gibt es nur bei TS und JS — überall sonst stecken die
 Farben ohnehin im Ergebnis.
 
-Freie Farben (Pipette, Rohfarben-Trace) passen nicht in `number[][]` — sie bekommen
+Freie Farben (Pipette, Schablone mit Originalfarben) passen nicht in `number[][]` — sie bekommen
 Indizes oberhalb der Palette (10, 11, …) und landen im Palettenblock. Der Round-Trip
 Export → Import ist damit verlustfrei.
 
@@ -324,8 +324,10 @@ ganzen Sprite bleibt die Fläche gleich und Ecken außerhalb fallen weg.
 ## Schablone (Foto-Vorlage)
 
 1. Bild laden, mit `Shift`+`Alt`+Linksklick ziehen positionieren
-2. **Reduzieren auf N Farben** — Median-Cut, gibt flache Flächen statt Foto-Rauschen
-3. **Bild → Palette** — macht aus den Bildfarben eine editierbare Palette
+2. **Aufs Raster übernehmen** — mit **Palettenfarben** (jede Farbe wird zur ähnlichsten der
+   Palette), **Originalfarben** (exakt aus dem Bild) oder **Reduzieren auf N Farben**
+   (Median-Cut, gibt flache Flächen statt Foto-Rauschen)
+3. **Bild → Palette …** — macht aus den Bildfarben eine Palette, mit Wahl der Farbanzahl
 4. **Hintergrund entfernen**, **Glätten**, **Outline**
 5. Reste von Hand säubern
 
