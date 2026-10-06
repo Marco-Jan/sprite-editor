@@ -379,6 +379,39 @@
         </div>
       </section>
 
+      <!-- Hilfslinien: frei und Figuren-Proportionen (js/guides.js) -->
+      <section class="panel" data-panel="guides">
+        <div class="panel-head">
+          <h2 class="panel-title" data-i18n="gd.title">Hilfslinien</h2>
+          <button class="panel-toggle" type="button" aria-expanded="true"></button>
+        </div>
+        <div class="panel-body">
+          <div class="btn-row">
+            <button class="btn" id="gd-show" aria-pressed="true" data-i18n="gd.show" data-i18n-attr="title:gd.showTitle" title="Alle Hilfslinien ein- und ausblenden (G)">Anzeigen</button>
+            <button class="btn" id="gd-edit" aria-pressed="false" data-i18n="gd.edit" data-i18n-attr="title:gd.editTitle" title="Linien auf der Zeichenfläche ziehen — solange wird nicht gemalt (Esc beendet)">Verschieben</button>
+          </div>
+          <span class="field-label" data-i18n="gd.free">Freie Linien</span>
+          <div class="btn-row">
+            <button class="btn" id="gd-add-h" data-i18n="gd.addH" data-i18n-attr="title:gd.addHTitle" title="Waagerechte Linie in die Mitte setzen">+ Waagerecht</button>
+            <button class="btn" id="gd-add-v" data-i18n="gd.addV" data-i18n-attr="title:gd.addVTitle" title="Senkrechte Linie in die Mitte setzen">+ Senkrecht</button>
+            <button class="btn btn--danger-soft" id="gd-clear" data-i18n="gd.clear" data-i18n-attr="title:gd.clearTitle" title="Alle freien Linien dieses Sprites entfernen">Alle löschen</button>
+          </div>
+          <label class="field">
+            <span class="field-label" data-i18n="gd.figure">Figur — Kopfhöhen</span>
+            <select id="gd-heads" class="input input--sm">
+              <option value="0" data-i18n="gd.off">Aus</option>
+              <option value="2" data-i18n="gd.h2">2 Köpfe — Chibi</option>
+              <option value="3" data-i18n="gd.h3">3 Köpfe — klein, niedlich</option>
+              <option value="4" data-i18n="gd.h4">4 Köpfe — kompakte Spielfigur</option>
+              <option value="6" data-i18n="gd.h6">6 Köpfe — Comic, Jugendliche</option>
+              <option value="8" data-i18n="gd.h8">8 Köpfe — klassisch, heldenhaft</option>
+            </select>
+          </label>
+          <button class="btn" id="gd-fit" data-i18n="gd.fit" data-i18n-attr="title:gd.fitTitle" title="Ober- und Unterkante der Einteilung auf das Gezeichnete setzen">An Figur anpassen</button>
+          <p class="field-note" data-i18n="gd.note">Nur zum Zeichnen — die Linien erscheinen in keinem Export. Im Modus „Verschieben“ Linien ziehen, eine freie Linie aus dem Bild ziehen löscht sie.</p>
+        </div>
+      </section>
+
       <section class="panel" data-panel="palette">
         <div class="panel-head">
           <h2 class="panel-title" data-i18n="pal.title">Palette</h2>
@@ -829,6 +862,14 @@
       <div>Bei einer Auswahl wächst der Rahmen mit, damit nichts abgeschnitten wird. Beim ganzen Sprite bleibt die Fläche gleich, Ecken außerhalb fallen weg.</div>
     </div>
 
+    <h3 class="help-h" data-i18n="help.h.guides">Hilfslinien</h3>
+    <div class="help-list" data-i18n-html="help.guides">
+      <div>Panel <b>Hilfslinien</b> im Dock — nur zum Zeichnen, sie erscheinen in keinem Export. <span class="kbd">G</span> blendet alle ein und aus.</div>
+      <div><b>Freie Linien</b>: „+ Waagerecht“ / „+ Senkrecht“ setzt eine Linie in die Mitte. Im Modus <b>Verschieben</b> zieht man Linien auf der Zeichenfläche an ihren Platz (immer auf einer Pixelgrenze); aus dem Bild gezogen ist eine Linie gelöscht. Solange wird nicht gemalt — <span class="kbd">Esc</span> beendet den Modus.</div>
+      <div><b>Figur</b>: teilt eine Figur in 2 (Chibi), 3, 4, 6 oder 8 Kopfhöhen und markiert Kinn, Brust, Hüfte, Knie usw. samt Körperachse. „An Figur anpassen“ setzt Ober- und Unterkante auf das Gezeichnete; beide lassen sich im Modus Verschieben ziehen.</div>
+      <div>Die Linien gehören zum Sprite und werden mit dem Projekt gespeichert.</div>
+    </div>
+
     <h3 class="help-h" data-i18n="help.h.layers">Ebenen</h3>
     <div class="help-list" data-i18n-html="help.layers">
       <div>Jeder Sprite kann mehrere <b>Ebenen</b> haben — das Panel <b>Ebenen</b> im Dock. Gemalt wird immer in die <b>aktive</b> Ebene; angezeigt werden alle sichtbaren übereinander, die oberste in der Liste liegt oben.</div>
@@ -906,6 +947,7 @@
       <div class="sc-row"><b>Entf</b><span>Auswahl leeren</span></div>
       <div class="sc-row"><b>Enter</b><span>Drehung übernehmen · sonst Animation abspielen / anhalten</span></div>
       <div class="sc-row"><b>, / .</b><span>Voriger / nächster Frame</span></div>
+      <div class="sc-row"><b>G</b><span>Hilfslinien ein / aus</span></div>
       <div class="sc-row"><b>Zwei Finger</b><span>Zoomen und verschieben (Touch)</span></div>
       <div class="sc-row"><b>Strg + Z</b><span>Rückgängig</span></div>
       <div class="sc-row"><b>Strg + Y</b><span>Wiederholen</span></div>

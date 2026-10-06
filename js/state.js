@@ -58,6 +58,10 @@ export const state = {
   onion:         false,
   playing:       false,
 
+  // Hilfslinien (js/guides.js): anzeigen; Verschieben-Modus (nicht gespeichert).
+  showGuides:    true,
+  guideEdit:     false,
+
   // Vorschau der Formen-Werkzeuge zwischen pointerdown und pointerup.
   // Liegt hier, damit renderEditor sie ohne Umweg zeichnen kann.
   shape: { cells: [], color: 0 },
@@ -157,9 +161,24 @@ export function normalizeLayer(l, n) {
 // Leeres Bild in der Größe eines vorhandenen.
 export const blankLike = g => g.map(row => row.map(() => 0));
 
+// ── Hilfslinien ─────────────────────────────────────────────────────
+// Je Sprite: freie Linien auf Pixelgrenzen (h = y-Werte, v = x-Werte) und
+// die Figuren-Einteilung (heads Kopfhöhen zwischen top und bottom).
+// Reine Anzeige — kein Undo, kein Export.
+export const FIGURE_HEADS = [2, 3, 4, 6, 8];
+
+export function normalizeGuides(g, W, H) {
+  const ints = (a, max) => [...new Set((Array.isArray(a) ? a : []).map(Number)
+    .filter(v => Number.isInteger(v) && v >= 0 && v <= max))].sort((a, b) => a - b);
+  const heads = FIGURE_HEADS.includes(Number(g?.heads)) ? Number(g.heads) : 0;
+  const top = Math.max(0, Math.min(H - 1, Number.isInteger(g?.top) ? g.top : 0));
+  const bottom = Math.max(top + 1, Math.min(H, Number.isInteger(g?.bottom) ? g.bottom : H));
+  return { h: ints(g?.h, H), v: ints(g?.v, W), heads, top, bottom };
+}
+
 // Sprite-Datensatz aus Rohdaten bauen (Anlegen, Laden, Import).
 // Frames als { cels: [grid, …], dur } oder — eine Ebene — als { grid, dur }.
-export function makeSprite({ name, palette, frames, fps = DEFAULT_FPS, frame = 0, layers = null, layer = 0 }) {
+export function makeSprite({ name, palette, frames, fps = DEFAULT_FPS, frame = 0, layers = null, layer = 0, guides = null }) {
   const fr = frames.map(f => ({ cels: f.cels ? [...f.cels] : [f.grid], dur: Math.max(0, Math.round(f.dur) || 0) }));
   const n = Math.max(...fr.map(f => f.cels.length));
   for (const f of fr) while (f.cels.length < n) f.cels.push(blankLike(f.cels[0]));
@@ -172,6 +191,7 @@ export function makeSprite({ name, palette, frames, fps = DEFAULT_FPS, frame = 0
     layer: Math.max(0, Math.min(n - 1, layer | 0)),
     layers: ly,
     frames: fr,
+    guides: normalizeGuides(guides, fr[0].cels[0][0].length, fr[0].cels[0].length),
   });
 }
 
@@ -228,7 +248,7 @@ export function frameDuration(sp, i) {
 
 // Sprite anlegen und zurückgeben. Setzt ihn NICHT automatisch aktiv.
 // `frames` ([{ grid | cels, dur }]) geht vor `grid` (ein einzelnes Bild).
-export function createSprite({ name, size = 24, palette = DEFAULT_PALETTE, grid = null, frames = null, fps, layers = null, layer = 0 }) {
+export function createSprite({ name, size = 24, palette = DEFAULT_PALETTE, grid = null, frames = null, fps, layers = null, layer = 0, guides = null }) {
   const id = makeSpriteId(name);
   sprites[id] = makeSprite({
     name: (name || id).trim() || id,
@@ -237,6 +257,7 @@ export function createSprite({ name, size = 24, palette = DEFAULT_PALETTE, grid 
     fps,
     layers,
     layer,
+    guides,
   });
   return id;
 }

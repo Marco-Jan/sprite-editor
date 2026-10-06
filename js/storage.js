@@ -75,6 +75,7 @@ function serializeSprites() {
       frame: sp.frame,
       layer: sp.layer,
       layers: sp.layers,
+      guides: sp.guides,
       frames: sp.frames.map(f => (f.dur ? { cels: f.cels, dur: f.dur } : { cels: f.cels })),
       grid: flatGrid(sp, 0),
     };
@@ -116,6 +117,7 @@ function buildPayload() {
       mirror:    state.mirror,
       shapeFill: state.shapeFill,
       onion:      state.onion,
+      showGuides: state.showGuides,
       fullscreen: document.body.classList.contains('editor-fullscreen'),
       panels: collectPanelStates(),
     },
@@ -254,6 +256,7 @@ function applyPayload(payload) {
           frame: sp.frame,
           layers: Array.isArray(sp.layers) ? sp.layers : null,
           layer: sp.layer,
+          guides: sp.guides,
         });
       }
     }
@@ -291,6 +294,7 @@ function applyPayload(payload) {
     if (ui.mirror) state.mirror = ui.mirror;
     if (typeof ui.shapeFill === 'boolean') state.shapeFill = ui.shapeFill;
     if (typeof ui.onion === 'boolean') state.onion = ui.onion;
+    if (typeof ui.showGuides === 'boolean') state.showGuides = ui.showGuides;
     applyPanelStates(ui.panels);
 
     return { loaded: true, migrated, note, fullscreen: !!ui.fullscreen };

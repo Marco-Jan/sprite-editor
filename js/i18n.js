@@ -229,6 +229,29 @@ const STATIC = {
 
     // ── Bühne ──
     'stage.undo':       'Undo (Ctrl+Z)',
+    // Hilfslinien-Panel (guides.js)
+    'gd.title': 'Guides',
+    'gd.show': 'Show',
+    'gd.showTitle': 'Show / hide all guides (G)',
+    'gd.edit': 'Move',
+    'gd.editTitle': 'Drag lines on the drawing area — no painting meanwhile (Esc ends it)',
+    'gd.free': 'Free lines',
+    'gd.addH': '+ Horizontal',
+    'gd.addHTitle': 'Put a horizontal line in the middle',
+    'gd.addV': '+ Vertical',
+    'gd.addVTitle': 'Put a vertical line in the middle',
+    'gd.clear': 'Delete all',
+    'gd.clearTitle': 'Remove all free lines of this sprite',
+    'gd.figure': 'Figure — head heights',
+    'gd.off': 'Off',
+    'gd.h2': '2 heads — chibi',
+    'gd.h3': '3 heads — small, cute',
+    'gd.h4': '4 heads — compact game character',
+    'gd.h6': '6 heads — comic, teenager',
+    'gd.h8': '8 heads — classic, heroic',
+    'gd.fit': 'Fit to figure',
+    'gd.fitTitle': 'Set the top and bottom of the division to what is drawn',
+    'gd.note': 'Drawing aid only — the lines never show up in an export. In “Move” mode drag the lines; dragging a free line out of the image deletes it.',
     // Ebenen-Panel (layers.js)
     'ly.title': 'Layers',
     'ly.add': 'New layer above the active one',
@@ -493,6 +516,12 @@ const STATIC = {
       + '<div>Every preview is computed from the <i>original</i>, not from the last rotated result — so pulling the slider three times does not smear the shape.</div>'
       + '<div>With a selection the frame grows along so nothing gets cut off. On the whole sprite the canvas stays the same size and corners outside it fall away.</div>',
 
+    'help.h.guides': 'Guides',
+    'help.guides': ''
+      + '<div>The <b>Guides</b> panel in the dock — a drawing aid only, they never show up in an export. <span class="kbd">G</span> shows and hides them all.</div>'
+      + '<div><b>Free lines</b>: “+ Horizontal” / “+ Vertical” puts a line in the middle. In <b>Move</b> mode you drag lines into place on the drawing area (always on a pixel edge); dragged out of the image, a line is deleted. No painting meanwhile — <span class="kbd">Esc</span> ends the mode.</div>'
+      + '<div><b>Figure</b>: divides a figure into 2 (chibi), 3, 4, 6 or 8 head heights and marks chin, chest, hip, knee etc. plus the body axis. “Fit to figure” sets the top and bottom to what is drawn; both can be dragged in Move mode.</div>'
+      + '<div>The lines belong to the sprite and are saved with the project.</div>',
     'help.h.layers': 'Layers',
     'help.layers': ''
       + '<div>Every sprite can have several <b>layers</b> — the <b>Layers</b> panel in the dock. You always paint into the <b>active</b> layer; all visible ones are shown on top of each other, the top one in the list lies on top.</div>'
@@ -564,6 +593,7 @@ const STATIC = {
       + '<div class="sc-row"><b>Del</b><span>Erase the selection</span></div>'
       + '<div class="sc-row"><b>Enter</b><span>Apply the rotation · otherwise play / pause the animation</span></div>'
       + '<div class="sc-row"><b>, / .</b><span>Previous / next frame</span></div>'
+      + '<div class="sc-row"><b>G</b><span>Guides on / off</span></div>'
       + '<div class="sc-row"><b>Two fingers</b><span>Zoom and pan (touch)</span></div>'
       + '<div class="sc-row"><b>Ctrl + Z</b><span>Undo</span></div>'
       + '<div class="sc-row"><b>Ctrl + Y</b><span>Redo</span></div>'
@@ -684,6 +714,17 @@ const MSG = {
     'tl.frameTitle': 'Frame {i} · {ms} ms — antippen zum Wählen, ziehen zum Verschieben',
     'tl.frameOf':   'Frame {i}/{n}',
     'tl.lastFrame': 'Der letzte Frame bleibt — ein Sprite braucht mindestens einen.',
+
+    // Hilfslinien (js/guides.js)
+    'gd.chin':     'Kinn',
+    'gd.chest':    'Brust',
+    'gd.navel':    'Nabel',
+    'gd.hip':      'Hüfte',
+    'gd.crotch':   'Schritt',
+    'gd.knee':     'Knie',
+    'gd.editInfo': 'Hilfslinien verschieben: Linie anfassen und ziehen, aus dem Bild ziehen löscht. Esc beendet.',
+    'gd.editOff':  'Zurück zum Malen.',
+    'gd.removed':  'Hilfslinie entfernt.',
 
     // Ebenen (js/layers.js) — die Panel-Texte stehen im HTML bzw. in STATIC
     'ly.name':        'Ebene {n}',
@@ -1074,6 +1115,16 @@ const MSG = {
     'tl.frameTitle': 'Frame {i} · {ms} ms — tap to select, drag to move',
     'tl.frameOf':   'frame {i}/{n}',
     'tl.lastFrame': 'The last frame stays — a sprite needs at least one.',
+
+    'gd.chin':     'chin',
+    'gd.chest':    'chest',
+    'gd.navel':    'navel',
+    'gd.hip':      'hip',
+    'gd.crotch':   'crotch',
+    'gd.knee':     'knee',
+    'gd.editInfo': 'Moving guides: grab a line and drag it, dragging it out of the image deletes it. Esc ends this.',
+    'gd.editOff':  'Back to painting.',
+    'gd.removed':  'Guide removed.',
 
     'ly.name':        'Layer {n}',
     'ly.copyName':    '{name} copy',

@@ -48,6 +48,7 @@ const PRECACHE = [
   'js/frames.js',
   'js/gamejson.js',
   'js/gif.js',
+  'js/guides.js',
   'js/history.js',
   'js/i18n-at.js',
   'js/i18n.js',

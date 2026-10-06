@@ -786,6 +786,10 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 #timeline.is-vertical .tl-frame { touch-action: pan-y; }
 #timeline.is-vertical .tl-num { flex-direction: row; }
 
+/* Hilfslinien: im Verschieben-Modus kein Pinsel-Umriss */
+#editor-canvas-wrap.is-guide-edit #brush-cursor { display: none; }
+#gd-show.is-active, #gd-edit.is-active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent-line); }
+
 /* Ebenen-Panel (js/layers.js) — oberste Ebene oben */
 .layer-list {
   display: flex;

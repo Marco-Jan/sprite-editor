@@ -326,6 +326,22 @@ Die Schablone überlebt einen Reload (eigener localStorage-Key).
 
 ---
 
+## Hilfslinien
+
+Panel „Hilfslinien“ im Dock. Reine Zeichenhilfe: nur in der Zeichenfläche zu sehen, in
+keinem Export, kein Undo. Gespeichert je Sprite (`sp.guides`), `G` blendet alle ein/aus.
+
+- **Freie Linien** — „+ Waagerecht“ / „+ Senkrecht“ setzt eine Linie in die Mitte. Im
+  Modus **Verschieben** gehört die Zeichenfläche den Linien: anfassen und ziehen (immer
+  auf eine Pixelgrenze), aus dem Bild ziehen löscht. Gemalt wird solange nicht; `Esc`
+  beendet den Modus.
+- **Figur** — Einteilung in 2 (Chibi), 3, 4, 6 oder 8 Kopfhöhen mit Kopfnummern, den
+  üblichen Marken (Kinn, Brust, Nabel, Hüfte, Schritt, Knie — je nach Einteilung) und
+  der Körperachse. „An Figur anpassen“ setzt Ober- und Unterkante auf den sichtbaren
+  Inhalt; beide lassen sich im Modus Verschieben ziehen.
+
+---
+
 ## Ebenen
 
 Jeder Sprite hat eine oder mehrere **Ebenen** (Panel „Ebenen“ im Dock). Die Liste zeigt
@@ -421,6 +437,7 @@ die FPS-Zahl des Sprites.
 | `Entf` | Auswahl leeren |
 | `Enter` | Drehung übernehmen · sonst Animation abspielen / anhalten |
 | `,` / `.` | Voriger / nächster Frame |
+| `G` | Hilfslinien ein / aus |
 | Zwei Finger (Touch) | Zoomen und verschieben |
 | `Strg+Z` / `Strg+Y` | Rückgängig / Wiederholen |
 | `Esc` | Auswahl aufheben, Dialog oder Vollbild schließen |
@@ -492,6 +509,7 @@ sprite-editor/
     ├── history.js      ← Undo/Redo pro Strich (sichert den ganzen Sprite mit allen Frames)
     ├── frames.js       ← Frames: anlegen, wechseln, abspielen, Onion Skin, Timeline
     ├── layers.js       ← Ebenen: anlegen, ordnen, ausblenden, sperren, Deckkraft, Panel
+    ├── guides.js       ← Hilfslinien: freie Linien, Figuren-Proportionen, Verschieben-Modus
     ├── gif.js          ← GIF89a-Encoder (LZW, Endlosschleife, Dauer je Frame)
     ├── sprites.js      ← anlegen, umbenennen, duplizieren, löschen
     ├── palettes.js     ← Paletten-Modal + Fork/Import

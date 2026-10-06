@@ -39,6 +39,10 @@ export const renderCallbacks = {
   // Timeline (frames.js): ganz neu zeichnen bzw. nur den aktuellen Frame.
   onRenderTimeline:  () => {},
   onRenderLayers:    () => {},
+  // Hilfslinien (guides.js) — zeichnet über Gitter und Auswahl.
+  onDrawOverlay:     (_ctx, _W, _H, _cs) => {},
+  onGuideInfo:       (_msg) => {},
+  onRenderGuides:    () => {},
   onEditorRendered:  () => {},
 };
 
@@ -225,6 +229,7 @@ export function renderEditor() {
   if (selection.rect) drawSelectionFrame(ctx, selection.rect, selection.mask, cs);
   if (selection.path) drawLassoPath(ctx, selection.path, cs);
   if (state.mirror !== 'off') drawMirrorGuides(ctx, W, H, cs);
+  renderCallbacks.onDrawOverlay(ctx, W, H, cs);
 
   updateStageTitle();
   renderCallbacks.onEditorRendered();
@@ -1031,4 +1036,5 @@ export function renderAll() {
   renderCallbacks.onSyncImagePanel();
   renderCallbacks.onRenderTimeline();
   renderCallbacks.onRenderLayers();
+  renderCallbacks.onRenderGuides();
 }

@@ -47,6 +47,7 @@ import {
 import { initExport } from './export.js';
 import { initFrames, togglePlay, nextFrame, prevFrame, isPlaying, stop as stopPlayback } from './frames.js';
 import { initLayers } from './layers.js';
+import { initGuides, guidePointerDown, toggleEdit as toggleGuideEdit, toggleShow as toggleGuides } from './guides.js';
 import { parseTsSprite } from './tsimport.js';
 import { CODE_FORMATS, getFormat, codeFilename } from './codegen.js';
 import {
@@ -628,6 +629,8 @@ function initCanvasEvents() {
     if (panKeyHeld || e.button === 1) return;
     // Beim Abspielen wird nicht gemalt — der Tipp hält an.
     if (isPlaying()) { e.preventDefault(); stopPlayback(); return; }
+    // Hilfslinien verschieben: die Zeichenfläche gehört den Linien.
+    if (state.guideEdit) { guidePointerDown(e); return; }
     // Pointer einfangen → move/up feuern weiter, auch außerhalb des Canvas.
     try { canvas.setPointerCapture(e.pointerId); } catch {}
 
@@ -843,6 +846,7 @@ function initKeyboardEvents() {
     if (e.key === 'Escape') {
       if (closeTopModal()) return;
       if (isPlaying()) { stopPlayback(); return; }
+      if (state.guideEdit) { toggleGuideEdit(false); return; }
       if (isRotating()) { stopRotating(false); info(t('rot.discarded')); return; }
       if (shapeStart || state.shape.cells.length) {
         shapeStart = null;
@@ -918,6 +922,9 @@ function initKeyboardEvents() {
         return;
       }
     }
+
+    // ── G: Hilfslinien ein/aus ──
+    if (e.key === 'g' || e.key === 'G') { toggleGuides(); return; }
 
     // ── Frames: , und . blättern, Enter spielt ab ──
     if (e.key === ',') { prevFrame(); return; }
@@ -1681,6 +1688,8 @@ function init() {
   initExport();
   initFrames();
   initLayers();   // nach initFrames: hängt sich an dessen Zeichen-Callback
+  initGuides();
+  renderCallbacks.onGuideInfo = info;
   initOutputPanel();
   initImport();
   initCanvasEvents();
