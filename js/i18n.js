@@ -172,12 +172,12 @@ export function initLangSwitch() {
 const STATIC = {
   en: {
     // ── Meta ──
-    'meta.title':   'Editor — Sprite Editor',
+    'meta.title':   'Editor — spritebit',
     'meta.desc':    'Pixel art editor with a photo stencil — draw sprites, build palettes, export as code or image. Runs entirely in the browser.',
     'meta.locale':  'en_US',
-    'meta.ogTitle': 'Editor — Sprite Editor',
+    'meta.ogTitle': 'Editor — spritebit',
     'meta.ogDesc':  'Pixel art editor with a photo stencil — draw, build palettes, export as code or image.',
-    'meta.ogAlt':   'Sprite Editor — a pixel staircase in green and blue next to the wordmark.',
+    'meta.ogAlt':   'spritebit — a pixel staircase in green and blue next to the wordmark.',
 
     // ── Kopfzeile ──
     'tb.home':        'Back to the start page',
@@ -766,7 +766,7 @@ const MSG = {
     'exp.sheetSaved':    'Spritesheet mit {n} Sprites gespeichert — „{png}“ und „{json}“{where}',
     'exp.sheetDownload': ' (im Download-Ordner).',
     'exp.sheetIn':       ' in „{dir}“.',
-    'exp.pdfMissing':    'PDF-Library noch nicht geladen — kurz warten und nochmal versuchen (Internet erforderlich).',
+    'exp.pdfMissing':    'PDF-Library noch nicht geladen — kurz warten und nochmal versuchen.',
 
     // Format-Hinweise unter dem Format-Dropdown
     'fmt.ts':   'number[][] mit Typen — der Klassiker für TypeScript-Projekte.',
@@ -1065,7 +1065,7 @@ const MSG = {
     'exp.sheetSaved':    'Spritesheet with {n} sprites saved — “{png}” and “{json}”{where}',
     'exp.sheetDownload': ' (in the downloads folder).',
     'exp.sheetIn':       ' in “{dir}”.',
-    'exp.pdfMissing':    'The PDF library has not loaded yet — wait a moment and try again (needs internet).',
+    'exp.pdfMissing':    'The PDF library has not loaded yet — wait a moment and try again.',
 
     'fmt.ts':   'number[][] with types — the classic for TypeScript projects.',
     'fmt.js':   'The same without types, as an ES module.',

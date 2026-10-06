@@ -18,10 +18,10 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # ── Die einzige Stelle mit der Domain ───────────────────────────────
 # Abgeleitet aus dem git-Remote (github.com/Marco-Jan/sprite-editor).
-# Bei eigener Domain hier ersetzen, z. B. 'https://sprite-editor.de'.
+# Bei eigener Domain hier ersetzen, z. B. 'https://spritebit.de'.
 BASE = 'https://marco-jan.github.io/sprite-editor'
 
-SITE_NAME = 'Sprite Editor'
+SITE_NAME = 'spritebit'
 LANG = 'de'
 
 # ── Die Seiten ──────────────────────────────────────────────────────
@@ -119,7 +119,7 @@ def build_llms():
 
 > Pixel-Art-Editor, der komplett im Browser läuft. Kein Build, keine
 > Anmeldung, keine Cloud — die Arbeit bleibt im localStorage des Nutzers.
-> Sprites lassen sich als Bild oder in acht Code-Formaten exportieren.
+> Sprites lassen sich als Bild oder in neun Code-Formaten exportieren.
 > Kostenlos, MIT-Lizenz, Quelltext offen.
 
 Der Editor ist reines Frontend: HTML, CSS und ES-Module ohne Bundler. Weil

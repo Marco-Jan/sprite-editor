@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════════
-   SPRITE EDITOR — Landingpage
+   SPRITEBIT — Landingpage
    Eigenes Stylesheet. Bindet styles.css NICHT ein, uebernimmt aber
    dessen Tokens, damit Startseite und Editor zusammenpassen.
    Kein JavaScript, keine externen Ressourcen.
@@ -356,6 +356,7 @@ kbd {
   font-weight: 650;
   letter-spacing: -0.015em;
 }
+.brand-bit { color: var(--ramp-1); }
 /* Sprachumschalter (DE / EN) — wird von js/landing-i18n.js eingesetzt.
    Ohne JavaScript steht er gar nicht erst da, dann bleibt alles deutsch. */
 .lang-switch {

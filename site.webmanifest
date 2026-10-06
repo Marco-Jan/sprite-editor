@@ -1,8 +1,9 @@
 {
-  "name": "Sprite Editor",
-  "short_name": "Sprites",
+  "name": "spritebit – Pixel Art Editor",
+  "short_name": "spritebit",
   "description": "Pixel-Art-Editor mit Foto-Vorlage — Sprites malen, Paletten bauen, als Code oder Bild exportieren.",
   "lang": "de",
+  "id": "./editor.html",
   "start_url": "./editor.html",
   "scope": "./",
   "display": "standalone",

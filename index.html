@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title data-i18n="meta.title">Sprite Editor — Pixel-Art im Browser</title>
-  <meta name="description" data-i18n-attr="content:meta.desc" content="Pixel-Art-Editor für den Browser: zeichnen, Paletten bauen, Fotos als Vorlage abpausen und in acht Code-Formaten exportieren. Kein Build, keine Anmeldung, alles bleibt lokal.">
+  <title data-i18n="meta.title">spritebit – Pixel Art Editor online, Export als Code</title>
+  <meta name="description" data-i18n-attr="content:meta.desc" content="Pixel-Art-Editor für den Browser: zeichnen, Paletten bauen, Fotos als Vorlage abpausen und in neun Code-Formaten exportieren. Kein Build, keine Anmeldung, alles bleibt lokal.">
   <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#121214">
 
@@ -13,23 +13,23 @@
   <link rel="alternate icon" href="assets/favicon.ico" sizes="16x16 32x32 48x48">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
   <link rel="manifest" href="site.webmanifest">
-  <meta name="apple-mobile-web-app-title" content="Sprites">
+  <meta name="apple-mobile-web-app-title" content="spritebit">
 
   <link rel="canonical" href="https://marco-jan.github.io/sprite-editor/">
   <meta name="robots" content="index, follow, max-image-preview:large">
 
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="Sprite Editor">
+  <meta property="og:site_name" content="spritebit">
   <meta property="og:locale" data-i18n-attr="content:meta.locale" content="de_DE">
   <meta property="og:url" content="https://marco-jan.github.io/sprite-editor/">
-  <meta property="og:title" data-i18n-attr="content:meta.ogTitle" content="Sprite Editor — Pixel-Art im Browser">
+  <meta property="og:title" data-i18n-attr="content:meta.ogTitle" content="spritebit – Pixel Art Editor online, Export als Code">
   <meta property="og:description" data-i18n-attr="content:meta.ogDesc" content="Vom leeren Raster zum fertigen Sprite. Zeichnen, Paletten bauen, exportieren — alles im Browser, nichts wird hochgeladen.">
   <meta property="og:image" content="https://marco-jan.github.io/sprite-editor/assets/og-image.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" data-i18n-attr="content:meta.ogAlt" content="Sprite Editor — Pixel-Treppe in Grün und Blau neben dem Schriftzug.">
+  <meta property="og:image:alt" data-i18n-attr="content:meta.ogAlt" content="spritebit — Pixel-Treppe in Grün und Blau neben dem Schriftzug.">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" data-i18n-attr="content:meta.ogTitle" content="Sprite Editor — Pixel-Art im Browser">
+  <meta name="twitter:title" data-i18n-attr="content:meta.ogTitle" content="spritebit – Pixel Art Editor online, Export als Code">
   <meta name="twitter:description" data-i18n-attr="content:meta.twDesc" content="Zeichnen, Paletten bauen, exportieren — alles im Browser, nichts wird hochgeladen.">
   <meta name="twitter:image" content="https://marco-jan.github.io/sprite-editor/assets/og-image.png">
 
@@ -65,13 +65,13 @@
   {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    "name": "Sprite Editor",
+    "name": "spritebit",
     "url": "https://marco-jan.github.io/sprite-editor/",
     "applicationCategory": "DesignApplication",
     "applicationSubCategory": "Pixel-Art-Editor",
     "operatingSystem": "Web-Browser",
     "inLanguage": "de",
-    "description": "Pixel-Art-Editor für den Browser: zeichnen, Paletten bauen, Fotos als Vorlage abpausen und in acht Code-Formaten exportieren. Kein Build, keine Anmeldung, alles bleibt lokal.",
+    "description": "Pixel-Art-Editor für den Browser: zeichnen, Paletten bauen, Fotos als Vorlage abpausen und in neun Code-Formaten exportieren. Kein Build, keine Anmeldung, alles bleibt lokal.",
     "image": "https://marco-jan.github.io/sprite-editor/assets/og-image.png",
     "license": "https://opensource.org/licenses/MIT",
     "isAccessibleForFree": true,
@@ -103,7 +103,7 @@
   <div class="topbar-inner">
     <span class="brand">
       <img class="brand-mark" src="assets/icon.svg" alt="" width="22" height="22">
-      <span class="brand-name">Sprite&nbsp;Editor</span>
+      <span class="brand-name">sprite<span class="brand-bit">bit</span></span>
     </span>
     <nav class="topnav" data-i18n-attr="aria-label:nav.aria" aria-label="Stationen">
       <a href="#pixel" data-i18n="nav.pixel">Pixel</a>
@@ -146,8 +146,8 @@
 
     <div class="stage-inner hero-grid">
       <div class="hero-text">
-        <p class="eyebrow" data-i18n="hero.eyebrow">Sprite&nbsp;Editor · Pixel-Art im Browser</p>
-        <h1 data-i18n="hero.h1">Fang klein an.</h1>
+        <p class="eyebrow" data-i18n="hero.eyebrow">spritebit · Fang klein an.</p>
+        <h1 data-i18n="hero.h1">Pixel Art Editor für Sprites</h1>
         <p class="lead" data-i18n="hero.lead">
           Ein leeres Raster, eine Handvoll Farben, und du malst los. Der Editor läuft
           komplett im Browser — kein Build, kein Konto, keine Cloud.
@@ -653,7 +653,7 @@
     </ul>
 
     <p class="section-lead section-lead--sub" data-i18n="s5.subLead">
-      Für Entwickler kommt der Sprite auch als Code heraus — acht Formate, jedes
+      Für Entwickler kommt der Sprite auch als Code heraus — neun Formate, jedes
       für sich allein benutzbar.
     </p>
 
@@ -712,7 +712,7 @@
   <div class="foot-inner">
     <p class="foot-brand">
       <img src="assets/icon.svg" alt="" width="18" height="18">
-      <span>Sprite&nbsp;Editor</span>
+      <span>sprite<span class="brand-bit">bit</span></span>
     </p>
     <p class="foot-note" data-i18n-html="foot.note">
       Die Pixel-Art in der Kulisse stammt aus dem eigenen Stream-Overlay.
@@ -726,6 +726,7 @@
 </footer>
 
 <script src="js/landing-i18n.js"></script>
+<script src="js/pwa.js"></script>
 
 </body>
 </html>

@@ -89,7 +89,7 @@ function writeNow() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(buildPayload()));
     flashSaved();
   } catch (e) {
-    console.warn('Sprite-Editor: Speichern fehlgeschlagen', e);
+    console.warn('spritebit: Speichern fehlgeschlagen', e);
     showInfoToast(t('file.saveFailed'));
   }
 }
@@ -114,7 +114,7 @@ export function loadState() {
 
   let payload;
   try { payload = JSON.parse(raw); } catch (e) {
-    console.warn('Sprite-Editor: Save unlesbar, starte frisch', e);
+    console.warn('spritebit: Save unlesbar, starte frisch', e);
     return { loaded: false };
   }
 
@@ -187,7 +187,7 @@ function applyPayload(payload) {
 
     return { loaded: true, migrated, note, fullscreen: !!ui.fullscreen };
   } catch (e) {
-    console.warn('Sprite-Editor: Laden fehlgeschlagen, starte frisch', e);
+    console.warn('spritebit: Laden fehlgeschlagen, starte frisch', e);
     return { loaded: false };
   }
 }

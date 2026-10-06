@@ -1,7 +1,7 @@
 // ════════════════════════════════════════════════════════════════════
 // EXPORT — PNG + PDF mit transparentem Hintergrund, ohne Grid-Linien
 // ════════════════════════════════════════════════════════════════════
-// PDF nutzt jsPDF, das via CDN in index.html geladen wird (window.jspdf).
+// PDF nutzt jsPDF aus vendor/, geladen in editor.html (window.jspdf).
 import { getGrid, getPal, getSprite, listSprites, getPaletteByName } from './state.js';
 import { cellToColor } from './render.js';
 import { showInfoToast } from './toast.js';

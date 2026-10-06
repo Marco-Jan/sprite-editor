@@ -1,4 +1,4 @@
-# Sprite Editor
+# spritebit
 
 Pixel-Art-Editor mit Foto-Vorlage. Reines Frontend — HTML, CSS und ES-Module, kein Build.
 
@@ -16,8 +16,38 @@ python -m http.server
 ```
 
 Dann `http://localhost:8000/` öffnen — das ist die Startseite, der Editor liegt unter
-`editor.html`. PDF-Export lädt jsPDF vom CDN und braucht dafür
-einmalig Internet; alles andere läuft offline.
+`editor.html`. Alles läuft ohne Internet, auch der PDF-Export (jsPDF liegt in `vendor/`).
+
+---
+
+## Offline-Modus (PWA)
+
+Wer Startseite oder Editor einmal online geöffnet hat, kann danach offline weiterarbeiten.
+Der Service Worker (`sw.js`) legt beim ersten Besuch die ganze App im Browser-Cache ab.
+Chrome und Edge bieten in der Adressleiste „Installieren“ an, danach startet der Editor wie
+eine eigene App.
+
+- **Online** lädt jede Datei frisch vom Server und aktualisiert dabei den Cache. Nach einem
+  Deploy bekommt man also beim nächsten Neuladen die neue Version.
+- **Offline**, oder wenn der Server länger als 4 Sekunden nicht antwortet, kommt die Datei
+  aus dem Cache.
+- Projekte liegen wie immer im `localStorage` bzw. in der Projektdatei. Mit dem Cache haben
+  sie nichts zu tun.
+
+Welche Dateien vorab in den Cache kommen, steht in der `PRECACHE`-Liste von `sw.js`. Die
+Liste wird erzeugt, nicht von Hand gepflegt. **Nach neuen, umbenannten oder gelöschten
+Dateien:**
+
+```
+python tools/make_sw.py           # Liste neu schreiben
+python tools/make_sw.py --check   # nur prüfen
+```
+
+`tests/sw.test.js` schlägt fehl, wenn ein Modul in der Liste fehlt oder eine Seite wieder
+etwas von einem fremden Server lädt.
+
+Zum Testen: DevTools → Application → Service Workers zeigt den Worker. Unter Network auf
+„Offline“ stellen und neu laden.
 
 ---
 
@@ -322,14 +352,20 @@ sprite-editor/
 ├── editor.html         ← der Editor selbst, keine Inline-Styles
 ├── styles.css          ← Token-System + Komponenten (Editor)
 ├── site.webmanifest    ← PWA-Manifest (Name, Farben, Icons)
+├── sw.js               ← Service Worker für den Offline-Modus (Liste: tools/make_sw.py)
+├── vendor/
+│   └── jspdf.umd.min.js ← jsPDF 2.5.1 für den PDF-Export, lokal statt CDN
 ├── assets/             ← Logos: icon.svg, favicon(.ico|-16|-32|-48), apple-touch,
 │                          icon-192/512, icon-maskable-512, og-image
 ├── docs/
 │   └── csharp-loader.md ← Format „JSON (Spiel)“ + C#-Loader
 ├── tests/
-│   └── gamejson.test.js ← Tests für „JSON (Spiel)“: node --test
+│   ├── gamejson.test.js ← Tests für „JSON (Spiel)“
+│   └── sw.test.js      ← Offline-Liste vollständig, nichts von fremden Servern
+│                          (alle Tests: node --test tests/*.test.js)
 ├── tools/
-│   └── make_icons.py   ← erzeugt alles in assets/ neu (nur Standardbibliothek)
+│   ├── make_icons.py   ← erzeugt alles in assets/ neu (nur Standardbibliothek)
+│   └── make_sw.py      ← schreibt die Offline-Dateiliste in sw.js
 └── js/
     ├── data.js         ← Farb-Labels, eingebaute Paletten, cellToColor, Konstanten
     ├── state.js        ← Sprites, Paletten, UI-State + Lookups
@@ -349,6 +385,7 @@ sprite-editor/
     ├── export.js       ← PNG + PDF
     ├── filesystem.js   ← Speicherort merken (File System Access API)
     ├── toast.js        ← Confirm-/Info-Toast statt window.confirm
+    ├── pwa.js          ← meldet den Service Worker an (Startseite + Editor)
     └── app.js          ← Init, Events, Verdrahtung
 ```
 
@@ -379,7 +416,7 @@ state.js
 
 ## Eigenheiten
 
-- `file://` geht nicht — ES-Module brauchen HTTP.
+- `file://` geht nicht — ES-Module und Service Worker brauchen HTTP.
 - Eine Auswahl ist bewusst flüchtig: sie überlebt weder Reload noch Sprite-Wechsel.
 - Ein schwebender Auswahl-Inhalt wird beim Schließen des Tabs abgesetzt. Stürzt der
   Browser mittendrin ab, ist die letzte Bewegung verloren — das Loch im Bild sieht man
@@ -388,7 +425,6 @@ state.js
   `Strg`+`C` im Editor kopiert also keine Pixel in andere Programme.
 - Inkognito-Modus verliert alles beim Tab-Schließen.
 - localStorage-Limit ~5 MB; bei Überschreitung erscheint ein Hinweis-Toast.
-- PDF braucht beim ersten Aufruf Internet (jsPDF vom CDN).
 - Die Schablonen-Pipette ignoriert Stellen mit Alpha = 0.
 
 ---

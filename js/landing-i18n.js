@@ -39,12 +39,12 @@
 
   // ── Englische Fassung ─────────────────────────────────────────────
   var EN = {
-    'meta.title':   'Sprite Editor — pixel art in the browser',
-    'meta.desc':    'A pixel art editor for the browser: draw, build palettes, trace photos as a stencil and export in eight code formats. No build, no sign-up, everything stays local.',
+    'meta.title':   'spritebit – pixel art editor online, export as code',
+    'meta.desc':    'A pixel art editor for the browser: draw, build palettes, trace photos as a stencil and export in nine code formats. No build, no sign-up, everything stays local.',
     'meta.locale':  'en_US',
-    'meta.ogTitle': 'Sprite Editor — pixel art in the browser',
+    'meta.ogTitle': 'spritebit – pixel art editor online, export as code',
     'meta.ogDesc':  'From an empty grid to a finished sprite. Draw, build palettes, export — all in the browser, nothing gets uploaded.',
-    'meta.ogAlt':   'Sprite Editor — a pixel staircase in green and blue next to the wordmark.',
+    'meta.ogAlt':   'spritebit — a pixel staircase in green and blue next to the wordmark.',
     'meta.twDesc':  'Draw, build palettes, export — all in the browser, nothing gets uploaded.',
 
     'nav.skip':     'Skip to content',
@@ -57,8 +57,8 @@
     'nav.open':     'Open the editor',
     'nav.langLabel': 'Language',
 
-    'hero.eyebrow': 'Sprite Editor · pixel art in the browser',
-    'hero.h1':      'Start small.',
+    'hero.eyebrow': 'spritebit · Start small.',
+    'hero.h1':      'Pixel art editor for sprites',
     'hero.lead':    'An empty grid, a handful of colors, and off you go. The editor runs entirely in the browser — no build, no account, no cloud.',
     'hero.watch':   'Just watch for now',
     'hero.note':    'Your pixels stay in <code>localStorage</code> on your own machine. Nothing is uploaded.',
@@ -142,7 +142,7 @@
       + '<li class="fmt"><span class="fmt-ext">.png</span><h3>Image</h3><p>With a transparent background, enlarged 1× to 32×</p></li>'
       + '<li class="fmt"><span class="fmt-ext">.pdf</span><h3>PDF</h3><p>For printing or passing on</p></li>'
       + '<li class="fmt"><span class="fmt-ext">.png</span><h3>Spritesheet</h3><p>All sprites in one image, with a list of where each one sits</p></li>',
-    's5.subLead':   'For developers the sprite also comes out as code — eight formats, each one usable on its own.',
+    's5.subLead':   'For developers the sprite also comes out as code — nine formats, each one usable on its own.',
     's5.codeFormats': ''
       + '<li class="fmt"><span class="fmt-ext">.ts</span><h3>TypeScript</h3><p>Number grid plus color list, fully typed</p></li>'
       + '<li class="fmt"><span class="fmt-ext">.js</span><h3>JavaScript</h3><p>The same without types, importable straight away</p></li>'
@@ -191,7 +191,7 @@
   // Nur die auffaelligen Stellen; der Rest bleibt der deutsche
   // Ausgangszustand aus dem HTML.
   var AT = {
-    'meta.title':   'Sprite Editor — Pixel-Art im Browser',
+    'meta.title':   'spritebit – Pixel Art Editor online, Export ois Code',
     'meta.locale':  'de_AT',
 
     'nav.skip':     'Zum Inhalt springa',
@@ -202,8 +202,8 @@
     'nav.open':     'Editor aufmochn',
     'nav.langLabel': 'Sproch',
 
-    'hero.eyebrow': 'Sprite Editor · Pixel-Art im Browser',
-    'hero.h1':      'Fang kloa an.',
+    'hero.eyebrow': 'spritebit · Fang kloa an.',
+    'hero.h1':      'Pixel Art Editor fia Sprites',
     'hero.lead':    'A laares Raster, a Handvoll Farben, und du moist los. Da Editor rennt komplett im Browser — ka Build, ka Konto, ka Cloud.',
     'hero.watch':   'Erst amoi zuaschaun',
     'hero.note':    'Deine Pixel bleibn im <code>localStorage</code> auf deim Rechner. Es wird nix aufeglodn.',
@@ -229,7 +229,7 @@
     's5.eyebrow':   '<span class="st-num">05</span> Export',
     's5.h2':        'Und dann derf’s geh.',
     's5.lead':      'Speichern kannst ois <b>Buidl</b> — oder ois fertign Code fürs Projekt. Beides mit oam Klick, d’Farben san immer dabei.',
-    's5.subLead':   'Für Entwickler kummt da Sprite a ois Code außa — acht Formate, jedes für sich alloa brauchbar.',
+    's5.subLead':   'Für Entwickler kummt da Sprite a ois Code außa — neun Formate, jedes für sich alloa brauchbar.',
     's5.backH3':    'Und wieder zruck',
     's5.backNote':  'De drei kannst a wieder einelesn — es geht nix verlorn.',
 

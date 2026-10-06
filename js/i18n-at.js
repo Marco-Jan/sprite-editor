@@ -21,10 +21,10 @@
 // ── Statisches DOM ──────────────────────────────────────────────────
 export const STATIC_AT = {
   // ── Meta ──
-  'meta.title':   'Editor — Sprite Editor',
+  'meta.title':   'Editor — spritebit',
   'meta.desc':    'Pixel-Art-Editor mit Foto-Vorlog — Sprites moin, Paletten baun, ois Code oder Buidl außageben. Rennt komplett im Browser.',
   'meta.locale':  'de_AT',
-  'meta.ogTitle': 'Editor — Sprite Editor',
+  'meta.ogTitle': 'Editor — spritebit',
   'meta.ogDesc':  'Pixel-Art-Editor mit Foto-Vorlog — moin, Paletten baun, ois Code oder Buidl außageben.',
 
   // ── Kopfzeile ──

@@ -1,4 +1,4 @@
-# Sprite Editor
+# spritebit
 # Alles darf gelesen werden — die Seite ist ein offenes Werkzeug.
 
 User-agent: *

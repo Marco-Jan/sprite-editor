@@ -2,9 +2,11 @@
 # ════════════════════════════════════════════════════════════════════
 # ICON-GENERATOR — erzeugt alle Logos aus einer einzigen Beschreibung
 # ════════════════════════════════════════════════════════════════════
-# Das Motiv ist ein 8x8-Raster: eine treppige Diagonale (das Erkennungs-
-# zeichen von Pixel-Art) in den beiden Akzentfarben der App, dahinter das
-# Transparenz-Schachbrett des Editors. Alles wird hier gerendert, damit
+# Das Motiv ist ein 16x16-Raster: eine Treppe aus vier 3x3-Blöcken (das
+# Erkennungszeichen von Pixel-Art), von Grün oben rechts nach Blau unten
+# links, auf einer dunklen Kachel mit feinem hellen Rand. 16x16 ist Absicht:
+# bei 16, 32, 48 und 64 px fällt jeder Rasterpixel auf ganze Bildschirm-
+# pixel, das Favicon bleibt also scharf. Alles wird hier gerendert, damit
 # Favicon, PWA-Icons und OG-Bild garantiert dasselbe Motiv zeigen.
 #
 #   python tools/make_icons.py
@@ -17,27 +19,29 @@ import zlib
 OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'assets')
 
 # ── Farben ───────────────────────────────────────────────────────────
-BG        = (0x1b, 0x1b, 0x21)
-CHECK_A   = (0x21, 0x21, 0x28)
-CHECK_B   = (0x1b, 0x1b, 0x21)
+BG        = (0x20, 0x20, 0x27)   # Kachel, einen Hauch heller als --panel
+RING      = (0xff, 0xff, 0xff)   # feiner Rand, mit RING_ALPHA aufgelegt
+RING_ALPHA = 0.14
 GREEN     = (0x6e, 0xd4, 0x9a)   # --primary
+TEAL      = (0x6e, 0xc9, 0xb3)
+SKY       = (0x6e, 0xb3, 0xe5)
 BLUE      = (0x6e, 0xa8, 0xfe)   # --accent
 TEXT      = (0xe6, 0xe6, 0xea)   # --text
 PAGE_BG   = (0x12, 0x12, 0x14)   # --bg
 
-GRID = 8  # Motiv-Raster
+GRID = 16  # Motiv-Raster
+RING_W = 0.5  # Randbreite in Rasterpixeln
 
 
 def band_cells():
-    """Die Treppe: zwei Zellen breit, von unten links nach oben rechts.
-    Bleibt im mittleren 6x6-Feld — sonst knabbert die Eckenrundung sie an."""
+    """Die Treppe: vier 3x3-Blöcke, von oben rechts nach unten links,
+    2 Rasterpixel Abstand zum Rand — sonst knabbert die Eckenrundung sie an."""
     cells = {}
-    for step in range(5):
-        y = step + 1
-        t = step / 4
-        color = tuple(round(GREEN[i] + (BLUE[i] - GREEN[i]) * t) for i in range(3))
-        for x in (5 - step, 6 - step):
-            cells[(x, y)] = color
+    for step, color in enumerate((GREEN, TEAL, SKY, BLUE)):
+        x0, y0 = 11 - 3 * step, 2 + 3 * step
+        for y in range(y0, y0 + 3):
+            for x in range(x0, x0 + 3):
+                cells[(x, y)] = color
     return cells
 
 
@@ -45,10 +49,8 @@ BAND = band_cells()
 
 
 def motif_color(x, y):
-    """Farbe einer Motiv-Zelle — Treppe oder Schachbrett dahinter."""
-    if (x, y) in BAND:
-        return BAND[(x, y)]
-    return CHECK_A if (x + y) % 2 == 0 else CHECK_B
+    """Farbe einer Motiv-Zelle — Treppe oder Kachel."""
+    return BAND.get((x, y), BG)
 
 
 # ── PNG schreiben (ohne Fremdbibliothek) ─────────────────────────────
@@ -86,13 +88,17 @@ def rounded_alpha(px, py, size, radius):
     return dx * dx + dy * dy <= radius * radius
 
 
-def render_icon(size, radius_frac=0.22, inset_frac=0.0):
+def render_icon(size, radius_frac=0.22, inset_frac=0.0, ring=True):
     """Icon als RGBA-Puffer. `inset_frac` schiebt das Motiv nach innen
-    (für maskierbare Icons, die am Rand beschnitten werden dürfen)."""
+    (für maskierbare Icons, die am Rand beschnitten werden dürfen).
+    `ring` zeichnet den feinen hellen Rand — nur bei Icons mit eigener
+    Rundung, randlose Icons schneidet das System selbst zu."""
     S = size * SS
     radius = S * radius_frac
     inset = S * inset_frac
     cell = (S - 2 * inset) / GRID
+    rw = RING_W * S / GRID if ring else 0
+    ring_rgb = tuple(round(BG[i] + (RING[i] - BG[i]) * RING_ALPHA) for i in range(3))
 
     big = bytearray(S * S * 4)
     for py in range(S):
@@ -106,6 +112,8 @@ def render_icon(size, radius_frac=0.22, inset_frac=0.0):
                 r, g, b = motif_color(gx, gy)
             else:
                 r, g, b = BG
+            if rw and not rounded_alpha(px + 0.5 - rw, py + 0.5 - rw, S - 2 * rw, max(radius - rw, 0)):
+                r, g, b = ring_rgb
             big[i:i + 4] = bytes((r, g, b, 255))
 
     return downsample(big, S, size)
@@ -138,6 +146,10 @@ def downsample(buf, src_size, dst_size):
 # ── Pixel-Schrift für das OG-Bild (nur die gebrauchten Buchstaben) ───
 FONT = {
     'S': ['01110', '10001', '10000', '01110', '00001', '10001', '01110'],
+    'B': ['11110', '10001', '10001', '11110', '10001', '10001', '11110'],
+    'X': ['10001', '10001', '01010', '00100', '01010', '10001', '10001'],
+    'L': ['10000', '10000', '10000', '10000', '10000', '10000', '11111'],
+    'A': ['01110', '10001', '10001', '11111', '10001', '10001', '10001'],
     'P': ['11110', '10001', '10001', '11110', '10000', '10000', '10000'],
     'R': ['11110', '10001', '10001', '11110', '10100', '10010', '10001'],
     'I': ['11111', '00100', '00100', '00100', '00100', '00100', '11111'],
@@ -163,6 +175,7 @@ def draw_text(buf, W, text, x0, y0, scale, color):
                         i = (y * W + x) * 4
                         buf[i:i + 4] = bytes((*color, 255))
         x0 += 6 * scale  # 5 Pixel Glyphe + 1 Pixel Abstand
+    return x0
 
 
 def render_og(W=1200, H=630):
@@ -185,15 +198,16 @@ def render_og(W=1200, H=630):
             for c in range(3):
                 buf[o + c] = (icon[i + c] * a + buf[o + c] * (255 - a)) // 255
 
-    scale = 14
-    draw_text(buf, W, 'SPRITE', 500, 210, scale, TEXT)
-    draw_text(buf, W, 'EDITOR', 500, 210 + 9 * scale, scale, BLUE)
+    scale = 11
+    x = draw_text(buf, W, 'SPRITE', 480, 230, scale, TEXT)
+    draw_text(buf, W, 'BIT', x, 230, scale, GREEN)
+    draw_text(buf, W, 'PIXEL ART EDITOR', 482, 230 + 11 * scale, 5, BLUE)
     return buf
 
 
 # ── SVG (skalierbares Favicon) ───────────────────────────────────────
 def write_svg(path):
-    cell = 8  # 8 * 8 = 64er viewBox
+    cell = 4  # 16 * 4 = 64er viewBox
     rects = []
     for y in range(GRID):
         for x in range(GRID):
@@ -202,22 +216,15 @@ def write_svg(path):
             r, g, b = BAND[(x, y)]
             rects.append(f'<rect x="{x*cell}" y="{y*cell}" width="{cell}" height="{cell}" '
                          f'fill="#{r:02x}{g:02x}{b:02x}"/>')
-    checks = []
-    for y in range(GRID):
-        for x in range(GRID):
-            if (x, y) in BAND or (x + y) % 2:
-                continue
-            checks.append(f'<rect x="{x*cell}" y="{y*cell}" width="{cell}" height="{cell}" '
-                          f'fill="#{CHECK_A[0]:02x}{CHECK_A[1]:02x}{CHECK_A[2]:02x}"/>')
+    rw = RING_W * cell
 
     svg = (
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" '
-        'role="img" aria-label="Sprite Editor">\n'
+        'role="img" aria-label="spritebit" shape-rendering="crispEdges">\n'
         f'  <rect width="64" height="64" rx="14" fill="#{BG[0]:02x}{BG[1]:02x}{BG[2]:02x}"/>\n'
-        '  <g clip-path="url(#r)">\n'
-        '    ' + '\n    '.join(checks + rects) + '\n'
-        '  </g>\n'
-        '  <defs><clipPath id="r"><rect width="64" height="64" rx="14"/></clipPath></defs>\n'
+        '  ' + '\n  '.join(rects) + '\n'
+        f'  <rect x="{rw/2}" y="{rw/2}" width="{64-rw}" height="{64-rw}" rx="{14-rw/2}" fill="none" '
+        f'stroke="#ffffff" stroke-opacity="{RING_ALPHA}" stroke-width="{rw}" shape-rendering="geometricPrecision"/>\n'
         '</svg>\n'
     )
     with open(path, 'w', encoding='utf-8') as f:
@@ -255,14 +262,14 @@ def main():
 
     # Apple füllt selbst ab — deshalb randlos und ohne eigene Rundung.
     write_png(os.path.join(OUT, 'apple-touch-icon.png'), 180, 180,
-              render_icon(180, radius_frac=0.0, inset_frac=0.08))
+              render_icon(180, radius_frac=0.0, inset_frac=0.08, ring=False))
 
     for size in (192, 512):
         write_png(os.path.join(OUT, f'icon-{size}.png'), size, size, render_icon(size))
 
     # Maskierbar: randlos, Motiv in der sicheren Zone (80 %).
     write_png(os.path.join(OUT, 'icon-maskable-512.png'), 512, 512,
-              render_icon(512, radius_frac=0.0, inset_frac=0.18))
+              render_icon(512, radius_frac=0.0, inset_frac=0.18, ring=False))
 
     write_png(os.path.join(OUT, 'og-image.png'), 1200, 630, render_og())
 

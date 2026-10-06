@@ -1,8 +1,8 @@
-# Sprite Editor
+# spritebit
 
 > Pixel-Art-Editor, der komplett im Browser läuft. Kein Build, keine
 > Anmeldung, keine Cloud — die Arbeit bleibt im localStorage des Nutzers.
-> Sprites lassen sich als Bild oder in acht Code-Formaten exportieren.
+> Sprites lassen sich als Bild oder in neun Code-Formaten exportieren.
 > Kostenlos, MIT-Lizenz, Quelltext offen.
 
 Der Editor ist reines Frontend: HTML, CSS und ES-Module ohne Bundler. Weil

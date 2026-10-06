@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════════
-   SPRITE EDITOR — Stylesheet
+   SPRITEBIT — Stylesheet
    Aufbau:  1 Tokens · 2 Basis · 3 Bausteine · 4 Layout · 5 Panels
             6 Bühne · 7 Farben · 8 Modale · 9 Vollbild · 10 Responsive
    ══════════════════════════════════════════════════════════════════ */
@@ -400,6 +400,7 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   text-decoration: none;
 }
 .brand-link:hover .brand-name { color: var(--accent); }
+.brand-bit { color: var(--primary); }
 .brand-name {
   font-size: var(--fs-lg);
   font-weight: 700;
