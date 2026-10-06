@@ -64,7 +64,8 @@ export function toRgba(hex) {
 //            Index 0 wird immer als transparent/"empty" vorangestellt.
 // materials — { [index]: 'sand', … } — fehlende Einträge werden "none"
 // sprites  — optionale Atlas-Ausschnitte { name: { x, y, w, h, frames } }
-export function buildGameSprite({ name, idxGrid, colors, materials = {}, sprites = null }) {
+// durations — optional: Dauer je Frame in ms, alle Ausschnitte der Reihe nach
+export function buildGameSprite({ name, idxGrid, colors, materials = {}, sprites = null, durations = null }) {
   const height = idxGrid.length;
   const width = height ? idxGrid[0].length : 0;
 
@@ -83,6 +84,7 @@ export function buildGameSprite({ name, idxGrid, colors, materials = {}, sprites
     for (const [key, r] of Object.entries(sprites)) {
       out.sprites[key] = { x: r.x, y: r.y, w: r.w, h: r.h, frames: r.frames ?? 1 };
     }
+    if (durations && durations.length) out.durations = [...durations];
   }
   return out;
 }
@@ -133,6 +135,14 @@ export function validateGameSprite(obj) {
       if (!ok) fail('region', { name: key }, `Ausschnitt „${key}“ liegt nicht vollständig im Bild`);
     }
   }
+  // durations: eine Dauer (ms) je Frame, alle Ausschnitte der Reihe nach.
+  if (obj.durations !== undefined) {
+    const need = obj.sprites ? Object.values(obj.sprites).reduce((n, r) => n + (r.frames ?? 1), 0) : 1;
+    const d = obj.durations;
+    if (!Array.isArray(d) || d.length !== need || !d.every(v => isInt(v) && v >= 1 && v <= 60000)) {
+      fail('durations', { need }, `durations braucht ${need} ganze Zahlen (ms)`);
+    }
+  }
   return obj;
 }
 
@@ -161,7 +171,11 @@ export function formatGameSprite(obj) {
     lines.push('  ],', '  "sprites": {');
     lines.push(Object.entries(obj.sprites).map(([k, r]) =>
       `    ${s(k)}: { "x": ${r.x}, "y": ${r.y}, "w": ${r.w}, "h": ${r.h}, "frames": ${r.frames} }`).join(',\n'));
-    lines.push('  }');
+    if (obj.durations) {
+      lines.push('  },', `  "durations": [${obj.durations.join(', ')}]`);
+    } else {
+      lines.push('  }');
+    }
   } else {
     lines.push('  ]');
   }

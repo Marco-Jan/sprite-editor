@@ -124,9 +124,9 @@
       +   '<p class="tool-meta">Plus: remove the background, despeckle, draw an outline.</p>'
       + '</li>'
       + '<li class="tool">'
-      +   '<h3>A layer underneath</h3>'
-      +   '<p>A second sprite sits semi-transparent under yours — for tracing, and for moving parts from one into the other.</p>'
-      +   '<p class="tool-meta">The clipboard survives switching sprites.</p>'
+      +   '<h3>Animation</h3>'
+      +   '<p>Frames in a timeline, with the previous and next one showing through. Play it right in the editor, with its own pace for every frame.</p>'
+      +   '<p class="tool-meta">Out as a GIF, a spritesheet or code.</p>'
       + '</li>'
       + '<li class="tool">'
       +   '<h3>All together</h3>'
@@ -140,19 +140,23 @@
     's5.imageFormats': ''
       + '<li class="fmt"><span class="fmt-ext">.png</span><h3>Image</h3><p>With a transparent background, enlarged 1× to 32×</p></li>'
       + '<li class="fmt"><span class="fmt-ext">.pdf</span><h3>PDF</h3><p>For printing or passing on</p></li>'
-      + '<li class="fmt"><span class="fmt-ext">.png</span><h3>Spritesheet</h3><p>All sprites in one image, with a list of where each one sits</p></li>',
+      + '<li class="fmt"><span class="fmt-ext">.gif</span><h3>Animation</h3><p>All frames as a GIF, loops forever</p></li>'
+      + '<li class="fmt"><span class="fmt-ext">.png</span><h3>Spritesheet</h3><p>All sprites and frames in one image, with a list of where each one sits</p></li>',
     's5.subLead':   'For developers the sprite also comes out as code — nine formats, each one usable on its own.',
     's5.codeFormats': ''
       + '<li class="fmt"><span class="fmt-ext">.ts</span><h3>TypeScript</h3><p>Number grid plus color list, fully typed</p></li>'
       + '<li class="fmt"><span class="fmt-ext">.js</span><h3>JavaScript</h3><p>The same without types, importable straight away</p></li>'
       + '<li class="fmt"><span class="fmt-ext">.json</span><h3>JSON</h3><p>Every language and every engine reads it</p></li>'
+      + '<li class="fmt"><span class="fmt-ext">.json</span><h3>JSON (game)</h3><p>A flat grid with a material per color — for game engines</p></li>'
       + '<li class="fmt"><span class="fmt-ext">.svg</span><h3>SVG</h3><p>Stays sharp at any size, drops straight in</p></li>'
       + '<li class="fmt"><span class="fmt-ext">.css</span><h3>CSS</h3><p>The sprite as pure CSS, with no image file at all</p></li>'
       + '<li class="fmt"><span class="fmt-ext">.h</span><h3>C header</h3><p>For microcontrollers and LED matrices</p></li>'
       + '<li class="fmt"><span class="fmt-ext">.py</span><h3>Python</h3><p>For Pygame, Pillow and your own scripts</p></li>'
       + '<li class="fmt"><span class="fmt-ext">.txt</span><h3>Text grid</h3><p>One character per pixel — just to look at</p></li>',
     's5.backH3':    'And back again',
-    's5.backNote':  'These three can be read back in as well — nothing is lost on the way.',
+    's5.backChips': ['TypeScript', 'JavaScript', 'JSON', 'JSON (game)', 'SVG', 'CSS', 'C header', 'Python', 'Text grid']
+      .map(function (n) { return '<span class="chip-tag chip-tag--in">' + n + '</span>'; }).join(''),
+    's5.backNote':  'All nine can be read back in as well — the picture comes back unchanged.',
 
     'end.h2':       'The grid is still empty.',
     'end.lead':     'No account, no server, no cost. The editor opens and waits for your first pixel.',
@@ -231,7 +235,7 @@
     's5.lead':      'Speichern kannst ois <b>Buidl</b> — oder ois fertign Code fürs Projekt. Beides mit oam Klick, d’Farben san immer dabei.',
     's5.subLead':   'Für Entwickler kummt da Sprite a ois Code außa — neun Formate, jedes für sich alloa brauchbar.',
     's5.backH3':    'Und wieder zruck',
-    's5.backNote':  'De drei kannst a wieder einelesn — es geht nix verlorn.',
+    's5.backNote':  'Olle neun kannst a wieder einelesn — s’Buidl kummt unverändert zruck.',
 
     'end.h2':       'S’Raster is no laar.',
     'end.lead':     'Ka Konto, ka Server, kane Kostn. Da Editor geht auf und wart auf dein erstn Pixel.',

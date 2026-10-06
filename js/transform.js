@@ -13,7 +13,12 @@
 // Aktionen auf dem ganzen Sprite laufen durch recordOp() und sind damit ein
 // einzelner Undo-Schritt — auch wenn dabei das Grid komplett getauscht wird:
 // history.js vergleicht die Grids als Ganzes.
-import { selection, sprites, state, getSprite, clearSelection } from './state.js';
+//
+// Ganzer Sprite heißt: alle Frames. Sonst hätten die Frames einer Animation
+// verschiedene Größen, oder sie spränge beim Zuschneiden und Zentrieren.
+// Einzige Ausnahme ist die freie Drehung — sie dreht den Frame, den man
+// sieht, weil man den Winkel am Bild abschätzt.
+import { selection, sprites, state, getSprite, clearSelection, mapFrames, allGrids } from './state.js';
 import { renderAll, renderEditor } from './render.js';
 import { saveState } from './storage.js';
 import { recordOp, recordOpOn, beginStroke, commitStroke } from './history.js';
@@ -66,7 +71,7 @@ export function flip(axis) {
     return 'Auswahl';
   }
 
-  recordOp(() => { sp.grid = flipFn(sp.grid); });
+  recordOp(() => { mapFrames(sp, flipFn); });
   done();
   return 'Sprite';
 }
@@ -100,7 +105,7 @@ export function rotate90() {
   }
 
   commitFloat(); // erst absetzen, sonst verfällt der Inhalt beim Abwählen
-  recordOp(() => { sp.grid = rotateRows(sp.grid); });
+  recordOp(() => { mapFrames(sp, rotateRows); });
   clearSelection();
   done();
   return 'Sprite';
@@ -252,6 +257,20 @@ export function contentBounds(grid) {
   return maxX < 0 ? null : { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 };
 }
 
+// Inhalts-Rechteck über alle Frames — was in irgendeinem Frame steht, zählt.
+function spriteBounds(sp) {
+  let u = null;
+  for (const g of allGrids(sp)) {
+    const b = contentBounds(g);
+    if (!b) continue;
+    if (!u) { u = { ...b }; continue; }
+    const x2 = Math.max(u.x + u.w, b.x + b.w), y2 = Math.max(u.y + u.h, b.y + b.h);
+    u.x = Math.min(u.x, b.x); u.y = Math.min(u.y, b.y);
+    u.w = x2 - u.x; u.h = y2 - u.y;
+  }
+  return u;
+}
+
 // ────────────────────────────────────────────────────────────────────
 // Auf den Inhalt zuschneiden
 // ────────────────────────────────────────────────────────────────────
@@ -259,13 +278,13 @@ export function trimToContent() {
   const sp = getSprite();
   if (!sp) return null;
   commitFloat(); // was noch in der Luft hängt, gehört ins Bild
-  const b = contentBounds(sp.grid);
+  const b = spriteBounds(sp);
   if (!b) return { ok: false, reason: 'empty' };
   if (b.w === sp.grid[0].length && b.h === sp.grid.length) return { ok: false, reason: 'nothing' };
 
   recordOp(() => {
-    sp.grid = Array.from({ length: b.h }, (_, y) =>
-      Array.from({ length: b.w }, (_, x) => sp.grid[b.y + y][b.x + x]));
+    mapFrames(sp, g => Array.from({ length: b.h }, (_, y) =>
+      Array.from({ length: b.w }, (_, x) => g[b.y + y][b.x + x])));
   });
   clearSelection();
   done();
@@ -279,7 +298,7 @@ export function centerContent() {
   const sp = getSprite();
   if (!sp) return null;
   commitFloat(); // was noch in der Luft hängt, gehört ins Bild
-  const b = contentBounds(sp.grid);
+  const b = spriteBounds(sp);
   if (!b) return { ok: false, reason: 'empty' };
 
   const H = sp.grid.length, W = sp.grid[0].length;
@@ -288,14 +307,16 @@ export function centerContent() {
   if (!dx && !dy) return { ok: false, reason: 'centered' };
 
   recordOp(() => {
-    const out = emptyRows(W, H);
-    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-      const v = sp.grid[y][x];
-      if (v === 0) continue;
-      const nx = x + dx, ny = y + dy;
-      if (nx >= 0 && ny >= 0 && nx < W && ny < H) out[ny][nx] = v;
-    }
-    sp.grid = out;
+    mapFrames(sp, g => {
+      const out = emptyRows(W, H);
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+        const v = g[y][x];
+        if (v === 0) continue;
+        const nx = x + dx, ny = y + dy;
+        if (nx >= 0 && ny >= 0 && nx < W && ny < H) out[ny][nx] = v;
+      }
+      return out;
+    });
   });
   clearSelection();
   done();
@@ -327,15 +348,17 @@ export function resizeSpriteCanvas(id, newW, newH, anchor = 'center') {
 
   let lost = 0;
   recordOpOn(id, () => {
-    const out = emptyRows(newW, newH);
-    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-      const v = sp.grid[y][x];
-      if (v === 0) continue;
-      const nx = x + dx, ny = y + dy;
-      if (nx >= 0 && ny >= 0 && nx < newW && ny < newH) out[ny][nx] = v;
-      else lost++;
-    }
-    sp.grid = out;
+    mapFrames(sp, g => {
+      const out = emptyRows(newW, newH);
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+        const v = g[y][x];
+        if (v === 0) continue;
+        const nx = x + dx, ny = y + dy;
+        if (nx >= 0 && ny >= 0 && nx < newW && ny < newH) out[ny][nx] = v;
+        else lost++;
+      }
+      return out;
+    });
   });
   // Nur die Auswahl im aktiven Sprite ist betroffen — sie würde sonst
   // außerhalb der neuen Fläche liegen.
@@ -357,9 +380,9 @@ export function scaleSprite(factor) {
   if (newW > 256 || newH > 256) return { ok: false, reason: 'tooBig' };
 
   recordOp(() => {
-    sp.grid = Array.from({ length: newH }, (_, y) =>
+    mapFrames(sp, g => Array.from({ length: newH }, (_, y) =>
       Array.from({ length: newW }, (_, x) =>
-        sp.grid[Math.min(H - 1, Math.floor(y / factor))][Math.min(W - 1, Math.floor(x / factor))]));
+        g[Math.min(H - 1, Math.floor(y / factor))][Math.min(W - 1, Math.floor(x / factor))])));
   });
   clearSelection();
   done();

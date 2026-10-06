@@ -3,7 +3,8 @@
 // ════════════════════════════════════════════════════════════════════
 // Ein Eintrag deckt einen kompletten "Strich" ab (pointerdown→pointerup),
 // nicht einzelne Pixel. Snapshot bei beginStroke(), Vergleich bei
-// commitStroke() — nur bei echter Änderung wird gespeichert.
+// commitStroke() — nur bei echter Änderung wird gespeichert. Gesichert wird
+// immer der ganze Sprite mit allen Frames (siehe snap).
 // Persistenz: bewusst nur in-memory (wie bei jedem Design-Tool).
 // Mit im Eintrag steckt die Palette des Sprites — so ist auch "Sprite
 // umfärben" (andere Palette zuweisen) ein normaler Undo-Schritt.
@@ -22,15 +23,47 @@ export const historyCallbacks = {
   onRestore: () => {},
 };
 
-function gridOf(id) {
-  return sprites[id]?.grid || null;
+// Ein Eintrag sichert den GANZEN Sprite: alle Frames samt Dauer, die fps,
+// die Palette und welcher Frame zu sehen war. So sind auch Frame-Aktionen
+// (anlegen, löschen, verschieben) und Änderungen über alle Frames (Größe,
+// Palette umfärben) ein normaler Undo-Schritt. Gespeicherte Grids werden
+// nie verändert — unveränderte Frames teilen sich darum ihre Kopie.
+function snap(id) {
+  const sp = sprites[id];
+  if (!sp) return null;
+  return {
+    frames: sp.frames.map(f => ({ cels: f.cels.map(dc), dur: f.dur || 0 })),
+    layers: sp.layers.map(l => ({ ...l })),
+    layer: sp.layer,
+    frame: sp.frame,
+    fps: sp.fps,
+    palette: sp.palette,
+  };
 }
 
-function setGridOf(id, grid) {
-  if (sprites[id]) sprites[id].grid = grid;
+// Stand nach der Änderung — Bilder, die gleich geblieben sind, verweisen
+// auf die Kopie im Vorher-Stand.
+function snapAfter(id, before) {
+  const sp = sprites[id];
+  if (!sp) return null;
+  return {
+    frames: sp.frames.map((f, i) => ({
+      cels: f.cels.map((g, j) => {
+        const b = before.frames[i]?.cels[j];
+        return b && gridsEqual(b, g) ? b : dc(g);
+      }),
+      dur: f.dur || 0,
+    })),
+    layers: sp.layers.map(l => ({ ...l })),
+    layer: sp.layer,
+    frame: sp.frame,
+    fps: sp.fps,
+    palette: sp.palette,
+  };
 }
 
 function gridsEqual(a, b) {
+  if (a === b) return true;
   if (!a || !b || a.length !== b.length) return false;
   for (let y = 0; y < a.length; y++) {
     if (a[y].length !== b[y].length) return false;
@@ -39,29 +72,39 @@ function gridsEqual(a, b) {
   return true;
 }
 
+// Welcher Frame und welche Ebene gerade aktiv sind, zählt nicht als Änderung.
+function snapsEqual(a, b) {
+  if (a.palette !== b.palette || a.fps !== b.fps || a.frames.length !== b.frames.length) return false;
+  if (JSON.stringify(a.layers) !== JSON.stringify(b.layers)) return false;
+  return a.frames.every((f, i) => f.dur === b.frames[i].dur
+    && f.cels.length === b.frames[i].cels.length
+    && f.cels.every((g, j) => gridsEqual(g, b.frames[i].cels[j])));
+}
+
+function push(entry) {
+  undoStack.push(entry);
+  if (undoStack.length > MAX_HISTORY) undoStack.shift();
+  redoStack.length = 0;
+  historyCallbacks.onChange();
+}
+
 // Snapshot vor Beginn einer Mutation. Mehrfachaufrufe während eines laufenden
 // Strichs sind no-op — der erste gewinnt.
 export function beginStroke() {
   if (pendingSnapshot) return;
   const id = state.curSprite;
-  const grid = gridOf(id);
-  if (!grid) return;
-  pendingSnapshot = { id, before: dc(grid), palBefore: sprites[id].palette };
+  const before = snap(id);
+  if (!before) return;
+  pendingSnapshot = { id, before };
 }
 
 // Abschluss: nur bei echter Änderung landet ein Eintrag im Undo-Stack.
 export function commitStroke() {
   if (!pendingSnapshot) return;
-  const { id, before, palBefore } = pendingSnapshot;
-  const after = gridOf(id);
-  const palAfter = sprites[id]?.palette;
-  if (after && (!gridsEqual(before, after) || palBefore !== palAfter)) {
-    undoStack.push({ id, before, after: dc(after), palBefore, palAfter });
-    if (undoStack.length > MAX_HISTORY) undoStack.shift();
-    redoStack.length = 0;
-    historyCallbacks.onChange();
-  }
+  const { id, before } = pendingSnapshot;
   pendingSnapshot = null;
+  const after = snapAfter(id, before);
+  if (after && !snapsEqual(before, after)) push({ id, before, after });
 }
 
 // Convenience für One-Shot-Ops (Fill, Import, Leeren, Effekte).
@@ -73,26 +116,29 @@ export function recordOp(fn) {
 
 // Wie recordOp(), aber für einen bestimmten Sprite: wenn aus der Sprite-Liste
 // heraus ein gerade NICHT aktiver Sprite geändert wird, liegt der Snapshot von
-// beginStroke() am falschen Grid.
+// beginStroke() am falschen Sprite.
 export function recordOpOn(id, fn) {
-  const grid = gridOf(id);
-  if (!grid) { fn(); return; }
-  const before = dc(grid);
+  const before = snap(id);
+  if (!before) { fn(); return; }
   fn();
-  const after = gridOf(id);
-  if (!after || gridsEqual(before, after)) return;
-  undoStack.push({ id, before, after: dc(after) });
-  if (undoStack.length > MAX_HISTORY) undoStack.shift();
-  redoStack.length = 0;
-  historyCallbacks.onChange();
+  const after = snapAfter(id, before);
+  if (after && !snapsEqual(before, after)) push({ id, before, after });
+}
+
+function apply(id, st) {
+  const sp = sprites[id];
+  sp.frames = st.frames.map(f => ({ cels: f.cels.map(dc), dur: f.dur }));
+  sp.layers = st.layers.map(l => ({ ...l }));
+  sp.layer = Math.min(st.layer, sp.layers.length - 1);
+  sp.frame = Math.min(st.frame, sp.frames.length - 1);
+  sp.fps = st.fps;
+  if (st.palette) sp.palette = st.palette;
 }
 
 function restore(entry, which) {
   // Der Sprite kann inzwischen gelöscht worden sein — Eintrag dann verwerfen.
   if (!sprites[entry.id]) return false;
-  setGridOf(entry.id, dc(entry[which]));
-  const pal = which === 'before' ? entry.palBefore : entry.palAfter;
-  if (pal) sprites[entry.id].palette = pal;
+  apply(entry.id, entry[which]);
   // Ansicht auf den betroffenen Sprite wechseln, sonst sieht man die Wirkung nicht.
   if (state.curSprite !== entry.id) state.curSprite = entry.id;
   return true;
@@ -126,6 +172,22 @@ export function redo() {
   }
   historyCallbacks.onChange();
   return false;
+}
+
+// Für Gesten, die sich erst im Nachhinein als Zoom statt Strich entpuppen
+// (zwei Finger, js/app.js initPinch): alles seit `depth` zurücknehmen und
+// einen laufenden Strich verwerfen — ohne Redo-Eintrag.
+export function undoDepth() { return undoStack.length; }
+
+export function rollbackTo(depth) {
+  let any = false;
+  if (pendingSnapshot) {
+    if (sprites[pendingSnapshot.id]) apply(pendingSnapshot.id, pendingSnapshot.before);
+    pendingSnapshot = null;
+    any = true;
+  }
+  while (undoStack.length > depth) { restore(undoStack.pop(), 'before'); any = true; }
+  if (any) { historyCallbacks.onChange(); historyCallbacks.onRestore(); }
 }
 
 export function canUndo() { return undoStack.length > 0; }

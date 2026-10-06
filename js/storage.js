@@ -3,7 +3,7 @@
 // ════════════════════════════════════════════════════════════════════
 // Alles liegt unter EINEM Key. `version` im Payload erlaubt Migrationen,
 // ohne alte Saves zu zerschießen.
-import { state, sprites, customPalettes, paletteMaterials, selectFirstSprite, paletteExists } from './state.js';
+import { state, sprites, customPalettes, paletteMaterials, selectFirstSprite, paletteExists, makeSprite, flatGrid } from './state.js';
 import { DEFAULT_PALETTE, completePalette } from './data.js';
 import { saveBlob } from './filesystem.js';
 import { showInfoToast } from './toast.js';
@@ -61,10 +61,49 @@ function applyPanelStates(panels) {
 // ────────────────────────────────────────────────────────────────────
 // Payload bauen / schreiben
 // ────────────────────────────────────────────────────────────────────
+// Sprites für den Speicherstand. `grid` (der erste Frame, alle Ebenen
+// zusammengefügt) steht zusätzlich drin: eine ältere, noch
+// zwischengespeicherte Version des Editors kennt weder Frames noch Ebenen —
+// sie liest dann wenigstens das Bild statt gar nichts.
+function serializeSprites() {
+  const out = {};
+  for (const [id, sp] of Object.entries(sprites)) {
+    out[id] = {
+      name: sp.name,
+      palette: sp.palette,
+      fps: sp.fps,
+      frame: sp.frame,
+      layer: sp.layer,
+      layers: sp.layers,
+      frames: sp.frames.map(f => (f.dur ? { cels: f.cels, dur: f.dur } : { cels: f.cels })),
+      grid: flatGrid(sp, 0),
+    };
+  }
+  return out;
+}
+
+// Ein Grid ist brauchbar, wenn es ein nicht-leeres Array aus Zeilen ist.
+const isGrid = g => Array.isArray(g) && g.length > 0 && Array.isArray(g[0]) && g[0].length > 0;
+
+// Frames aus einem gespeicherten Sprite lesen. Alte Stände kennen nur
+// `grid` (ein Bild) oder Frames mit `grid` (eine Ebene). Alle Bilder bekommen
+// die Maße des ersten, fehlende Ebenen werden leer ergänzt (makeSprite).
+function readFrames(sp) {
+  const celsOf = f => (Array.isArray(f?.cels) ? f.cels.filter(isGrid) : isGrid(f?.grid) ? [f.grid] : []);
+  const raw = Array.isArray(sp.frames) && sp.frames.some(f => celsOf(f).length)
+    ? sp.frames.filter(f => celsOf(f).length).map(f => ({ cels: celsOf(f), dur: f.dur }))
+    : isGrid(sp.grid) ? [{ cels: [sp.grid] }] : null;
+  if (!raw) return null;
+  const first = raw[0].cels[0];
+  const H = first.length, W = first[0].length;
+  const fit = g => Array.from({ length: H }, (_, y) => Array.from({ length: W }, (_, x) => g[y]?.[x] ?? 0));
+  return raw.map(f => ({ cels: f.cels.map(fit), dur: Number(f.dur) || 0 }));
+}
+
 function buildPayload() {
   return {
     version: SCHEMA_VERSION,
-    sprites,
+    sprites: serializeSprites(),
     customPalettes,
     paletteMaterials,
     ui: {
@@ -76,10 +115,7 @@ function buildPayload() {
       outputFormat: state.outputFormat,
       mirror:    state.mirror,
       shapeFill: state.shapeFill,
-      refSprite:  state.refSprite,
-      refVisible: state.refVisible,
-      refOpacity: state.refOpacity,
-      refFront:   state.refFront,
+      onion:      state.onion,
       fullscreen: document.body.classList.contains('editor-fullscreen'),
       panels: collectPanelStates(),
     },
@@ -208,12 +244,17 @@ function applyPayload(payload) {
   try {
     if (payload.sprites && typeof payload.sprites === 'object') {
       for (const [id, sp] of Object.entries(payload.sprites)) {
-        if (!sp || !Array.isArray(sp.grid) || !sp.grid.length || !Array.isArray(sp.grid[0])) continue;
-        sprites[id] = {
+        const frames = sp && readFrames(sp);
+        if (!frames) continue;
+        sprites[id] = makeSprite({
           name: typeof sp.name === 'string' && sp.name ? sp.name : id,
           palette: typeof sp.palette === 'string' ? sp.palette : DEFAULT_PALETTE,
-          grid: sp.grid,
-        };
+          frames,
+          fps: sp.fps,
+          frame: sp.frame,
+          layers: Array.isArray(sp.layers) ? sp.layers : null,
+          layer: sp.layer,
+        });
       }
     }
     if (payload.customPalettes && typeof payload.customPalettes === 'object') {
@@ -249,11 +290,7 @@ function applyPayload(payload) {
     if (ui.outputFormat) state.outputFormat = ui.outputFormat;
     if (ui.mirror) state.mirror = ui.mirror;
     if (typeof ui.shapeFill === 'boolean') state.shapeFill = ui.shapeFill;
-    // Die Ebene nur übernehmen, wenn es den Sprite noch gibt.
-    state.refSprite = ui.refSprite && sprites[ui.refSprite] ? ui.refSprite : null;
-    if (typeof ui.refVisible === 'boolean') state.refVisible = ui.refVisible;
-    if (ui.refOpacity) state.refOpacity = ui.refOpacity;
-    if (typeof ui.refFront === 'boolean') state.refFront = ui.refFront;
+    if (typeof ui.onion === 'boolean') state.onion = ui.onion;
     applyPanelStates(ui.panels);
 
     return { loaded: true, migrated, note, fullscreen: !!ui.fullscreen };

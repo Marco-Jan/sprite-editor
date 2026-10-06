@@ -2,7 +2,7 @@
 // APP — Haupt-Entry: Init + Event-Bindings + Wiring zwischen Modulen
 // ════════════════════════════════════════════════════════════════════
 import {
-  state, sprites, customPalettes, selection,
+  state, sprites, customPalettes, paletteMaterials, selection, allGrids, flatGrid, defaultLayer,
   getGrid, getSprite, getPal, getMaxIdx, getPaletteName, getPreviewName, listSprites,
   createSprite, uniquePaletteName, clearSelection, isInSelection,
 } from './state.js';
@@ -45,11 +45,13 @@ import {
   despeckleGrid, outlineGrid, magicWandDelete, autoRemoveBackground,
 } from './spritefx.js';
 import { initExport } from './export.js';
+import { initFrames, togglePlay, nextFrame, prevFrame, isPlaying, stop as stopPlayback } from './frames.js';
+import { initLayers } from './layers.js';
 import { parseTsSprite } from './tsimport.js';
 import { CODE_FORMATS, getFormat, codeFilename } from './codegen.js';
 import {
   beginStroke, commitStroke, recordOp, undo, redo,
-  canUndo, canRedo, clearHistory, historyCallbacks,
+  canUndo, canRedo, clearHistory, historyCallbacks, undoDepth, rollbackTo,
 } from './history.js';
 import {
   startMarquee, updateMarquee, startLasso, updateLasso, startMove, updateMove,
@@ -72,7 +74,6 @@ renderCallbacks.onSelectSprite     = id => {
   stopRotating(true);
   commitFloat();
   selectSprite(id);
-  renderRefSelect(); // der neue aktive Sprite fällt als Ebene raus
 };
 renderCallbacks.onRenameSprite     = openRenameModal;
 renderCallbacks.onResizeSprite     = openSizeModal;
@@ -104,7 +105,7 @@ function syncHistoryButtons() {
 historyCallbacks.onChange = syncHistoryButtons;
 // Nach einem Undo passt eine Auswahl nicht mehr zum Bild — weg damit. Ein
 // schwebender Inhalt wurde vorher schon abgesetzt (siehe Undo-Bindings).
-historyCallbacks.onRestore = () => { clearSelection(); renderAll(); saveState(); };
+historyCallbacks.onRestore = () => { stopPlayback(); clearSelection(); renderAll(); saveState(); };
 
 // ────────────────────────────────────────────────────────────────────
 // SCHABLONE ÜBERNEHMEN — Auto-Trace ins Grid
@@ -129,6 +130,7 @@ const TRACE_ALPHA_MIN = 32; // darunter gilt ein Schablonen-Pixel als transparen
 // mode 'quantize' → per Median-Cut auf n dominante Töne reduzieren
 function applyTemplateTrace(mode, n) {
   if (!getSprite()) { showInfoToast(t('tpl.needSprite')); return; }
+  if (layerBlocked(true)) return;
   if (!tplLoaded() || !tplHasOffscreen()) { showInfoToast(t('tpl.needTpl')); return; }
 
   const grid = getGrid();
@@ -196,7 +198,7 @@ function collectImageColors() {
   if (!sp) return null;
   const pal = getPal();
   const counts = new Map();
-  for (const row of sp.grid) for (const c of row) {
+  for (const row of allGrids(sp).flat()) for (const c of row) {
     const hex = cellToColor(c, pal);
     if (!hex) continue;
     const k = hex.toLowerCase();
@@ -292,7 +294,7 @@ function applyReduce() {
 
   // Grid auf die neuen Indizes umschreiben — mit der Palette ein Undo-Schritt.
   recordOp(() => {
-    for (const row of sp.grid) for (let x = 0; x < row.length; x++) {
+    for (const row of allGrids(sp).flat()) for (let x = 0; x < row.length; x++) {
       const hex = cellToColor(row[x], pal);
       row[x] = hex ? map.get(hex.toLowerCase()) : 0;
     }
@@ -468,13 +470,28 @@ function info(msg) {
   if (el) el.textContent = msg;
 }
 
+// In eine gesperrte oder ausgeblendete Ebene wird nicht gemalt — man sähe
+// es nicht bzw. will es dort gerade nicht. Gibt true zurück, wenn blockiert.
+// toast = true: für Knöpfe in Panels, dort sieht man die Statuszeile kaum.
+function layerBlocked(toast = false) {
+  const sp = getSprite();
+  const L = sp?.layers[sp.layer];
+  if (!L) return false;
+  const msg = L.locked ? t('ly.lockedInfo', { name: L.name })
+    : !L.visible ? t('ly.hiddenInfo', { name: L.name }) : null;
+  if (!msg) return false;
+  if (toast) showInfoToast(msg); else info(msg);
+  return true;
+}
+
 // ────────────────────────────────────────────────────────────────────
 // Ansicht: zoomen auf den Zeiger, verschieben mit Leertaste / mittlerer Taste
 // ────────────────────────────────────────────────────────────────────
 let panKeyHeld = false;
 
 // Zoomt um `step` Pixel pro Zelle und hält dabei die Zelle unter dem Zeiger fest.
-function zoomAt(step, clientX, clientY) {
+// `save` = false während einer laufenden Geste — gespeichert wird am Ende.
+function zoomAt(step, clientX, clientY, save = true) {
   const next = Math.max(2, Math.min(40, state.cellSize + step));
   if (next === state.cellSize) return;
   const area = $('editor-canvas-area'), canvas = $('editor-canvas');
@@ -488,7 +505,7 @@ function zoomAt(step, clientX, clientY) {
   const after = canvas.getBoundingClientRect();
   area.scrollLeft += (after.left + fx * next) - clientX;
   area.scrollTop  += (after.top  + fy * next) - clientY;
-  saveState();
+  if (save) saveState();
 }
 
 function initPan() {
@@ -529,12 +546,88 @@ function initPan() {
   area.addEventListener('mousedown', e => { if (e.button === 1) e.preventDefault(); });
 }
 
+// ── Finger: zwei zum Zoomen und Verschieben, einer neben dem Bild schiebt ──
+// Der erste Finger hat beim Aufsetzen schon gemalt (oder gefüllt, eine Form
+// begonnen …). Kommt kurz danach ein zweiter, war es eine Zoom-Geste — dann
+// wird alles seit dem ersten Finger zurückgenommen. Läuft in der Capture-
+// Phase vor den Canvas-Handlern, damit die Bewegung nicht weitermalt.
+const PINCH_GRACE = 400;   // ms: so spät darf der zweite Finger kommen
+
+function initPinch() {
+  const area = $('editor-canvas-area');
+  const pts = new Map();
+  let pinch = null, slide = null;
+  let depth0 = 0, t0 = 0;
+
+  const two = () => {
+    const [a, b] = [...pts.values()];
+    return { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+  };
+
+  area.addEventListener('pointerdown', e => {
+    if (e.pointerType !== 'touch') return;
+    pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pts.size === 1) {
+      depth0 = undoDepth();
+      t0 = e.timeStamp;
+      // Neben dem Bild: mit einem Finger verschieben.
+      if (e.target === area || !e.target.closest('#editor-canvas')) {
+        slide = { x: e.clientX, y: e.clientY, l: area.scrollLeft, t: area.scrollTop };
+      }
+      return;
+    }
+    if (pts.size !== 2) return;
+    e.stopPropagation();
+    e.preventDefault();
+    slide = null;
+    // Was der erste Finger begonnen hat, verwerfen.
+    if (shapeStart) { shapeStart = null; state.shape.cells = []; }
+    if (selection.mode) endSelectionPointer();
+    if (e.timeStamp - t0 < PINCH_GRACE) rollbackTo(depth0);
+    else if (state.isDrawing || state.isErasing) commitStroke();
+    state.isDrawing = false;
+    state.isErasing = false;
+    renderAll();
+    const g = two();
+    pinch = { d0: g.d, c0: state.cellSize, x: g.x, y: g.y };
+  }, true);
+
+  area.addEventListener('pointermove', e => {
+    if (!pts.has(e.pointerId)) return;
+    pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (slide) {
+      area.scrollLeft = slide.l - (e.clientX - slide.x);
+      area.scrollTop  = slide.t - (e.clientY - slide.y);
+      return;
+    }
+    if (!pinch) return;
+    e.stopPropagation();
+    const g = two();
+    const target = Math.round(pinch.c0 * g.d / pinch.d0);
+    if (target !== state.cellSize) zoomAt(target - state.cellSize, g.x, g.y, false);
+    area.scrollLeft -= g.x - pinch.x;
+    area.scrollTop  -= g.y - pinch.y;
+    pinch.x = g.x;
+    pinch.y = g.y;
+  }, true);
+
+  const lift = e => {
+    if (!pts.delete(e.pointerId)) return;
+    if (pinch && pts.size < 2) { pinch = null; saveState(); }
+    if (!pts.size) slide = null;
+  };
+  area.addEventListener('pointerup', lift, true);
+  area.addEventListener('pointercancel', lift, true);
+}
+
 function initCanvasEvents() {
   const canvas = $('editor-canvas');
 
   canvas.addEventListener('pointerdown', e => {
     // Leertaste gehalten oder mittlere Taste: verschieben, nicht malen (initPan).
     if (panKeyHeld || e.button === 1) return;
+    // Beim Abspielen wird nicht gemalt — der Tipp hält an.
+    if (isPlaying()) { e.preventDefault(); stopPlayback(); return; }
     // Pointer einfangen → move/up feuern weiter, auch außerhalb des Canvas.
     try { canvas.setPointerCapture(e.pointerId); } catch {}
 
@@ -548,6 +641,7 @@ function initCanvasEvents() {
         else if (r.status === 'transparent') info(t('info.tplTransp'));
         else                                 info(t('info.tplPipette', { hex: r.hex }));
       } else {
+        if (layerBlocked()) return;
         commitFloat(); // sonst radiert man in ein Loch, unter dem noch etwas hängt
         state.isErasing = true;
         beginStroke();
@@ -566,17 +660,18 @@ function initCanvasEvents() {
     if (isSelectTool(state.tool)) {
       const c = cellFromEventClamped(e);
       if (isInSelection(c.x, c.y)) {
+        if (layerBlocked()) return;
         startMove(e, e.altKey);
         info(selectionInfo(t(e.altKey ? 'info.dragCopy' : 'info.move')));
         return;
       }
     }
 
-    // ── Alt+Links = Pipette auf das Grid ──
+    // ── Alt+Links = Pipette auf das Grid — greift, was man sieht ──
     if (e.altKey) {
       const c = cellFromEvent(e);
       if (c) {
-        state.curColor = getGrid()[c.y][c.x];
+        state.curColor = flatGrid(getSprite())[c.y][c.x];
         syncColorActive();
         const v = state.curColor;
         info(typeof v === 'string'
@@ -585,6 +680,8 @@ function initCanvasEvents() {
       }
       return;
     }
+
+    if (layerBlocked()) return;
 
     // ── Auswahl aufziehen / lassoen / nach Farbe wählen ──
     if (state.tool === 'select') {
@@ -745,6 +842,7 @@ function initKeyboardEvents() {
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
       if (closeTopModal()) return;
+      if (isPlaying()) { stopPlayback(); return; }
       if (isRotating()) { stopRotating(false); info(t('rot.discarded')); return; }
       if (shapeStart || state.shape.cells.length) {
         shapeStart = null;
@@ -788,10 +886,12 @@ function initKeyboardEvents() {
         updateSelectionUI();
       } else if (k === 'x' && selection.rect) {
         e.preventDefault();
+        if (layerBlocked()) return;
         info(t('sel.cut', { n: cutSelection() }));
         updateSelectionUI();
       } else if (k === 'v') {
         e.preventDefault();
+        if (layerBlocked()) return;
         if (!hasClipboard()) info(t('sel.clipEmpty'));
         else {
           setTool('select');
@@ -813,9 +913,19 @@ function initKeyboardEvents() {
       }
       if (e.key === 'Delete' || e.key === 'Backspace') {
         e.preventDefault();
+        if (layerBlocked()) return;
         info(t('sel.erased', { n: deleteSelection() }));
         return;
       }
+    }
+
+    // ── Frames: , und . blättern, Enter spielt ab ──
+    if (e.key === ',') { prevFrame(); return; }
+    if (e.key === '.') { nextFrame(); return; }
+    if (e.key === 'Enter' && !e.target.closest?.('button, a, select, [role="option"]')) {
+      e.preventDefault();
+      togglePlay();
+      return;
     }
 
     if (e.key >= '0' && e.key <= '9') {
@@ -896,14 +1006,18 @@ function initToolbar() {
     saveState();
   });
 
-  const selAction = (id, fn) => $(id).addEventListener('click', () => { fn(); updateSelectionUI(); });
-  selAction('sel-all-btn',    () => { selectAll(); info(selectionInfo(t('sel.all'))); });
+  const selAction = (id, fn, edits = true) => $(id).addEventListener('click', () => {
+    if (edits && layerBlocked(true)) return;
+    fn();
+    updateSelectionUI();
+  });
+  selAction('sel-all-btn',    () => { selectAll(); info(selectionInfo(t('sel.all'))); }, false);
   selAction('sel-cut-btn',    () => { info(t('sel.cutShort',    { n: cutSelection() })); });
-  selAction('sel-copy-btn',   () => { info(t('sel.copiedShort', { n: copySelection() })); });
+  selAction('sel-copy-btn',   () => { info(t('sel.copiedShort', { n: copySelection() })); }, false);
   selAction('sel-paste-btn',  () => { info(t('sel.pasted',      { n: pasteClipboard() })); });
   selAction('sel-delete-btn', () => { info(t('sel.erased',      { n: deleteSelection() })); });
   selAction('sel-fill-btn',   () => { info(t('sel.filled',      { n: fillSelection() })); });
-  selAction('sel-none-btn',   () => { deselect(); info(t('sel.dropped')); });
+  selAction('sel-none-btn',   () => { deselect(); info(t('sel.dropped')); }, false);
 
   document.querySelectorAll('.brush-sz').forEach(btn =>
     btn.addEventListener('click', () => {
@@ -1025,89 +1139,6 @@ function initPalettePanel() {
   picker.addEventListener('input', () => {
     state.curColor = picker.value;
     syncColorActive();
-  });
-}
-
-// ────────────────────────────────────────────────────────────────────
-// Referenz-Ebene — zweiter Sprite als Vorlage
-// ────────────────────────────────────────────────────────────────────
-// Bearbeitet wird immer nur der aktive Sprite. Die Ebene liegt bloß darunter
-// (oder darüber) und hilft beim Abpausen und beim Übertragen von Teilen.
-function renderRefSelect() {
-  const sel = $('ref-select');
-  if (!sel) return;
-  const others = listSprites().filter(sp => sp.id !== state.curSprite);
-
-  sel.innerHTML = '';
-  const none = document.createElement('option');
-  none.value = '';
-  none.textContent = t(others.length ? 'ref.none' : 'ref.noSecond');
-  sel.appendChild(none);
-
-  for (const sp of others) {
-    const o = document.createElement('option');
-    o.value = sp.id;
-    o.textContent = t('sprite.option', { name: sp.name, w: sp.grid[0].length, h: sp.grid.length });
-    if (sp.id === state.refSprite) o.selected = true;
-    sel.appendChild(o);
-  }
-  sel.disabled = !others.length;
-
-  const active = !!state.refSprite && state.refSprite !== state.curSprite;
-  $('ref-controls').hidden = !active;
-  $('ref-note').hidden = !active;
-  $('ref-visible-btn').classList.toggle('is-off', !state.refVisible);
-  $('ref-visible-btn').setAttribute('aria-pressed', String(state.refVisible));
-  $('ref-front-btn').classList.toggle('is-active', state.refFront);
-  $('ref-front-btn').setAttribute('aria-pressed', String(state.refFront));
-  $('ref-front-btn').textContent = t(state.refFront ? 'ref.front' : 'ref.behind');
-  $('ref-opacity').value = Math.round(state.refOpacity * 100);
-}
-
-function initRefLayer() {
-  $('ref-select').addEventListener('change', () => {
-    state.refSprite = $('ref-select').value || null;
-    renderRefSelect();
-    renderEditor();
-    saveState();
-    const sp = state.refSprite ? sprites[state.refSprite] : null;
-    info(sp
-      ? t('ref.on', { name: sp.name, pos: t(state.refFront ? 'ref.posFront' : 'ref.posBehind') })
-      : t('ref.off'));
-  });
-
-  $('ref-visible-btn').addEventListener('click', () => {
-    state.refVisible = !state.refVisible;
-    renderRefSelect();
-    renderEditor();
-    saveState();
-  });
-
-  $('ref-front-btn').addEventListener('click', () => {
-    state.refFront = !state.refFront;
-    renderRefSelect();
-    renderEditor();
-    saveState();
-  });
-
-  $('ref-opacity').addEventListener('input', () => {
-    state.refOpacity = Number($('ref-opacity').value) / 100;
-    renderEditor();
-  });
-  $('ref-opacity').addEventListener('change', saveState);
-
-  // Rollentausch: der bearbeitete Sprite wird zur Ebene und umgekehrt.
-  // Damit lässt sich zwischen zwei Sprites hin- und herarbeiten.
-  $('ref-swap-btn').addEventListener('click', () => {
-    const other = state.refSprite;
-    if (!other || !sprites[other]) return;
-    stopRotating(true);
-    commitFloat();
-    const previous = state.curSprite;
-    state.refSprite = previous;
-    selectSprite(other);
-    renderRefSelect();
-    info(t('ref.swapped', { now: sprites[other].name, before: sprites[previous].name }));
   });
 }
 
@@ -1262,6 +1293,7 @@ function initImagePanel() {
 // ────────────────────────────────────────────────────────────────────
 function initCleanupPanel() {
   $('bg-remove-btn').addEventListener('click', () => {
+    if (layerBlocked(true)) return;
     const tol = Number($('bg-tolerance').value) || 25;
     let n = 0;
     recordOp(() => { n = autoRemoveBackground(getGrid(), getPal(), tol); });
@@ -1270,6 +1302,7 @@ function initCleanupPanel() {
   });
 
   $('despeckle-btn').addEventListener('click', () => {
+    if (layerBlocked(true)) return;
     let n = 0;
     recordOp(() => { n = despeckleGrid(getGrid()); });
     if (n) renderAll();
@@ -1277,6 +1310,7 @@ function initCleanupPanel() {
   });
 
   $('outline-btn').addEventListener('click', () => {
+    if (layerBlocked(true)) return;
     const col = $('outline-color').value;
     const th  = Number($('outline-thickness').value) || 1;
     let n = 0;
@@ -1396,7 +1430,7 @@ function initOutputPanel() {
   });
 
   $('clear-grid-btn').addEventListener('click', () => {
-    if (!getSprite()) return;
+    if (!getSprite() || layerBlocked(true)) return;
     stopRotating(false);
     commitFloat();
     showConfirmToast(t('sprite.confirmClear'), () => {
@@ -1474,6 +1508,7 @@ function initImport() {
     const parts = [];
     if (r.stats.format && r.stats.format !== 'Array') parts.push(r.stats.format);
     parts.push(t('imp.size', { w: r.stats.w, h: r.stats.h }));
+    if (r.stats.frames > 1) parts.push(tn('list.frames', r.stats.frames));
     if (r.stats.paletteCount) parts.push(t('imp.paletteWith', { n: r.stats.paletteCount }));
     else parts.push(t('imp.paletteNone'));
     if (r.stats.restored) parts.push(t('imp.restored', { n: r.stats.restored }));
@@ -1525,20 +1560,37 @@ function initImport() {
     let palName = null;
     if (usePal.checked && r.palette) {
       palName = createPaletteFromImport(r.palette, r.name ? r.name.toLowerCase() : 'import');
+      // JSON (Spiel): Materialien gehören zur Palette.
+      if (palName && r.materials) paletteMaterials[palName] = { ...r.materials };
     }
 
+    // Frames samt Dauer. Sind alle gleich lang, wird daraus die fps-Zahl.
+    const durs = r.durations || [];
+    const same = durs.length && durs.every(d => d === durs[0]);
+    const fps = same ? Math.round(1000 / durs[0]) : undefined;
+    const frames = (r.frames || [r.grid]).map((grid, i) => ({ grid, dur: same ? 0 : durs[i] || 0 }));
+
+    stopPlayback();
     if (asNew || !getSprite()) {
       const id = createSprite({
         name: r.name || t('imp.fallbackName'),
         palette: palName || getSprite()?.palette || DEFAULT_PALETTE,
-        grid: r.grid,
+        frames,
+        fps,
       });
       state.curSprite = id;
       clearHistory(); // frischer Sprite → alte Undo-Einträge sind bedeutungslos
     } else {
+      // Ersetzt den ganzen Sprite — Frames UND Ebenen. Undo holt alles zurück.
       const sp = getSprite();
-      recordOp(() => { sp.grid = r.grid; });
-      if (palName) sp.palette = palName;
+      recordOp(() => {
+        sp.frames = frames.map(f => ({ cels: [f.grid], dur: f.dur }));
+        sp.layers = [defaultLayer(1)];
+        sp.layer = 0;
+        sp.frame = 0;
+        if (fps) sp.fps = Math.max(1, Math.min(60, fps));
+        if (palName) sp.palette = palName;
+      });
     }
 
     close();
@@ -1571,7 +1623,6 @@ function syncUiFromState() {
   $('shape-fill-btn').setAttribute('aria-pressed', String(state.shapeFill));
   updateMirrorUI();
   syncImagePanel();
-  renderRefSelect();
   updateToolUI();
 }
 
@@ -1589,7 +1640,6 @@ function relabelUi() {
   syncFullscreenBtn();
   syncFormatUI();
   syncSaveDirBtn();
-  renderRefSelect();
   syncImagePanel();
   updateToolUI();
   renderAll();
@@ -1619,7 +1669,6 @@ function init() {
   initFreeColors();
   initReduceModal();
   initShowColor();
-  initRefLayer();
   initImagePanel();
   initRotateSlider();
   initCleanupPanel();
@@ -1630,10 +1679,13 @@ function init() {
   initSizeModal();
   initPaletteModal();
   initExport();
+  initFrames();
+  initLayers();   // nach initFrames: hängt sich an dessen Zeichen-Callback
   initOutputPanel();
   initImport();
   initCanvasEvents();
   initPan();
+  initPinch();
   initKeyboardEvents();
 
   $('sprite-search').addEventListener('input', renderSpriteList);

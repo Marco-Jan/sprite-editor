@@ -9,7 +9,7 @@
 // es höchstens die Seite und den Platz in der Reihe — ein angepinntes bleibt
 // angepinnt, alle anderen werden zur Schublade.
 //
-// Die zwei Leisten der Bühne (#toolbar, #color-bar) docken in einer von vier
+// Die drei Leisten der Bühne (#toolbar, #color-bar, #timeline) docken in einer von vier
 // Zonen um die Zeichenfläche an (oben, links, rechts, unten), schweben, oder
 // sitzen wie ein Panel als Icon im Dock (Modus drawer, senkrecht aufgeklappt).
 // Auch ihre Reihenfolge innerhalb einer Zone lässt sich ziehen.
@@ -25,15 +25,23 @@ const KEY = 'spritebit_layout';
 const SIDE_REACH = 40;    // so weit neben der Leiste zählt ein Drop noch zur Seite
 const ZONE_REACH = 44;    // so nah am Rand der Zeichenfläche dockt eine Leiste an
 const PIN_MIN = 200, PIN_MAX = 560;
-const BARS = ['toolbar', 'color-bar'];
-const BAR_DOCK = { 'toolbar': ['tools', 'lay.toolbar'], 'color-bar': ['swatches', 'lay.colorbar'] };
+const BARS = ['toolbar', 'color-bar', 'timeline'];
+const BAR_DOCK = {
+  'toolbar': ['tools', 'lay.toolbar'],
+  'color-bar': ['swatches', 'lay.colorbar'],
+  'timeline': ['frames', 'lay.timeline'],
+};
+// Wo eine Leiste ohne gespeicherte Anordnung andockt.
+const BAR_HOME = { 'toolbar': 'top', 'color-bar': 'top', 'timeline': 'bottom' };
 // Handy: Panels nur als Schublade (von unten), beide Leisten waagerecht
 // unter der Zeichenfläche. Die gespeicherte Anordnung bleibt unberührt.
 const MOBILE = window.matchMedia('(max-width: 700px)');
 
 let ws, layer, hint;
 let zTop = 40;
-let layout = { pinW: { left: 280, right: 300 }, items: {}, order: [], barOrder: [...BARS] };
+// mobilePins: auf dem Handy eigene Wahl je Leiste — true = unten angepinnt
+// (Standard), false = im Dock. Unabhängig von der Anordnung am Desktop.
+let layout = { pinW: { left: 280, right: 300 }, items: {}, order: [], barOrder: [...BARS], mobilePins: {} };
 
 const $ = id => document.getElementById(id);
 const panelEl = id => document.querySelector(`[data-panel="${id}"]`);
@@ -52,6 +60,7 @@ function load() {
     const keep = (saved, all) => [...(saved || []).filter(id => all.includes(id)), ...all.filter(id => !(saved || []).includes(id))];
     layout.order = keep(raw.order, layout.order);
     layout.barOrder = keep(raw.barOrder, BARS);
+    layout.mobilePins = raw.mobilePins && typeof raw.mobilePins === 'object' ? raw.mobilePins : {};
   } catch {}
 }
 let transient = false;   // gerade Handy-Anordnung angewendet → nicht speichern
@@ -392,7 +401,7 @@ function setBarMode(id, mode, opts = {}) {
     if (!MOBILE.matches) el.classList.add('is-vertical');
   } else {
     mode = 'docked';
-    st.zone = opts.zone || st.zone || 'top';
+    st.zone = opts.zone || st.zone || BAR_HOME[id] || 'top';
     placeBar(id, st.zone, 'before' in opts ? opts.before : layout.barOrder[layout.barOrder.indexOf(id) + 1] ?? null);
     if (st.zone === 'left' || st.zone === 'right') el.classList.add('is-vertical');
   }
@@ -407,6 +416,13 @@ function setBarMode(id, mode, opts = {}) {
 
 function syncBarButton(el) {
   const pin = el.querySelector('.bar-pin');
+  if (MOBILE.matches) {
+    const pinned = el.dataset.mode === 'docked';
+    pin.setAttribute('aria-pressed', String(pinned));
+    pin.title = t(pinned ? 'lay.mobileUnpin' : 'lay.mobilePin');
+    pin.setAttribute('aria-label', pin.title);
+    return;
+  }
   const docked = el.dataset.mode !== 'float';
   pin.setAttribute('aria-pressed', String(docked));
   pin.title = t(docked ? 'lay.floatBar' : 'lay.dockBar');
@@ -468,6 +484,14 @@ function initBar(id) {
   el.prepend(handle);
 
   pin.addEventListener('click', () => {
+    // Handy: zwischen "unten angepinnt" und "im Dock" wechseln.
+    if (MOBILE.matches) {
+      layout.mobilePins[id] = el.dataset.mode !== 'docked';
+      save();
+      closeDrawer();
+      applyAll();
+      return;
+    }
     if (el.dataset.mode === 'float') { setBarMode(id, 'docked'); return; }
     const r = el.getBoundingClientRect(), w = wsRect();
     setBarMode(id, 'float', { geom: { x: r.left - w.left + 24, y: r.top - w.top + 24, w: Math.min(r.width, 420), cascade: true } });
@@ -572,7 +596,51 @@ function initPinResizer(side) {
   });
 }
 
+// ── Handy: Werkzeug-Optionen ────────────────────────────────────────
+// In der einzeiligen Werkzeugleiste stehen auf dem Handy nur die Werkzeuge.
+// Symmetrie, Größe, Stärke usw. wandern in eine eigene Zeile darüber, die
+// der Regler-Knopf oder ein zweiter Tipp aufs aktive Werkzeug aufklappt.
+// Am breiten Fenster kommen sie an ihren Platz zurück (Platzhalter).
+const OPT_IDS = ['mirror-group', 'brush-size-group', 'strength-group', 'tolerance-group', 'shape-group', 'select-group'];
+let optsBox, optsBtn, optsMarks;
+
+function setToolOpts(open) {
+  optsBox.hidden = !open;
+  optsBtn.classList.toggle('is-active', open);
+  optsBtn.setAttribute('aria-expanded', String(open));
+}
+
+function initToolOpts() {
+  const tb = $('toolbar');
+  optsMarks = OPT_IDS.map(id => { const c = document.createComment(id); $(id).before(c); return c; });
+  optsBox = document.createElement('div');
+  optsBox.id = 'tool-opts';
+  optsBtn = headButton('tool-opts-btn', 'sliders');
+  optsBtn.setAttribute('aria-controls', 'tool-opts');
+  tb.querySelector('.bar-handle').after(optsBtn);
+  optsBtn.addEventListener('click', () => setToolOpts(optsBox.hidden));
+  // Capture: vor app.js, solange das Werkzeug noch als aktiv markiert ist.
+  tb.addEventListener('click', e => {
+    const b = e.target.closest('.tool-btn[data-tool]');
+    if (b && MOBILE.matches && b.classList.contains('is-active')) setToolOpts(optsBox.hidden);
+  }, true);
+  setToolOpts(false);
+}
+
+function syncToolOpts() {
+  if (MOBILE.matches) {
+    OPT_IDS.forEach(id => optsBox.append($(id)));
+    zoneOf('bottom').before(optsBox);
+  } else {
+    OPT_IDS.forEach((id, i) => optsMarks[i].after($(id)));
+    optsBox.remove();
+    setToolOpts(false);
+  }
+}
+
 function relabel() {
+  optsBtn.title = t('lay.toolOpts');
+  optsBtn.setAttribute('aria-label', optsBtn.title);
   document.querySelectorAll('[data-panel]').forEach(syncHeadButtons);
   BARS.forEach(id => syncBarButton($(id)));
   document.querySelectorAll('.pins-resizer').forEach(g => { g.title = t('lay.resize'); });
@@ -593,13 +661,17 @@ function applyAll() {
   }
   for (const id of [...layout.barOrder]) {
     const st = layout.items[id] || {};
-    if (st.mode === 'drawer') setBarMode(id, 'drawer', { side: st.side });
-    else if (mobile) setBarMode(id, 'docked', { zone: 'bottom', before: null });
+    if (mobile) {
+      if (layout.mobilePins[id] === false) setBarMode(id, 'drawer', { side: st.side || 'right' });
+      else setBarMode(id, 'docked', { zone: 'bottom', before: null });
+    }
+    else if (st.mode === 'drawer') setBarMode(id, 'drawer', { side: st.side });
     else if (st.mode === 'float') setBarMode(id, 'float');
-    else setBarMode(id, 'docked', { zone: st.zone || 'top', before: null });
+    else setBarMode(id, 'docked', { zone: st.zone || BAR_HOME[id], before: null });
   }
   if (mobile) layout = JSON.parse(snapshot);
   transient = false;
+  syncToolOpts();
   syncRail('left');
   syncRail('right');
 }
@@ -625,6 +697,7 @@ export function initLayout() {
   document.querySelectorAll('[data-panel]').forEach(initPanel);
   document.querySelectorAll('[data-panel]').forEach(p => initPanelDockDrag(p.dataset.panel));
   BARS.forEach(initBar);
+  initToolOpts();
 
   load();
   applyAll();
@@ -642,6 +715,6 @@ export function initLayout() {
     }
     if (changed) save();
   });
-  document.querySelectorAll('[data-panel], #toolbar, #color-bar').forEach(el => ro.observe(el));
+  document.querySelectorAll('[data-panel], #toolbar, #color-bar, #timeline').forEach(el => ro.observe(el));
   window.addEventListener('resize', () => layer.querySelectorAll('.is-floating').forEach(clampFloat));
 }

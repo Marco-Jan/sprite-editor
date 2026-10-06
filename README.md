@@ -56,9 +56,10 @@ Zum Testen: DevTools → Application → Service Workers zeigt den Worker. Unter
 ```
 ┌── Kopfzeile: Projekt sichern/öffnen, Speicherort, Hilfe ──────────┐
 ├───────────┬───────────────────────────────────┬──────────────────┤
-│ Sprites   │  Werkzeugleiste                   │ Farben           │
+│ Sprites   │  Werkzeugleiste                   │ Ebenen, Farben   │
 │ Code &    │  Farb-Schnellwahl (0–9)           │ Schablone        │
 │ Export    │  Zeichenfläche                    │ Aufräumen        │
+│           │  Timeline (Frames)                │                  │
 │           │  Statuszeile                      │                  │
 └───────────┴───────────────────────────────────┴──────────────────┘
 ```
@@ -77,8 +78,10 @@ sich als Schublade. Im Panel-Kopf:
 - Die Reihenfolge lässt sich überall ziehen: Panels in der angepinnten Spalte und die
   Icons im Dock (auch auf die andere Seite).
 
-Werkzeugleiste und Farbzeile haben vorn einen Griff und einen Pin: lösen, frei schweben
-lassen, Größe ändern. Andocken lassen sie sich oben, unten oder links/rechts neben der
+Werkzeugleiste, Farbzeile und Timeline haben vorn einen Griff und einen Pin: lösen, frei schweben
+lassen, Größe ändern.
+Auf dem Handy (bis 700 px) hat jede dieser Leisten nur den Pin: angepinnt sitzt sie fest unter
+der Zeichenfläche (Standard), ohne Pin liegt sie im Dock. Diese Wahl gilt nur fürs Handy. Andocken lassen sie sich oben, unten oder links/rechts neben der
 Zeichenfläche (dort senkrecht), in beliebiger Reihenfolge. Die Anordnung merkt sich
 der Browser (localStorage `spritebit_layout`), sie gehört nicht zum Projekt. Im Vollbild
 verschwindet nur die Kopfzeile.
@@ -160,7 +163,7 @@ für sich allein benutzbar:
 | Python | `.py` | Dict + Liste für Pygame, Pillow, Skripte |
 | Text-Raster | `.txt` | Ein Zeichen pro Pixel plus Legende — für Diffs und Doku |
 
-**Zurück in den Editor** kommen TypeScript, JavaScript und JSON. Der Rest ist Einbahnstraße.
+**Zurück in den Editor** kommen alle Formate, siehe [Import](#import).
 
 Bei **JSON (Spiel)** erscheint unter dem Format eine Auswahl *Material je Farbe*
 (`sand`, `water`, `stone` …). Sie gilt pro Palette und wird mit dem Projekt gespeichert.
@@ -185,7 +188,7 @@ eine Datei.
 
 | Format | Kommt zurück |
 |---|---|
-| TypeScript, JavaScript, JSON, Python, C-Header | verlustfrei, auch die Farb-Nummern |
+| TypeScript, JavaScript, JSON, JSON (Spiel), Python, C-Header | verlustfrei, auch die Farb-Nummern (bei JSON (Spiel) ohne die Materialien) |
 | SVG, CSS, Text-Raster | Bild identisch, Farben neu durchnummeriert |
 
 Die drei letzten kennen keine Palette-Indizes — dort werden die Farben in der Reihenfolge
@@ -210,12 +213,17 @@ geprüft und mit `JSON.parse` gelesen.
 
 ### Bilder
 
-- **PNG** transparent, Skalierung 1× bis 32×
-- **PDF** mit eingebettetem PNG
-- **Spritesheet** packt *alle* Sprites in gleich große Zellen (möglichst quadratisches
-  Raster) und schreibt einen JSON-Atlas daneben: Name, Palette und Pixelkoordinaten je
-  Frame. Jeder Sprite sitzt mittig in seiner Zelle, der Atlas nennt die echte Lage —
-  auch für Sprites, die kleiner als die Zelle sind.
+- **PNG** transparent, Skalierung 1× bis 32× — der aktuelle Frame
+- **PDF** mit eingebettetem PNG — der aktuelle Frame
+- **GIF** die ganze Animation des aktiven Sprites, läuft endlos, Dauer je Frame wie im
+  Editor (GIF rechnet in 1/100 s). Höchstens 255 Farben plus Transparent; bei mehr
+  Farben erst mit „Bild → Palette …“ reduzieren. Eigener Encoder (`js/gif.js`).
+- **Spritesheet** packt *alle* Sprites in gleich große Zellen und schreibt einen
+  JSON-Atlas daneben: Name, Palette und Pixelkoordinaten je Frame. Ohne Animation ist es
+  ein möglichst quadratisches Raster; sobald ein Sprite mehrere Frames hat, bekommt jeder
+  Sprite eine Zeile mit seinen Frames nebeneinander, und jeder Atlas-Eintrag nennt
+  zusätzlich `frame` und `duration` (ms). Jeder Frame sitzt mittig in seiner Zelle, der
+  Atlas nennt die echte Lage — auch für Sprites, die kleiner als die Zelle sind.
 - *Farb-Legende ins Bild* rendert die verwendeten Farben mit Hex-Codes unter den Sprite
 
 ---
@@ -273,25 +281,8 @@ Werkzeug- oder Sprite-Wechsel, Undo, Tab schließen.
 
 Der schwebende Inhalt merkt sich, aus **welchem** Sprite er stammt (`selection.owner`),
 und landet beim Absetzen immer dort — auch wenn inzwischen ein anderer Sprite offen ist.
-Ohne das würde er beim Arbeiten mit einer Ebene im falschen Bild landen oder ganz
+Ohne das würde er nach einem Sprite-Wechsel im falschen Bild landen oder ganz
 verschwinden.
-
----
-
-## Ebene — mit zwei Sprites arbeiten
-
-Unter der Sprite-Liste lässt sich ein **zweiter Sprite als Ebene** einblenden:
-halbdurchsichtig, oben links ausgerichtet, mit seiner eigenen Palette. Bearbeitet wird
-immer nur der aktive Sprite — die Ebene ist reine Vorlage.
-
-- **👁** blendet sie aus, der Regler stellt die Deckkraft.
-- **dahinter / davor** legt sie unter oder über das Bild (davor hilft beim Abpausen von
-  Konturen).
-- **Tauschen** vertauscht die Rollen: die Ebene wird bearbeitet, der bisherige Sprite
-  wird zur Ebene.
-
-Teile übertragen: im einen Sprite auswählen, `Strg`+`C`, zum anderen wechseln, `Strg`+`V`.
-Das Eingefügte schwebt und lässt sich erst hinschieben, bevor es liegt.
 
 ---
 
@@ -335,6 +326,77 @@ Die Schablone überlebt einen Reload (eigener localStorage-Key).
 
 ---
 
+## Ebenen
+
+Jeder Sprite hat eine oder mehrere **Ebenen** (Panel „Ebenen“ im Dock). Die Liste zeigt
+die oberste Ebene oben, mit Vorschaubild des aktuellen Frames.
+
+- Gemalt wird immer in die **aktive** Ebene — alle Werkzeuge, Auswahl, Aufräumen und die
+  Schablone arbeiten dort. Die Pipette greift, was man sieht.
+- **Auge** blendet aus, **Schloss** sperrt. In eine gesperrte oder ausgeblendete Ebene
+  wird nicht gemalt; die Statuszeile sagt, warum.
+- **Deckkraft** per Regler (ein Undo-Schritt je Ziehen), **Name** per Doppelklick,
+  **Reihenfolge** per Ziehen.
+- **+** neue leere Ebene über der aktiven, **duplizieren**, **nach unten zusammenführen**
+  (in jedem Frame), **löschen** (die letzte Ebene bleibt).
+
+Jede Ebene hat in jedem Frame ihr eigenes Bild (`frames[].cels`). Größe ändern, drehen,
+spiegeln, skalieren, zuschneiden und Paletten umfärben wirken auf alle Ebenen.
+
+**Export: was man sieht.** Bilder, GIF, Spritesheet, alle Code-Formate, Vorschaubilder
+und Onion Skin zeigen alle sichtbaren Ebenen zusammengefügt. Bei voller Deckkraft bleibt
+der Palette-Index erhalten; eine halbdurchsichtige Ebene wird mit der Farbe darunter zu
+einer freien Farbe gemischt — über leerem Grund bleibt sie deckend, weil Pixel keine
+Transparenz-Stufen kennen. Die Ebenen selbst stecken nur im Projekt (Speicherstand und
+Projektdatei). „Import → In aktuellen Sprite“ ersetzt den Sprite samt Ebenen
+(`Strg+Z` holt ihn zurück).
+
+---
+
+## Animation — Frames
+
+Jeder Sprite hat einen oder mehrere **Frames**. Die **Timeline** ist eine Leiste wie
+Werkzeugleiste und Farbzeile (Standard: unter der Zeichenfläche) und lässt sich genauso
+andocken, schweben lassen oder ins Dock legen.
+
+- **Vorschaubilder** aller Frames: antippen wählt, ziehen sortiert um.
+- **+** fügt dahinter einen leeren Frame ein, daneben **duplizieren** und **löschen**
+  (der letzte Frame bleibt).
+- **▶** spielt in der Zeichenfläche ab (`Enter`); ein Tipp auf die Fläche, `Esc` oder
+  jede Frame-Aktion hält an. Beim Abspielen wird nicht gezeichnet.
+- **FPS** gilt für den ganzen Sprite (1–60). **Dauer** gibt einem einzelnen Frame eine
+  eigene Länge in ms; leer heißt „nach FPS“. Frames mit eigener Dauer tragen ein ⏱.
+- **Onion Skin** zeigt den vorigen Frame rot und den nächsten blau getönt unter dem
+  aktuellen.
+
+Gezeichnet wird immer im aktuellen Frame — alle Werkzeuge, Auswahl und Effekte arbeiten
+dort. Was den ganzen Sprite betrifft, wirkt auf **alle Frames**: Größe ändern, drehen um
+90°, spiegeln, skalieren, zuschneiden und zentrieren (beides über die Begrenzung aller
+Frames, damit die Animation nicht springt) sowie Paletten-Zuweisung, „Bildfarben in die
+Palette“ und „Bild → Palette“. Nur die freie Drehung dreht den sichtbaren Frame.
+
+Frame-Aktionen und das Ändern von FPS und Dauer sind normale Undo-Schritte. Ein
+Undo-Eintrag sichert dafür den ganzen Sprite; Frames, die sich nicht geändert haben,
+teilen sich ihre Kopie.
+
+**Code-Formate mit mehreren Frames** (mit einem Frame bleibt alles wie oben):
+
+| Format | Frames |
+|---|---|
+| TypeScript / JavaScript | `X: number[][][]` (`[Frame][y][x]`) plus `X_DURATIONS` in ms |
+| JSON | `"frames": [ … ]` statt `"grid"`, dazu `"fps"` und `"durations"` |
+| JSON (Spiel) | Frames als Streifen nebeneinander in `data`, Atlas `sprites` mit `frames`, dazu `durations` |
+| SVG | eine `<g>` je Frame mit `data-ms`, CSS-Animation zeigt sie nacheinander (ohne CSS: Frame 1) |
+| CSS | Frame 1 am Element, `@keyframes` mit einem `box-shadow` je Frame, `step-end` |
+| C-Header | `X_FRAMES`, `X_DURATIONS[]`, `X_DATA[Frames][W*H]` |
+| Python | Liste von Grids plus `X_DURATIONS` |
+| Text-Raster | ein Block je Frame mit Zeile `Frame N · ms` |
+
+Der Import liest all das zurück, samt Dauer. Sind alle Frames gleich lang, wird daraus
+die FPS-Zahl des Sprites.
+
+---
+
 ## Tastenkürzel
 
 | Taste | Wirkung |
@@ -357,7 +419,9 @@ Die Schablone überlebt einen Reload (eigener localStorage-Key).
 | Pfeiltasten | Auswahl pixelweise verschieben |
 | `Strg+A` / `C` / `X` / `V` | Alles wählen · Kopieren · Ausschneiden · Einfügen |
 | `Entf` | Auswahl leeren |
-| `Enter` | Drehung übernehmen |
+| `Enter` | Drehung übernehmen · sonst Animation abspielen / anhalten |
+| `,` / `.` | Voriger / nächster Frame |
+| Zwei Finger (Touch) | Zoomen und verschieben |
 | `Strg+Z` / `Strg+Y` | Rückgängig / Wiederholen |
 | `Esc` | Auswahl aufheben, Dialog oder Vollbild schließen |
 
@@ -421,17 +485,20 @@ sprite-editor/
     ├── storage.js      ← localStorage + Projekt-Datei
     ├── migrate.js      ← v1 (dog/cat) → v2 (generisch)
     ├── render.js       ← alle Render-Funktionen + Mal-Operationen
-    ├── codegen.js      ← Code-Formate (TS/JS/JSON/SVG/CSS/C/Python/Text)
+    ├── codegen.js      ← Code-Formate (TS/JS/JSON/SVG/CSS/C/Python/Text), alle Frames
     ├── gamejson.js     ← „JSON (Spiel)“: Materialliste, Aufbau, Validierung (ohne DOM)
     ├── selection.js    ← Auswahl: Rechteck, Lasso, Farbwahl, verschieben, einfügen
     ├── transform.js    ← spiegeln, drehen, zuschneiden, zentrieren, Größe, skalieren
-    ├── history.js      ← Undo/Redo pro Strich
+    ├── history.js      ← Undo/Redo pro Strich (sichert den ganzen Sprite mit allen Frames)
+    ├── frames.js       ← Frames: anlegen, wechseln, abspielen, Onion Skin, Timeline
+    ├── layers.js       ← Ebenen: anlegen, ordnen, ausblenden, sperren, Deckkraft, Panel
+    ├── gif.js          ← GIF89a-Encoder (LZW, Endlosschleife, Dauer je Frame)
     ├── sprites.js      ← anlegen, umbenennen, duplizieren, löschen
     ├── palettes.js     ← Paletten-Modal + Fork/Import
-    ├── tsimport.js     ← TS-/JS-Parser (Grid + Palette)
+    ├── tsimport.js     ← Import aller Formate (Frames + Palette)
     ├── template.js     ← Schablone: Upload, Drag, Pipette, Abtasten
     ├── spritefx.js     ← Median-Cut, Glätten, Outline, Zauberstab
-    ├── export.js       ← PNG + PDF
+    ├── export.js       ← PNG, PDF, GIF, Spritesheet
     ├── filesystem.js   ← Speicherort merken (File System Access API)
     ├── toast.js        ← Confirm-/Info-Toast statt window.confirm
     ├── pwa.js          ← meldet den Service Worker an (Startseite + Editor)

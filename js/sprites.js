@@ -2,7 +2,7 @@
 // SPRITES — anlegen, umbenennen, duplizieren, löschen
 // ════════════════════════════════════════════════════════════════════
 import {
-  state, sprites, createSprite, selectFirstSprite,
+  state, sprites, createSprite, selectFirstSprite, flatGrid,
   getSprite, makeSpriteId, listSprites, clearSelection,
 } from './state.js';
 import { DEFAULT_PALETTE, dc } from './data.js';
@@ -44,7 +44,10 @@ export function duplicateSprite(id) {
   const newId = createSprite({
     name: src.name + t('list.copySuffix'),
     palette: src.palette,
-    grid: dc(src.grid),
+    frames: src.frames.map(f => ({ cels: f.cels.map(dc), dur: f.dur })),
+    fps: src.fps,
+    layers: src.layers.map(l => ({ ...l })),
+    layer: src.layer,
   });
   commitFloat();
   clearSelection();
@@ -142,7 +145,7 @@ export function initNewSpriteModal() {
     // Vorlage wird zentriert eingesetzt (geclippt wenn größer, gepadded wenn kleiner).
     let grid = Array.from({ length: h }, () => Array(w).fill(0));
     if (srcId && sprites[srcId]) {
-      const tpl = sprites[srcId].grid;
+      const tpl = flatGrid(sprites[srcId]);
       const tplH = tpl.length, tplW = tpl[0].length;
       const ox = Math.floor((w - tplW) / 2);
       const oy = Math.floor((h - tplH) / 2);

@@ -8,7 +8,7 @@
 //   assignPalette(name, { keepLook: false }) — Sprite umfärben
 // Beides ist ein normaler Undo-Schritt (history.js merkt sich die Palette).
 import {
-  state, sprites, customPalettes, paletteMaterials,
+  state, sprites, customPalettes, paletteMaterials, allGrids,
   getSprite, getPal, getPaletteName, getPaletteByName, getAllPaletteOptions,
   getPreviewName, paletteExists, isCustomPalette, uniquePaletteName,
 } from './state.js';
@@ -54,7 +54,7 @@ export function assignPalette(name, { keepLook }) {
         const k = newPal[i]?.toLowerCase();
         if (k && !where.has(k)) where.set(k, i);
       }
-      for (const row of sp.grid) {
+      for (const row of allGrids(sp).flat()) {
         for (let x = 0; x < row.length; x++) {
           const c = row[x];
           if (c === 0) continue;
@@ -109,7 +109,7 @@ export function addFreeColorsToPalette() {
   const sp = getSprite();
   if (!sp) return;
   const free = new Set();
-  for (const row of sp.grid) for (const c of row) {
+  for (const row of allGrids(sp).flat()) for (const c of row) {
     if (typeof c === 'string' && c[0] === '#') free.add(c.toLowerCase());
   }
   if (!free.size) return;
@@ -135,7 +135,7 @@ export function addFreeColorsToPalette() {
   fresh.forEach((hex, k) => { pal[size + 1 + k] = hex; have.set(hex, size + 1 + k); });
 
   recordOp(() => {
-    for (const row of sp.grid) for (let x = 0; x < row.length; x++) {
+    for (const row of allGrids(sp).flat()) for (let x = 0; x < row.length; x++) {
       const c = row[x];
       if (typeof c === 'string' && c[0] === '#') row[x] = have.get(c.toLowerCase());
     }

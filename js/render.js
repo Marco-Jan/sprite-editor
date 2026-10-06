@@ -7,7 +7,7 @@
 import {
   state, sprites, customPalettes, paletteMaterials, selection,
   getGrid, getSprite, getPal, getPaletteName, getMaxIdx, getPreviewName,
-  getAllPaletteOptions, isCustomPalette, listSprites, getPaletteByName,
+  getAllPaletteOptions, isCustomPalette, listSprites, getPaletteByName, allGrids, flatGrid,
 } from './state.js';
 import { PALETTE_GROUP_SPLIT, MAX_COLORS, cellToColor, paletteSize } from './data.js';
 import { t, tn, colorLabel, colorLabelShort } from './i18n.js';
@@ -36,6 +36,10 @@ export const renderCallbacks = {
   onPreviewPalette:  (_name) => {},
   // Felder im Bild-Panel an die Maße des aktiven Sprites angleichen.
   onSyncImagePanel:  () => {},
+  // Timeline (frames.js): ganz neu zeichnen bzw. nur den aktuellen Frame.
+  onRenderTimeline:  () => {},
+  onRenderLayers:    () => {},
+  onEditorRendered:  () => {},
 };
 
 // SVG-String für eine Sprite-Vorschau (Thumbnails in der Sprite-Liste).
@@ -93,13 +97,15 @@ export function renderSpriteList() {
 
     const thumb = document.createElement('div');
     thumb.className = 'sprite-thumb';
-    thumb.innerHTML = svgSprite(sp.grid, getPaletteFor(sp), 40 / Math.max(sp.grid.length, sp.grid[0].length));
+    thumb.innerHTML = svgSprite(flatGrid(sp), getPaletteFor(sp), 40 / Math.max(sp.grid.length, sp.grid[0].length));
 
     const meta = document.createElement('div');
     meta.className = 'sprite-meta';
     meta.innerHTML =
       `<span class="sprite-name">${esc(sp.name)}</span>` +
-      `<span class="sprite-sub">${sp.grid[0].length}×${sp.grid.length} · ${esc(sp.palette)}</span>`;
+      `<span class="sprite-sub">${sp.grid[0].length}×${sp.grid.length}`
+      + (sp.frames.length > 1 ? ` · ${tn('list.frames', sp.frames.length)}` : '')
+      + ` · ${esc(sp.palette)}</span>`;
 
     const acts = document.createElement('div');
     acts.className = 'sprite-acts';
@@ -155,17 +161,23 @@ export function renderEditor() {
     ctx.fillRect(x * cs, y * cs, cs, cs);
   }
 
-  // Referenz-Ebene dahinter
-  if (!state.refFront) drawRefLayer(ctx, W, H, cs);
+  // Onion Skin: Nachbar-Frames getönt unter dem aktuellen
+  drawOnion(ctx, W, H, cs);
 
-  // Pixel
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    const fill = cellToColor(grid[y][x], pal);
-    if (fill) { ctx.fillStyle = fill; ctx.fillRect(x * cs, y * cs, cs, cs); }
+  // Pixel — alle sichtbaren Ebenen von unten nach oben, je mit ihrer Deckkraft
+  const sp = getSprite();
+  if (sp) {
+    sp.layers.forEach((L, li) => {
+      if (!L.visible || L.opacity <= 0) return;
+      const g = sp.frames[sp.frame].cels[li];
+      ctx.globalAlpha = L.opacity;
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+        const fill = cellToColor(g[y][x], pal);
+        if (fill) { ctx.fillStyle = fill; ctx.fillRect(x * cs, y * cs, cs, cs); }
+      }
+    });
+    ctx.globalAlpha = 1;
   }
-
-  // ... oder darüber, zum Abpausen von Konturen
-  if (state.refFront) drawRefLayer(ctx, W, H, cs);
 
   // Formen-Vorschau (Linie, Rechteck, Ellipse) waehrend des Ziehens
   if (state.shape.cells.length) {
@@ -215,6 +227,24 @@ export function renderEditor() {
   if (state.mirror !== 'off') drawMirrorGuides(ctx, W, H, cs);
 
   updateStageTitle();
+  renderCallbacks.onEditorRendered();
+}
+
+// Onion Skin: voriger Frame rot, nächster blau getönt — nur die Form, nicht
+// die Farben, damit man sie vom aktuellen Frame unterscheiden kann. Beim
+// Abspielen aus, sonst flackert es.
+function drawOnion(ctx, W, H, cs) {
+  const sp = getSprite();
+  if (!state.onion || state.playing || !sp || sp.frames.length < 2) return;
+  const tint = (g, color) => {
+    if (!g) return;
+    ctx.fillStyle = color;
+    for (let y = 0; y < H && y < g.length; y++) for (let x = 0; x < W && x < g[y].length; x++) {
+      if (g[y][x] !== 0) ctx.fillRect(x * cs, y * cs, cs, cs);
+    }
+  };
+  if (sp.frame > 0) tint(flatGrid(sp, sp.frame - 1), 'rgba(255, 96, 96, 0.30)');
+  if (sp.frame < sp.frames.length - 1) tint(flatGrid(sp, sp.frame + 1), 'rgba(96, 156, 255, 0.30)');
 }
 
 // "Farbe zeigen": alles, was NICHT die aktuelle Farbe hat, wird abgedunkelt.
@@ -245,28 +275,6 @@ function drawColorSpotlight(ctx, grid, pal, W, H, cs) {
     const hex = cellToColor(grid[y][x], pal);
     if ((hex ? hex.toLowerCase() : null) !== want) ctx.fillRect(x * cs, y * cs, cs, cs);
   }
-}
-
-// Referenz-Ebene: ein zweiter Sprite, halbdurchsichtig, oben links
-// ausgerichtet und am aktuellen Grid abgeschnitten. Er bringt seine eigene
-// Palette mit, damit die Vorlage so aussieht wie ihr Original.
-function drawRefLayer(ctx, W, H, cs) {
-  const ref = state.refSprite && state.refSprite !== state.curSprite
-    ? sprites[state.refSprite] : null;
-  if (!ref || !state.refVisible) return;
-
-  const pal = getPaletteByName(ref.palette);
-  const rh = Math.min(H, ref.grid.length);
-  ctx.save();
-  ctx.globalAlpha = Math.max(0.05, Math.min(1, state.refOpacity));
-  for (let y = 0; y < rh; y++) {
-    const rw = Math.min(W, ref.grid[y].length);
-    for (let x = 0; x < rw; x++) {
-      const fill = cellToColor(ref.grid[y][x], pal);
-      if (fill) { ctx.fillStyle = fill; ctx.fillRect(x * cs, y * cs, cs, cs); }
-    }
-  }
-  ctx.restore();
 }
 
 // Auswahlrahmen — laeuft an den Kanten der Maske entlang, nicht stumpf um die
@@ -346,7 +354,11 @@ export function updateStageTitle() {
   const dimEl  = document.getElementById('stage-dims');
   if (nameEl) nameEl.textContent = sp ? sp.name : t('list.noSprite');
   if (dimEl) {
-    dimEl.textContent = sp ? `${sp.grid[0].length}×${sp.grid.length} · ${sp.palette}` : '';
+    dimEl.textContent = sp
+      ? `${sp.grid[0].length}×${sp.grid.length}`
+        + (sp.frames.length > 1 ? ` · ${t('tl.frameOf', { i: sp.frame + 1, n: sp.frames.length })}` : '')
+        + ` · ${sp.palette}`
+      : '';
   }
   const docTitle = document.getElementById('doc-title');
   if (docTitle) docTitle.textContent = sp ? sp.name : '';
@@ -680,11 +692,12 @@ export function syncColorActive() {
 // Entstehen beim Abpausen mit Rohfarben/N Farben und über die Pipette.
 // Gespeichert und exportiert werden sie ohnehin; hier werden sie sichtbar
 // und wieder anwählbar. Sortiert nach Häufigkeit.
+// Über alle Frames — "in die Palette aufnehmen" färbt auch alle Frames um.
 function collectFreeColors() {
-  const grid = getGrid();
+  const sp = getSprite();
   const counts = new Map();
-  if (!grid) return [];
-  for (const row of grid) for (const c of row) {
+  if (!sp) return [];
+  for (const row of allGrids(sp).flat()) for (const c of row) {
     if (typeof c === 'string' && c[0] === '#') {
       const k = c.toLowerCase();
       counts.set(k, (counts.get(k) || 0) + 1);
@@ -1016,4 +1029,6 @@ export function renderAll() {
   updateOutput();
   updateCurrentColorIndicator();
   renderCallbacks.onSyncImagePanel();
+  renderCallbacks.onRenderTimeline();
+  renderCallbacks.onRenderLayers();
 }

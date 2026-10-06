@@ -212,15 +212,6 @@ const STATIC = {
     'sp.title':       'Sprites',
     'sp.new':         '+ New sprite',
     'sp.search':      'Search sprites…',
-    'sp.layer':       'Layer',
-    'sp.refTitle':    'A second sprite as a semi-transparent reference — you keep editing the active one',
-    'sp.refToggle':   'Show / hide the layer',
-    'sp.refOpacity':  'Layer opacity',
-    'sp.refFront':    'in front',
-    'sp.refFrontTitle': 'Put the layer above the active sprite',
-    'sp.refSwap':     'Swap',
-    'sp.refSwapTitle': 'Swap the layer and the active sprite',
-    'sp.refNote':     'Copy with <b>Ctrl+C</b> here and <b>Ctrl+V</b> in the other sprite.',
 
     // ── Code & Export ──
     'out.title':        'Code & export',
@@ -238,6 +229,27 @@ const STATIC = {
 
     // ── Bühne ──
     'stage.undo':       'Undo (Ctrl+Z)',
+    // Ebenen-Panel (layers.js)
+    'ly.title': 'Layers',
+    'ly.add': 'New layer above the active one',
+    'ly.dup': 'Duplicate layer',
+    'ly.merge': 'Merge down — in every frame',
+    'ly.del': 'Delete layer',
+    'ly.opacity': 'Opacity',
+    'ly.note': 'Double-click the name to rename, drag to reorder. Export and preview show all visible layers on top of each other.',
+    // Timeline (frames.js) und GIF-Export
+    'tl.prev': 'Previous frame (,)',
+    'tl.next': 'Next frame (.)',
+    'tl.play': 'Play / pause (Enter)',
+    'tl.frames': 'Frames',
+    'tl.add': 'Insert an empty frame after this one',
+    'tl.dup': 'Duplicate frame',
+    'tl.del': 'Delete frame',
+    'tl.onion': 'Onion skin — show the previous (red) and next frame (blue) through',
+    'tl.fps': 'FPS',
+    'tl.dur': 'Duration',
+    'tl.durTitle': 'How long this frame stays — empty = by FPS',
+    'exp.gifTitle': 'Animation as GIF — all frames, loops forever',
     'stage.redo':       'Redo (Ctrl+Y)',
     'stage.bgGroup':    'Editor background',
     'stage.bgDark':     'Dark',
@@ -418,12 +430,12 @@ const STATIC = {
     // ── Modal: Import ──
     'mod.impTitle':     'Import a sprite',
     'mod.impIntro':     'Pick a file or paste text — the editor reads <b>every format it also writes</b>. The format is recognised from the content, the file extension does not matter.',
-    'mod.impIntro2':    'TypeScript, JavaScript, JSON, Python and C header carry the color numbers along and come back unchanged. SVG, CSS and the text grid know no numbers — there the picture stays the same but the colors are renumbered.',
+    'mod.impIntro2':    'TypeScript, JavaScript, JSON, JSON (game), Python and C header carry the color numbers along and come back unchanged. SVG, CSS and the text grid know no numbers — there the picture stays the same but the colors are renumbered.',
     'mod.impFile':      'Choose a file',
     'mod.impPh':        'Paste here — for example:\n\nexport const HERO: number[][] = [\n  [0,1,2],\n];\n\n… or an SVG, a box-shadow block, a C header\nor a text grid.',
     'mod.impUsePal':    'Take the palette from the file and assign it to the sprite',
     'mod.impCurrent':   'Into current sprite',
-    'mod.impCurrentTitle': 'Overwrites the grid of the current sprite',
+    'mod.impCurrentTitle': 'Replaces the current sprite with all its frames and layers — Ctrl+Z brings it back',
     'mod.impNew':       'As a new sprite',
 
     // ── Bestätigungs-Toast ──
@@ -481,12 +493,19 @@ const STATIC = {
       + '<div>Every preview is computed from the <i>original</i>, not from the last rotated result — so pulling the slider three times does not smear the shape.</div>'
       + '<div>With a selection the frame grows along so nothing gets cut off. On the whole sprite the canvas stays the same size and corners outside it fall away.</div>',
 
-    'help.h.layer': 'Layer — working with two sprites',
-    'help.layer': ''
-      + '<div>Below the sprite list you can show a <b>second sprite as a layer</b>: semi-transparent, aligned to the top left, with its own palette.</div>'
-      + '<div>Only the active sprite is ever edited — the layer is pure reference. <b>👁</b> hides it, the slider sets the opacity, <b>behind/in front</b> puts it under or over the image (handy for tracing outlines).</div>'
-      + '<div><b>Swap</b> exchanges the roles: the layer becomes the one you edit, the previous sprite becomes the layer.</div>'
-      + '<div>Moving parts across: select in one sprite and press <span class="kbd">Ctrl</span>+<span class="kbd">C</span>, switch to the other, <span class="kbd">Ctrl</span>+<span class="kbd">V</span>. What you paste floats and can be pushed into place before it settles.</div>',
+    'help.h.layers': 'Layers',
+    'help.layers': ''
+      + '<div>Every sprite can have several <b>layers</b> — the <b>Layers</b> panel in the dock. You always paint into the <b>active</b> layer; all visible ones are shown on top of each other, the top one in the list lies on top.</div>'
+      + '<div>The <b>eye</b> hides, the <b>padlock</b> locks — nothing gets painted into a locked or hidden layer. The slider sets the <b>opacity</b>, double-click the name to rename, drag to reorder.</div>'
+      + '<div><b>+</b> adds an empty layer, next to it duplicate, <b>merge down</b> (in every frame) and delete.</div>'
+      + '<div>Each layer has its own picture in every frame. What gets exported is what you see: all visible layers merged. Semi-transparent layers are mixed with the color below.</div>',
+    'help.h.anim': 'Animation — frames',
+    'help.anim': ''
+      + '<div>Every sprite can have several <b>frames</b>. The <b>timeline</b> (at the bottom) shows them as small pictures: tap to select, drag to reorder. <b>+</b> inserts an empty frame, next to it duplicate and delete.</div>'
+      + '<div>▶ plays in the drawing area (<span class="kbd">Enter</span>), a tap on the area stops it. <b>FPS</b> applies to the whole sprite, <b>duration</b> lets single frames stay longer (e.g. a blink).</div>'
+      + '<div><b>Onion skin</b> shows the previous frame in red and the next one in blue — for lining up the motion.</div>'
+      + '<div>Resizing, rotating, flipping, trimming and recoloring with a palette act on <b>all frames</b>. You always draw into the current frame.</div>'
+      + '<div>Export: <b>GIF</b> loops the animation, the <b>spritesheet</b> lays the frames side by side, and every code format carries all frames with their duration.</div>',
 
     'help.h.stencil': 'Stencil',
     'help.stencil': ''
@@ -506,8 +525,8 @@ const STATIC = {
 
     'help.h.io': 'Import & export',
     'help.io': ''
-      + '<div><b>Import</b> reads <code>number[][]</code> from text or file — TypeScript, JavaScript and JSON. A palette block that comes with it is created as a palette of your own and assigned.</div>'
-      + '<div>The <b>code box</b> produces the export in the chosen <b>format</b>. Free eyedropper colors are kept as indices above the palette — with TS, JS and JSON the round trip is lossless.</div>'
+      + '<div><b>Import</b> reads every format the editor writes, from text or file — with all frames. A palette that comes with it is created as a palette of your own and assigned.</div>'
+      + '<div>The <b>code box</b> produces the export in the chosen <b>format</b>, for animations with all frames. Free eyedropper colors are kept as indices above the palette — the round trip is lossless.</div>'
       + '<div class="help-formats">'
       +   '<div><b>TypeScript</b> / <b>JavaScript</b> — <code>number[][]</code> plus palette, with or without types.</div>'
       +   '<div><b>JSON</b> — language-neutral, for your own pipelines, engines and tools.</div>'
@@ -518,8 +537,8 @@ const STATIC = {
       +   '<div><b>Python</b> — dict and list for Pygame, Pillow or your own scripts.</div>'
       +   '<div><b>Text grid</b> — one character per pixel with a key; handy for diffs and docs.</div>'
       + '</div>'
-      + '<div><b>PNG / PDF</b> export with transparency; with <i>color key</i> the palette is rendered into the image.</div>'
-      + '<div><b>Spritesheet</b> packs all sprites into equally sized cells and drops a JSON atlas with names and coordinates next to it — engines read that straight away.</div>'
+      + '<div><b>PNG / PDF</b> export the current frame with transparency; with <i>color key</i> the palette is rendered into the image. <b>GIF</b> holds the whole animation.</div>'
+      + '<div><b>Spritesheet</b> packs all sprites into equally sized cells — for animations one row per sprite with all its frames — and drops a JSON atlas with names, coordinates and duration next to it. Engines read that straight away.</div>'
       + '<div><b>Save project / Open</b> writes all sprites and palettes into one JSON file.</div>',
 
     'help.h.keys': 'Keyboard shortcuts',
@@ -543,7 +562,9 @@ const STATIC = {
       + '<div class="sc-row"><b>Arrow keys</b><span>Nudge the selection pixel by pixel</span></div>'
       + '<div class="sc-row"><b>Ctrl + A / C / X / V</b><span>All · Copy · Cut · Paste</span></div>'
       + '<div class="sc-row"><b>Del</b><span>Erase the selection</span></div>'
-      + '<div class="sc-row"><b>Enter</b><span>Apply the rotation</span></div>'
+      + '<div class="sc-row"><b>Enter</b><span>Apply the rotation · otherwise play / pause the animation</span></div>'
+      + '<div class="sc-row"><b>, / .</b><span>Previous / next frame</span></div>'
+      + '<div class="sc-row"><b>Two fingers</b><span>Zoom and pan (touch)</span></div>'
       + '<div class="sc-row"><b>Ctrl + Z</b><span>Undo</span></div>'
       + '<div class="sc-row"><b>Ctrl + Y</b><span>Redo</span></div>'
       + '<div class="sc-row"><b>Esc</b><span>Deselect, close a dialog or leave full screen</span></div>',
@@ -654,8 +675,32 @@ const MSG = {
     'lay.dockBar':         'Wieder oben anpinnen',
     'lay.grip':            'Ziehen zum Verschieben',
     'lay.toolbar':         'Werkzeuge',
+    'lay.mobilePin':       'Unten anpinnen — bleibt immer offen',
+    'lay.mobileUnpin':     'Ins Dock legen — öffnet sich dann per Icon',
     'lay.colorbar':        'Farbzeile',
+    'lay.timeline':        'Timeline',
+
+    // Timeline (js/frames.js) — die Knopf-Titel stehen in STATIC
+    'tl.frameTitle': 'Frame {i} · {ms} ms — antippen zum Wählen, ziehen zum Verschieben',
+    'tl.frameOf':   'Frame {i}/{n}',
+    'tl.lastFrame': 'Der letzte Frame bleibt — ein Sprite braucht mindestens einen.',
+
+    // Ebenen (js/layers.js) — die Panel-Texte stehen im HTML bzw. in STATIC
+    'ly.name':        'Ebene {n}',
+    'ly.copyName':    '{name} Kopie',
+    'ly.hide':        'Ausblenden',
+    'ly.show':        'Einblenden',
+    'ly.lock':        'Sperren — dann wird hier nicht gemalt',
+    'ly.unlock':      'Entsperren',
+    'ly.rowTitle':    '{name} — antippen wählt, ziehen ordnet, Doppelklick benennt um',
+    'ly.lastLayer':   'Die letzte Ebene bleibt — ein Sprite braucht mindestens eine.',
+    'ly.nothingBelow':'Unter der untersten Ebene liegt nichts zum Zusammenführen.',
+    'ly.lockedInfo':  'Ebene „{name}“ ist gesperrt — erst entsperren (Schloss im Ebenen-Panel).',
+    'ly.hiddenInfo':  'Ebene „{name}“ ist ausgeblendet — erst einblenden (Auge im Ebenen-Panel).',
+    'list.frames_one':   '{n} Frame',
+    'list.frames_other': '{n} Frames',
     'lay.resize':          'Ziehen ändert die Breite',
+    'lay.toolOpts':        'Werkzeug-Optionen — oder das aktive Werkzeug nochmal antippen',
     'tpl.pick':            'Bild laden …',
     'tpl.pickOther':       'Anderes Bild laden …',
     'tpl.unnamed':         'Schablone',
@@ -706,17 +751,6 @@ const MSG = {
     'sprite.option':        '{name} ({w}×{h})',
     'sprite.confirmClear':  'Alle Pixel dieses Sprites löschen?',
     'sprite.clearOk':       'Leeren',
-
-    // Ebene
-    'ref.none':      'keine',
-    'ref.noSecond':  'kein zweiter Sprite',
-    'ref.front':     'davor',
-    'ref.behind':    'dahinter',
-    'ref.on':        'Ebene: „{name}“ liegt {pos}',
-    'ref.posFront':  'darüber',
-    'ref.posBehind': 'darunter',
-    'ref.off':       'Ebene aus',
-    'ref.swapped':   'Getauscht — „{now}“ wird bearbeitet, „{before}“ liegt als Ebene',
 
     // Vollbild
     'full.enter':      'Vollbild',
@@ -853,6 +887,7 @@ const MSG = {
     'exp.legendTitle':   'Palette — {n} Farben',
     'exp.legendSorted':  'Palette — {n} Farben (nach Farbton sortiert)',
     'exp.noSprites':     'Keine Sprites zum Zusammenpacken.',
+    'exp.gifTooMany':    'GIF fasst höchstens 255 Farben — dieser Sprite hat {n}. Erst mit „Bild → Palette …“ reduzieren.',
     'exp.sheetSaved':    'Spritesheet mit {n} Sprites gespeichert — „{png}“ und „{json}“{where}',
     'exp.sheetDownload': ' (im Download-Ordner).',
     'exp.sheetIn':       ' in „{dir}“.',
@@ -895,6 +930,7 @@ const MSG = {
     'imp.errTxtNoGrid':  'Kein Zeichenraster gefunden (gleich lange Zeilen aus . und 1-9).',
     'imp.errTxtBig':     'Raster ist {w}×{h} — zu groß.',
     'imp.errNoArray':    'Kein gültiges number[][]-Array gefunden. Erwartet wird [[0,1,…], …].',
+    'imp.errGame':       'JSON (Spiel) erkannt, aber {reason}',
 
     // Migration alter Projekte
     'mig.rescued_one':   '{n} bearbeiteter Alt-Sprite übernommen',
@@ -914,6 +950,10 @@ const MSG = {
     'gen.cNote':        '// Index 0 ist transparent; Farben als 0xRRGGBB.',
     'gen.pyHead':       '# {name} — {w}×{h}. Index 0 ist transparent.',
     'gen.txtLegend':    "Legende ('.' = transparent):",
+    'gen.framesJs':     '// Animation: {n} Frames — {id}[Frame][y][x], Dauer je Frame in ms: {id}_DURATIONS',
+    'gen.framesPy':     '# Animation: {n} Frames — {id}[Frame][y][x], Dauer je Frame in ms: {id}_DURATIONS',
+    'gen.framesC':      '// Animation: {n} Frames — {id}_DATA[Frame][y * WIDTH + x], Dauer in ms: {id}_DURATIONS',
+    'gen.cssAnim':      '/* Animation: {n} Frames, {ms} ms pro Durchlauf, läuft endlos. */',
 
     // JSON (Spiel)
     'game.materials':      'Material je Farbe — Palette „{name}“',
@@ -929,6 +969,7 @@ const MSG = {
     'game.err.length':     'data hat {len} Werte, erwartet sind {w} × {h} = {expected}.',
     'game.err.index':      'Pixel ({x}, {y}) hat Index {value}, gültig ist 0 bis {max}.',
     'game.err.region':     'Ausschnitt „{name}“ liegt nicht vollständig im Bild.',
+    'game.err.durations':  'durations braucht {need} ganze Zahlen (ms), eine je Frame.',
   },
 
   en: {
@@ -1025,8 +1066,30 @@ const MSG = {
     'lay.dockBar':         'Pin back to the top',
     'lay.grip':            'Drag to move',
     'lay.toolbar':         'Tools',
+    'lay.mobilePin':       'Pin to the bottom — stays open',
+    'lay.mobileUnpin':     'Put into the dock — opens from its icon',
     'lay.colorbar':        'Color bar',
+    'lay.timeline':        'Timeline',
+
+    'tl.frameTitle': 'Frame {i} · {ms} ms — tap to select, drag to move',
+    'tl.frameOf':   'frame {i}/{n}',
+    'tl.lastFrame': 'The last frame stays — a sprite needs at least one.',
+
+    'ly.name':        'Layer {n}',
+    'ly.copyName':    '{name} copy',
+    'ly.hide':        'Hide',
+    'ly.show':        'Show',
+    'ly.lock':        'Lock — nothing gets painted here then',
+    'ly.unlock':      'Unlock',
+    'ly.rowTitle':    '{name} — tap to select, drag to reorder, double-click to rename',
+    'ly.lastLayer':   'The last layer stays — a sprite needs at least one.',
+    'ly.nothingBelow':'There is nothing below the bottom layer to merge into.',
+    'ly.lockedInfo':  'Layer “{name}” is locked — unlock it first (padlock in the layers panel).',
+    'ly.hiddenInfo':  'Layer “{name}” is hidden — show it first (eye in the layers panel).',
+    'list.frames_one':   '{n} frame',
+    'list.frames_other': '{n} frames',
     'lay.resize':          'Drag to change the width',
+    'lay.toolOpts':        'Tool options — or tap the active tool again',
     'tpl.pick':            'Load image …',
     'tpl.pickOther':       'Load another image …',
     'tpl.unnamed':         'Stencil',
@@ -1076,16 +1139,6 @@ const MSG = {
     'sprite.option':        '{name} ({w}×{h})',
     'sprite.confirmClear':  'Erase every pixel of this sprite?',
     'sprite.clearOk':       'Clear',
-
-    'ref.none':      'none',
-    'ref.noSecond':  'no second sprite',
-    'ref.front':     'in front',
-    'ref.behind':    'behind',
-    'ref.on':        'Layer: “{name}” sits {pos}',
-    'ref.posFront':  'above',
-    'ref.posBehind': 'below',
-    'ref.off':       'Layer off',
-    'ref.swapped':   'Swapped — “{now}” is being edited, “{before}” is now the layer',
 
     'full.enter':      'Full screen',
     'full.enterTitle': 'Full screen (Esc to leave)',
@@ -1214,6 +1267,7 @@ const MSG = {
     'exp.legendTitle':   'Palette — {n} colors',
     'exp.legendSorted':  'Palette — {n} colors (sorted by hue)',
     'exp.noSprites':     'No sprites to pack together.',
+    'exp.gifTooMany':    'GIF holds at most 255 colors — this sprite has {n}. Reduce them first with “Image → palette …”.',
     'exp.sheetSaved':    'Spritesheet with {n} sprites saved — “{png}” and “{json}”{where}',
     'exp.sheetDownload': ' (in the downloads folder).',
     'exp.sheetIn':       ' in “{dir}”.',
@@ -1254,6 +1308,7 @@ const MSG = {
     'imp.errTxtNoGrid':  'No character grid found (lines of equal length made of . and 1-9).',
     'imp.errTxtBig':     'The grid is {w}×{h} — too big.',
     'imp.errNoArray':    'No valid number[][] array found. Expected [[0,1,…], …].',
+    'imp.errGame':       'JSON (game) recognised, but {reason}',
 
     'mig.rescued_one':   '{n} edited legacy sprite kept',
     'mig.rescued_other': '{n} edited legacy sprites kept',
@@ -1271,6 +1326,10 @@ const MSG = {
     'gen.cNote':        '// index 0 is transparent; colors as 0xRRGGBB.',
     'gen.pyHead':       '# {name} — {w}×{h}. Index 0 is transparent.',
     'gen.txtLegend':    "Key ('.' = transparent):",
+    'gen.framesJs':     '// Animation: {n} frames — {id}[frame][y][x], duration per frame in ms: {id}_DURATIONS',
+    'gen.framesPy':     '# Animation: {n} frames — {id}[frame][y][x], duration per frame in ms: {id}_DURATIONS',
+    'gen.framesC':      '// Animation: {n} frames — {id}_DATA[frame][y * WIDTH + x], duration in ms: {id}_DURATIONS',
+    'gen.cssAnim':      '/* Animation: {n} frames, {ms} ms per loop, runs forever. */',
 
     'game.materials':      'Material per color — palette “{name}”',
     'game.materialAria':   'Material for color {i}',
@@ -1284,6 +1343,7 @@ const MSG = {
     'game.err.badMaterial':'unknown material “{material}” at index {i}.',
     'game.err.length':     'data has {len} values, expected {w} × {h} = {expected}.',
     'game.err.index':      'pixel ({x}, {y}) has index {value}, valid is 0 to {max}.',
+    'game.err.durations':  'durations needs {need} whole numbers (ms), one per frame.',
     'game.err.region':     'region “{name}” does not lie fully inside the image.',
   },
 };

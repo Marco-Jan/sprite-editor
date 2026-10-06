@@ -618,12 +618,12 @@
           <p class="tool-meta">Dazu: Hintergrund entfernen, glätten, Outline ziehen.</p>
         </li>
         <li class="tool">
-          <h3>Ebene darunter</h3>
+          <h3>Animation</h3>
           <p>
-            Ein zweiter Sprite liegt halbdurchsichtig unter deinem — zum Abpausen und
-            um Teile von einem in den anderen zu übertragen.
+            Frames in einer Timeline, der vorige und nächste scheinen durch. Abspielen
+            direkt im Editor, mit eigenem Tempo für jeden Frame.
           </p>
-          <p class="tool-meta">Die Zwischenablage überlebt den Sprite-Wechsel.</p>
+          <p class="tool-meta">Raus als GIF, Spritesheet oder Code.</p>
         </li>
         <li class="tool">
           <h3>Alle zusammen</h3>
@@ -651,7 +651,8 @@
     <ul class="formats formats--image" data-i18n-html="s5.imageFormats">
       <li class="fmt"><span class="fmt-ext">.png</span><h3>Bild</h3><p>Mit transparentem Hintergrund, 1× bis 32× vergrößert</p></li>
       <li class="fmt"><span class="fmt-ext">.pdf</span><h3>PDF</h3><p>Zum Drucken oder Weitergeben</p></li>
-      <li class="fmt"><span class="fmt-ext">.png</span><h3>Spritesheet</h3><p>Alle Sprites in einem Bild, mit Liste wo welcher sitzt</p></li>
+      <li class="fmt"><span class="fmt-ext">.gif</span><h3>Animation</h3><p>Alle Frames als GIF, läuft endlos</p></li>
+      <li class="fmt"><span class="fmt-ext">.png</span><h3>Spritesheet</h3><p>Alle Sprites und Frames in einem Bild, mit Liste wo welcher sitzt</p></li>
     </ul>
 
     <p class="section-lead section-lead--sub" data-i18n="s5.subLead">
@@ -663,6 +664,7 @@
       <li class="fmt"><span class="fmt-ext">.ts</span><h3>TypeScript</h3><p>Zahlenraster plus Farbliste, fertig getypt</p></li>
       <li class="fmt"><span class="fmt-ext">.js</span><h3>JavaScript</h3><p>Dasselbe ohne Typen, direkt importierbar</p></li>
       <li class="fmt"><span class="fmt-ext">.json</span><h3>JSON</h3><p>Liest jede Sprache und jede Engine</p></li>
+      <li class="fmt"><span class="fmt-ext">.json</span><h3>JSON (Spiel)</h3><p>Flaches Raster mit Material je Farbe — für Spiele-Engines</p></li>
       <li class="fmt"><span class="fmt-ext">.svg</span><h3>SVG</h3><p>Bleibt in jeder Größe scharf, direkt einbindbar</p></li>
       <li class="fmt"><span class="fmt-ext">.css</span><h3>CSS</h3><p>Der Sprite als reines CSS, ganz ohne Bilddatei</p></li>
       <li class="fmt"><span class="fmt-ext">.h</span><h3>C-Header</h3><p>Für Mikrocontroller und LED-Matrix</p></li>
@@ -673,13 +675,19 @@
     <div class="export-extras">
       <div class="extra">
         <h3 data-i18n="s5.backH3">Und wieder zurück</h3>
-        <p class="chips">
+        <p class="chips" data-i18n-html="s5.backChips">
           <span class="chip-tag chip-tag--in">TypeScript</span>
           <span class="chip-tag chip-tag--in">JavaScript</span>
           <span class="chip-tag chip-tag--in">JSON</span>
+          <span class="chip-tag chip-tag--in">JSON (Spiel)</span>
+          <span class="chip-tag chip-tag--in">SVG</span>
+          <span class="chip-tag chip-tag--in">CSS</span>
+          <span class="chip-tag chip-tag--in">C-Header</span>
+          <span class="chip-tag chip-tag--in">Python</span>
+          <span class="chip-tag chip-tag--in">Text-Raster</span>
         </p>
         <p class="tool-meta" data-i18n="s5.backNote">
-          Diese drei kannst du auch wieder einlesen — nichts geht dabei verloren.
+          Alle neun kannst du auch wieder einlesen — das Bild kommt unverändert zurück.
         </p>
       </div>
     </div>
@@ -721,8 +729,6 @@
       <span>sprite<span class="brand-bit">bit</span></span>
     </p>
     <p class="foot-meta">
-      <a href="editor.html" data-i18n="nav.open">Editor öffnen</a>
-      <span aria-hidden="true">·</span>
       <span>© 2026 Marco Jan</span>
       <span aria-hidden="true">·</span>
       <a href="impressum.html" data-i18n="foot.imprint">Impressum</a>

@@ -107,23 +107,6 @@
           <button class="btn btn--primary btn--block" id="new-sprite-btn" data-i18n="sp.new">+ Neuer Sprite</button>
           <input type="search" id="sprite-search" class="input" data-i18n-attr="placeholder:sp.search" placeholder="Sprite suchen…" autocomplete="off">
           <div id="sprite-list" class="sprite-list"></div>
-
-          <div class="layer-box">
-            <div class="field field--inline">
-              <span class="field-label" data-i18n="sp.layer">Ebene</span>
-              <select id="ref-select" class="input input--sm" data-i18n-attr="title:sp.refTitle"
-                      title="Zweiter Sprite als halbdurchsichtige Vorlage — bearbeitet wird weiter der aktive"></select>
-              <button class="icon-btn" id="ref-visible-btn" data-i18n-attr="title:sp.refToggle" title="Ebene ein-/ausblenden" aria-pressed="true"><span class="ico" data-icon="eye"></span></button>
-            </div>
-            <div class="field field--inline" id="ref-controls" hidden>
-              <input type="range" id="ref-opacity" min="5" max="100" value="45" data-i18n-attr="title:sp.refOpacity" title="Deckkraft der Ebene">
-              <button class="btn" id="ref-front-btn" aria-pressed="false" data-i18n-attr="title:sp.refFrontTitle" title="Ebene über den aktiven Sprite legen">davor</button>
-              <button class="btn" id="ref-swap-btn" data-i18n="sp.refSwap" data-i18n-attr="title:sp.refSwapTitle" title="Ebene und aktiven Sprite tauschen">Tauschen</button>
-            </div>
-            <p class="field-note" id="ref-note" data-i18n-html="sp.refNote" hidden>
-              Kopieren geht mit <b>Strg+C</b> hier und <b>Strg+V</b> im anderen Sprite.
-            </p>
-          </div>
         </div>
       </section>
 
@@ -168,6 +151,7 @@
             </label>
             <button class="btn" id="export-png-btn">PNG</button>
             <button class="btn" id="export-pdf-btn">PDF</button>
+            <button class="btn" id="export-gif-btn" data-i18n-attr="title:exp.gifTitle" title="Animation als GIF — alle Frames, läuft endlos">GIF</button>
             <button class="btn" id="export-sheet-btn" data-i18n="out.sheet" data-i18n-attr="title:out.sheetTitle"
                     title="Alle Sprites in einem Bild — plus JSON-Atlas mit Namen und Koordinaten">Spritesheet</button>
           </div>
@@ -336,7 +320,34 @@
         </div>
         <div class="bar-zone bar-zone--side" data-zone="right"></div>
       </div>
-      <div class="bar-zone" data-zone="bottom"></div>
+      <div class="bar-zone" data-zone="bottom">
+
+      <!-- Timeline — Frames des aktiven Sprites, Abspielen, Onion Skin (js/frames.js) -->
+      <div id="timeline">
+        <div class="btn-group tl-transport">
+          <button class="btn" id="tl-prev" data-i18n-attr="title:tl.prev" title="Voriger Frame (,)"><span class="ico" data-icon="prev"></span></button>
+          <button class="btn" id="tl-play" aria-pressed="false" data-i18n-attr="title:tl.play" title="Abspielen / Anhalten (Enter)"><span class="ico" data-icon="play"></span></button>
+          <button class="btn" id="tl-next" data-i18n-attr="title:tl.next" title="Nächster Frame (.)"><span class="ico" data-icon="next"></span></button>
+        </div>
+        <div class="tl-frames" id="tl-frames" role="listbox" data-i18n-attr="aria-label:tl.frames" aria-label="Frames"></div>
+        <div class="btn-group tl-edit">
+          <button class="btn" id="tl-add" data-i18n-attr="title:tl.add" title="Leeren Frame dahinter einfügen"><span class="ico" data-icon="plus"></span></button>
+          <button class="btn" id="tl-dup" data-i18n-attr="title:tl.dup" title="Frame duplizieren"><span class="ico" data-icon="copy"></span></button>
+          <button class="btn" id="tl-del" data-i18n-attr="title:tl.del" title="Frame löschen"><span class="ico" data-icon="trash"></span></button>
+        </div>
+        <button class="btn" id="tl-onion" aria-pressed="false" data-i18n-attr="title:tl.onion" title="Onion Skin — vorigen und nächsten Frame durchscheinen lassen"><span class="ico" data-icon="onion"></span></button>
+        <label class="field field--inline tl-num">
+          <span class="field-label" data-i18n="tl.fps">FPS</span>
+          <input type="number" id="tl-fps" class="input input--sm" min="1" max="60" step="1" value="8">
+        </label>
+        <label class="field field--inline tl-num" data-i18n-attr="title:tl.durTitle" title="Wie lange dieser Frame steht — leer = nach FPS">
+          <span class="field-label" data-i18n="tl.dur">Dauer</span>
+          <input type="number" id="tl-dur" class="input input--sm" min="10" max="10000" step="10">
+          <span class="field-value">ms</span>
+        </label>
+      </div>
+
+      </div>
 
       <div id="info-bar" role="status" aria-live="polite"></div>
 
@@ -344,6 +355,29 @@
 
     <!-- ── Rechte Spalte ── -->
     <aside id="rail-right" class="rail">
+
+      <!-- Ebenen des aktiven Sprites (js/layers.js) -->
+      <section class="panel" data-panel="layers">
+        <div class="panel-head">
+          <h2 class="panel-title" data-i18n="ly.title">Ebenen</h2>
+          <button class="panel-toggle" type="button" aria-expanded="true"></button>
+        </div>
+        <div class="panel-body">
+          <div id="layer-list" class="layer-list" role="listbox" data-i18n-attr="aria-label:ly.title" aria-label="Ebenen"></div>
+          <div class="btn-group ly-actions">
+            <button class="btn" id="ly-add" data-i18n-attr="title:ly.add" title="Neue Ebene über der aktiven"><span class="ico" data-icon="plus"></span></button>
+            <button class="btn" id="ly-dup" data-i18n-attr="title:ly.dup" title="Ebene duplizieren"><span class="ico" data-icon="copy"></span></button>
+            <button class="btn" id="ly-merge" data-i18n-attr="title:ly.merge" title="Nach unten zusammenführen — in jedem Frame"><span class="ico" data-icon="mergeDown"></span></button>
+            <button class="btn" id="ly-del" data-i18n-attr="title:ly.del" title="Ebene löschen"><span class="ico" data-icon="trash"></span></button>
+          </div>
+          <label class="field field--inline">
+            <span class="field-label" data-i18n="ly.opacity">Deckkraft</span>
+            <input type="range" id="ly-opacity" min="0" max="100" step="5" value="100">
+            <span id="ly-opacity-val" class="field-value">100%</span>
+          </label>
+          <p class="field-note" data-i18n="ly.note">Doppelklick auf den Namen benennt um, ziehen ordnet. Export und Vorschau zeigen alle sichtbaren Ebenen übereinander.</p>
+        </div>
+      </section>
 
       <section class="panel" data-panel="palette">
         <div class="panel-head">
@@ -701,7 +735,7 @@
       schreibt</b>. Das Format wird am Inhalt erkannt, die Dateiendung ist egal.
     </p>
     <p class="modal-intro modal-intro--sub" data-i18n="mod.impIntro2">
-      TypeScript, JavaScript, JSON, Python und C-Header bringen die Farb-Nummern mit und
+      TypeScript, JavaScript, JSON, JSON (Spiel), Python und C-Header bringen die Farb-Nummern mit und
       kommen unverändert zurück. SVG, CSS und Text-Raster kennen keine Nummern — dort
       bleibt das Bild gleich, die Farben werden neu durchnummeriert.
     </p>
@@ -725,7 +759,7 @@
 
     <div class="modal-actions">
       <button class="btn" id="import-modal-cancel" data-i18n="mod.cancel">Abbrechen</button>
-      <button class="btn" id="import-modal-current" data-i18n="mod.impCurrent" data-i18n-attr="title:mod.impCurrentTitle" title="Überschreibt das Grid des aktuellen Sprites">In aktuellen Sprite</button>
+      <button class="btn" id="import-modal-current" data-i18n="mod.impCurrent" data-i18n-attr="title:mod.impCurrentTitle" title="Ersetzt den aktuellen Sprite mit allen Frames und Ebenen — Strg+Z holt ihn zurück">In aktuellen Sprite</button>
       <button class="btn btn--primary" id="import-modal-new" data-i18n="mod.impNew">Als neuen Sprite</button>
     </div>
   </div>
@@ -795,12 +829,21 @@
       <div>Bei einer Auswahl wächst der Rahmen mit, damit nichts abgeschnitten wird. Beim ganzen Sprite bleibt die Fläche gleich, Ecken außerhalb fallen weg.</div>
     </div>
 
-    <h3 class="help-h" data-i18n="help.h.layer">Ebene — mit zwei Sprites arbeiten</h3>
-    <div class="help-list" data-i18n-html="help.layer">
-      <div>Unter der Sprite-Liste lässt sich ein <b>zweiter Sprite als Ebene</b> einblenden: halbdurchsichtig, oben links ausgerichtet, mit eigener Palette.</div>
-      <div>Bearbeitet wird immer nur der aktive Sprite — die Ebene ist reine Vorlage. <b>👁</b> blendet sie aus, der Regler stellt die Deckkraft, <b>dahinter/davor</b> legt sie unter oder über das Bild (zum Abpausen von Konturen).</div>
-      <div><b>Tauschen</b> vertauscht die Rollen: die Ebene wird bearbeitet, der bisherige Sprite wird zur Ebene.</div>
-      <div>Teile übertragen: im einen Sprite auswählen und <span class="kbd">Strg</span>+<span class="kbd">C</span>, zum anderen wechseln, <span class="kbd">Strg</span>+<span class="kbd">V</span>. Das Eingefügte schwebt und lässt sich erst hinschieben, bevor es liegt.</div>
+    <h3 class="help-h" data-i18n="help.h.layers">Ebenen</h3>
+    <div class="help-list" data-i18n-html="help.layers">
+      <div>Jeder Sprite kann mehrere <b>Ebenen</b> haben — das Panel <b>Ebenen</b> im Dock. Gemalt wird immer in die <b>aktive</b> Ebene; angezeigt werden alle sichtbaren übereinander, die oberste in der Liste liegt oben.</div>
+      <div><b>Auge</b> blendet aus, <b>Schloss</b> sperrt — in eine gesperrte oder ausgeblendete Ebene wird nicht gemalt. Der Regler stellt die <b>Deckkraft</b>, Doppelklick auf den Namen benennt um, Ziehen ordnet.</div>
+      <div><b>+</b> legt eine leere Ebene an, daneben duplizieren, <b>nach unten zusammenführen</b> (in jedem Frame) und löschen.</div>
+      <div>Jede Ebene hat in jedem Frame ihr eigenes Bild. Exportiert wird, was man sieht: alle sichtbaren Ebenen zusammengefügt. Halbdurchsichtige Ebenen werden dabei mit der Farbe darunter gemischt.</div>
+    </div>
+
+    <h3 class="help-h" data-i18n="help.h.anim">Animation — Frames</h3>
+    <div class="help-list" data-i18n-html="help.anim">
+      <div>Jeder Sprite kann mehrere <b>Frames</b> haben. Die <b>Timeline</b> (unten) zeigt sie als kleine Bilder: antippen wählt, ziehen sortiert um. <b>+</b> fügt einen leeren Frame ein, daneben duplizieren und löschen.</div>
+      <div>▶ spielt in der Zeichenfläche ab (<span class="kbd">Enter</span>), ein Tipp auf die Fläche hält an. <b>FPS</b> gilt für den ganzen Sprite, <b>Dauer</b> lässt einzelne Frames länger stehen (z. B. ein Blinzeln).</div>
+      <div><b>Onion Skin</b> lässt den vorigen Frame rot und den nächsten blau durchscheinen — zum Ausrichten der Bewegung.</div>
+      <div>Größe ändern, drehen, spiegeln, zuschneiden und Paletten umfärben wirken auf <b>alle Frames</b>. Gezeichnet wird immer im aktuellen Frame.</div>
+      <div>Export: <b>GIF</b> spielt die Animation endlos ab, das <b>Spritesheet</b> legt die Frames nebeneinander, und alle Code-Formate enthalten alle Frames samt Dauer.</div>
     </div>
 
     <h3 class="help-h" data-i18n="help.h.stencil">Schablone</h3>
@@ -823,8 +866,8 @@
 
     <h3 class="help-h" data-i18n="help.h.io">Import &amp; Export</h3>
     <div class="help-list" data-i18n-html="help.io">
-      <div><b>Import</b> liest <code>number[][]</code> aus Text oder Datei — TypeScript, JavaScript und JSON. Ein mitgelieferter Palettenblock wird als eigene Palette angelegt und zugewiesen.</div>
-      <div><b>Code-Feld</b> erzeugt den Export im gewählten <b>Format</b>. Freie Pipetten-Farben werden als Indizes oberhalb der Palette gesichert — bei TS, JS und JSON ist der Round-Trip verlustfrei.</div>
+      <div><b>Import</b> liest alle Formate, die der Editor schreibt, aus Text oder Datei — samt aller Frames. Eine mitgelieferte Palette wird als eigene Palette angelegt und zugewiesen.</div>
+      <div><b>Code-Feld</b> erzeugt den Export im gewählten <b>Format</b>, bei Animationen mit allen Frames. Freie Pipetten-Farben werden als Indizes oberhalb der Palette gesichert — der Round-Trip ist verlustfrei.</div>
       <div class="help-formats">
         <div><b>TypeScript</b> / <b>JavaScript</b> — <code>number[][]</code> plus Palette, mit oder ohne Typen.</div>
         <div><b>JSON</b> — sprachneutral für eigene Pipelines, Engines und Tools.</div>
@@ -835,8 +878,8 @@
         <div><b>Python</b> — Dict und Liste für Pygame, Pillow oder eigene Skripte.</div>
         <div><b>Text-Raster</b> — ein Zeichen pro Pixel mit Legende; praktisch für Diffs und Doku.</div>
       </div>
-      <div><b>PNG / PDF</b> exportieren transparent; mit <i>Farb-Legende</i> wird die Palette ins Bild gerendert.</div>
-      <div><b>Spritesheet</b> packt alle Sprites in gleich große Zellen und legt einen JSON-Atlas mit Namen und Koordinaten daneben — so lesen Engines es direkt ein.</div>
+      <div><b>PNG / PDF</b> exportieren den aktuellen Frame transparent; mit <i>Farb-Legende</i> wird die Palette ins Bild gerendert. <b>GIF</b> enthält die ganze Animation.</div>
+      <div><b>Spritesheet</b> packt alle Sprites in gleich große Zellen — bei Animationen eine Zeile je Sprite mit allen Frames — und legt einen JSON-Atlas mit Namen, Koordinaten und Dauer daneben. So lesen Engines es direkt ein.</div>
       <div><b>Projekt sichern / Öffnen</b> schreibt alle Sprites und Paletten in eine JSON-Datei.</div>
     </div>
 
@@ -861,7 +904,9 @@
       <div class="sc-row"><b>Pfeiltasten</b><span>Auswahl pixelweise verschieben</span></div>
       <div class="sc-row"><b>Strg + A / C / X / V</b><span>Alles · Kopieren · Ausschneiden · Einfügen</span></div>
       <div class="sc-row"><b>Entf</b><span>Auswahl leeren</span></div>
-      <div class="sc-row"><b>Enter</b><span>Drehung übernehmen</span></div>
+      <div class="sc-row"><b>Enter</b><span>Drehung übernehmen · sonst Animation abspielen / anhalten</span></div>
+      <div class="sc-row"><b>, / .</b><span>Voriger / nächster Frame</span></div>
+      <div class="sc-row"><b>Zwei Finger</b><span>Zoomen und verschieben (Touch)</span></div>
       <div class="sc-row"><b>Strg + Z</b><span>Rückgängig</span></div>
       <div class="sc-row"><b>Strg + Y</b><span>Wiederholen</span></div>
       <div class="sc-row"><b>Esc</b><span>Auswahl aufheben, Dialog oder Vollbild schließen</span></div>

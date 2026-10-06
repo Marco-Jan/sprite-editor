@@ -137,3 +137,26 @@ test('Berg-Hintergrund: data.length === width * height', () => {
   const dataLines = text.split('\n').filter(l => /^ {4}\d/.test(l));
   assert.equal(dataLines.length, 120);
 });
+
+// Animation: Frames als Streifen nebeneinander, Atlas + durations.
+test('Animation: Atlas mit frames und durations', () => {
+  const frame = i => [[i, 0], [0, i]];
+  const strip = frame(1).map((_, y) => [frame(1), frame(2), frame(1)].flatMap(g => g[y]));
+  const text = gameJson({
+    ...SAMPLE, idxGrid: strip,
+    sprites: { lauf: { x: 0, y: 0, w: 2, h: 2, frames: 3 } },
+    durations: [100, 100, 250],
+  });
+  const parsed = JSON.parse(text);
+  assert.equal(parsed.width, 6);
+  assert.deepEqual(parsed.sprites.lauf, { x: 0, y: 0, w: 2, h: 2, frames: 3 });
+  assert.deepEqual(parsed.durations, [100, 100, 250]);
+  assert.match(text, /"durations": \[100, 100, 250\]\n\}\n$/);
+});
+
+test('Animation: durations muss eine Dauer je Frame haben', () => {
+  const base = buildGameSprite({ ...SAMPLE, sprites: { a: { x: 0, y: 0, w: 1, h: 2, frames: 3 } } });
+  assert.throws(() => validateGameSprite({ ...base, durations: [100, 100] }), { code: 'durations' });
+  assert.throws(() => validateGameSprite({ ...base, durations: [100, 0, 100] }), { code: 'durations' });
+  assert.doesNotThrow(() => validateGameSprite({ ...base, durations: [100, 100, 100] }));
+});

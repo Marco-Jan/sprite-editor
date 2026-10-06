@@ -105,15 +105,6 @@ export const STATIC_AT = {
   'sp.title':         'Sprites',
   'sp.new':           '+ A neicher Sprite',
   'sp.search':        'Sprite suachn…',
-  'sp.layer':         'Ebene',
-  'sp.refTitle':      'A zweiter Sprite ois halbdurchsichtige Vorlog — bearbeit wird weiter da aktive',
-  'sp.refToggle':     'Ebene herzagn oder wegtuan',
-  'sp.refOpacity':    'Wia durchsichtig d’Ebene is',
-  'sp.refFront':      'davor',
-  'sp.refFrontTitle': 'D’Ebene über’n aktivn Sprite legn',
-  'sp.refSwap':       'Tauschn',
-  'sp.refSwapTitle':  'D’Ebene und den aktivn Sprite tauschn',
-  'sp.refNote':       'Kopiern geht mit <b>Strg+C</b> do und <b>Strg+V</b> im andern Sprite.',
 
   // ── Code & Export ──
   'out.title':      'Code & Export',
@@ -335,17 +326,6 @@ export const MSG_AT = {
   'pal.overwrite':      'Drüberschreibn',
   'pal.confirmDelete':  'Palettn „{name}“ wirklich weghaun?{extra}',
   'pal.forked':         'Palettn „{name}“ angelegt — Doppelklick auf a Farb ändert’s.',
-
-  // Ebene
-  'ref.none':      'kane',
-  'ref.noSecond':  'ka zweiter Sprite',
-  'ref.front':     'davor',
-  'ref.behind':    'dahinta',
-  'ref.on':        'Ebene: „{name}“ liegt {pos}',
-  'ref.posFront':  'drüber',
-  'ref.posBehind': 'drunta',
-  'ref.off':       'Ebene aus',
-  'ref.swapped':   'Tauscht — „{now}“ wird bearbeit, „{before}“ liegt ois Ebene.',
 
   // Drehen und Verwandeln
   'rot.discarded':  'Drahung weghaut',

@@ -143,20 +143,25 @@ ES-Module HTTP brauchen, funktioniert ein Aufruf über `file://` nicht.
 - Foto-Vorlage: Bild laden, darüberlegen, per Median-Cut auf wenige Farben
   reduzieren, Bildfarben als Palette übernehmen, Hintergrund entfernen,
   glätten, Outline ziehen.
-- Ebene: ein zweiter Sprite lässt sich halbdurchsichtig einblenden — zum
-  Abpausen und um Teile zwischen Sprites zu übertragen.
 - Bild: spiegeln, drehen (auch frei um beliebige Winkel), auf den Inhalt
   zuschneiden, zentrieren, Fläche ändern, hart skalieren.
 - Undo und Redo pro Strich, Auto-Save, Tastenkürzel für jedes Werkzeug.
 
 ## Export
 
-- Als Bild: PNG mit Transparenz (1× bis 32×), PDF, sowie ein Spritesheet
-  aller Sprites mit begleitender JSON-Liste der Positionen.
-- Als Code: TypeScript, JavaScript, JSON, SVG, CSS (box-shadow), C-Header
-  für Mikrocontroller, Python und ein Text-Raster. Jedes Format enthält die
-  Farben und ist für sich allein benutzbar.
-- Zurück in den Editor kommen TypeScript, JavaScript und JSON — verlustfrei.
+- Als Bild: PNG mit Transparenz (1× bis 32×), PDF, ein animiertes GIF sowie
+  ein Spritesheet aller Sprites und Frames mit begleitender JSON-Liste der
+  Positionen und Dauer.
+- Animation: mehrere Frames je Sprite, Timeline mit Vorschaubildern, Onion
+  Skinning, Abspielen mit FPS und eigener Dauer je Frame.
+- Ebenen: mehrere Ebenen je Sprite, ausblenden, sperren, Deckkraft,
+  zusammenführen; exportiert wird das zusammengefügte Bild.
+- Als Code: TypeScript, JavaScript, JSON, JSON für Spiele-Engines (mit
+  Material je Farbe), SVG, CSS (box-shadow), C-Header für Mikrocontroller,
+  Python und ein Text-Raster. Jedes Format enthält die Farben und ist für
+  sich allein benutzbar.
+- Zurück in den Editor kommen alle neun Formate — das Bild bleibt dabei
+  unverändert.
   Der Import wertet keinen Code aus, er prüft den Text gegen eine
   Zeichen-Whitelist.
 

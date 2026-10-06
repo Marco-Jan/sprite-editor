@@ -32,7 +32,8 @@ ohne Umbau deserialisieren. Erzeugt wird es in `js/gamejson.js`, die Tests liege
 | `width`, `height` | Größe in Pixeln, ganze Zahlen `>= 1`. |
 | `palette` | Dichte Liste. Index `0` ist immer `#00000000` / `empty`. Farben als `#rrggbbaa`, klein. |
 | `data` | Flaches Array, Länge `width * height`, zeilenweise: Index = `y * width + x`. Jeder Wert ist ein Palettenindex. Eine Textzeile pro Bildzeile. |
-| `sprites` | Optional, für Atlanten: `{ "name": { "x", "y", "w", "h", "frames" } }`. Der Editor schreibt das Feld zurzeit **nicht** (siehe unten). |
+| `sprites` | Optional, für Atlanten: `{ "name": { "x", "y", "w", "h", "frames" } }`. Die Frames eines Ausschnitts liegen nebeneinander (`x + w * frames <= width`). Der Editor schreibt das Feld bei Sprites mit mehreren Frames. |
+| `durations` | Optional, nur zusammen mit `sprites`: Dauer je Frame in ms, alle Ausschnitte der Reihe nach (Länge = Summe aller `frames`). |
 
 ### Palette im Editor-Export
 
@@ -60,7 +61,8 @@ Der Editor bricht mit einer Meldung ab (kein Kopieren, kein Speichern), wenn:
 - ein Index außerhalb der Palette liegt,
 - die Palette leer ist oder Index `0` nicht transparent ist,
 - eine Farbe oder ein Material ungültig ist,
-- ein `sprites`-Ausschnitt (samt aller Frames) nicht vollständig im Bild liegt.
+- ein `sprites`-Ausschnitt (samt aller Frames) nicht vollständig im Bild liegt,
+- `durations` nicht genau eine ganze Zahl (1–60000 ms) je Frame enthält.
 
 ## C#-Gegenseite
 
@@ -76,7 +78,8 @@ public record SpriteData(
     int Height,
     PaletteEntry[] Palette,
     int[] Data,
-    Dictionary<string, SpriteRegion>? Sprites = null);
+    Dictionary<string, SpriteRegion>? Sprites = null,
+    int[]? Durations = null);
 
 public static class SpriteLoader
 {
@@ -102,15 +105,20 @@ Zugriff auf ein Pixel: `sprite.Data[y * sprite.Width + x]`, das Material dazu:
 `sprite.Palette[sprite.Data[y * sprite.Width + x]].Material`.
 
 `JsonSerializerDefaults.Web` sorgt für camelCase und Groß-/Kleinschreibung-unabhängige
-Namen. Fehlt `sprites` in der Datei, ist `Sprites` `null`.
+Namen. Fehlt `sprites` in der Datei, ist `Sprites` `null`, ebenso `Durations`.
+
+Pixel von Frame `f` eines Ausschnitts `r`:
+`sprite.Data[(r.Y + y) * sprite.Width + r.X + f * r.W + x]`.
 
 Geprüft mit .NET 10: ein 160×120-Berg-Hintergrund aus dem Editor lädt mit
 `Data.Length == Width * Height` (19 200).
 
-## Was der Editor (noch) nicht kann
+## Animation und Import
 
-- **Keine Atlanten/Frames:** Ein Sprite ist im Editor ein einzelnes Raster ohne Frames.
-  `sprites` wird deshalb nicht geschrieben. Format und Validierung kennen das Feld schon.
-- **Kein Re-Import:** „JSON (Spiel)“ ist eine Einbahnstraße. Zum Weiterbearbeiten das
-  Projekt speichern oder das normale JSON nehmen.
+- **Frames:** Hat ein Sprite mehrere Frames, liegen sie nebeneinander in `data`
+  (`width = Breite × Frames`), `sprites` enthält genau einen Ausschnitt mit `frames`,
+  `durations` die Dauer je Frame. Mit einem Frame fehlen beide Felder — die Datei sieht
+  aus wie vorher.
+- **Re-Import:** Der Import im Editor liest „JSON (Spiel)“ zurück — Bild, Farben, Frames
+  samt Dauer und die Materialien (an der neu angelegten Palette).
 - Kein Binärformat und keine Kompression.

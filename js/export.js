@@ -2,7 +2,9 @@
 // EXPORT — PNG + PDF mit transparentem Hintergrund, ohne Grid-Linien
 // ════════════════════════════════════════════════════════════════════
 // PDF nutzt jsPDF aus vendor/, geladen in editor.html (window.jspdf).
-import { getGrid, getPal, getSprite, listSprites, getPaletteByName } from './state.js';
+// PNG und PDF zeigen den aktuellen Frame, GIF und Spritesheet alle Frames.
+import { getPal, getSprite, listSprites, getPaletteByName, frameDuration, flatGrid, emptyGrid } from './state.js';
+import { encodeGif } from './gif.js';
 import { cellToColor } from './render.js';
 import { showInfoToast } from './toast.js';
 import { saveBlob } from './filesystem.js';
@@ -11,8 +13,11 @@ import { t } from './i18n.js';
 
 // Sauberer Sprite-Render auf neuen Canvas (ohne Grid-Linien, ohne Schachbrett).
 // Hintergrund bleibt transparent (default-state des Canvas).
+// Der aktuelle Frame, so wie man ihn sieht (alle sichtbaren Ebenen).
+const shownGrid = () => (getSprite() ? flatGrid(getSprite()) : emptyGrid(24));
+
 function renderSpriteToCanvas(scale) {
-  const grid = getGrid();
+  const grid = shownGrid();
   const pal  = getPal();
   const H = grid.length, W = grid[0].length;
 
@@ -144,7 +149,7 @@ function buildExportCanvas(scale, includePalette) {
   const sprite = renderSpriteToCanvas(scale);
   if (!includePalette) return sprite;
 
-  const grid = getGrid();
+  const grid = shownGrid();
   const pal  = getPal();
   const colors = collectUsedColors(grid, pal);
   if (!colors.length) return sprite;
@@ -189,20 +194,59 @@ function reportSaved(result, filename) {
 }
 
 // ────────────────────────────────────────────────────────────────────
+// GIF — die Animation des aktiven Sprites (ein Frame: ein stilles Bild)
+// ────────────────────────────────────────────────────────────────────
+// Farben über alle Frames einsammeln; GIF fasst 255 plus Transparent.
+function buildGif(scale) {
+  const sp = getSprite();
+  if (!sp) return { ok: false, reason: t('exp.noSprites') };
+  const pal = getPal();
+  const H = sp.grid.length, W = sp.grid[0].length;
+  const index = new Map();
+  const shown = sp.frames.map((_, i) => flatGrid(sp, i));
+  for (const g of shown) for (const row of g) for (const c of row) {
+    const hex = cellToColor(c, pal);
+    if (hex && !index.has(hex.toLowerCase())) index.set(hex.toLowerCase(), index.size + 1);
+  }
+  if (index.size > 255) return { ok: false, reason: t('exp.gifTooMany', { n: index.size }) };
+
+  const w = W * scale, h = H * scale;
+  const frames = shown.map(g => {
+    const px = new Uint8Array(w * h);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const hex = cellToColor(g[y][x], pal);
+      if (!hex) continue;
+      const v = index.get(hex.toLowerCase());
+      for (let dy = 0; dy < scale; dy++) px.fill(v, (y * scale + dy) * w + x * scale, (y * scale + dy) * w + x * scale + scale);
+    }
+    return px;
+  });
+  const bytes = encodeGif({
+    width: w, height: h, colors: [...index.keys()], frames,
+    delays: sp.frames.map((_, i) => frameDuration(sp, i)),
+  });
+  return { ok: true, blob: new Blob([bytes], { type: 'image/gif' }), n: frames.length };
+}
+
+// ────────────────────────────────────────────────────────────────────
 // SPRITESHEET — alle Sprites in einem Bild, plus Atlas
 // ────────────────────────────────────────────────────────────────────
-// Gleich große Zellen in einem möglichst quadratischen Raster: das ist das
-// Format, das Engines (Phaser, Godot, Unity) ohne Nacharbeit einlesen.
-// Jeder Sprite sitzt mittig in seiner Zelle, der Atlas nennt die echten
-// Pixelkoordinaten — auch für Sprites, die kleiner als die Zelle sind.
+// Gleich große Zellen: das ist das Format, das Engines (Phaser, Godot,
+// Unity) ohne Nacharbeit einlesen. Jeder Frame sitzt mittig in seiner
+// Zelle, der Atlas nennt die echten Pixelkoordinaten — auch für Sprites,
+// die kleiner als die Zelle sind.
+// Ohne Animation: ein möglichst quadratisches Raster, ein Sprite je Zelle.
+// Mit Animation: eine Zeile je Sprite, seine Frames nebeneinander; der Atlas
+// nennt dann zu jedem Eintrag Frame-Nummer und Dauer.
 function buildSheet(scale) {
   const all = listSprites();
   if (!all.length) return null;
 
+  const animated = all.some(s => s.frames.length > 1);
   const cellW = Math.max(...all.map(s => s.grid[0].length));
   const cellH = Math.max(...all.map(s => s.grid.length));
-  const cols = Math.ceil(Math.sqrt(all.length));
-  const rows = Math.ceil(all.length / cols);
+  const cols = animated ? Math.max(...all.map(s => s.frames.length)) : Math.ceil(Math.sqrt(all.length));
+  const rows = animated ? all.length : Math.ceil(all.length / cols);
 
   const c = document.createElement('canvas');
   c.width  = cols * cellW * scale;
@@ -210,22 +254,26 @@ function buildSheet(scale) {
   const ctx = c.getContext('2d');
   ctx.imageSmoothingEnabled = false;
 
-  const frames = all.map((sp, i) => {
-    const col = i % cols, row = Math.floor(i / cols);
-    const W = sp.grid[0].length, H = sp.grid.length;
+  const place = (sp, grid, col, row) => {
+    const W = grid[0].length, H = grid.length;
     // Mittig in der Zelle, auf ganze Pixel gerundet.
     const ox = col * cellW + Math.floor((cellW - W) / 2);
     const oy = row * cellH + Math.floor((cellH - H) / 2);
     const pal = getPaletteByName(sp.palette);
-
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-      const fill = cellToColor(sp.grid[y][x], pal);
+      const fill = cellToColor(grid[y][x], pal);
       if (!fill) continue;
       ctx.fillStyle = fill;
       ctx.fillRect((ox + x) * scale, (oy + y) * scale, scale, scale);
     }
     return { name: sp.name, id: sp.id, x: ox * scale, y: oy * scale, w: W * scale, h: H * scale, palette: sp.palette };
-  });
+  };
+
+  const frames = animated
+    ? all.flatMap((sp, row) => sp.frames.map((_, i) => ({
+        ...place(sp, flatGrid(sp, i), i, row), frame: i, duration: frameDuration(sp, i),
+      })))
+    : all.map((sp, i) => place(sp, flatGrid(sp), i % cols, Math.floor(i / cols)));
 
   const atlas = {
     image: '',                       // wird unten mit dem Dateinamen gefüllt
@@ -239,6 +287,15 @@ function buildSheet(scale) {
 
 export function initExport() {
   const scaleSel = document.getElementById('export-scale');
+
+  document.getElementById('export-gif-btn').addEventListener('click', async () => {
+    const scale = Number(scaleSel.value) || 8;
+    const r = buildGif(scale);
+    if (!r.ok) { showInfoToast(r.reason); return; }
+    const filename = exportFilename('gif');
+    const result = await saveBlob(r.blob, filename);
+    reportSaved(result, filename);
+  });
 
   const embedPalette = () => document.getElementById('export-embed-palette')?.checked;
 

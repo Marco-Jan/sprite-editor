@@ -311,18 +311,6 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   border-left: 2px solid var(--line);
   color: var(--text-muted);
 }
-.layer-box {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-  margin-top: var(--sp-2);
-  padding-top: var(--sp-3);
-  border-top: 1px solid var(--line);
-}
-.layer-box select { flex: 1; min-width: 0; }
-.layer-box input[type="range"] { flex: 1; min-width: 60px; }
-.layer-box .btn { padding: 4px 8px; }
-.icon-btn.is-off { opacity: 0.35; }
 .field-note {
   margin: 0;
   font-size: var(--fs-xs);
@@ -736,6 +724,109 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   pointer-events: none;
 }
 .qp-sep { width: 1px; height: 22px; margin: 0 var(--sp-1); background: var(--line); }
+
+/* Timeline (js/frames.js) — Transport, Vorschaubilder, Bearbeiten, Tempo */
+#timeline {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  flex-shrink: 0;
+  min-width: 0;
+  padding: var(--sp-2) var(--sp-4);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-1);
+}
+#timeline .btn { padding: 5px 8px; }
+.tl-frames {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  flex: 0 1 auto;
+  min-width: 0;
+  padding: 2px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.tl-frame {
+  appearance: none;
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  min-width: 40px;
+  height: 44px;
+  padding: 2px 4px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  cursor: pointer;
+  touch-action: pan-x;
+}
+.tl-frame canvas {
+  display: block;
+  image-rendering: pixelated;
+  background:
+    repeating-conic-gradient(var(--surface-3) 0% 25%, transparent 0% 50%) 0 0 / 8px 8px;
+}
+.tl-n {
+  position: absolute;
+  left: 0; right: 0; bottom: 1px;
+  font: 600 10px/1 var(--mono);
+  color: var(--text-dim);
+  text-align: center;
+}
+.tl-frame.has-dur .tl-n::after { content: ' ⏱'; }
+.tl-frame:hover { border-color: var(--line-strong); }
+.tl-frame.is-active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.tl-frame.is-active .tl-n { color: var(--accent); }
+.tl-frame.is-dragging { z-index: 2; opacity: 0.85; cursor: grabbing; box-shadow: var(--shadow-md); }
+#tl-play.is-active, #tl-onion.is-active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent-line); }
+.tl-num input { width: 4.5rem; }
+#timeline.is-vertical .tl-frames { flex-direction: column; overflow-x: hidden; overflow-y: auto; max-height: 50vh; }
+#timeline.is-vertical .tl-frame { touch-action: pan-y; }
+#timeline.is-vertical .tl-num { flex-direction: row; }
+
+/* Ebenen-Panel (js/layers.js) — oberste Ebene oben */
+.layer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+.ly-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 3px 6px;
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  cursor: pointer;
+  touch-action: pan-x;
+}
+.ly-row:hover { border-color: var(--line-strong); }
+.ly-row.is-active { border-color: var(--accent-line); background: var(--accent-bg); }
+.ly-row.is-hidden .ly-thumb,
+.ly-row.is-hidden .ly-name { opacity: 0.45; }
+.ly-row.is-dragging { position: relative; z-index: 2; opacity: 0.85; box-shadow: var(--shadow-md); cursor: grabbing; }
+.ly-row .icon-btn { flex: none; }
+.ly-lock.is-on { color: var(--accent); }
+.ly-thumb {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-sm);
+  background:
+    repeating-conic-gradient(var(--surface-3) 0% 25%, transparent 0% 50%) 0 0 / 8px 8px;
+}
+.ly-thumb canvas { display: block; image-rendering: pixelated; }
+.ly-name { flex: 1; min-width: 0; overflow: hidden; font-size: var(--fs-sm); text-overflow: ellipsis; white-space: nowrap; }
+.ly-op { flex: none; font: 600 10px/1 var(--mono); color: var(--text-dim); }
+.ly-rename { flex: 1; min-width: 0; }
+.ly-actions { align-self: flex-start; }
 
 /* Zeichenfläche */
 #editor-canvas-area {
@@ -1455,7 +1546,8 @@ body.editor-fullscreen #topbar { display: none; }
 
 .panel.is-floating,
 #toolbar.is-floating,
-#color-bar.is-floating {
+#color-bar.is-floating,
+#timeline.is-floating {
   position: absolute;
   min-width: 180px;
   min-height: 44px;
@@ -1470,7 +1562,7 @@ body.editor-fullscreen #topbar { display: none; }
 .panel.is-floating .panel-head { position: sticky; top: 0; z-index: 1; }
 .panel.is-floating .panel-body { display: flex; }
 .panel.is-floating .panel-toggle { display: none; }
-#toolbar.is-floating, #color-bar.is-floating { border-bottom: 1px solid var(--line-strong); }
+#toolbar.is-floating, #color-bar.is-floating, #timeline.is-floating { border-bottom: 1px solid var(--line-strong); }
 
 /* Griff + Pin vorn an Werkzeugleiste und Farbzeile. */
 .bar-handle { display: flex; align-items: center; gap: 2px; margin-inline-end: var(--sp-1); }
@@ -1514,7 +1606,8 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
 #stage-body > #editor-canvas-area { flex: 1; min-width: 0; }
 
 .bar-zone[data-zone="bottom"] > #toolbar,
-.bar-zone[data-zone="bottom"] > #color-bar { border-bottom: 0; border-top: 1px solid var(--line); }
+.bar-zone[data-zone="bottom"] > #color-bar,
+.bar-zone[data-zone="bottom"] > #timeline { border-bottom: 0; border-top: 1px solid var(--line); }
 
 /* Senkrecht: links/rechts der Zeichenfläche und als Schublade im Dock.
    js/layout.js setzt dafür .is-vertical an die Leiste. */
@@ -1523,7 +1616,8 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
 .bar-zone[data-zone="right"] { border-left: 1px solid var(--line); }
 .bar-zone--side > * + * { border-left: 1px solid var(--line); }
 #toolbar.is-vertical,
-#color-bar.is-vertical {
+#color-bar.is-vertical,
+#timeline.is-vertical {
   flex-direction: column;
   flex-wrap: nowrap;
   align-items: stretch;
@@ -1555,9 +1649,11 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
 /* Leiste als Schublade im Dock: zu, bis man das Icon anklickt. */
 /* IDs mit im Selektor: #toolbar/#color-bar setzen display selbst per ID. */
 .rail > #toolbar.is-bar-drawer,
-.rail > #color-bar.is-bar-drawer { display: none; }
+.rail > #color-bar.is-bar-drawer,
+.rail > #timeline.is-bar-drawer { display: none; }
 .rail > #toolbar.is-bar-drawer.is-shown,
-.rail > #color-bar.is-bar-drawer.is-shown {
+.rail > #color-bar.is-bar-drawer.is-shown,
+.rail > #timeline.is-bar-drawer.is-shown {
   display: flex;
   position: absolute;
   top: 0;
@@ -1572,7 +1668,8 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
 #rail-left  > .is-bar-drawer.is-shown { left: 100%; }
 #rail-right > .is-bar-drawer.is-shown { right: 100%; }
 .rail-pins > #toolbar.is-guest,
-.rail-pins > #color-bar.is-guest { display: flex; border-top: 1px solid var(--accent-line); }
+.rail-pins > #color-bar.is-guest,
+.rail-pins > #timeline.is-guest { display: flex; border-top: 1px solid var(--accent-line); }
 
 /* Dock-Icon beim Ziehen */
 .dock-ghost {
@@ -1658,6 +1755,12 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
 .help-legal { margin: var(--sp-3) 0 0; padding-top: var(--sp-3); border-top: 1px solid var(--line); font-size: var(--fs-sm); color: var(--text-dim); }
 .help-legal a { color: var(--text-muted); }
 
+/* Finger auf der Zeichenfläche: Zoomen und Verschieben macht js/app.js
+   (initPinch) selbst — sonst zoomt der Browser die ganze Seite. */
+@media (pointer: coarse) {
+  #editor-canvas-area { touch-action: none; }
+}
+
 /* ── 17 · Handy (js/layout.js MOBILE) ─────────────────────────────────
    Die Zeichenfläche bekommt den ganzen Rest. Beide Docks liegen als eine
    Leiste ganz unten, Panels öffnen sich als Blatt von unten. Werkzeugleiste
@@ -1703,8 +1806,11 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
     border-radius: var(--r-lg) var(--r-lg) 0 0;
   }
   #workspace > .rail > #toolbar.is-shown,
-  #workspace > .rail > #color-bar.is-shown { padding: var(--sp-3); }
-  .panel-pin, .panel-float, .bar-handle { display: none !important; }
+  #workspace > .rail > #color-bar.is-shown,
+  #workspace > .rail > #timeline.is-shown { padding: var(--sp-3); }
+  /* Panels werden hier nicht angepinnt; Leisten schon — nur der Griff fehlt. */
+  .panel-pin, .panel-float, .bar-grip { display: none !important; }
+  .bar-handle { margin-inline-end: 0; }
 
   /* Kopf der Bühne in einer Zeile. */
   #stage-head { flex-wrap: nowrap; gap: var(--sp-2); padding: var(--sp-1) var(--sp-3); }
@@ -1717,16 +1823,20 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
   .stage-head-right .btn-group .btn { padding-inline: 8px; }
 
   /* Werkzeugleiste und Farbzeile: je eine Zeile, waagerecht scrollbar. */
-  #toolbar, #color-bar {
+  #toolbar, #color-bar, #timeline {
     flex-wrap: nowrap;
     gap: var(--sp-2);
     padding: var(--sp-1) var(--sp-3);
     overflow-x: auto;
     scrollbar-width: none;
   }
-  #toolbar::-webkit-scrollbar, #color-bar::-webkit-scrollbar,
+  #toolbar::-webkit-scrollbar, #color-bar::-webkit-scrollbar, #timeline::-webkit-scrollbar,
   .rail-dock::-webkit-scrollbar { display: none; }
-  #toolbar > *, #color-bar > * { flex: none; }
+  #toolbar > *, #color-bar > *, #timeline > * { flex: none; }
+  /* Die Frames scrollen selbst — die Leiste drumherum nicht doppelt. */
+  #timeline > .tl-frames { flex: 1 1 auto; min-width: 96px; scrollbar-width: none; }
+  #timeline > .tl-frames::-webkit-scrollbar { display: none; }
+  #timeline .tl-num .field-label { display: none; }
   .tool-group { flex: none; }
   .tool-btn { padding: 8px; }
   #toolbar .field-label { white-space: nowrap; }
@@ -1747,4 +1857,23 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
 
   #editor-canvas-area { padding: var(--sp-2); }
   #info-bar { min-height: 0; }
+
+  /* Werkzeug-Optionen: eigene Zeile über den Leisten (js/layout.js). */
+  #toolbar > .tool-opts-btn { display: inline-grid; flex: none; }
+  #toolbar > .tool-opts-btn.is-active { background: var(--accent-bg); color: var(--accent); }
+  #tool-opts {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-2) var(--sp-3);
+    flex-shrink: 0;
+    padding: var(--sp-2) var(--sp-3);
+    border-top: 1px solid var(--line);
+    background: var(--surface-1);
+  }
+  #tool-opts[hidden], #tool-opts > [hidden] { display: none; }
+  #tool-opts .size-btns { flex-wrap: wrap; }
+  #tool-opts .brush-sz { min-width: 32px; padding: 7px 6px; }
+  #tool-opts input[type="range"] { width: 120px; }
 }
+.tool-opts-btn { display: none; }
