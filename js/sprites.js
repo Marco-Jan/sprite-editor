@@ -112,7 +112,8 @@ export function initNewSpriteModal() {
 
   const close = () => overlay.classList.remove('open');
   cancel.addEventListener('click', close);
-  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  // Kein Schließen per Klick daneben — ein Fehlklick (oder Text markieren und
+  // außerhalb loslassen) soll die Eingaben nicht verwerfen. Abbrechen oder Esc.
   nameInp.addEventListener('keydown', e => { if (e.key === 'Enter') create.click(); });
 
   create.addEventListener('click', () => {
@@ -207,7 +208,8 @@ export function initRenameModal() {
   const close = () => { overlay.classList.remove('open'); _renameId = null; };
 
   document.getElementById('rename-modal-cancel').addEventListener('click', close);
-  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  // Kein Schließen per Klick daneben — ein Fehlklick (oder Text markieren und
+  // außerhalb loslassen) soll die Eingaben nicht verwerfen. Abbrechen oder Esc.
   inp.addEventListener('keydown', e => { if (e.key === 'Enter') ok.click(); });
 
   ok.addEventListener('click', () => {
@@ -253,7 +255,8 @@ export function initSizeModal() {
   const close = () => { overlay.classList.remove('open'); _sizeId = null; };
 
   document.getElementById('size-modal-cancel').addEventListener('click', close);
-  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  // Kein Schließen per Klick daneben — ein Fehlklick (oder Text markieren und
+  // außerhalb loslassen) soll die Eingaben nicht verwerfen. Abbrechen oder Esc.
   [wInp, hInp].forEach(inp => inp.addEventListener('keydown', e => {
     if (e.key === 'Enter') ok.click();
   }));

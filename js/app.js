@@ -314,7 +314,8 @@ function initReduceModal() {
   $('reduce-count').addEventListener('change', renderReducePreview);
   $('reduce-cancel').addEventListener('click', close);
   $('reduce-apply').addEventListener('click', applyReduce);
-  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  // Kein Schließen per Klick daneben — ein Fehlklick (oder Text markieren und
+  // außerhalb loslassen) soll die Eingaben nicht verwerfen. Abbrechen oder Esc.
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -1503,7 +1504,8 @@ function initImport() {
   });
 
   $('import-modal-cancel').addEventListener('click', close);
-  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  // Kein Schließen per Klick daneben — ein Fehlklick (oder Text markieren und
+  // außerhalb loslassen) soll die Eingaben nicht verwerfen. Abbrechen oder Esc.
   ta.addEventListener('input', preview);
 
   // Datei einlesen → landet im Textfeld, dann läuft der normale Weg.

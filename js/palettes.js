@@ -281,7 +281,8 @@ export function initPaletteModal() {
   });
 
   document.getElementById('pal-modal-cancel').addEventListener('click', close);
-  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  // Kein Schließen per Klick daneben — ein Fehlklick (oder Text markieren und
+  // außerhalb loslassen) soll die Eingaben nicht verwerfen. Abbrechen oder Esc.
 
   document.getElementById('pal-modal-create').addEventListener('click', () => {
     const raw = document.getElementById('pal-name').value.trim();
