@@ -6,7 +6,8 @@ import {
   getSprite, makeSpriteId, listSprites, clearSelection,
 } from './state.js';
 import { DEFAULT_PALETTE, dc } from './data.js';
-import { renderAll, fillPaletteSelect } from './render.js';
+import { renderAll } from './render.js';
+import { createPalettePicker } from './palpicker.js';
 import { saveState } from './storage.js';
 import { showInfoToast, showConfirmToast } from './toast.js';
 import { clearHistory } from './history.js';
@@ -83,7 +84,12 @@ export function initNewSpriteModal() {
   const overlay = document.getElementById('new-modal-overlay');
   const nameInp = document.getElementById('new-name');
   const sizeSel = document.getElementById('new-size');
-  const palSel  = document.getElementById('new-palette');
+  // Paletten-Auswahl wie im Panel: Suche, Filter, klappbare Gruppen.
+  let chosenPalette = DEFAULT_PALETTE;
+  const palPicker = createPalettePicker(document.getElementById('new-palette'), {
+    onSelect: n => { chosenPalette = n; },
+    activeName: () => getSprite()?.palette || null,
+  });
   const tplSel  = document.getElementById('new-template');
   const customRow = document.getElementById('new-size-custom');
   const wInp    = document.getElementById('new-w');
@@ -97,7 +103,8 @@ export function initNewSpriteModal() {
     wInp.value = '24';
     hInp.value = '24';
     syncCustomRow();
-    fillPaletteSelect(palSel, getSprite()?.palette || DEFAULT_PALETTE);
+    chosenPalette = getSprite()?.palette || DEFAULT_PALETTE;
+    palPicker.render(chosenPalette);
     fillSpriteTemplateSelect(tplSel);
     overlay.classList.add('open');
     nameInp.focus();
@@ -129,7 +136,7 @@ export function initNewSpriteModal() {
     } else {
       w = h = Number(sizeSel.value) || 24;
     }
-    const palette = palSel.value || DEFAULT_PALETTE;
+    const palette = chosenPalette || DEFAULT_PALETTE;
     const srcId = tplSel.value;
 
     // Vorlage wird zentriert eingesetzt (geclippt wenn größer, gepadded wenn kleiner).

@@ -842,6 +842,85 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 
 .palette-picker { display: flex; align-items: center; gap: var(--sp-1); }
 .palette-picker .input { flex: 1; }
+.palette-picker .pal-status { flex: 1; }
+
+/* Paletten-Auswahl (js/palpicker.js): Suche, Filter, klappbare Gruppen,
+   jede Palette mit Farbstreifen. */
+.pp { display: flex; flex-direction: column; gap: var(--sp-2); }
+.pp-tools { display: flex; flex-direction: column; gap: var(--sp-1); }
+.pp-filter { display: flex; gap: 2px; }
+.pp-chip {
+  flex: 1;
+  padding: 3px 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--text-dim);
+  font: 600 var(--fs-xs)/1.4 var(--font);
+  cursor: pointer;
+}
+.pp-chip:hover { color: var(--text); }
+.pp-chip[aria-pressed="true"] { background: var(--accent-bg); border-color: var(--accent-line); color: var(--accent); }
+.pp-list {
+  max-height: 15rem;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-1);
+}
+.pp-group + .pp-group { border-top: 1px solid var(--line); }
+.pp-group-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  width: 100%;
+  padding: 6px var(--sp-2);
+  border: 0;
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font: 700 var(--fs-xs)/1 var(--font);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.pp-group-head:hover { color: var(--text); }
+.pp-caret::before { content: '▾'; display: inline-block; width: 1em; transition: transform 0.15s; }
+.pp-group-head[aria-expanded="false"] .pp-caret::before { transform: rotate(-90deg); }
+.pp-count { margin-left: auto; color: var(--text-dim); font-family: var(--mono); letter-spacing: 0; }
+.pp-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-areas: "name active size" "strip strip strip";
+  align-items: center;
+  gap: 3px var(--sp-2);
+  width: 100%;
+  padding: 5px var(--sp-2);
+  border: 0;
+  border-left: 2px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  font: 500 var(--fs-sm)/1.2 var(--font);
+  text-align: left;
+  cursor: pointer;
+}
+.pp-item:hover { background: var(--surface-2); color: var(--text); }
+.pp-item.is-selected { background: var(--accent-bg); border-left-color: var(--accent); color: var(--text); }
+.pp-name { grid-area: name; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pp-active {
+  grid-area: active;
+  padding: 0 5px;
+  border-radius: 99px;
+  background: var(--primary-bg);
+  color: var(--primary);
+  font-size: var(--fs-xs);
+}
+.pp-size { grid-area: size; font-family: var(--mono); font-size: var(--fs-xs); color: var(--text-dim); }
+.pp-strip { grid-area: strip; display: flex; height: 7px; border-radius: 2px; overflow: hidden; }
+.pp-strip i { flex: 1; }
+.pp-none { margin: 0; padding: var(--sp-3); color: var(--text-dim); font-size: var(--fs-sm); }
 
 /* Paletten-Raster: Vorschau der angezeigten Palette. 8 Spalten bei kleinen
    Paletten, 16 ab 16 Farben — 256 Farben sind dann genau 16 × 16. */

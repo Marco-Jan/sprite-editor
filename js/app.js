@@ -18,7 +18,7 @@ import {
   renderAll, renderEditor, renderSpriteList, syncColorActive, updateOutput, renderMaterials,
   renderFreeColorsList, countCurrentColor,
   cellFromEvent, cellFromEventClamped, cellToColor, paintCell, paintBrush, paintSpray, floodFill,
-  fillPaletteSelect, renderCallbacks, shapeCells, commitShape,
+  renderCallbacks, shapeCells, commitShape,
 } from './render.js';
 import {
   saveState, loadState, clearStorage, forceSaveBeforeUnload, saveToFile, loadFromFile,
@@ -1001,11 +1001,7 @@ function initShowColor() {
 
 function initPalettePanel() {
   // Auswählen zeigt die Palette nur an — die Zeichnung bleibt unverändert.
-  const sel = $('palette-select');
-  sel.addEventListener('change', () => { if (sel.value) previewPalette(sel.value); });
-
-  const search = $('palette-search');
-  search.addEventListener('input', () => fillPaletteSelect(sel, getPreviewName(), search.value));
+  renderCallbacks.onPreviewPalette = previewPalette;
 
   $('palette-use-btn').addEventListener('click', () => assignPalette(getPreviewName(), { keepLook: true }));
   $('palette-recolor-btn').addEventListener('click', () => assignPalette(getPreviewName(), { keepLook: false }));

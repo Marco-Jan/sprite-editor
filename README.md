@@ -438,6 +438,7 @@ sprite-editor/
     ├── dock.js         ← Seitenleisten als Icon-Spalte, unter 1280 px Kopfzeile als Menü
     ├── icons.js        ← alle Pixel-Icons (8×8) + applyIcons() für [data-icon]
     ├── layout.js       ← Panels/Leisten anpinnen, schweben lassen, verschieben, Größe ändern
+    ├── palpicker.js    ← Paletten-Auswahl: Suche, Filter, klappbare Gruppen, Farbstreifen
     └── app.js          ← Init, Events, Verdrahtung
 ```
 

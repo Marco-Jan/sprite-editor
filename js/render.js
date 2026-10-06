@@ -15,6 +15,7 @@ import { buildCode, tsIdentifier, getFormat } from './codegen.js';
 import { MATERIALS, DEFAULT_MATERIAL, GameJsonError } from './gamejson.js';
 import { iconSvg } from './icons.js';
 import { showInfoToast } from './toast.js';
+import { createPalettePicker } from './palpicker.js';
 
 // Weiterreichen, damit bestehende Importe aus render.js gültig bleiben.
 export { cellToColor, tsIdentifier };
@@ -32,6 +33,7 @@ export const renderCallbacks = {
   onEditPalette:     (_name) => {},
   onDeletePalette:   (_name) => {},
   onImageToPalette:  () => {},
+  onPreviewPalette:  (_name) => {},
   // Felder im Bild-Panel an die Maße des aktiven Sprites angleichen.
   onSyncImagePanel:  () => {},
 };
@@ -793,34 +795,9 @@ function syncFreeColorsActive() {
 // FARB-PANEL (rechte Spalte)
 // ────────────────────────────────────────────────────────────────────
 
-// Das Paletten-Dropdown befüllen. `filter` blendet Optionen aus, deren Name
-// den Suchtext nicht enthält.
-export function fillPaletteSelect(sel, selectedName, filter = '') {
-  if (!sel) return;
-  sel.innerHTML = '';
-  const q = filter.trim().toLowerCase();
-  const opts = getAllPaletteOptions().filter(o => !q || o.name.toLowerCase().includes(q));
-
-  const groups = [
-    { label: t('pal.groupBuiltin'), items: opts.filter(o => !o.isCustom) },
-    { label: t('pal.groupCustom'),  items: opts.filter(o => o.isCustom) },
-  ];
-  for (const g of groups) {
-    if (!g.items.length) continue;
-    const og = document.createElement('optgroup');
-    og.label = g.label;
-    g.items.forEach(o => {
-      const opt = document.createElement('option');
-      opt.value = o.name;
-      opt.textContent = o.name;
-      if (o.name === selectedName) opt.selected = true;
-      og.appendChild(opt);
-    });
-    sel.appendChild(og);
-  }
-  // Ausgewählte Palette ist wegfiltert → trotzdem als Wert halten.
-  if (selectedName && !opts.some(o => o.name === selectedName)) sel.value = '';
-}
+// Paletten-Auswahl im Panel (js/palpicker.js) — einmal anlegen, dann nur neu
+// aufbauen. Auswählen ruft renderCallbacks.onPreviewPalette (app.js).
+let panelPicker = null;
 
 export function renderPalette() {
   const spName   = getPaletteName();
@@ -830,10 +807,14 @@ export function renderPalette() {
   const isSprite = name === spName;
   const custom   = isCustomPalette(name);
 
-  const sel = document.getElementById('palette-select');
-  const search = document.getElementById('palette-search');
-  fillPaletteSelect(sel, name, search?.value || '');
-  if (search) search.hidden = getAllPaletteOptions().length <= 12 && !search.value;
+  const host = document.getElementById('palette-browser');
+  if (host && !panelPicker) {
+    panelPicker = createPalettePicker(host, {
+      onSelect: n => renderCallbacks.onPreviewPalette(n),
+      activeName: () => getPaletteName(),
+    });
+  }
+  panelPicker?.render(name);
 
   // Bearbeiten/Löschen gibt es nur für eigene Paletten — gilt der ANGEZEIGTEN.
   document.getElementById('palette-edit-btn')?.toggleAttribute('hidden', !custom);

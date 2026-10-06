@@ -353,17 +353,16 @@
         </div>
         <div class="panel-body">
 
+          <!-- Paletten-Auswahl mit Suche, Filter und klappbaren Gruppen (js/palpicker.js).
+               Auswählen zeigt die Palette nur an — die Zeichnung ändert sich
+               erst über einen der zwei Knöpfe weiter unten (js/palettes.js). -->
+          <div id="palette-browser"></div>
+
           <div class="palette-picker">
-            <select id="palette-select" class="input" data-i18n-attr="aria-label:pal.select" aria-label="Palette wählen"></select>
+            <p class="pal-status" id="palette-status"></p>
             <button class="icon-btn" id="palette-edit-btn" data-i18n-attr="title:pal.edit" title="Palette bearbeiten" hidden><span class="ico" data-icon="pencil"></span></button>
             <button class="icon-btn is-danger" id="palette-del-btn" data-i18n-attr="title:pal.del" title="Palette löschen" hidden><span class="ico" data-icon="close"></span></button>
           </div>
-
-          <input type="search" id="palette-search" class="input input--sm" data-i18n-attr="placeholder:pal.search" placeholder="Palette suchen…" autocomplete="off">
-
-          <!-- Auswählen zeigt die Palette nur an — die Zeichnung ändert sich
-               erst über einen der zwei Knöpfe darunter (js/palettes.js). -->
-          <p class="pal-status" id="palette-status"></p>
           <div id="palette-items" class="pal-grid"></div>
           <p class="pal-pick" id="palette-pick-info"></p>
 
@@ -554,10 +553,10 @@
       <input type="text" id="new-name" class="input" maxlength="40" data-i18n-attr="placeholder:mod.namePh" placeholder="z.B. Held, Baum, Icon">
     </label>
 
-    <label class="form-row">
+    <div class="form-row">
       <span class="form-label" data-i18n="mod.palette">Farbpalette</span>
-      <select id="new-palette" class="input"></select>
-    </label>
+      <div id="new-palette"></div>
+    </div>
 
     <label class="form-row">
       <span class="form-label" data-i18n="mod.size">Größe</span>

@@ -52,6 +52,7 @@ const PRECACHE = [
   'js/layout.js',
   'js/migrate.js',
   'js/palettes.js',
+  'js/palpicker.js',
   'js/pwa.js',
   'js/render.js',
   'js/selection.js',
