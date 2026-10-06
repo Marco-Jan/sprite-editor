@@ -617,8 +617,11 @@ function initPinch() {
     if (pinch && pts.size < 2) { pinch = null; saveState(); }
     if (!pts.size) slide = null;
   };
-  area.addEventListener('pointerup', lift, true);
-  area.addEventListener('pointercancel', lift, true);
+  // Am Fenster, nicht nur an der Fläche: ein Finger, der woanders losgelassen
+  // oder vom Browser abgebrochen wird, darf nicht als "noch aufgesetzt"
+  // hängen bleiben — sonst gälte der nächste einzelne Finger als zweiter.
+  window.addEventListener('pointerup', lift, true);
+  window.addEventListener('pointercancel', lift, true);
 }
 
 function initCanvasEvents() {

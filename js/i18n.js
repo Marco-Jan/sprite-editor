@@ -234,7 +234,7 @@ const STATIC = {
     'gd.show': 'Show',
     'gd.showTitle': 'Show / hide all guides (G)',
     'gd.edit': 'Move',
-    'gd.editTitle': 'Drag lines on the drawing area — no painting meanwhile (Esc ends it)',
+    'gd.editTitle': 'Drag lines on the drawing area — no painting meanwhile (a tap next to the lines or Esc ends it)',
     'gd.free': 'Free lines',
     'gd.addH': '+ Horizontal',
     'gd.addHTitle': 'Put a horizontal line in the middle',
@@ -251,7 +251,7 @@ const STATIC = {
     'gd.h8': '8 heads — classic, heroic',
     'gd.fit': 'Fit to figure',
     'gd.fitTitle': 'Set the top and bottom of the division to what is drawn',
-    'gd.note': 'Drawing aid only — the lines never show up in an export. In “Move” mode drag the lines; dragging a free line out of the image deletes it.',
+    'gd.note': 'Drawing aid only — the lines never show up in an export. In “Move” mode drag the lines; dragging a free line out of the image deletes it, a tap next to the lines ends the mode.',
     // Ebenen-Panel (layers.js)
     'ly.title': 'Layers',
     'ly.add': 'New layer above the active one',
@@ -519,7 +519,7 @@ const STATIC = {
     'help.h.guides': 'Guides',
     'help.guides': ''
       + '<div>The <b>Guides</b> panel in the dock — a drawing aid only, they never show up in an export. <span class="kbd">G</span> shows and hides them all.</div>'
-      + '<div><b>Free lines</b>: “+ Horizontal” / “+ Vertical” puts a line in the middle. In <b>Move</b> mode you drag lines into place on the drawing area (always on a pixel edge); dragged out of the image, a line is deleted. No painting meanwhile — <span class="kbd">Esc</span> ends the mode.</div>'
+      + '<div><b>Free lines</b>: “+ Horizontal” / “+ Vertical” puts a line in the middle. In <b>Move</b> mode you drag lines into place on the drawing area (always on a pixel edge); dragged out of the image, a line is deleted. No painting meanwhile — a tap next to the lines or <span class="kbd">Esc</span> ends the mode; with no lines left it ends by itself.</div>'
       + '<div><b>Figure</b>: divides a figure into 2 (chibi), 3, 4, 6 or 8 head heights and marks chin, chest, hip, knee etc. plus the body axis. “Fit to figure” sets the top and bottom to what is drawn; both can be dragged in Move mode.</div>'
       + '<div>The lines belong to the sprite and are saved with the project.</div>',
     'help.h.layers': 'Layers',
@@ -722,8 +722,7 @@ const MSG = {
     'gd.hip':      'Hüfte',
     'gd.crotch':   'Schritt',
     'gd.knee':     'Knie',
-    'gd.editInfo': 'Hilfslinien verschieben: Linie anfassen und ziehen, aus dem Bild ziehen löscht. Esc beendet.',
-    'gd.editOff':  'Zurück zum Malen.',
+    'gd.editInfo': 'Hilfslinien verschieben: Linie anfassen und ziehen, aus dem Bild ziehen löscht. Tipp daneben oder Esc beendet.',
     'gd.removed':  'Hilfslinie entfernt.',
 
     // Ebenen (js/layers.js) — die Panel-Texte stehen im HTML bzw. in STATIC
@@ -1122,8 +1121,7 @@ const MSG = {
     'gd.hip':      'hip',
     'gd.crotch':   'crotch',
     'gd.knee':     'knee',
-    'gd.editInfo': 'Moving guides: grab a line and drag it, dragging it out of the image deletes it. Esc ends this.',
-    'gd.editOff':  'Back to painting.',
+    'gd.editInfo': 'Moving guides: grab a line and drag it, dragging it out of the image deletes it. A tap next to it or Esc ends this.',
     'gd.removed':  'Guide removed.',
 
     'ly.name':        'Layer {n}',

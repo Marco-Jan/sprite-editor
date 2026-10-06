@@ -81,7 +81,9 @@ sich als Schublade. Im Panel-Kopf:
 Werkzeugleiste, Farbzeile und Timeline haben vorn einen Griff und einen Pin: lösen, frei schweben
 lassen, Größe ändern.
 Auf dem Handy (bis 700 px) hat jede dieser Leisten nur den Pin: angepinnt sitzt sie fest unter
-der Zeichenfläche (Standard), ohne Pin liegt sie im Dock. Diese Wahl gilt nur fürs Handy. Andocken lassen sie sich oben, unten oder links/rechts neben der
+der Zeichenfläche (Standard), ohne Pin liegt sie im Dock. Diese Wahl gilt nur fürs Handy.
+Auch die Dock-Icons unten lassen sich dort ziehen: Reihenfolge ändern und zwischen linker
+und rechter Gruppe wechseln — ebenfalls nur fürs Handy, das Desktop-Layout bleibt. Andocken lassen sie sich oben, unten oder links/rechts neben der
 Zeichenfläche (dort senkrecht), in beliebiger Reihenfolge. Die Anordnung merkt sich
 der Browser (localStorage `spritebit_layout`), sie gehört nicht zum Projekt. Im Vollbild
 verschwindet nur die Kopfzeile.
@@ -333,8 +335,8 @@ keinem Export, kein Undo. Gespeichert je Sprite (`sp.guides`), `G` blendet alle 
 
 - **Freie Linien** — „+ Waagerecht“ / „+ Senkrecht“ setzt eine Linie in die Mitte. Im
   Modus **Verschieben** gehört die Zeichenfläche den Linien: anfassen und ziehen (immer
-  auf eine Pixelgrenze), aus dem Bild ziehen löscht. Gemalt wird solange nicht; `Esc`
-  beendet den Modus.
+  auf eine Pixelgrenze), aus dem Bild ziehen löscht. Gemalt wird solange nicht; ein Tipp
+  neben die Linien oder `Esc` beendet den Modus, ohne Linien endet er von selbst.
 - **Figur** — Einteilung in 2 (Chibi), 3, 4, 6 oder 8 Kopfhöhen mit Kopfnummern, den
   üblichen Marken (Kinn, Brust, Nabel, Hüfte, Schritt, Knie — je nach Einteilung) und
   der Körperachse. „An Figur anpassen“ setzt Ober- und Unterkante auf den sichtbaren

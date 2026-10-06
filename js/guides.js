@@ -130,10 +130,11 @@ function hitTest(e) {
 }
 
 // Vom Canvas aufgerufen (app.js), solange der Verschieben-Modus läuft.
-// Gibt immer true zurück: im Modus wird nicht gemalt.
+// Gibt immer true zurück: im Modus wird nicht gemalt. Ein Tipp neben die
+// Linien beendet den Modus — auf dem Handy gibt es kein Esc.
 export function guidePointerDown(e) {
   const hit = hitTest(e);
-  if (!hit) { renderCallbacks.onGuideInfo(t('gd.editInfo')); return true; }
+  if (!hit) { e.preventDefault(); toggleEdit(false); return true; }
   e.preventDefault();
   const sp = getSprite();
   const g = sp.guides;
@@ -168,6 +169,7 @@ export function guidePointerDown(e) {
     }
     renderEditor();
     saveState();
+    leaveIfEmpty();
   };
   window.addEventListener('pointermove', move);
   window.addEventListener('pointerup', up);
@@ -194,17 +196,24 @@ function changed() {
 
 export function toggleShow() {
   state.showGuides = !state.showGuides;
-  if (!state.showGuides) state.guideEdit = false;
+  if (!state.showGuides && state.guideEdit) { toggleEdit(false); return; }
   changed();
 }
 
+// Beim Beenden wird die Statuszeile geleert — der Hinweis gilt nicht mehr.
 export function toggleEdit(on = !state.guideEdit) {
   state.guideEdit = on;
   if (on) state.showGuides = true;
   $('editor-canvas-wrap').classList.toggle('is-guide-edit', on);
   if (!on) $('editor-canvas-wrap').style.cursor = '';
-  renderCallbacks.onGuideInfo(t(on ? 'gd.editInfo' : 'gd.editOff'));
+  renderCallbacks.onGuideInfo(on ? t('gd.editInfo') : '');
   changed();
+}
+
+// Nichts mehr zu verschieben → zurück zum Malen.
+function leaveIfEmpty() {
+  const g = guides();
+  if (state.guideEdit && g && !g.h.length && !g.v.length && !g.heads) toggleEdit(false);
 }
 
 // Neue Linie in der Mitte; danach gleich verschiebbar.
@@ -227,6 +236,7 @@ function clearLines() {
   g.h.length = 0;
   g.v.length = 0;
   changed();
+  leaveIfEmpty();
 }
 
 function setHeads(n) {
@@ -235,6 +245,7 @@ function setHeads(n) {
   g.heads = FIGURE_HEADS.includes(n) ? n : 0;
   if (g.heads) state.showGuides = true;
   changed();
+  leaveIfEmpty();
 }
 
 // Ober- und Unterkante auf den gezeichneten Inhalt (was man sieht).

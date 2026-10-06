@@ -39,9 +39,19 @@ const MOBILE = window.matchMedia('(max-width: 700px)');
 
 let ws, layer, hint;
 let zTop = 40;
-// mobilePins: auf dem Handy eigene Wahl je Leiste — true = unten angepinnt
-// (Standard), false = im Dock. Unabhängig von der Anordnung am Desktop.
-let layout = { pinW: { left: 280, right: 300 }, items: {}, order: [], barOrder: [...BARS], mobilePins: {} };
+// Handy — eigene Wahl, unabhängig von der Anordnung am Desktop:
+//   mobilePins  je Leiste true = unten angepinnt (Standard), false = im Dock
+//   mobileOrder Reihenfolge der Dock-Icons (leer = wie am Desktop)
+//   mobileSide  je Icon 'left' | 'right' (fehlt = wie am Desktop)
+let layout = { pinW: { left: 280, right: 300 }, items: {}, order: [], barOrder: [...BARS],
+  mobilePins: {}, mobileOrder: [], mobileSide: {} };
+
+// Seite, auf der ein Panel im HTML steht — Rückfall, solange der Nutzer es
+// nirgends hingezogen hat (das Handy-Layout darf sie nicht verschieben).
+const homeSide = {};
+
+// Nur bekannte IDs übernehmen, fehlende hinten anhängen.
+const mergeOrder = (saved, all) => [...(saved || []).filter(id => all.includes(id)), ...all.filter(id => !(saved || []).includes(id))];
 
 const $ = id => document.getElementById(id);
 const panelEl = id => document.querySelector(`[data-panel="${id}"]`);
@@ -56,11 +66,12 @@ function load() {
     if (!raw || typeof raw !== 'object') return;
     layout.pinW = { ...layout.pinW, ...(raw.pinW || {}) };
     layout.items = raw.items || {};
-    // Nur bekannte IDs übernehmen, fehlende hinten anhängen.
-    const keep = (saved, all) => [...(saved || []).filter(id => all.includes(id)), ...all.filter(id => !(saved || []).includes(id))];
-    layout.order = keep(raw.order, layout.order);
-    layout.barOrder = keep(raw.barOrder, BARS);
-    layout.mobilePins = raw.mobilePins && typeof raw.mobilePins === 'object' ? raw.mobilePins : {};
+    layout.order = mergeOrder(raw.order, layout.order);
+    layout.barOrder = mergeOrder(raw.barOrder, BARS);
+    const obj = v => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});
+    layout.mobilePins = obj(raw.mobilePins);
+    layout.mobileSide = obj(raw.mobileSide);
+    layout.mobileOrder = Array.isArray(raw.mobileOrder) ? raw.mobileOrder : [];
   } catch {}
 }
 let transient = false;   // gerade Handy-Anordnung angewendet → nicht speichern
@@ -266,6 +277,7 @@ function dropPanel(id, tgt) {
 function initPanel(el) {
   const id = el.dataset.panel;
   el.dataset.side = el.closest('#rail-left') ? 'left' : 'right';
+  homeSide[el.dataset.panel] = el.dataset.side;   // Ausgangsseite laut HTML
   el.dataset.mode = 'drawer';
   const head = el.querySelector('.panel-head');
   const close = head.querySelector('.dock-close');
@@ -322,6 +334,7 @@ function initDockDrag(id, { target, drop }) {
   // Der Klick direkt nach dem Ziehen gehört zum Ziehen, nicht zum Öffnen.
   const swallow = e => { e.stopImmediatePropagation(); e.preventDefault(); };
   makeDraggable(btn, null, {
+    mobile: true,   // Dock-Icons lassen sich auch auf dem Handy ordnen
     lift: () => {
       ghost = btn.cloneNode(true);
       ghost.classList.add('dock-ghost');
@@ -332,14 +345,41 @@ function initDockDrag(id, { target, drop }) {
       const w = wsRect();
       Object.assign(ghost.style, { left: (cx - w.left - 18) + 'px', top: (cy - w.top - 18) + 'px' });
     },
-    target,
+    target: (cx, cy) => (MOBILE.matches ? mobileDockSlot(id, cx, cy) : target(cx, cy)),
     drop: tgt => {
       ghost?.remove();
       ghost = null;
       setTimeout(() => btn.removeEventListener('click', swallow, { capture: true }), 0);
-      if (tgt) drop(tgt);
+      if (!tgt) return;
+      if (MOBILE.matches) mobileDockDrop(id, tgt); else drop(tgt);
     },
   });
+}
+
+// Handy: die beiden Docks liegen als eine waagerechte Leiste unten. Die
+// linke Gruppe reicht bis zum Anfang der rechten.
+function mobileDockSlot(id, cx, cy) {
+  const w = wsRect();
+  const L = railOf('left').getBoundingClientRect(), R = railOf('right').getBoundingClientRect();
+  // Weit über der Leiste losgelassen → abbrechen.
+  if (cy < Math.min(L.top, R.top) - 60) return null;
+  const side = cx < R.left ? 'left' : 'right';
+  const dock = railOf(side).querySelector('.rail-dock');
+  const btns = [...dock.children].filter(b => b.dataset.target !== id && !b.hidden);
+  const ip = insertionPoint(btns, cx, false);
+  const d = dock.getBoundingClientRect();
+  const x = ip.line ?? d.left + 8;
+  return { side, before: ip.before?.dataset.target || null,
+    hint: { x: x - w.left - 2, y: d.top - w.top + 6, w: 4, h: d.height - 12 } };
+}
+
+function mobileDockDrop(id, tgt) {
+  layout.mobileSide = { ...layout.mobileSide, [id]: tgt.side };
+  const order = mergeOrder(layout.mobileOrder, layout.order);
+  moveInOrder(order, id, tgt.before);
+  layout.mobileOrder = order;
+  save();
+  applyAll();
 }
 
 function initPanelDockDrag(id) {
@@ -528,9 +568,9 @@ function initBar(id) {
 // ── Ziehen ──────────────────────────────────────────────────────────
 // Erst ab ein paar Pixeln Bewegung wird gezogen — ein normaler Klick auf
 // Knöpfe im Kopf bleibt ein Klick. `el` folgt dem Zeiger (oder `follow`).
-function makeDraggable(handle, el, { lift, follow, target, drop }) {
+function makeDraggable(handle, el, { lift, follow, target, drop, mobile = false }) {
   handle.addEventListener('pointerdown', e => {
-    if (e.button !== 0 || MOBILE.matches) return;
+    if (e.button !== 0 || (MOBILE.matches && !mobile)) return;
     if (el && e.target.closest('button, input, select, a')) return;
     const sx = e.clientX, sy = e.clientY;
     let dragging = false, offX = 0, offY = 0, tgt = null;
@@ -654,22 +694,26 @@ function applyAll() {
   const mobile = MOBILE.matches;
   const snapshot = mobile ? JSON.stringify(layout) : null;
   transient = mobile;
+  const mSide = id => (mobile ? layout.mobileSide[id] : null);
   for (const id of layout.order.filter(id => panelEl(id))) {
     const st = layout.items[id] || {};
     const mode = mobile ? 'drawer' : st.mode || 'drawer';
-    setPanelMode(id, mode, { side: st.side || panelEl(id).dataset.side });
+    setPanelMode(id, mode, { side: mSide(id) || st.side || homeSide[id] });
   }
   for (const id of [...layout.barOrder]) {
     const st = layout.items[id] || {};
     if (mobile) {
-      if (layout.mobilePins[id] === false) setBarMode(id, 'drawer', { side: st.side || 'right' });
+      if (layout.mobilePins[id] === false) setBarMode(id, 'drawer', { side: mSide(id) || st.side || 'right' });
       else setBarMode(id, 'docked', { zone: 'bottom', before: null });
     }
     else if (st.mode === 'drawer') setBarMode(id, 'drawer', { side: st.side });
     else if (st.mode === 'float') setBarMode(id, 'float');
     else setBarMode(id, 'docked', { zone: st.zone || BAR_HOME[id], before: null });
   }
-  if (mobile) layout = JSON.parse(snapshot);
+  if (mobile) {
+    layout = JSON.parse(snapshot);
+    if (layout.mobileOrder.length) sortDock(mergeOrder(layout.mobileOrder, layout.order));
+  }
   transient = false;
   syncToolOpts();
   syncRail('left');
