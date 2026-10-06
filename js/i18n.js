@@ -191,6 +191,8 @@ const STATIC = {
     'help.backupDownload': 'Download',
     'help.backupRestore':  'Restore',
     'help.backupNone':     'No backup yet.',
+    'help.imprint':        'Legal notice',
+    'help.privacy':        'Privacy policy',
     'fc.btnTitle':    'Colors in the sprite that have no slot in the palette',
     'pal.show':       'Show',
     'pal.showTitle':  'Shows where the current color appears in the image — everything else is dimmed',

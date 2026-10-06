@@ -17,9 +17,8 @@ import subprocess
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # ── Die einzige Stelle mit der Domain ───────────────────────────────
-# Abgeleitet aus dem git-Remote (github.com/Marco-Jan/sprite-editor).
-# Bei eigener Domain hier ersetzen, z. B. 'https://spritebit.de'.
-BASE = 'https://marco-jan.github.io/sprite-editor'
+# Die Seite läuft auf eigener Domain (gehostet bei Vercel).
+BASE = 'https://spritebit.at'
 
 SITE_NAME = 'spritebit'
 LANG = 'de'
@@ -120,7 +119,7 @@ def build_llms():
 > Pixel-Art-Editor, der komplett im Browser läuft. Kein Build, keine
 > Anmeldung, keine Cloud — die Arbeit bleibt im localStorage des Nutzers.
 > Sprites lassen sich als Bild oder in neun Code-Formaten exportieren.
-> Kostenlos, MIT-Lizenz, Quelltext offen.
+> Kostenlos, ohne Werbung, ohne Anmeldung.
 
 Der Editor ist reines Frontend: HTML, CSS und ES-Module ohne Bundler. Weil
 ES-Module HTTP brauchen, funktioniert ein Aufruf über `file://` nicht.
@@ -166,12 +165,13 @@ ES-Module HTTP brauchen, funktioniert ein Aufruf über `file://` nicht.
 - Kein Konto, kein Server, keine Telemetrie. Nichts wird hochgeladen.
 - Speicherort ist der localStorage des Browsers; für Sicherungen schreibt
   „Projekt sichern" eine JSON-Datei.
-- Einzige Ausnahme beim Offline-Betrieb: der PDF-Export lädt seine
-  Bibliothek beim ersten Aufruf nach.
+- Läuft nach dem ersten Aufruf komplett offline (PWA), auch der PDF-Export,
+  und lässt sich als App installieren.
 
-## Quelltext
+## Rechtliches
 
-- [GitHub](https://github.com/Marco-Jan/sprite-editor): MIT-Lizenz.
+- [Impressum]({BASE}/impressum.html)
+- [Datenschutz]({BASE}/datenschutz.html)
 """
 
 
@@ -191,10 +191,16 @@ def sync_html():
         s = re.sub(r'(<meta property="og:url" content=")[^"]*(")',
                    lambda m: m.group(1) + url + m.group(2), s)
         # Absolute Bild-URL: manche Dienste folgen relativen og:image nicht.
+        img = BASE + '/assets/og-image.png'
         s = re.sub(r'(<meta property="og:image" content=")[^"]*(")',
-                   lambda m: m.group(1) + BASE + '/assets/og-image.png' + m.group(2), s)
+                   lambda m: m.group(1) + img + m.group(2), s)
+        s = re.sub(r'(<meta name="twitter:image" content=")[^"]*(")',
+                   lambda m: m.group(1) + img + m.group(2), s)
+        # Strukturierte Daten (JSON-LD): Adresse und Vorschaubild.
         s = re.sub(r'("url"\s*:\s*")[^"]*(")',
                    lambda m: m.group(1) + BASE + '/' + m.group(2), s)
+        s = re.sub(r'("image"\s*:\s*")[^"]*(")',
+                   lambda m: m.group(1) + img + m.group(2), s)
 
         if s != before:
             with open(path, 'w', encoding='utf-8', newline='') as f:

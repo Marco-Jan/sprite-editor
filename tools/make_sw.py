@@ -17,8 +17,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SW = os.path.join(ROOT, 'sw.js')
 
 # Einzelne Dateien im Hauptordner
-FILES = ['./', 'index.html', 'editor.html', 'styles.css', 'landing.css',
-         'site.webmanifest']
+FILES = ['./', 'index.html', 'editor.html', 'impressum.html', 'datenschutz.html',
+         'styles.css', 'landing.css', 'site.webmanifest']
 # Ordner, die komplett mitkommen
 DIRS = ['js', 'vendor', 'assets']
 # Nur für Suchmaschinen/Link-Vorschauen, offline nutzlos

@@ -9,4 +9,4 @@ Disallow: /tools/
 Disallow: /js/
 Disallow: /assets/sprites/
 
-Sitemap: https://marco-jan.github.io/sprite-editor/sitemap.xml
+Sitemap: https://spritebit.at/sitemap.xml

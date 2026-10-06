@@ -1362,3 +1362,43 @@ kbd {
 @media (max-width: 400px) {
   .topbar .brand-name { display: none; }
 }
+
+/* ── Rechtliches: Impressum, Datenschutz ───────────────────────────── */
+.legal {
+  max-width: 44rem;
+  margin-inline: auto;
+  padding: clamp(2rem, 6vw, 4rem) var(--gutter) clamp(3rem, 8vw, 5rem);
+  color: var(--text-muted);
+  line-height: 1.65;
+}
+.legal h1 { margin-bottom: 0.25rem; }
+.legal h2 { margin: 2rem 0 0.5rem; font-size: var(--fs-h3); color: var(--text); }
+.legal p, .legal ul { margin: 0 0 0.9rem; }
+.legal ul { padding-left: 1.2rem; }
+.legal a { color: var(--accent); }
+.legal-sub { color: var(--text-dim); font-size: var(--fs-sm); }
+.legal-lead { padding: 0.9rem 1rem; border-left: 3px solid var(--ramp-1); background: var(--surface-1); color: var(--text); }
+.legal-links { margin-top: 2.5rem !important; font-size: var(--fs-sm); }
+a.brand { text-decoration: none; }
+.legal-switch { margin: 0 0 1.5rem !important; font-size: var(--fs-sm); }
+.legal-switch a { color: var(--text-dim); text-decoration: none; }
+.legal-switch a[aria-current="true"] { color: var(--text); font-weight: 600; }
+
+/* Rechtsseiten: "Editor öffnen" nach rechts (die Startseite schiebt ihn über
+   die Navigation, die es hier nicht gibt), Überschrift passend zur Spalte.
+   Pixelschrift nur in Vielfachen von 8 px, sonst verschwimmen die Kanten. */
+.legal-page .brand { margin-inline-end: auto; }
+.legal h1 { font-size: 32px; overflow-wrap: anywhere; }
+@media (max-width: 560px) { .legal h1 { font-size: 24px; } }
+@media (max-width: 400px) { .legal h1 { font-size: 16px; } }
+
+/* Herkunftsvermerk für alle Kulissen — einmal, unter der ersten, außerhalb des Bildes */
+.scene-credit {
+  max-width: var(--page);
+  margin: 0 auto;
+  padding: 6px var(--gutter);
+  font-size: var(--fs-xs);
+  line-height: 1.4;
+  text-align: right;
+  color: var(--text-dim);
+}

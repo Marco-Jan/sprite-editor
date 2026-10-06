@@ -436,7 +436,7 @@ sprite-editor/
     ├── toast.js        ← Confirm-/Info-Toast statt window.confirm
     ├── pwa.js          ← meldet den Service Worker an (Startseite + Editor)
     ├── dock.js         ← Seitenleisten als Icon-Spalte, unter 1280 px Kopfzeile als Menü
-    ├── icons.js        ← alle Pixel-Icons (8×8) + applyIcons() für [data-icon]
+    ├── icons.js        ← alle Linien-Icons (SVG) + applyIcons() für [data-icon]
     ├── layout.js       ← Panels/Leisten anpinnen, schweben lassen, verschieben, Größe ändern
     ├── palpicker.js    ← Paletten-Auswahl: Suche, Filter, klappbare Gruppen, Farbstreifen
     └── app.js          ← Init, Events, Verdrahtung
@@ -500,4 +500,6 @@ maskierbar) sowie ein OG-Vorschaubild in `assets/`. Wer das Motiv ändert, ände
 
 ## Lizenz
 
-MIT
+© 2026 Marco Jan — alle Rechte vorbehalten. Das Repository ist privat; Code und
+Gestaltung dürfen ohne Erlaubnis nicht weiterverwendet werden. Was Nutzer mit
+spritebit zeichnen, gehört ihnen.

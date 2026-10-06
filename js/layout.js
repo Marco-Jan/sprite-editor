@@ -27,6 +27,9 @@ const ZONE_REACH = 44;    // so nah am Rand der Zeichenfläche dockt eine Leiste
 const PIN_MIN = 200, PIN_MAX = 560;
 const BARS = ['toolbar', 'color-bar'];
 const BAR_DOCK = { 'toolbar': ['tools', 'lay.toolbar'], 'color-bar': ['swatches', 'lay.colorbar'] };
+// Handy: Panels nur als Schublade (von unten), beide Leisten waagerecht
+// unter der Zeichenfläche. Die gespeicherte Anordnung bleibt unberührt.
+const MOBILE = window.matchMedia('(max-width: 700px)');
 
 let ws, layer, hint;
 let zTop = 40;
@@ -51,7 +54,9 @@ function load() {
     layout.barOrder = keep(raw.barOrder, BARS);
   } catch {}
 }
+let transient = false;   // gerade Handy-Anordnung angewendet → nicht speichern
 function save() {
+  if (transient) return;
   try { localStorage.setItem(KEY, JSON.stringify(layout)); } catch {}
 }
 const itemState = id => (layout.items[id] ||= {});
@@ -383,7 +388,8 @@ function setBarMode(id, mode, opts = {}) {
     if ('before' in opts) moveInOrder(layout.order, id, opts.before);
     railOf(st.side).append(el);
     if (btn) railOf(st.side).querySelector('.rail-dock').append(btn);
-    el.classList.add('is-vertical', 'is-bar-drawer');
+    el.classList.add('is-bar-drawer');
+    if (!MOBILE.matches) el.classList.add('is-vertical');
   } else {
     mode = 'docked';
     st.zone = opts.zone || st.zone || 'top';
@@ -500,7 +506,7 @@ function initBar(id) {
 // Knöpfe im Kopf bleibt ein Klick. `el` folgt dem Zeiger (oder `follow`).
 function makeDraggable(handle, el, { lift, follow, target, drop }) {
   handle.addEventListener('pointerdown', e => {
-    if (e.button !== 0) return;
+    if (e.button !== 0 || MOBILE.matches) return;
     if (el && e.target.closest('button, input, select, a')) return;
     const sx = e.clientX, sy = e.clientY;
     let dragging = false, offX = 0, offY = 0, tgt = null;
@@ -572,6 +578,32 @@ function relabel() {
   document.querySelectorAll('.pins-resizer').forEach(g => { g.title = t('lay.resize'); });
 }
 
+// Gespeicherte Anordnung anwenden — auf dem Handy abgewandelt: angepinnte
+// und schwebende Panels werden Schubladen, Leisten wandern nach unten.
+// Diese Abwandlung wird nicht gespeichert; zurück am breiten Fenster
+// steht alles wieder wie vorher.
+function applyAll() {
+  const mobile = MOBILE.matches;
+  const snapshot = mobile ? JSON.stringify(layout) : null;
+  transient = mobile;
+  for (const id of layout.order.filter(id => panelEl(id))) {
+    const st = layout.items[id] || {};
+    const mode = mobile ? 'drawer' : st.mode || 'drawer';
+    setPanelMode(id, mode, { side: st.side || panelEl(id).dataset.side });
+  }
+  for (const id of [...layout.barOrder]) {
+    const st = layout.items[id] || {};
+    if (st.mode === 'drawer') setBarMode(id, 'drawer', { side: st.side });
+    else if (mobile) setBarMode(id, 'docked', { zone: 'bottom', before: null });
+    else if (st.mode === 'float') setBarMode(id, 'float');
+    else setBarMode(id, 'docked', { zone: st.zone || 'top', before: null });
+  }
+  if (mobile) layout = JSON.parse(snapshot);
+  transient = false;
+  syncRail('left');
+  syncRail('right');
+}
+
 export function initLayout() {
   ws = $('workspace');
   layer = document.createElement('div');
@@ -595,18 +627,8 @@ export function initLayout() {
   BARS.forEach(initBar);
 
   load();
-  for (const id of layout.order.filter(id => panelEl(id))) {
-    const st = layout.items[id] || {};
-    setPanelMode(id, st.mode || 'drawer', { side: st.side || panelEl(id).dataset.side });
-  }
-  for (const id of [...layout.barOrder]) {
-    const st = layout.items[id] || {};
-    if (st.mode === 'float') setBarMode(id, 'float');
-    else if (st.mode === 'drawer') setBarMode(id, 'drawer', { side: st.side });
-    else setBarMode(id, 'docked', { zone: st.zone || 'top', before: null });
-  }
-  syncRail('left');
-  syncRail('right');
+  applyAll();
+  MOBILE.addEventListener('change', applyAll);
   relabel();
   onLangChange(relabel);
 

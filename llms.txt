@@ -3,15 +3,15 @@
 > Pixel-Art-Editor, der komplett im Browser läuft. Kein Build, keine
 > Anmeldung, keine Cloud — die Arbeit bleibt im localStorage des Nutzers.
 > Sprites lassen sich als Bild oder in neun Code-Formaten exportieren.
-> Kostenlos, MIT-Lizenz, Quelltext offen.
+> Kostenlos, ohne Werbung, ohne Anmeldung.
 
 Der Editor ist reines Frontend: HTML, CSS und ES-Module ohne Bundler. Weil
 ES-Module HTTP brauchen, funktioniert ein Aufruf über `file://` nicht.
 
 ## Seiten
 
-- [Startseite](https://marco-jan.github.io/sprite-editor/): Was der Editor kann, in fünf Stationen erzählt.
-- [Editor](https://marco-jan.github.io/sprite-editor/editor.html): Die Anwendung selbst.
+- [Startseite](https://spritebit.at/): Was der Editor kann, in fünf Stationen erzählt.
+- [Editor](https://spritebit.at/editor.html): Die Anwendung selbst.
 
 ## Was der Editor kann
 
@@ -49,9 +49,10 @@ ES-Module HTTP brauchen, funktioniert ein Aufruf über `file://` nicht.
 - Kein Konto, kein Server, keine Telemetrie. Nichts wird hochgeladen.
 - Speicherort ist der localStorage des Browsers; für Sicherungen schreibt
   „Projekt sichern" eine JSON-Datei.
-- Einzige Ausnahme beim Offline-Betrieb: der PDF-Export lädt seine
-  Bibliothek beim ersten Aufruf nach.
+- Läuft nach dem ersten Aufruf komplett offline (PWA), auch der PDF-Export,
+  und lässt sich als App installieren.
 
-## Quelltext
+## Rechtliches
 
-- [GitHub](https://github.com/Marco-Jan/sprite-editor): MIT-Lizenz.
+- [Impressum](https://spritebit.at/impressum.html)
+- [Datenschutz](https://spritebit.at/datenschutz.html)

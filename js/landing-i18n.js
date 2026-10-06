@@ -159,8 +159,9 @@
     'end.note':     'Once opened, everything works without internet — even the PDF export. Installed as an app, spritebit starts like a program of its own.',
     'end.install':  'Install as app',
 
-    'foot.note':    'The pixel art in the backdrop comes from my own stream overlay.',
-    'foot.license': 'MIT license',
+    'scene.credit': '* The pixel art in the backdrops on this page is homemade — hand-pixeled, no additives.',
+    'foot.imprint': 'Legal notice',
+    'foot.privacy': 'Privacy',
   };
 
   // ── Snapshot + Anwenden ───────────────────────────────────────────
@@ -237,8 +238,7 @@
     'end.note':     'Amoi offn, rennt ois a ohne Internet — sogar da PDF-Export. Ois App installiert, startet spritebit wia a eigns Programm.',
     'end.install':  'Ois App installiern',
 
-    'foot.note':    'D’Pixel-Art in da Kulissn kummt aus’m eigenen Stream-Overlay.',
-    'foot.license': 'MIT-Lizenz',
+    'scene.credit': '* D’Pixel-Art in de Kulissn do is hausgmocht — händisch pixlt, ohne Zuasatzstoffe.',
   };
 
   function pick(key, fallback) {

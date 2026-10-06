@@ -1264,7 +1264,7 @@ body.editor-fullscreen #topbar { display: none; }
   cursor: pointer;
   transition: background 0.12s, color 0.12s, border-color 0.12s;
 }
-.dock-btn svg { width: 16px; height: 16px; shape-rendering: crispEdges; }
+.dock-btn svg { width: 18px; height: 18px; }
 .dock-btn:hover { background: var(--surface-3); color: var(--text); }
 .dock-btn.is-active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent-line); }
 .dock-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -1309,10 +1309,9 @@ body.editor-fullscreen #topbar { display: none; }
 .dock-close { display: inline-grid; }
 .sprite-list { max-height: none; }
 
-/* ── 12 · Pixel-Icons und Menü ──────────────────────────────────────
-   Alle Icons kommen aus js/icons.js (8×8-Raster, in currentColor). 16 px
-   heißt 2×2 Bildschirmpixel pro Rasterpixel — darum feste Größe. */
-.px-ico { display: block; flex: none; width: 16px; height: 16px; shape-rendering: crispEdges; }
+/* ── 12 · Icons und Menü ────────────────────────────────────────────
+   Alle Icons kommen aus js/icons.js (Linien-SVG, in currentColor). */
+.ui-ico { display: block; flex: none; width: 16px; height: 16px; }
 .ico, .tool-ico { display: inline-grid; place-items: center; }
 .btn:has(.ico) { gap: 6px; }
 .btn:has(.ico):not(:has(.btn-label)) { padding-inline: 8px; }
@@ -1485,7 +1484,7 @@ body.editor-fullscreen #topbar { display: none; }
   touch-action: none;
 }
 .bar-grip:hover { color: var(--text); }
-.bar-grip .px-ico { width: 12px; height: 12px; }
+.bar-grip .ui-ico { width: 12px; height: 12px; }
 .bar-pin[aria-pressed="true"] { color: var(--accent); }
 
 body.is-dragging-ui, body.is-dragging-ui * { cursor: grabbing !important; user-select: none; }
@@ -1654,3 +1653,98 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
 /* Hilfe -> Sicherung */
 .backup-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); font-size: var(--fs-md); }
 .backup-row span { flex: 1 1 12rem; color: var(--text-muted); }
+
+/* Hilfe: Links zu Impressum und Datenschutz ganz unten */
+.help-legal { margin: var(--sp-3) 0 0; padding-top: var(--sp-3); border-top: 1px solid var(--line); font-size: var(--fs-sm); color: var(--text-dim); }
+.help-legal a { color: var(--text-muted); }
+
+/* ── 17 · Handy (js/layout.js MOBILE) ─────────────────────────────────
+   Die Zeichenfläche bekommt den ganzen Rest. Beide Docks liegen als eine
+   Leiste ganz unten, Panels öffnen sich als Blatt von unten. Werkzeugleiste
+   und Farbzeile sitzen einzeilig darüber und scrollen waagerecht.
+   Anpinnen und Schweben gibt es hier nicht (layout.js macht Schubladen
+   daraus, ohne die gespeicherte Anordnung zu ändern). */
+@media (max-width: 700px) {
+  :root { --mbar-h: 48px; }
+
+  #topbar { gap: var(--sp-2); padding: var(--sp-1) var(--sp-3); }
+
+  #workspace {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+  #stage { grid-column: 1 / -1; grid-row: 1; }
+  #rail-left  { grid-column: 1; grid-row: 2; }
+  #rail-right { grid-column: 2; grid-row: 2; }
+  .rail { min-width: 0; padding-bottom: env(safe-area-inset-bottom); }
+  .rail-dock {
+    flex-direction: row;
+    width: auto;
+    height: var(--mbar-h);
+    padding: 0 var(--sp-2);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .rail-dock .dock-btn { flex: none; width: 40px; height: 40px; }
+  .rail-pins, .pins-resizer { display: none !important; }
+
+  /* Schublade → Blatt von unten über der Dock-Leiste. */
+  #workspace > .rail > [data-dock].is-shown {
+    position: fixed;
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: calc(var(--mbar-h) + env(safe-area-inset-bottom));
+    width: auto;
+    max-height: 70dvh;
+    overflow-y: auto;
+    border: 1px solid var(--line-strong);
+    border-bottom: 0;
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+  }
+  #workspace > .rail > #toolbar.is-shown,
+  #workspace > .rail > #color-bar.is-shown { padding: var(--sp-3); }
+  .panel-pin, .panel-float, .bar-handle { display: none !important; }
+
+  /* Kopf der Bühne in einer Zeile. */
+  #stage-head { flex-wrap: nowrap; gap: var(--sp-2); padding: var(--sp-1) var(--sp-3); }
+  .stage-ident { flex: 1 1 auto; }
+  .stage-dims { display: none; }
+  .stage-head-right { flex-wrap: nowrap; gap: var(--sp-2); }
+  .stage-head-right .field-label,
+  #cell-size-val { display: none; }
+  .stage-head-right input[type="range"] { width: 64px; }
+  .stage-head-right .btn-group .btn { padding-inline: 8px; }
+
+  /* Werkzeugleiste und Farbzeile: je eine Zeile, waagerecht scrollbar. */
+  #toolbar, #color-bar {
+    flex-wrap: nowrap;
+    gap: var(--sp-2);
+    padding: var(--sp-1) var(--sp-3);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  #toolbar::-webkit-scrollbar, #color-bar::-webkit-scrollbar,
+  .rail-dock::-webkit-scrollbar { display: none; }
+  #toolbar > *, #color-bar > * { flex: none; }
+  .tool-group { flex: none; }
+  .tool-btn { padding: 8px; }
+  #toolbar .field-label { white-space: nowrap; }
+  #color-bar .current-color { min-width: 0; padding: 3px; }
+  #color-bar .cc-info, #color-bar .cc-pick,
+  #color-bar #show-color-btn .btn-label { display: none; }
+  #quick-palette { flex-wrap: nowrap; }
+
+  /* Im scrollenden Streifen würde die Liste abgeschnitten — als Blatt. */
+  #color-bar .free-colors-list {
+    position: fixed;
+    top: auto;
+    left: var(--sp-2);
+    right: var(--sp-2);
+    bottom: calc(var(--mbar-h) + env(safe-area-inset-bottom) + var(--sp-2));
+    width: auto;
+  }
+
+  #editor-canvas-area { padding: var(--sp-2); }
+  #info-bar { min-height: 0; }
+}
