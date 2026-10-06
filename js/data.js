@@ -2,8 +2,8 @@
 // DATA — Konstanten: Farb-Labels + eingebaute Farbpaletten
 // ════════════════════════════════════════════════════════════════════
 // Das Palettensystem ist bewusst generisch: eine Palette ist nichts weiter
-// als ein Mapping Index → Hex-Farbe. Index 0 ist immer transparent, 1–9 sind
-// frei belegbar. Es gibt keine an ein Motiv gebundenen Slots mehr.
+// als ein Mapping Index → Hex-Farbe. Index 0 ist immer transparent, 1..n sind
+// frei belegbar (n bis 255). Es gibt keine an ein Motiv gebundenen Slots mehr.
 
 // Deep-Copy Helper für Grids (2D-Arrays).
 export function dc(a) { return a.map(r => [...r]); }
@@ -11,7 +11,7 @@ export function dc(a) { return a.map(r => [...r]); }
 // ────────────────────────────────────────────────────────────────────
 // Eine Grid-Zelle → CSS-Farbe (oder null = nichts zeichnen).
 //   0          → transparent
-//   1-9        → Palette-Index
+//   1..n       → Palette-Index
 //   "#RRGGBB"  → freie Farbe (Pipette / Rohfarben-Trace)
 // Liegt hier unten, weil sowohl das Rendering als auch die Code-Erzeugung
 // sie brauchen — so bleibt der Abhängigkeitsgraph zyklenfrei.
@@ -22,8 +22,24 @@ export function cellToColor(c, palette) {
   return palette[c] || null;
 }
 
-// Höchster belegbarer Palette-Index. 0 = transparent, 1..MAX_IDX = Farben.
-export const MAX_IDX = 9;
+// Eine Palette hat so viele Farben, wie sie braucht: Index 1..n, n ≤ MAX_COLORS.
+// 255 Farben + Transparent = 256 Werte — die übliche Grenze indizierter
+// Pixel-Art (GIF, PNG-8) und genau ein Byte im C-Export.
+export const MAX_COLORS = 255;
+
+// Größe der klassischen Palette: die eingebauten haben genau so viele Farben,
+// und nur 1–9 tragen Namen (Tonleiter, Kontur, Akzente) und eine Taste.
+export const BASE_SIZE = 9;
+
+// Anzahl Farben einer Palette = höchster belegter Index.
+export function paletteSize(pal) {
+  let n = 0;
+  for (const k in pal) {
+    const i = Number(k);
+    if (Number.isInteger(i) && i > n && i <= MAX_COLORS && pal[k]) n = i;
+  }
+  return n;
+}
 
 // Die Beschriftungen der Palette-Indizes sind Oberflächentext und stehen
 // deshalb zweisprachig in i18n.js — colorLabel(i) und colorLabelShort(i).
@@ -74,13 +90,14 @@ export const DEFAULT_PALETTE = 'graustufen';
 // Fallback-Farben für leere Slots beim Anlegen einer neuen Palette.
 export const NEW_PALETTE_DEFAULTS = BUILTIN_PALETTES.graustufen;
 
-// Eine Palette auf alle Indizes 1..MAX_IDX auffüllen.
+// Lücken einer Palette füllen (1..n, mindestens `minSize`).
 // Lückenhafte Paletten kommen aus Migration und Import; ohne Auffüllen würden
 // Pixel mit einem fehlenden Index unsichtbar gerendert statt in einer Farbe.
-export function completePalette(pal) {
+export function completePalette(pal, minSize = 1) {
+  const n = Math.min(MAX_COLORS, Math.max(minSize, paletteSize(pal || {})));
   const out = {};
-  for (let i = 1; i <= MAX_IDX; i++) {
-    out[i] = pal?.[i] || NEW_PALETTE_DEFAULTS[i];
+  for (let i = 1; i <= n; i++) {
+    out[i] = pal?.[i] || NEW_PALETTE_DEFAULTS[i] || '#888888';
   }
   return out;
 }

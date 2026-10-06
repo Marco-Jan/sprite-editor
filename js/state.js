@@ -4,7 +4,7 @@
 // Alle anderen Module importieren von hier. Mutationen erfolgen über die
 // exportierten Objekte (state.curSprite = …, sprites[id] = …), NICHT über
 // lokale Re-Assignments — sonst sehen andere Module die Änderung nicht.
-import { BUILTIN_PALETTES, DEFAULT_PALETTE, MAX_IDX } from './data.js';
+import { BUILTIN_PALETTES, DEFAULT_PALETTE, paletteSize } from './data.js';
 
 // ────────────────────────────────────────────────────────────────────
 // Sprites — eine flache Sammlung. Jeder Sprite bringt sein eigenes Grid
@@ -15,7 +15,7 @@ import { BUILTIN_PALETTES, DEFAULT_PALETTE, MAX_IDX } from './data.js';
 export const sprites = {};
 
 // Eigene Paletten des Nutzers — flacher Namensraum neben den Built-ins.
-//   customPalettes['neon'] = { 1:'#…', …, 9:'#…' }
+//   customPalettes['neon'] = { 1:'#…', …, n:'#…' }   (n ≤ 255)
 export const customPalettes = {};
 
 // Material je Palettenfarbe — nur für den Export "JSON (Spiel)".
@@ -40,6 +40,10 @@ export const state = {
   outputFormat:  'ts',     // Schlüssel aus CODE_FORMATS (codegen.js)
   mirror:        'off',    // 'off' | 'x' (senkrechte Achse) | 'y' | 'both'
   shapeFill:     false,    // Rechteck/Ellipse gefüllt statt nur Kontur
+  showColor:     false,    // aktuelle Farbe im Bild hervorheben (alles andere abgedunkelt)
+  // Palette, die das Paletten-Panel gerade ZEIGT. null = die des Sprites.
+  // Anschauen ändert nichts am Sprite — zugewiesen wird nur per Knopf.
+  palPreview:    null,
 
   // Referenz-Ebene: ein zweiter Sprite, der halbdurchsichtig mitgezeichnet
   // wird. Zum Abpausen und um Teile von einem Sprite in den anderen zu
@@ -196,7 +200,13 @@ export function uniquePaletteName(base) {
   return base + i;
 }
 
-// Höchster gültiger Palette-Index — im generischen System immer gleich.
+// Höchster gültiger Palette-Index = Anzahl Farben der Sprite-Palette.
 export function getMaxIdx() {
-  return MAX_IDX;
+  return paletteSize(getPal());
+}
+
+// Name der Palette, die das Paletten-Panel gerade zeigt.
+export function getPreviewName() {
+  const n = state.palPreview;
+  return n && paletteExists(n) ? n : getPaletteName();
 }

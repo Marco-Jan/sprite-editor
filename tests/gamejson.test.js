@@ -7,7 +7,7 @@ import {
   gameJson, buildGameSprite, validateGameSprite, formatGameSprite,
   GameJsonError, MATERIALS, toRgba, gameName,
 } from '../js/gamejson.js';
-import { BUILTIN_PALETTES, MAX_IDX } from '../js/data.js';
+import { BUILTIN_PALETTES, BASE_SIZE as MAX_IDX } from '../js/data.js';
 
 const SAMPLE = {
   name: 'Test Sprite',

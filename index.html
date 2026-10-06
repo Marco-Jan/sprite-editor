@@ -85,10 +85,11 @@
       "Formen: Linie, Rechteck, Ellipse mit Live-Vorschau",
       "Auswahl per Rechteck, Lasso und Farbauswahl",
       "Freies Drehen, Spiegeln und Verschieben der Auswahl",
-      "Index-basierte Paletten mit Live-Umfärbung",
+      "Index-basierte Paletten mit bis zu 255 Farben und Umfärben per Knopf",
       "Foto als Vorlage abpausen",
       "Export als PNG, PDF und Spritesheet",
-      "Export als TypeScript, JavaScript, JSON, SVG, CSS, C-Header, Python und Text"
+      "Export als TypeScript, JavaScript, JSON, SVG, CSS, C-Header, Python und Text",
+      "Funktioniert offline und lässt sich als App installieren (PWA)"
     ],
     "codeRepository": "https://github.com/Marco-Jan/sprite-editor"
   }
@@ -102,7 +103,7 @@
 <header class="topbar">
   <div class="topbar-inner">
     <span class="brand">
-      <img class="brand-mark" src="assets/icon.svg" alt="" width="22" height="22">
+      <img class="brand-mark" src="assets/icon.svg" alt="" width="32" height="32">
       <span class="brand-name">sprite<span class="brand-bit">bit</span></span>
     </span>
     <nav class="topnav" data-i18n-attr="aria-label:nav.aria" aria-label="Stationen">
@@ -158,7 +159,7 @@
         </div>
         <p class="note" data-i18n-html="hero.note">
           Deine Pixel bleiben im <code>localStorage</code> auf deinem Rechner.
-          Nichts wird hochgeladen.
+          Nichts wird hochgeladen — und einmal geöffnet, läuft der Editor auch offline.
         </p>
       </div>
 
@@ -593,7 +594,7 @@
           <img src="assets/landing/bird-b.png" alt="" width="17" height="7">
         </div>
 
-        <div class="actor actor--walk" style="--x:26%; --range:140px; --walk-dur:34s; --h:116px; --base:12px">
+        <div class="actor actor--walk" style="--x:26%; --face:-1; --range:140px; --walk-dur:34s; --h:116px; --base:12px">
           <span class="actor-face"><img class="actor-body" src="assets/landing/dog-brown.png" alt="" width="52" height="58"></span>
         </div>
         <div class="actor" style="--x:58%; --h:78px; --base:18px; --bob-dur:3.4s">
@@ -700,8 +701,12 @@
         Kein Konto, kein Server, keine Kosten. Der Editor öffnet sich und wartet auf
         deinen ersten Pixel.
       </p>
-      <a class="btn btn--primary btn--lg" href="editor.html" data-i18n="nav.open">Editor öffnen</a>
-      <p class="note" data-i18n="end.note">Einmal geladen, läuft die Seite auch offline weiter.</p>
+      <div class="cta-row">
+        <a class="btn btn--primary btn--lg" href="editor.html" data-i18n="nav.open">Editor öffnen</a>
+        <!-- Nur sichtbar, wenn der Browser die Installation anbietet (js/pwa.js). -->
+        <button type="button" class="btn btn--ghost btn--lg" data-install hidden data-i18n="end.install">Als App installieren</button>
+      </div>
+      <p class="note" data-i18n="end.note">Einmal geöffnet, läuft alles auch ohne Internet — sogar der PDF-Export. Als App installiert, startet spritebit wie ein eigenes Programm.</p>
     </div>
   </section>
 
@@ -711,7 +716,7 @@
 <footer class="foot">
   <div class="foot-inner">
     <p class="foot-brand">
-      <img src="assets/icon.svg" alt="" width="18" height="18">
+      <img src="assets/icon.svg" alt="" width="24" height="24">
       <span>sprite<span class="brand-bit">bit</span></span>
     </p>
     <p class="foot-note" data-i18n-html="foot.note">

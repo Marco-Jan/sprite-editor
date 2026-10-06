@@ -686,13 +686,28 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 #toolbar input[type="range"] { width: 100px; flex: none; }
 
 /* Farb-Schnellwahl */
-#quick-palette {
+/* Aktuelle Farbe + Schnellwahl in einer Zeile. Die aktuelle Farbe gehört
+   hierher und nicht in die Farben-Schublade — man muss sie immer sehen. */
+#color-bar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--sp-1);
+  gap: var(--sp-2) var(--sp-3);
   flex-shrink: 0;
   padding: var(--sp-2) var(--sp-4);
   border-bottom: 1px solid var(--line);
+}
+#color-bar .current-color {
+  width: auto;
+  min-width: 11rem;
+  flex: none;
+  padding: 3px var(--sp-2) 3px 3px;
+}
+#quick-palette {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1);
 }
 .qp-swatch {
   position: relative;
@@ -828,47 +843,26 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 .palette-picker { display: flex; align-items: center; gap: var(--sp-1); }
 .palette-picker .input { flex: 1; }
 
-.color-list { display: flex; flex-direction: column; gap: 1px; }
-.color-item {
-  display: flex;
-  position: relative;
-  align-items: center;
-  gap: var(--sp-2);
-  padding: 5px var(--sp-2);
-  border: 1px solid transparent;
-  border-radius: var(--r-sm);
+/* Paletten-Raster: Vorschau der angezeigten Palette. 8 Spalten bei kleinen
+   Paletten, 16 ab 16 Farben — 256 Farben sind dann genau 16 × 16. */
+.pal-status { margin: 0; font-size: var(--fs-sm); color: var(--text-muted); }
+.pal-status.is-preview { color: var(--accent); }
+.pal-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 8), minmax(0, 1fr));
+  gap: 2px;
+}
+.pal-sw {
+  aspect-ratio: 1;
+  min-width: 0;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 3px;
   cursor: pointer;
 }
-.color-item:hover { background: var(--surface-2); }
-.color-item.is-active { background: var(--surface-2); border-color: var(--accent-line); }
-.color-swatch {
-  flex-shrink: 0;
-  width: 22px; height: 22px;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--r-sm);
-}
-.color-item.is-editable .color-swatch { cursor: pointer; }
-.color-item.is-editable .color-swatch:hover {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent-bg);
-}
-.color-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-.color-line { display: flex; align-items: center; gap: var(--sp-2); }
-.color-idx {
-  width: 12px;
-  font-family: var(--mono);
-  font-size: var(--fs-sm);
-  font-weight: 700;
-  color: var(--text-dim);
-}
-.color-name { font-size: var(--fs-sm); color: var(--text-muted); }
-.color-hex {
-  padding-left: 20px;
-  font-family: var(--mono);
-  font-size: var(--fs-xs);
-  color: var(--text-dim);
-}
-.color-sep { height: 1px; margin: var(--sp-1) 0; background: var(--line); }
+.pal-sw:hover { border-color: var(--text-muted); transform: scale(1.12); position: relative; z-index: 1; }
+.pal-sw.is-active { border-color: var(--text); box-shadow: 0 0 0 2px var(--bg), 0 0 0 3px var(--accent); position: relative; z-index: 2; }
+.pal-pick { min-height: 1.2em; margin: 0; font-family: var(--mono); font-size: var(--fs-xs); color: var(--text-dim); }
 
 /* ── 8 · Modale + Toast ─────────────────────────────────────────── */
 .modal-overlay {
@@ -920,7 +914,8 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 .modal-actions { display: flex; gap: var(--sp-2); margin-top: var(--sp-1); }
 .modal-actions .btn { flex: 1; padding: 9px 12px; font-size: var(--fs-md); }
 
-.pal-rows { display: flex; flex-direction: column; gap: var(--sp-1); }
+/* Bis zu 255 Zeilen — die Liste scrollt, Name und Knöpfe bleiben stehen. */
+.pal-rows { display: flex; flex-direction: column; gap: var(--sp-1); max-height: 46vh; overflow-y: auto; }
 .pal-color-row {
   display: flex;
   align-items: center;
@@ -1066,9 +1061,9 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 }
 
 /* ── 9 · Vollbild ───────────────────────────────────────────────── */
-body.editor-fullscreen #topbar,
-body.editor-fullscreen .rail { display: none; }
-body.editor-fullscreen #workspace { grid-template-columns: 1fr; }
+/* Im Vollbild verschwindet nur die Kopfzeile — Dock, angepinnte Panels
+   und schwebende Fenster bleiben, damit man weiterarbeiten kann. */
+body.editor-fullscreen #topbar { display: none; }
 
 /* ── 10 · Responsive ────────────────────────────────────────────── */
 @media (max-width: 1280px) {
@@ -1088,9 +1083,7 @@ body.editor-fullscreen #workspace { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 680px) {
-  #topbar { flex-wrap: wrap; }
-  .topbar-actions { width: 100%; margin-left: 0; overflow-x: auto; }
-  .doc-title { padding-left: 0; border-left: none; }
+  .doc-title { display: none; }
   .modal { padding: var(--sp-4); }
   .sc-row { flex-direction: column; gap: 0; }
   .sc-row b { flex: none; }
@@ -1167,6 +1160,414 @@ body.editor-fullscreen #workspace { grid-template-columns: 1fr; }
 
 /* Auf schmalen Fenstern reicht die Flagge — das Kuerzel steht ohnehin
    im title-Attribut und in aria-label. */
-@media (max-width: 700px) {
+@media (max-width: 1100px) {
   .lang-btn { padding: 4px 6px; font-size: 0; gap: 0; letter-spacing: 0; }
 }
+
+/* ── 11 · Dock: Seitenleisten als Icon-Spalte ───────────────────────
+   Beide Leisten sind bei jeder Fenstergröße eine schmale Icon-Spalte
+   (js/dock.js). Ein Panel öffnet sich als Schublade über der Zeichen-
+   fläche, links nach rechts aufgehend, rechts nach links. Steht bewusst
+   nach Abschnitt 10, damit es dessen "alles untereinander" ablöst. */
+.rail-dock, .dock-close { display: none; }
+
+.dock-btn {
+  appearance: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.dock-btn svg { width: 16px; height: 16px; shape-rendering: crispEdges; }
+.dock-btn:hover { background: var(--surface-3); color: var(--text); }
+.dock-btn.is-active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent-line); }
+.dock-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+:root {
+  --dock-w: 48px;
+  --drawer-w: min(320px, calc(100vw - 2 * var(--dock-w) - 24px));
+}
+#app { height: 100vh; height: 100dvh; min-height: 0; }
+#workspace { position: relative; grid-template-columns: auto minmax(0, 1fr) auto; }
+#rail-left, #stage, #rail-right { order: 0; }
+
+.rail { position: relative; overflow: visible; flex-direction: row; }
+.rail-dock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-1);
+  width: var(--dock-w);
+  flex: none;
+  padding: var(--sp-2) 0;
+}
+#rail-right .rail-dock { order: 2; }
+.rail > .panel { display: none; }
+.rail > .panel.is-shown {
+  display: block;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 30;
+  width: var(--drawer-w);
+  overflow-y: auto;
+  background: var(--bg);
+  border-inline: 1px solid var(--line);
+  box-shadow: var(--shadow-lg);
+}
+#rail-left > .panel.is-shown { left: 100%; }
+#rail-right > .panel.is-shown { right: 100%; }
+.rail > .panel.is-shown .panel-head { position: sticky; top: 0; z-index: 1; }
+.rail > .panel.is-shown .panel-body { display: flex; }
+.rail .panel-toggle { display: none; }
+.dock-close { display: inline-grid; }
+.sprite-list { max-height: none; }
+
+/* ── 12 · Pixel-Icons und Menü ──────────────────────────────────────
+   Alle Icons kommen aus js/icons.js (8×8-Raster, in currentColor). 16 px
+   heißt 2×2 Bildschirmpixel pro Rasterpixel — darum feste Größe. */
+.px-ico { display: block; flex: none; width: 16px; height: 16px; shape-rendering: crispEdges; }
+.ico, .tool-ico { display: inline-grid; place-items: center; }
+.btn:has(.ico) { gap: 6px; }
+.btn:has(.ico):not(:has(.btn-label)) { padding-inline: 8px; }
+
+.menu-btn { display: none; }
+
+@media (max-width: 1279.98px) {
+  #topbar { position: relative; z-index: 60; }
+  .menu-btn { display: inline-flex; margin-left: auto; }
+  #menu-btn[aria-expanded="true"] { background: var(--accent-bg); color: var(--accent); border-color: var(--accent-line); }
+
+  /* Die Knöpfe der Kopfzeile liegen jetzt im Menü hinter ☰. */
+  .topbar-actions {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    right: var(--sp-4);
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+    min-width: 220px;
+    margin-left: 0;
+    padding: var(--sp-2);
+    background: var(--surface-1);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-lg);
+  }
+  #topbar.menu-open .topbar-actions { display: flex; }
+  .topbar-actions .btn {
+    justify-content: flex-start;
+    gap: var(--sp-2);
+    padding: 9px 10px;
+    border-color: transparent;
+    background: transparent;
+    font-size: var(--fs-md);
+  }
+  .topbar-actions .btn:hover { background: var(--surface-3); color: var(--text); }
+  .topbar-actions .btn--danger { color: var(--danger); }
+  .topbar-actions .btn--danger:hover { background: var(--danger-bg); color: var(--danger); }
+  .topbar-actions .btn[hidden] { display: none; }
+
+  /* Werkzeugleiste: Auswahl-Aktionen und Vollbild nur als Icon, der Name
+     steht im Tooltip. Sonst schiebt sich die Reihe rechts hinaus. */
+  #select-group .btn-label,
+  #fullscreen-btn .btn-label { display: none; }
+}
+
+/* ── 13 · Bildfarben ────────────────────────────────────────────────
+   Freie Farben im Sprite (eigener Hex statt Paletten-Index). Der Knopf
+   hinter der Schnellwahl zeigt die Anzahl, die Liste klappt darunter auf. */
+.free-colors { position: relative; }
+.free-colors-btn { gap: var(--sp-2); padding: 4px 10px 4px 4px; }
+.free-colors-btn.is-active { border-color: var(--accent-line); color: var(--accent); }
+.fc-preview {
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+}
+.free-colors-list {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 40;
+  width: min(22rem, calc(100vw - 2rem));
+  padding: var(--sp-3);
+  background: var(--surface-1);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+}
+.fc-head { margin: 0 0 var(--sp-2); font-size: var(--fs-xs); color: var(--text-dim); line-height: 1.4; }
+.fc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(24px, 1fr));
+  gap: 4px;
+  max-height: 14rem;
+  overflow-y: auto;
+}
+.fc-swatch {
+  aspect-ratio: 1;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+.fc-swatch:hover { transform: translateY(-1px); border-color: var(--text-muted); }
+.fc-swatch.is-active { border-color: var(--text); box-shadow: 0 0 0 2px var(--bg), 0 0 0 3px var(--accent); }
+
+/* ── 14 · Anpinnen, schwebende Fenster (js/layout.js) ──────────────── */
+/* Angepinnte Panels: eine Spalte zwischen Dock und Zeichenfläche. */
+.rail-pins {
+  display: none;
+  position: relative;
+  flex-direction: column;
+  width: var(--pins-w, 280px);
+  min-height: 0;
+  overflow-y: auto;
+  background: var(--bg);
+}
+.rail.has-pins .rail-pins { display: flex; }
+#rail-left .rail-pins  { order: 1; border-left: 1px solid var(--line); }
+#rail-right .rail-pins { order: 1; border-right: 1px solid var(--line); }
+.rail-pins > .panel { flex: none; }
+.rail-pins .panel-toggle { display: block; }
+.pins-resizer {
+  display: none;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 6;
+  width: 7px;
+  cursor: col-resize;
+}
+.rail.has-pins .pins-resizer { display: block; }
+#rail-left  .pins-resizer { left: calc(var(--dock-w) + var(--pins-w, 280px) - 4px); }
+#rail-right .pins-resizer { left: -4px; }
+.pins-resizer:hover,
+.is-resizing-ui .pins-resizer { background: var(--accent-line); }
+
+/* Panel-Kopf ist der Griff zum Lösen und Verschieben. */
+.panel-head { touch-action: none; }
+.rail > .panel.is-shown .panel-head,
+.rail-pins .panel-head,
+.panel.is-floating .panel-head { cursor: grab; }
+.panel-pin[aria-pressed="true"] { color: var(--accent); }
+.rail-pins .dock-close,
+.panel.is-floating .panel-float { display: none; }
+
+/* Schwebende Ebene über der Arbeitsfläche. */
+#float-layer { position: absolute; inset: 0; z-index: 35; pointer-events: none; }
+#float-layer > * { pointer-events: auto; }
+.drop-hint {
+  position: absolute;
+  background: var(--accent-bg);
+  border: 2px solid var(--accent);
+  border-radius: var(--r-md);
+  opacity: 0.7;
+}
+
+.panel.is-floating,
+#toolbar.is-floating,
+#color-bar.is-floating {
+  position: absolute;
+  min-width: 180px;
+  min-height: 44px;
+  overflow: auto;
+  resize: both;
+  background: var(--surface-1);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+}
+.panel.is-floating { display: flex; flex-direction: column; min-height: 90px; background: var(--bg); }
+.panel.is-floating .panel-head { position: sticky; top: 0; z-index: 1; }
+.panel.is-floating .panel-body { display: flex; }
+.panel.is-floating .panel-toggle { display: none; }
+#toolbar.is-floating, #color-bar.is-floating { border-bottom: 1px solid var(--line-strong); }
+
+/* Griff + Pin vorn an Werkzeugleiste und Farbzeile. */
+.bar-handle { display: flex; align-items: center; gap: 2px; margin-inline-end: var(--sp-1); }
+.bar-grip {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 26px;
+  color: var(--text-dim);
+  cursor: grab;
+  touch-action: none;
+}
+.bar-grip:hover { color: var(--text); }
+.bar-grip .px-ico { width: 12px; height: 12px; }
+.bar-pin[aria-pressed="true"] { color: var(--accent); }
+
+body.is-dragging-ui, body.is-dragging-ui * { cursor: grabbing !important; user-select: none; }
+body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
+
+@keyframes panelFlash { from { box-shadow: inset 0 0 0 2px var(--accent); } to { box-shadow: inset 0 0 0 2px transparent; } }
+.panel.is-flash { animation: panelFlash 0.9s ease-out; }
+
+/* "Farbe zeigen" — Schalter neben der aktuellen Farbe. */
+#show-color-btn.is-active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent-line); }
+.fc-more { margin: var(--sp-2) 0 0; }
+
+/* Gast: ein geöffnetes, nicht angepinntes Panel unten in der Spalte der
+   angepinnten (js/dock.js). Sieht aus wie angepinnt, schließt sich aber
+   beim Klick daneben. */
+.rail-pins > .panel.is-guest { border-top: 1px solid var(--accent-line); }
+.rail-pins > .panel.is-guest .panel-body { display: flex; }
+.rail-pins > .panel.is-guest .panel-toggle { display: none; }
+.rail-pins > .panel.is-guest .dock-close { display: inline-grid; }
+
+/* ── 15 · Andock-Zonen für Werkzeugleiste und Farbzeile ─────────────
+   Oben und unten liegen die Leisten waagerecht, links und rechts neben
+   der Zeichenfläche senkrecht (js/layout.js setzt sie in die Zonen). */
+.bar-zone { display: flex; flex-direction: column; flex-shrink: 0; }
+.bar-zone:not(:has(> *)) { display: none; }
+#stage-body { display: flex; flex: 1; min-height: 0; }
+#stage-body > #editor-canvas-area { flex: 1; min-width: 0; }
+
+.bar-zone[data-zone="bottom"] > #toolbar,
+.bar-zone[data-zone="bottom"] > #color-bar { border-bottom: 0; border-top: 1px solid var(--line); }
+
+/* Senkrecht: links/rechts der Zeichenfläche und als Schublade im Dock.
+   js/layout.js setzt dafür .is-vertical an die Leiste. */
+.bar-zone--side { flex-direction: row; overflow-y: auto; background: var(--surface-1); }
+.bar-zone[data-zone="left"]  { border-right: 1px solid var(--line); }
+.bar-zone[data-zone="right"] { border-left: 1px solid var(--line); }
+.bar-zone--side > * + * { border-left: 1px solid var(--line); }
+#toolbar.is-vertical,
+#color-bar.is-vertical {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: var(--sp-2);
+  padding: var(--sp-2);
+  border-bottom: 0;
+}
+.is-vertical .bar-handle { flex-direction: row; justify-content: center; margin: 0 0 var(--sp-1); }
+.is-vertical .tool-group { flex-direction: column; align-items: stretch; }
+.is-vertical .tool-sep { width: auto; height: 1px; }
+.is-vertical .tool-name { display: none; }
+.is-vertical .tool-btn { justify-content: center; }
+.is-vertical .field-label { text-align: center; }
+.is-vertical .btn-group { flex-direction: column; }
+.is-vertical .btn-group .btn { border-radius: var(--r-md); }
+.is-vertical .field--inline { flex-direction: column; }
+.is-vertical .size-btns { flex-wrap: wrap; justify-content: center; max-width: 64px; }
+.is-vertical #quick-palette { flex-direction: column; flex-wrap: nowrap; }
+.is-vertical .qp-sep { width: 22px; height: 1px; }
+#color-bar.is-vertical .current-color { min-width: 0; padding: 3px; }
+#color-bar.is-vertical .cc-info,
+#color-bar.is-vertical .cc-pick,
+#color-bar.is-vertical .btn-label { display: none; }
+.is-vertical .free-colors-btn { padding: 4px; justify-content: center; }
+.bar-zone[data-zone="right"] .free-colors-list,
+#rail-right .free-colors-list { left: auto; right: 0; }
+.bar-zone[data-zone="bottom"] .free-colors-list { top: auto; bottom: calc(100% + 6px); }
+
+/* Leiste als Schublade im Dock: zu, bis man das Icon anklickt. */
+/* IDs mit im Selektor: #toolbar/#color-bar setzen display selbst per ID. */
+.rail > #toolbar.is-bar-drawer,
+.rail > #color-bar.is-bar-drawer { display: none; }
+.rail > #toolbar.is-bar-drawer.is-shown,
+.rail > #color-bar.is-bar-drawer.is-shown {
+  display: flex;
+  position: absolute;
+  top: 0;
+  z-index: 30;
+  max-height: 100%;
+  overflow-y: auto;
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-top: 0;
+  box-shadow: var(--shadow-lg);
+}
+#rail-left  > .is-bar-drawer.is-shown { left: 100%; }
+#rail-right > .is-bar-drawer.is-shown { right: 100%; }
+.rail-pins > #toolbar.is-guest,
+.rail-pins > #color-bar.is-guest { display: flex; border-top: 1px solid var(--accent-line); }
+
+/* Dock-Icon beim Ziehen */
+.dock-ghost {
+  position: absolute;
+  z-index: 1000;
+  pointer-events: none;
+  background: var(--accent-bg);
+  color: var(--accent);
+  border-color: var(--accent-line);
+  box-shadow: var(--shadow-md);
+}
+.dock-btn { touch-action: none; }
+
+/* Verschieben mit Leertaste / mittlerer Maustaste (js/app.js initPan) */
+#editor-canvas-area.is-pannable,
+#editor-canvas-area.is-pannable #editor-canvas { cursor: grab; }
+#editor-canvas-area.is-panning,
+#editor-canvas-area.is-panning #editor-canvas { cursor: grabbing; }
+
+/* Schablone: zeigt, welches Bild geladen ist (js/template.js syncTplStatus) */
+.tpl-status {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-1);
+}
+.tpl-status img {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  border-radius: var(--r-sm);
+  background: var(--surface-3);
+}
+.tpl-status-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tpl-status-text b { overflow: hidden; font-size: var(--fs-md); text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── 16 · Farbzeile: weitere Palettenfarben und Bildfarben ──────────
+   0–9 groß (Tasten), danach kleine Felder; Bildfarben ebenso. */
+.qp-more, .fc-top { display: flex; flex-wrap: wrap; gap: 2px; max-width: 18rem; }
+.qp-mini {
+  width: 15px;
+  height: 15px;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 3px;
+  cursor: pointer;
+}
+.qp-mini:hover { border-color: var(--text-muted); }
+.qp-mini.is-active { border-color: var(--text); box-shadow: 0 0 0 1px var(--bg), 0 0 0 2px var(--accent); }
+.qp-all { padding: 4px 8px; font-size: var(--fs-sm); }
+.free-colors { display: flex; align-items: center; gap: var(--sp-2); }
+.fc-top:empty { display: none; }
+.fc-actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-3); }
+.is-vertical .qp-more, .is-vertical .fc-top { max-width: 34px; justify-content: center; }
+.is-vertical .free-colors { flex-direction: column; }
+
+/* Bild -> Palette: Vorher/Nachher nebeneinander, pixelgenau vergroessert */
+.reduce-preview { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3); }
+.reduce-preview figure { display: flex; flex-direction: column; align-items: center; gap: var(--sp-1); margin: 0; }
+.reduce-preview canvas {
+  width: 100%;
+  max-height: 34vh;
+  object-fit: contain;
+  image-rendering: pixelated;
+  background-image: var(--checker);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+}
+.reduce-preview figcaption { font-size: var(--fs-sm); color: var(--text-muted); }
+.reduce-swatches { max-height: 9rem; overflow-y: auto; }
+.reduce-swatches .pal-sw { cursor: default; }
+.reduce-swatches .pal-sw:hover { transform: none; }

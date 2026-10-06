@@ -6,13 +6,15 @@
 // Farb-Swatches) werden hier gesetzt und rufen dann renderCallbacks auf.
 import {
   state, sprites, customPalettes, paletteMaterials, selection,
-  getGrid, getSprite, getPal, getPaletteName, getMaxIdx,
+  getGrid, getSprite, getPal, getPaletteName, getMaxIdx, getPreviewName,
   getAllPaletteOptions, isCustomPalette, listSprites, getPaletteByName,
 } from './state.js';
-import { PALETTE_GROUP_SPLIT, cellToColor } from './data.js';
-import { t, colorLabel, colorLabelShort } from './i18n.js';
+import { PALETTE_GROUP_SPLIT, MAX_COLORS, cellToColor, paletteSize } from './data.js';
+import { t, tn, colorLabel, colorLabelShort } from './i18n.js';
 import { buildCode, tsIdentifier, getFormat } from './codegen.js';
 import { MATERIALS, DEFAULT_MATERIAL, GameJsonError } from './gamejson.js';
+import { iconSvg } from './icons.js';
+import { showInfoToast } from './toast.js';
 
 // Weiterreichen, damit bestehende Importe aus render.js gültig bleiben.
 export { cellToColor, tsIdentifier };
@@ -99,10 +101,10 @@ export function renderSpriteList() {
 
     const acts = document.createElement('div');
     acts.className = 'sprite-acts';
-    acts.appendChild(iconBtn('✎', t('list.rename'), e => { e.stopPropagation(); renderCallbacks.onRenameSprite(sp.id); }));
-    acts.appendChild(iconBtn('⤢', t('list.resize'), e => { e.stopPropagation(); renderCallbacks.onResizeSprite(sp.id); }));
-    acts.appendChild(iconBtn('⧉', t('list.duplicate'), e => { e.stopPropagation(); renderCallbacks.onDuplicateSprite(sp.id); }));
-    acts.appendChild(iconBtn('×', t('list.delete'), e => { e.stopPropagation(); renderCallbacks.onDeleteSprite(sp.id); }, 'is-danger'));
+    acts.appendChild(iconBtn('pencil', t('list.rename'), e => { e.stopPropagation(); renderCallbacks.onRenameSprite(sp.id); }));
+    acts.appendChild(iconBtn('expand', t('list.resize'), e => { e.stopPropagation(); renderCallbacks.onResizeSprite(sp.id); }));
+    acts.appendChild(iconBtn('copy', t('list.duplicate'), e => { e.stopPropagation(); renderCallbacks.onDuplicateSprite(sp.id); }));
+    acts.appendChild(iconBtn('close', t('list.delete'), e => { e.stopPropagation(); renderCallbacks.onDeleteSprite(sp.id); }, 'is-danger'));
 
     card.append(thumb, meta, acts);
     card.addEventListener('click', () => renderCallbacks.onSelectSprite(sp.id));
@@ -113,11 +115,11 @@ export function renderSpriteList() {
   });
 }
 
-function iconBtn(label, title, onClick, extraClass = '') {
+function iconBtn(icon, title, onClick, extraClass = '') {
   const b = document.createElement('button');
   b.className = 'icon-btn ' + extraClass;
   b.type = 'button';
-  b.textContent = label;
+  b.innerHTML = iconSvg(icon);
   b.title = title;
   b.setAttribute('aria-label', title);
   b.addEventListener('click', onClick);
@@ -194,6 +196,8 @@ export function renderEditor() {
     }
   }
 
+  if (state.showColor) drawColorSpotlight(ctx, grid, pal, W, H, cs);
+
   // Grid-Linien — bei sehr kleinen Zellen weglassen, sonst wird alles Raster.
   if (cs >= 6) {
     ctx.strokeStyle = state.editorBg === 'bw' ? 'rgba(0,0,0,0.09)' : 'rgba(255,255,255,0.07)';
@@ -209,6 +213,36 @@ export function renderEditor() {
   if (state.mirror !== 'off') drawMirrorGuides(ctx, W, H, cs);
 
   updateStageTitle();
+}
+
+// "Farbe zeigen": alles, was NICHT die aktuelle Farbe hat, wird abgedunkelt.
+// Verglichen wird die tatsächliche Farbe, nicht der Index — eine freie Farbe
+// mit demselben Hex zählt also mit. Bei Transparent (0) leuchten die leeren
+// Stellen.
+export function currentColorHex() {
+  const c = state.curColor;
+  if (c === 0) return null;
+  if (typeof c === 'string') return c.toLowerCase();
+  return (getPal()[c] || '').toLowerCase() || null;
+}
+
+export function countCurrentColor() {
+  const grid = getGrid(), pal = getPal(), want = currentColorHex();
+  let n = 0;
+  for (const row of grid) for (const c of row) {
+    const hex = cellToColor(c, pal);
+    if ((hex ? hex.toLowerCase() : null) === want) n++;
+  }
+  return n;
+}
+
+function drawColorSpotlight(ctx, grid, pal, W, H, cs) {
+  const want = currentColorHex();
+  ctx.fillStyle = state.editorBg === 'bw' ? 'rgba(255,255,255,0.82)' : 'rgba(8,8,12,0.8)';
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const hex = cellToColor(grid[y][x], pal);
+    if ((hex ? hex.toLowerCase() : null) !== want) ctx.fillRect(x * cs, y * cs, cs, cs);
+  }
 }
 
 // Referenz-Ebene: ein zweiter Sprite, halbdurchsichtig, oben links
@@ -529,6 +563,10 @@ export function commitShape() {
 // ────────────────────────────────────────────────────────────────────
 // QUICK-PALETTE — Swatch-Leiste über dem Canvas
 // ────────────────────────────────────────────────────────────────────
+// 0–9 groß (dafür gibt es Tasten), danach bis QP_SMALL kleine Felder; was
+// darüber liegt, zeigt das Paletten-Panel (Knopf "+N").
+const QP_SMALL = 32;
+
 export function renderQuickPalette() {
   const qp = document.getElementById('quick-palette');
   if (!qp) return;
@@ -536,10 +574,11 @@ export function renderQuickPalette() {
   const maxIdx = getMaxIdx();
   qp.innerHTML = '';
 
-  for (let i = 0; i <= maxIdx; i++) {
+  for (let i = 0; i <= Math.min(9, maxIdx); i++) {
     const color = pal[i];
     const el = document.createElement('button');
     el.type = 'button';
+    el.dataset.idx = i;
     el.className = 'qp-swatch' + (i === state.curColor ? ' is-active' : '') + (i === 0 ? ' is-transparent' : '');
     el.title = t('pal.quickTitle', { i, label: colorLabelShort(i), extra: color && i !== 0 ? ' · ' + color : '' });
     if (i !== 0) el.style.background = color || 'var(--surface-3)';
@@ -556,6 +595,38 @@ export function renderQuickPalette() {
       const sep = document.createElement('span');
       sep.className = 'qp-sep';
       qp.appendChild(sep);
+    }
+  }
+
+  if (maxIdx > 9) {
+    const more = document.createElement('div');
+    more.className = 'qp-more';
+    const last = Math.min(maxIdx, 9 + QP_SMALL);
+    for (let i = 10; i <= last; i++) {
+      const el = document.createElement('button');
+      el.type = 'button';
+      el.dataset.idx = i;
+      el.className = 'qp-mini' + (i === state.curColor ? ' is-active' : '');
+      el.style.background = pal[i] || 'var(--surface-3)';
+      el.title = t('pal.miniTitle', { i, hex: pal[i] || '—' });
+      el.setAttribute('aria-label', el.title);
+      el.addEventListener('click', () => { state.curColor = i; syncColorActive(); });
+      more.appendChild(el);
+    }
+    qp.appendChild(more);
+    if (maxIdx > last) {
+      const all = document.createElement('button');
+      all.type = 'button';
+      all.className = 'btn qp-all';
+      all.textContent = t('pal.moreCount', { n: maxIdx - last });
+      all.title = t('pal.moreTitle', { n: maxIdx });
+      // Das ganze Raster steht im Paletten-Panel — dort die Sprite-Palette zeigen.
+      all.addEventListener('click', () => {
+        state.palPreview = null;
+        renderPalette();
+        document.querySelector('.dock-btn[data-target="palette"]')?.click();
+      });
+      qp.appendChild(all);
     }
   }
 }
@@ -593,11 +664,129 @@ export function updateCurrentColorIndicator() {
 // Aktiv-Markierung ohne Full-Re-Render.
 export function syncColorActive() {
   const isHex = typeof state.curColor === 'string';
-  document.querySelectorAll('.qp-swatch').forEach((el, i) =>
-    el.classList.toggle('is-active', !isHex && i === state.curColor));
-  document.querySelectorAll('.color-item').forEach(el =>
+  document.querySelectorAll('.qp-swatch, .qp-mini').forEach(el =>
     el.classList.toggle('is-active', !isHex && Number(el.dataset.idx) === state.curColor));
+  syncPaletteGridActive();
+  syncFreeColorsActive();
   updateCurrentColorIndicator();
+  if (state.showColor) renderEditor();
+}
+
+// ────────────────────────────────────────────────────────────────────
+// BILDFARBEN — freie Farben im Sprite (Pixel mit eigenem Hex statt Index)
+// ────────────────────────────────────────────────────────────────────
+// Entstehen beim Abpausen mit Rohfarben/N Farben und über die Pipette.
+// Gespeichert und exportiert werden sie ohnehin; hier werden sie sichtbar
+// und wieder anwählbar. Sortiert nach Häufigkeit.
+function collectFreeColors() {
+  const grid = getGrid();
+  const counts = new Map();
+  if (!grid) return [];
+  for (const row of grid) for (const c of row) {
+    if (typeof c === 'string' && c[0] === '#') {
+      const k = c.toLowerCase();
+      counts.set(k, (counts.get(k) || 0) + 1);
+    }
+  }
+  return [...counts].sort((a, b) => b[1] - a[1]);
+}
+
+// Bei Fotos können es Tausende sein. Darum: Zählen bei jeder Änderung,
+// die Liste selbst aber nur aufbauen, wenn sie offen ist — und höchstens
+// FC_MAX Felder, die häufigsten zuerst.
+const FC_MAX = 400;
+let freeColorCache = [];
+
+// Die häufigsten freien Farben stehen direkt in der Farbzeile.
+const FC_INLINE = 12;
+
+function freeSwatch(hex, n, cls) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = cls;
+  b.dataset.hex = hex;
+  b.style.background = hex;
+  b.title = t('fc.swatch', { hex, n });
+  b.setAttribute('aria-label', b.title);
+  b.addEventListener('click', () => { state.curColor = hex; syncColorActive(); });
+  return b;
+}
+
+export function renderFreeColors() {
+  const box = document.getElementById('free-colors');
+  if (!box) return;
+  const colors = freeColorCache = collectFreeColors();
+  box.hidden = !colors.length;
+  if (!colors.length) return;
+
+  const inline = document.getElementById('free-colors-top');
+  inline.innerHTML = '';
+  for (const [hex, n] of colors.slice(0, FC_INLINE)) inline.appendChild(freeSwatch(hex, n, 'qp-mini fc-swatch'));
+
+  document.getElementById('free-colors-count').textContent = t('fc.count', { n: colors.length });
+  const top = colors.slice(0, 3).map(([hex]) => hex);
+  while (top.length < 3) top.push(top[top.length - 1]);
+  box.querySelector('.fc-preview').style.background =
+    `linear-gradient(90deg, ${top[0]} 0 34%, ${top[1]} 34% 67%, ${top[2]} 67%)`;
+
+  if (!document.getElementById('free-colors-list').hidden) renderFreeColorsList();
+  syncFreeColorsActive();
+}
+
+export function renderFreeColorsList() {
+  const colors = freeColorCache;
+  const list = document.getElementById('free-colors-list');
+  list.innerHTML = '';
+  const head = document.createElement('p');
+  head.className = 'fc-head';
+  head.textContent = t('fc.head', { n: colors.length });
+  const grid = document.createElement('div');
+  grid.className = 'fc-grid';
+  for (const [hex, n] of colors.slice(0, FC_MAX)) grid.appendChild(freeSwatch(hex, n, 'fc-swatch'));
+  list.append(head, grid);
+  if (colors.length > FC_MAX) {
+    const more = document.createElement('p');
+    more.className = 'fc-head fc-more';
+    more.textContent = t('fc.more', { n: colors.length - FC_MAX });
+    list.append(more);
+  }
+
+  // Aufnehmen geht, solange alles in 255 Plätze passt — sonst erst reduzieren.
+  const room = MAX_COLORS - getMaxIdx();
+  const acts = document.createElement('div');
+  acts.className = 'fc-actions';
+  const add = document.createElement('button');
+  add.type = 'button';
+  add.className = 'btn btn--primary';
+  add.textContent = t('fc.toPalette');
+  add.title = t('fc.toPaletteTitle');
+  add.dataset.action = 'to-palette';
+  add.disabled = colors.length > room;
+  const reduce = document.createElement('button');
+  reduce.type = 'button';
+  reduce.className = 'btn';
+  reduce.textContent = t('fc.reduce');
+  reduce.dataset.action = 'reduce';
+  acts.append(add, reduce);
+  list.append(acts);
+  if (add.disabled) {
+    const note = document.createElement('p');
+    note.className = 'fc-head fc-more';
+    note.textContent = t('fc.tooMany', { n: colors.length, max: room });
+    list.append(note);
+  }
+  syncFreeColorsActive();
+}
+
+function syncFreeColorsActive() {
+  const cur = typeof state.curColor === 'string' ? state.curColor.toLowerCase() : null;
+  let hit = false;
+  document.querySelectorAll('.fc-swatch').forEach(el => {
+    const on = el.dataset.hex === cur;
+    if (on) hit = true;
+    el.classList.toggle('is-active', on);
+  });
+  document.getElementById('free-colors-btn')?.classList.toggle('is-active', hit);
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -634,19 +823,22 @@ export function fillPaletteSelect(sel, selectedName, filter = '') {
 }
 
 export function renderPalette() {
-  const pal     = getPal();
-  const palName = getPaletteName();
-  const maxIdx  = getMaxIdx();
+  const spName   = getPaletteName();
+  const name     = getPreviewName();
+  const pal      = getPaletteByName(name);
+  const size     = paletteSize(pal);
+  const isSprite = name === spName;
+  const custom   = isCustomPalette(name);
 
   const sel = document.getElementById('palette-select');
   const search = document.getElementById('palette-search');
-  fillPaletteSelect(sel, palName, search?.value || '');
+  fillPaletteSelect(sel, name, search?.value || '');
   if (search) search.hidden = getAllPaletteOptions().length <= 12 && !search.value;
 
-  // Bearbeiten/Löschen gibt es nur für eigene Paletten.
-  const custom = isCustomPalette(palName);
+  // Bearbeiten/Löschen gibt es nur für eigene Paletten — gilt der ANGEZEIGTEN.
   document.getElementById('palette-edit-btn')?.toggleAttribute('hidden', !custom);
   document.getElementById('palette-del-btn')?.toggleAttribute('hidden', !custom);
+  document.getElementById('palette-fork-btn')?.toggleAttribute('hidden', custom);
 
   const badge = document.getElementById('palette-origin');
   if (badge) {
@@ -654,73 +846,106 @@ export function renderPalette() {
     badge.className = 'badge ' + (custom ? 'badge--custom' : 'badge--builtin');
   }
 
-  const hint = document.getElementById('palette-hint');
-  if (hint) {
-    hint.textContent = custom ? t('pal.hint.custom') : t('pal.hint.builtin');
+  // Vorschau oder die Palette des Sprites? Nur bei einer Vorschau gibt es
+  // die zwei Knöpfe zum Zuweisen.
+  const status = document.getElementById('palette-status');
+  if (status) {
+    status.textContent = isSprite
+      ? tn('pal.statusActive', size)
+      : tn('pal.statusPreview', size, { name: spName });
+    status.classList.toggle('is-preview', !isSprite);
   }
-  document.getElementById('palette-fork-btn')?.toggleAttribute('hidden', custom);
+  document.getElementById('palette-assign-row')?.toggleAttribute('hidden', isSprite);
 
-  // Farbliste
+  const hint = document.getElementById('palette-hint');
+  if (hint) hint.textContent = custom ? t('pal.hint.custom') : t('pal.hint.builtin');
+
+  // Raster: 8 Spalten bei kleinen Paletten, 16 ab 16 Farben (16×16 = 256).
   const items = document.getElementById('palette-items');
   if (!items) return;
   items.innerHTML = '';
+  items.style.setProperty('--cols', size + 1 > 16 ? 16 : 8);
+  items.dataset.palette = name;
 
-  for (let i = 0; i <= maxIdx; i++) {
+  for (let i = 0; i <= size; i++) {
     const color = pal[i];
-    const item = document.createElement('div');
-    item.className = 'color-item'
-      + (i === state.curColor ? ' is-active' : '')
-      + (custom && i !== 0 ? ' is-editable' : '');
-    item.dataset.idx = i;
+    const sw = document.createElement('button');
+    sw.type = 'button';
+    sw.className = 'pal-sw' + (i === 0 ? ' is-transparent' : '');
+    sw.dataset.idx = i;
+    if (i !== 0) sw.style.background = color || 'var(--surface-3)';
+    sw.title = i === 0 ? colorLabel(0)
+      : t('pal.swInfo', { i, label: colorLabel(i), hex: color || '—' })
+        + '\n' + t(custom ? 'pal.swEdit' : 'pal.swPick');
+    if (i === PALETTE_GROUP_SPLIT + 1 && size > PALETTE_GROUP_SPLIT) sw.classList.add('is-group');
 
-    const sw = document.createElement('span');
-    sw.className = 'color-swatch' + (i === 0 ? ' is-transparent' : '');
-    if (i !== 0 && color) sw.style.background = color;
+    // Klick: damit malen. Aus der Sprite-Palette als Index, aus einer
+    // Vorschau als freie Farbe — die Zeichnung ändert sich dadurch nie.
+    sw.addEventListener('click', () => {
+      state.curColor = i === 0 ? 0 : isSprite ? i : (color || '#888888');
+      syncColorActive();
+    });
+    // Doppelklick: Farbe ändern (nur eigene Paletten).
+    sw.addEventListener('dblclick', () => {
+      if (i === 0) return;
+      if (!custom) { showInfoToast(t('pal.hint.builtin')); return; }
+      editPaletteColor(name, i);
+    });
+    items.appendChild(sw);
+  }
+  syncPaletteGridActive();
+}
 
-    const text = document.createElement('span');
-    text.className = 'color-text';
-    text.innerHTML =
-      `<span class="color-line"><span class="color-idx">${i}</span>` +
-      `<span class="color-name">${esc(colorLabel(i))}</span></span>` +
-      (i !== 0 && color ? `<span class="color-hex">${color}</span>` : '');
-
-    item.append(sw, text);
-
-    if (custom && i !== 0) {
-      // Verstecktes <input type="color"> — Klick auf den Swatch öffnet es.
-      const picker = document.createElement('input');
-      picker.type = 'color';
-      picker.className = 'hidden-color-input';
-      picker.value = color || '#888888';
-      sw.title = t('pal.swatchTitle');
-      sw.addEventListener('click', e => {
-        e.stopPropagation();
-        picker.value = getPal()[i] || '#888888';
-        picker.click();
-      });
-      picker.addEventListener('input', () => {
-        const target = customPalettes[getPaletteName()];
-        if (!target) return;
-        target[i] = picker.value;
-        sw.style.background = picker.value;
-        const hexEl = item.querySelector('.color-hex');
-        if (hexEl) hexEl.textContent = picker.value;
+// Ein unsichtbarer Farbwähler für alle Felder des Rasters.
+let _palPicker = null;
+function editPaletteColor(name, i) {
+  if (!_palPicker) {
+    _palPicker = document.createElement('input');
+    _palPicker.type = 'color';
+    _palPicker.className = 'hidden-color-input';
+    document.body.appendChild(_palPicker);
+    _palPicker.addEventListener('input', () => {
+      const { name: n, idx } = _palPicker.dataset;
+      const target = customPalettes[n];
+      if (!target) return;
+      target[idx] = _palPicker.value;
+      const sw = document.querySelector(`#palette-items[data-palette="${n}"] .pal-sw[data-idx="${idx}"]`);
+      if (sw) sw.style.background = _palPicker.value;
+      if (n === getPaletteName()) {
         renderEditor(); renderQuickPalette(); renderSpriteList(); updateCurrentColorIndicator();
         renderMaterials(); updateOutput();
-        renderCallbacks.onSave();
-      });
-      item.appendChild(picker);
-    }
-
-    item.addEventListener('click', () => { state.curColor = i; syncColorActive(); });
-    items.appendChild(item);
-
-    if (i === PALETTE_GROUP_SPLIT) {
-      const sep = document.createElement('div');
-      sep.className = 'color-sep';
-      items.appendChild(sep);
-    }
+      }
+      syncPaletteGridActive();
+      renderCallbacks.onSave();
+    });
   }
+  _palPicker.dataset.name = name;
+  _palPicker.dataset.idx = i;
+  _palPicker.value = customPalettes[name]?.[i] || '#888888';
+  _palPicker.click();
+}
+
+// Markierung im Raster + Zeile darunter, welche Farbe gerade gewählt ist.
+function syncPaletteGridActive() {
+  const items = document.getElementById('palette-items');
+  if (!items) return;
+  const name = items.dataset.palette;
+  const pal = getPaletteByName(name);
+  const isSprite = name === getPaletteName();
+  const c = state.curColor;
+  const hex = typeof c === 'string' ? c.toLowerCase() : null;
+  let hit = null;
+  items.querySelectorAll('.pal-sw').forEach(sw => {
+    const i = Number(sw.dataset.idx);
+    const on = isSprite ? (typeof c === 'number' && c === i)
+      : (i === 0 ? c === 0 : !!hex && pal[i]?.toLowerCase() === hex);
+    sw.classList.toggle('is-active', on);
+    if (on && hit === null) hit = i;
+  });
+  const info = document.getElementById('palette-pick-info');
+  if (!info) return;
+  if (hit === null || hit === 0) { info.textContent = hit === 0 ? colorLabel(0) : ''; return; }
+  info.textContent = t('pal.swInfo', { i: hit, label: colorLabel(hit), hex: pal[hit] || '—' });
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -729,6 +954,8 @@ export function renderPalette() {
 // Scheitert die Validierung (JSON (Spiel)), steht die Meldung im Feld und
 // in data-error — Kopieren und Speichern weigern sich dann (app.js).
 export function updateOutput() {
+  // Hängt wie der Code am Inhalt des Rasters — darum hier mit aufgefrischt.
+  renderFreeColors();
   const ta = document.getElementById('output-textarea');
   if (!ta) return;
   delete ta.dataset.error;

@@ -84,10 +84,11 @@ export function tn(key, n, params) {
 }
 
 // Palette-Index → Beschriftung (lang, für die Farbliste im Panel).
-export function colorLabel(i) { return t(`color.label.${i}`); }
+// Namen gibt es nur für 0–9 (Tonleiter, Kontur, Akzente); darüber "Farbe 12".
+export function colorLabel(i) { return i > 9 ? t('color.labelN', { i }) : t(`color.label.${i}`); }
 
 // Kurzform für enge Stellen (Quick-Palette, Statuszeile).
-export function colorLabelShort(i) { return t(`color.short.${i}`); }
+export function colorLabelShort(i) { return i > 9 ? t('color.labelN', { i }) : t(`color.short.${i}`); }
 
 // ────────────────────────────────────────────────────────────────────
 // Statisches DOM
@@ -182,6 +183,10 @@ const STATIC = {
     // ── Kopfzeile ──
     'tb.home':        'Back to the start page',
     'tb.saved':       'saved',
+    'tb.menu':        'Menu',
+    'fc.btnTitle':    'Colors in the sprite that have no slot in the palette',
+    'pal.show':       'Show',
+    'pal.showTitle':  'Shows where the current color appears in the image — everything else is dimmed',
     'tb.help':        'Help',
     'tb.helpTitle':   'Help & explanations',
     'tb.dir':         'Save folder',
@@ -288,7 +293,7 @@ const STATIC = {
     'tool.quickPal':    'Quick color picker',
 
     // ── Farb-Panel ──
-    'pal.title':        'Colors',
+    'pal.title':        'Palette',
     'pal.builtin':      'built-in',
     'pal.currentTitle': 'Click to open the free color picker',
     'pal.current':      'Current color',
@@ -301,8 +306,16 @@ const STATIC = {
     'pal.addTitle':     'Create a new custom palette',
     'pal.fork':         'Edit a copy',
     'pal.forkTitle':    'Copy this built-in palette into a custom one — then it can be edited',
-    'pal.fromImage':    'Image → palette',
-    'pal.fromImageTitle': 'Turn the colors of the current image into an editable palette',
+    'pal.fromImage':    'Image → palette …',
+    'pal.fromImageTitle': 'Turn the colors of the current image into a palette — you choose how many',
+    'pal.use':          'Use for sprite',
+    'pal.useTitle':     'The sprite gets this palette — the drawing keeps its look',
+    'pal.recolor':      'Recolor sprite',
+    'pal.recolorTitle': 'Every pixel takes the colors of this palette — Ctrl+Z undoes it',
+    'red.title':        'Image → palette',
+    'red.colors':       'Colors in the palette',
+    'red.before':       'Before',
+    'red.apply':        'Create palette',
 
     // ── Schablone ──
     'tpl.title':        'Stencil',
@@ -389,6 +402,8 @@ const STATIC = {
     'mod.palNamePh':    'e.g. neon, pastel, dark',
     'mod.palSource':    'Base <span class="form-note">(take over its colors)</span>',
     'mod.palColors':    'Colors',
+    'mod.palAdd':       '+ Color',
+    'mod.palRemove':    '− Last',
 
     // ── Modal: Import ──
     'mod.impTitle':     'Import a sprite',
@@ -465,9 +480,9 @@ const STATIC = {
 
     'help.h.stencil': 'Stencil',
     'help.stencil': ''
-      + '<div>Load an image, move it with <span class="kbd">Shift</span>+left-drag, set opacity and size with the sliders.</div>'
-      + '<div>Hold <span class="kbd">Shift</span> → the stencil comes fully to the front.</div>'
-      + '<div><span class="kbd">Shift</span>+right-click → stencil eyedropper (the exact color from the image).</div>'
+      + '<div>Load an image, move it with <span class="kbd">Shift</span>+<span class="kbd">Alt</span>+left-drag, set opacity and size with the sliders.</div>'
+      + '<div>Hold <span class="kbd">Shift</span>+<span class="kbd">Alt</span> → the stencil comes fully to the front.</div>'
+      + '<div><span class="kbd">Shift</span>+<span class="kbd">Alt</span>+right-click → stencil eyedropper (the exact color from the image).</div>'
       + '<div>Survives a reload.</div>',
 
     'help.h.photo': 'Photo → sprite',
@@ -502,14 +517,17 @@ const STATIC = {
       + '<div class="sc-row"><b>Click</b><span>Draw</span></div>'
       + '<div class="sc-row"><b>Right-click</b><span>Erase (hold for continuous)</span></div>'
       + '<div class="sc-row"><b>Alt + click</b><span>Eyedropper on the grid</span></div>'
-      + '<div class="sc-row"><b>Hold Shift</b><span>Stencil to the front</span></div>'
-      + '<div class="sc-row"><b>Shift + left + drag</b><span>Move the stencil</span></div>'
-      + '<div class="sc-row"><b>Shift + right-click</b><span>Stencil eyedropper</span></div>'
+      + '<div class="sc-row"><b>Hold Shift + Alt</b><span>Stencil to the front</span></div>'
+      + '<div class="sc-row"><b>Shift + Alt + drag</b><span>Move the stencil</span></div>'
+      + '<div class="sc-row"><b>Shift + Alt + right-click</b><span>Stencil eyedropper</span></div>'
       + '<div class="sc-row"><b>0 – 9</b><span>Pick a color index</span></div>'
       + '<div class="sc-row"><b>P B S F E W</b><span>Pencil · Brush · Spray · Fill · Eraser · Magic wand</span></div>'
       + '<div class="sc-row"><b>I R O</b><span>Line · Rectangle · Ellipse</span></div>'
       + '<div class="sc-row"><b>A L K</b><span>Marquee · Lasso · Color select</span></div>'
-      + '<div class="sc-row"><b>Ctrl + mouse wheel</b><span>Zoom</span></div>'
+      + '<div class="sc-row"><b>Mouse wheel</b><span>Scroll up / down</span></div>'
+      + '<div class="sc-row"><b>Shift + mouse wheel</b><span>Scroll left / right</span></div>'
+      + '<div class="sc-row"><b>Ctrl + mouse wheel</b><span>Zoom (towards the pointer)</span></div>'
+      + '<div class="sc-row"><b>Space + drag</b><span>Pan the image (middle mouse button works too)</span></div>'
       + '<div class="sc-row"><b>Drag inside the selection</b><span>Cut the area out and move it</span></div>'
       + '<div class="sc-row"><b>Alt + drag</b><span>Move a copy (the original stays)</span></div>'
       + '<div class="sc-row"><b>Arrow keys</b><span>Nudge the selection pixel by pixel</span></div>'
@@ -548,6 +566,7 @@ const MSG = {
     'color.short.7': 'Highlight',
     'color.short.8': 'Akzent B',
     'color.short.9': 'Akzent C',
+    'color.labelN':  'Farbe {i}',
 
     // Wirkungsbereich
     'scope.sprite':    'Sprite',
@@ -578,7 +597,37 @@ const MSG = {
     // Farb-Panel
     'pal.origin.custom':   'eigene',
     'pal.origin.builtin':  'eingebaut',
-    'pal.hint.custom':     'Swatch anklicken zum Ändern — das Bild färbt sich live um.',
+    'pal.hint.custom':     'Doppelklick auf eine Farbe ändert sie — Bilder mit dieser Palette färben sich mit.',
+    'pal.statusActive_one':    'Dein Sprite nutzt diese Palette · {n} Farbe',
+    'pal.statusActive_other':  'Dein Sprite nutzt diese Palette · {n} Farben',
+    'pal.statusPreview_one':   'Vorschau · {n} Farbe — dein Sprite nutzt „{name}“',
+    'pal.statusPreview_other': 'Vorschau · {n} Farben — dein Sprite nutzt „{name}“',
+    'pal.swInfo':          '{i} · {label} · {hex}',
+    'pal.swEdit':          'Klick: damit malen · Doppelklick: Farbe ändern',
+    'pal.swPick':          'Klick: damit malen',
+    'pal.miniTitle':       '{i} · {hex}',
+    'pal.moreCount':       '+{n}',
+    'pal.moreTitle':       'Alle {n} Farben im Paletten-Panel zeigen',
+    'pal.assigned':        'Dein Sprite nutzt jetzt „{name}“ — die Zeichnung sieht aus wie vorher.',
+    'pal.assignedFree_one':   'Dein Sprite nutzt jetzt „{name}“. {n} Farbe gab es dort nicht — sie bleibt als Bildfarbe erhalten.',
+    'pal.assignedFree_other': 'Dein Sprite nutzt jetzt „{name}“. {n} Farben gab es dort nicht — sie bleiben als Bildfarben erhalten.',
+    'pal.recolored':       'Sprite mit „{name}“ umgefärbt — Strg+Z macht es rückgängig.',
+    'pal.sizeCount_one':   '({n} Farbe)',
+    'pal.sizeCount_other': '({n} Farben)',
+    'fc.toPalette':        'In Palette aufnehmen',
+    'fc.toPaletteTitle':   'Die Bildfarben hinten an die Palette hängen — dann sind sie wie jede Palettenfarbe anwählbar',
+    'fc.reduce':           'Bild → Palette …',
+    'fc.tooMany':          'Zu viele für die Palette: {n} Bildfarben, aber nur {max} freie Plätze. Mit „Bild → Palette …“ reduzieren.',
+    'fc.added_one':        '{n} Farbe in „{name}“ aufgenommen.',
+    'fc.added_other':      '{n} Farben in „{name}“ aufgenommen.',
+    'red.all_one':         'Alle ({n}) — exakt',
+    'red.all_other':       'Alle ({n}) — exakt',
+    'red.count_one':       '{n} Farbe',
+    'red.count_other':     '{n} Farben',
+    'red.intro_one':       'Das Bild hat {n} Farbe. Eine Palette fasst bis zu {max}.',
+    'red.intro_other':     'Das Bild hat {n} verschiedene Farben. Eine Palette fasst bis zu {max} — weniger Farben ergeben mehr Pixel-Art-Look.',
+    'red.after_one':       'Nachher · {n} Farbe',
+    'red.after_other':     'Nachher · {n} Farben',
     'pal.hint.builtin':    'Eingebaute Paletten sind schreibgeschützt. „Kopie bearbeiten“ macht sie änderbar.',
     'pal.swatchTitle':     'Farbe ändern',
     'pal.groupBuiltin':    'Eingebaut',
@@ -588,6 +637,26 @@ const MSG = {
     'pal.currentFree':     'Freie Farbe',
     'pal.currentIndex':    'Index {i} — {label}',
     'pal.transparent':     'transparent',
+    'lay.pin':             'Anpinnen — fest neben der Zeichenfläche',
+    'lay.unpin':           'Lösen — zurück in die Schublade',
+    'lay.float':           'Als schwebendes Fenster lösen',
+    'lay.floatBar':        'Leiste lösen — frei verschieben',
+    'lay.dockBar':         'Wieder oben anpinnen',
+    'lay.grip':            'Ziehen zum Verschieben',
+    'lay.toolbar':         'Werkzeuge',
+    'lay.colorbar':        'Farbzeile',
+    'lay.resize':          'Ziehen ändert die Breite',
+    'tpl.pick':            'Bild laden …',
+    'tpl.pickOther':       'Anderes Bild laden …',
+    'tpl.unnamed':         'Schablone',
+    'tpl.restored':        'Aus dem letzten Besuch — bleibt in diesem Browser gespeichert, bis du sie entfernst.',
+    'tpl.kept':            'Bleibt in diesem Browser gespeichert, bis du sie entfernst.',
+    'fc.count':            '+{n} Bildfarben',
+    'fc.head':             '{n} Farben ohne Paletten-Platz — nach Häufigkeit. Klick wählt die Farbe.',
+    'fc.more':             '… und {n} weitere, seltener benutzte.',
+    'pal.showCount_one':   'Hervorgehoben: {n} Pixel in dieser Farbe.',
+    'pal.showCount_other': 'Hervorgehoben: {n} Pixel in dieser Farbe.',
+    'fc.swatch':           '{hex} · {n} Pixel',
     'pal.optCurrent':      '— aktuelle Palette —',
     'pal.optCustomSuffix': '{name} (eigene)',
     'pal.colorAria':       'Farbe {i}',
@@ -599,13 +668,13 @@ const MSG = {
     'pal.isBuiltin':       '„{name}“ ist eine eingebaute Palette — bitte einen anderen Namen wählen.',
     'pal.exists':          'Palette „{name}“ existiert schon — überschreiben?',
     'pal.overwrite':       'Überschreiben',
-    'pal.forked':          'Palette „{name}“ angelegt — die Farb-Swatches rechts sind jetzt änderbar.',
+    'pal.forked':          'Palette „{name}“ angelegt — Doppelklick auf eine Farbe ändert sie.',
     'pal.deleted_one':     'Palette gelöscht — {n} Sprite auf „{fallback}“ gesetzt.',
     'pal.deleted_other':   'Palette gelöscht — {n} Sprites auf „{fallback}“ gesetzt.',
     'pal.confirmDelete':   'Palette „{name}“ wirklich löschen?{extra}',
     'pal.usedBy_one':      ' {n} Sprite nutzt sie gerade.',
     'pal.usedBy_other':    ' {n} Sprites nutzen sie gerade.',
-    'pal.fromImage':       'Palette „{name}“ erstellt — {n} Farben. Rechts direkt editierbar, das Bild färbt sich live um.',
+    'pal.fromImage':       'Palette „{name}“ erstellt — {n} Farben. Strg+Z macht es rückgängig.',
 
     // Sprites
     'sprite.confirmDelete': 'Sprite „{name}“ wirklich löschen?',
@@ -629,9 +698,9 @@ const MSG = {
     'ref.swapped':   'Getauscht — „{now}“ wird bearbeitet, „{before}“ liegt als Ebene',
 
     // Vollbild
-    'full.enter':      '⤢ Vollbild',
+    'full.enter':      'Vollbild',
     'full.enterTitle': 'Vollbild (Esc zum Schließen)',
-    'full.exit':       '⤡ Beenden',
+    'full.exit':       'Beenden',
     'full.exitTitle':  'Vollbild verlassen (Esc)',
 
     // Statuszeile — Malen
@@ -862,6 +931,7 @@ const MSG = {
     'color.short.7': 'Highlight',
     'color.short.8': 'Accent B',
     'color.short.9': 'Accent C',
+    'color.labelN':  'Color {i}',
 
     'scope.sprite':    'Sprite',
     'scope.selection': 'Selection',
@@ -887,7 +957,37 @@ const MSG = {
 
     'pal.origin.custom':   'custom',
     'pal.origin.builtin':  'built-in',
-    'pal.hint.custom':     'Click a swatch to change it — the image recolors live.',
+    'pal.hint.custom':     'Double-click a color to change it — images using this palette recolor with it.',
+    'pal.statusActive_one':    'Your sprite uses this palette · {n} color',
+    'pal.statusActive_other':  'Your sprite uses this palette · {n} colors',
+    'pal.statusPreview_one':   'Preview · {n} color — your sprite uses “{name}”',
+    'pal.statusPreview_other': 'Preview · {n} colors — your sprite uses “{name}”',
+    'pal.swInfo':          '{i} · {label} · {hex}',
+    'pal.swEdit':          'Click: paint with it · Double-click: change the color',
+    'pal.swPick':          'Click: paint with it',
+    'pal.miniTitle':       '{i} · {hex}',
+    'pal.moreCount':       '+{n}',
+    'pal.moreTitle':       'Show all {n} colors in the palette panel',
+    'pal.assigned':        'Your sprite now uses “{name}” — the drawing looks the same as before.',
+    'pal.assignedFree_one':   'Your sprite now uses “{name}”. {n} color was not in it — it stays as an image color.',
+    'pal.assignedFree_other': 'Your sprite now uses “{name}”. {n} colors were not in it — they stay as image colors.',
+    'pal.recolored':       'Sprite recolored with “{name}” — Ctrl+Z undoes it.',
+    'pal.sizeCount_one':   '({n} color)',
+    'pal.sizeCount_other': '({n} colors)',
+    'fc.toPalette':        'Add to palette',
+    'fc.toPaletteTitle':   'Append the image colors to the palette — then they can be picked like any palette color',
+    'fc.reduce':           'Image → palette …',
+    'fc.tooMany':          'Too many for the palette: {n} image colors but only {max} free slots. Reduce them with “Image → palette …”.',
+    'fc.added_one':        'Added {n} color to “{name}”.',
+    'fc.added_other':      'Added {n} colors to “{name}”.',
+    'red.all_one':         'All ({n}) — exact',
+    'red.all_other':       'All ({n}) — exact',
+    'red.count_one':       '{n} color',
+    'red.count_other':     '{n} colors',
+    'red.intro_one':       'The image has {n} color. A palette holds up to {max}.',
+    'red.intro_other':     'The image has {n} different colors. A palette holds up to {max} — fewer colors give more of a pixel-art look.',
+    'red.after_one':       'After · {n} color',
+    'red.after_other':     'After · {n} colors',
     'pal.hint.builtin':    'Built-in palettes are read-only. “Edit a copy” makes an editable one.',
     'pal.swatchTitle':     'Change the color',
     'pal.groupBuiltin':    'Built-in',
@@ -897,6 +997,26 @@ const MSG = {
     'pal.currentFree':     'Free color',
     'pal.currentIndex':    'Index {i} — {label}',
     'pal.transparent':     'transparent',
+    'lay.pin':             'Pin — keep it next to the canvas',
+    'lay.unpin':           'Unpin — back into the drawer',
+    'lay.float':           'Detach as a floating window',
+    'lay.floatBar':        'Detach bar — move it freely',
+    'lay.dockBar':         'Pin back to the top',
+    'lay.grip':            'Drag to move',
+    'lay.toolbar':         'Tools',
+    'lay.colorbar':        'Color bar',
+    'lay.resize':          'Drag to change the width',
+    'tpl.pick':            'Load image …',
+    'tpl.pickOther':       'Load another image …',
+    'tpl.unnamed':         'Stencil',
+    'tpl.restored':        'From your last visit — stays saved in this browser until you remove it.',
+    'tpl.kept':            'Stays saved in this browser until you remove it.',
+    'fc.count':            '+{n} image colors',
+    'fc.head':             '{n} colors without a palette slot — most used first. Click to pick.',
+    'fc.more':             '… and {n} more, used less often.',
+    'pal.showCount_one':   'Highlighted: {n} pixel in this color.',
+    'pal.showCount_other': 'Highlighted: {n} pixels in this color.',
+    'fc.swatch':           '{hex} · {n} px',
     'pal.optCurrent':      '— current palette —',
     'pal.optCustomSuffix': '{name} (custom)',
     'pal.colorAria':       'Color {i}',
@@ -908,13 +1028,13 @@ const MSG = {
     'pal.isBuiltin':       '“{name}” is a built-in palette — please pick another name.',
     'pal.exists':          'Palette “{name}” already exists — overwrite it?',
     'pal.overwrite':       'Overwrite',
-    'pal.forked':          'Palette “{name}” created — the color swatches on the right can now be edited.',
+    'pal.forked':          'Palette “{name}” created — double-click a color to change it.',
     'pal.deleted_one':     'Palette deleted — {n} sprite set to “{fallback}”.',
     'pal.deleted_other':   'Palette deleted — {n} sprites set to “{fallback}”.',
     'pal.confirmDelete':   'Really delete the palette “{name}”?{extra}',
     'pal.usedBy_one':      ' {n} sprite is using it right now.',
     'pal.usedBy_other':    ' {n} sprites are using it right now.',
-    'pal.fromImage':       'Palette “{name}” created — {n} colors. Editable on the right, the image recolors live.',
+    'pal.fromImage':       'Palette “{name}” created — {n} colors. Ctrl+Z undoes it.',
 
     'sprite.confirmDelete': 'Really delete the sprite “{name}”?',
     'sprite.created':       '“{name}” created.',
@@ -935,9 +1055,9 @@ const MSG = {
     'ref.off':       'Layer off',
     'ref.swapped':   'Swapped — “{now}” is being edited, “{before}” is now the layer',
 
-    'full.enter':      '⤢ Full screen',
+    'full.enter':      'Full screen',
     'full.enterTitle': 'Full screen (Esc to leave)',
-    'full.exit':       '⤡ Leave',
+    'full.exit':       'Leave',
     'full.exitTitle':  'Leave full screen (Esc)',
 
     'info.mirrorOff':   'Symmetry off',

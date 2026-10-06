@@ -12,12 +12,14 @@
 //   C-Header       → #define _WIDTH/_HEIGHT, _PALETTE[] und flaches _DATA[]
 //   Text-Raster    → ein Zeichen pro Pixel plus Legende
 //
-// Bei den Array-Formaten bleiben die Indizes erhalten: Werte oberhalb von
-// MAX_IDX gehören zu freien Farben und werden wieder zu "#rrggbb"-Pixeln.
+// Bei den Array-Formaten bleiben die Indizes erhalten: alles bis MAX_COLORS
+// (255) kommt in die Palette, nur Werte darüber werden wieder zu freien
+// "#rrggbb"-Pixeln. Freie Farben aus einem Export landen so in der Palette —
+// das Bild sieht gleich aus, die Farben sind danach bloß anwählbar.
 // Die vier bildhaften Formate kennen keine Indizes, dort werden die Farben
 // in der Reihenfolge ihres Auftretens neu durchnummeriert (siehe
 // gridFromColors) — inhaltlich gleich, die Nummern können sich verschieben.
-import { MAX_IDX } from './data.js';
+import { MAX_COLORS } from './data.js';
 import { t } from './i18n.js';
 
 // ── Hex normalisieren: #abc → #aabbcc, Großbuchstaben → klein ──
@@ -117,7 +119,7 @@ function extractName(text) {
 // ════════════════════════════════════════════════════════════════════
 
 // Farbraster ("#rrggbb" | null) → Grid + Palette.
-// Die ersten MAX_IDX Farben bekommen die Indizes 1..9, alles darüber bleibt
+// Die ersten MAX_COLORS Farben bekommen die Indizes 1..255, alles darüber bleibt
 // als freie Hex-Farbe stehen — genauso hält es der Editor selbst.
 function gridFromColors(colors, w, h) {
   const order = [];
@@ -129,7 +131,7 @@ function gridFromColors(colors, w, h) {
     }
   }
   const palette = {};
-  for (const [hex, i] of index) if (i <= MAX_IDX) palette[i] = hex;
+  for (const [hex, i] of index) if (i <= MAX_COLORS) palette[i] = hex;
 
   const grid = [];
   for (let y = 0; y < h; y++) {
@@ -138,7 +140,7 @@ function gridFromColors(colors, w, h) {
       const c = colors[y][x];
       if (!c) { row.push(0); continue; }
       const i = index.get(c);
-      row.push(i <= MAX_IDX ? i : c);   // darüber: freie Farbe
+      row.push(i <= MAX_COLORS ? i : c);   // darüber: freie Farbe
     }
     grid.push(row);
   }
@@ -244,7 +246,7 @@ function parseCHeader(text) {
     // Feld 0 ist der Transparenz-Platzhalter des Exports.
     vals.forEach((hex, i) => {
       if (i < 1) return;
-      if (i <= MAX_IDX) palette[i] = hex;
+      if (i <= MAX_COLORS) palette[i] = hex;
       else free[i] = hex;
     });
   }
@@ -266,7 +268,7 @@ function parseCHeader(text) {
 // ── Text-Raster ─────────────────────────────────────────────────────
 // Ein Zeichen pro Pixel, '.' ist transparent. Die Legende darunter ordnet
 // jedem Zeichen eine Farbe zu; ohne Legende bleiben die Indizes trotzdem.
-const TXT_CHARS = '.123456789abcdefghijklmnopqrstuvwxyz';
+const TXT_CHARS = '.123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 function parseTextRaster(text) {
   const lines = text.split(/\r?\n/);
@@ -284,7 +286,7 @@ function parseTextRaster(text) {
   // Der Rasterblock: mehrere aufeinanderfolgende Zeilen gleicher Länge,
   // die nur aus Rasterzeichen bestehen und mindestens ein '.' oder eine
   // Ziffer enthalten. Der laengste solche Block gewinnt.
-  const isRow = l => l.length >= 2 && /^[.0-9a-z]+$/.test(l) && /[.1-9]/.test(l);
+  const isRow = l => l.length >= 2 && /^[.0-9a-zA-Z]+$/.test(l) && /[.1-9]/.test(l);
   let best = null, cur = [];
   const flush = () => {
     if (cur.length >= 2 && (!best || cur.length > best.length)) best = cur;
@@ -310,7 +312,7 @@ function parseTextRaster(text) {
       const idx = TXT_CHARS.indexOf(ch);
       if (idx <= 0) { row.push(0); continue; }        // '.' oder unbekannt
       const hex = legend.get(ch);
-      if (idx <= MAX_IDX) {
+      if (idx <= MAX_COLORS) {
         row.push(idx);
         if (hex) palette[idx] = hex;
       } else {
@@ -328,7 +330,7 @@ function parseTextRaster(text) {
 function detectFormat(text) {
   if (/<svg[\s>]/i.test(text) && /<rect\b/i.test(text)) return 'svg';
   if (/box-shadow\s*:/i.test(text)) return 'css';
-  if (/#define\s+\w*_?(WIDTH|HEIGHT)\b/i.test(text) || /\b(uint8_t|uint32_t)\b/.test(text)) return 'c';
+  if (/#define\s+\w*_?(WIDTH|HEIGHT)\b/i.test(text) || /\b(uint8_t|uint16_t|uint32_t)\b/.test(text)) return 'c';
   if (/\[\s*\[/.test(text)) return 'array';
   return 'txt';
 }
@@ -383,14 +385,14 @@ export function parseTsSprite(text) {
   }
 
   const all = extractPalette(text);
-  let palette = null;   // Indizes 1..MAX_IDX → gehen in eine Palette
-  let freeColors = null; // Indizes > MAX_IDX → werden zu Roh-Pixeln im Grid
+  let palette = null;   // Indizes 1..MAX_COLORS → gehen in eine Palette
+  let freeColors = null; // Indizes > MAX_COLORS → werden zu Roh-Pixeln im Grid
   if (all) {
     palette = {};
     freeColors = {};
     for (const [k, hex] of Object.entries(all)) {
       const i = Number(k);
-      if (i <= MAX_IDX) palette[i] = hex;
+      if (i <= MAX_COLORS) palette[i] = hex;
       else freeColors[i] = hex;
     }
     if (!Object.keys(palette).length) palette = null;

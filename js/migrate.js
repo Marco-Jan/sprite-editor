@@ -11,7 +11,7 @@
 // genau einmal pro Save und darf danach theoretisch weg — sie bleibt, damit
 // alte Projekt-JSONs auch später noch geladen werden können.
 
-import { DEFAULT_PALETTE, completePalette } from './data.js';
+import { DEFAULT_PALETTE, BASE_SIZE, completePalette } from './data.js';
 import { t, tn } from './i18n.js';
 
 // Die alten Built-in-Sprites werden NICHT übernommen — es sei denn, sie wurden
@@ -59,7 +59,8 @@ export function migrateV1(old) {
       let target = name;
       let i = 2;
       while (customPalettes[target]) target = `${name}_${i++}`;
-      customPalettes[target] = completePalette(pal);
+      // v1-Paletten hatten immer 9 Plätze — Lücken wie damals auffüllen.
+      customPalettes[target] = completePalette(pal, BASE_SIZE);
       paletteRename[`${type}:${name}`] = target;
     }
   }

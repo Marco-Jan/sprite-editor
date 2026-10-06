@@ -65,12 +65,56 @@ Zum Testen: DevTools → Application → Service Workers zeigt den Worker. Unter
 
 Alle Panels lassen sich zuklappen; der Zustand wird gespeichert.
 
+**Anordnung anpassen:** Jedes Panel sitzt als Icon im Dock links oder rechts und öffnet
+sich als Schublade. Im Panel-Kopf:
+- **Pin** — fest als Spalte neben der Zeichenfläche anpinnen; die Spaltenbreite lässt
+  sich an ihrer Kante ziehen. Nochmal klicken löst es zurück in die Schublade.
+- **Fenster-Symbol** — als schwebendes Fenster lösen, frei verschiebbar, Größe über die
+  Ecke unten rechts.
+- Am Kopf ziehen löst ein Panel ebenfalls. Lässt man es neben der linken oder rechten
+  Leiste los, wechselt es dorthin — **ohne** angepinnt zu werden: ein angepinntes bleibt
+  angepinnt (an der Stelle, wo man es loslässt), alle anderen werden zur Schublade.
+- Die Reihenfolge lässt sich überall ziehen: Panels in der angepinnten Spalte und die
+  Icons im Dock (auch auf die andere Seite).
+
+Werkzeugleiste und Farbzeile haben vorn einen Griff und einen Pin: lösen, frei schweben
+lassen, Größe ändern. Andocken lassen sie sich oben, unten oder links/rechts neben der
+Zeichenfläche (dort senkrecht), in beliebiger Reihenfolge. Die Anordnung merkt sich
+der Browser (localStorage `spritebit_layout`), sie gehört nicht zum Projekt. Im Vollbild
+verschwindet nur die Kopfzeile.
+
 ---
 
 ## Palettensystem
 
 Eine Palette ist ein Mapping **Index → Hex-Farbe**. Index `0` ist immer transparent,
-`1`–`9` sind frei belegbar. Es gibt keine an ein Motiv gebundenen Slots.
+dazu kommen **bis zu 255 Farben** — zusammen 256 Werte, die übliche Grenze indizierter
+Pixel-Art (GIF, PNG-8) und genau ein Byte im C-Export. Die eingebauten Paletten haben
+9 Farben; nur `1`–`9` tragen Namen und eine Taste, ab `10` heißt es schlicht „Farbe 10“.
+
+**Anschauen ist nicht Zuweisen.** Eine Palette im Panel auswählen zeigt sie nur an
+(Raster mit 8 bzw. 16 Spalten, 256 Farben = 16 × 16) — die Zeichnung bleibt, wie sie
+ist. Ein Klick auf ein Feld wählt die Farbe zum Malen. Zugewiesen wird per Knopf:
+
+- **Für Sprite nutzen** — der Sprite bekommt die Palette, die Zeichnung behält ihr
+  Aussehen. Farben, die es in der neuen Palette nicht gibt, bleiben als Bildfarben stehen.
+- **Sprite umfärben** — die Indizes bleiben, die Farben kommen aus der neuen Palette.
+
+Beides ist ein normaler Undo-Schritt.
+
+Daneben kann ein Pixel eine **freie Farbe** tragen: seinen Hex-Wert direkt statt eines
+Index. Die entstehen über die Pipette und beim Abpausen mit „Rohfarben“ oder „N Farben“.
+Sie werden ganz normal gespeichert und exportiert. Die häufigsten stehen als kleine Felder
+in der Farbzeile, alle über **„+N Bildfarben“** (nach Häufigkeit sortiert). Von dort lassen
+sie sich **in die Palette aufnehmen**, solange sie in 255 Plätze passen.
+
+**Bild → Palette …** macht aus allen Farben des Bildes eine Palette. Man wählt, wie viele:
+alle (bis 255, exakt) oder reduziert auf 128 / 64 / 32 / 16 / 8 / 4 — mit Vorher/Nachher-
+Vorschau, bevor das Bild umgeschrieben wird. Ein Foto mit Tausenden Farben sieht mit 255
+fast aus wie vorher; 16 oder 32 geben den typischen Pixel-Art-Look.
+
+**Farbzeile**: 0–9 groß (Tasten), danach bis zu 32 weitere Palettenfarben als kleine
+Felder; bei mehr öffnet `+N` das ganze Raster im Paletten-Panel.
 
 | Index | Konvention (kein Zwang) |
 |---|---|
@@ -88,9 +132,10 @@ gewählt, dass die Figur wiedererkennbar wird; die Namen sind beschreibend statt
 geliehen. Alle neun Slots sind belegt, und jede Kontur hebt sich vom mittleren Ton
 mindestens 3:1 ab — sonst verschwindet sie beim Zeichnen.
 
-**Eigene Paletten**: über `+ Palette` neu anlegen oder mit `Kopie bearbeiten` aus einer
-eingebauten ableiten. Danach sind die Swatches rechts direkt anklickbar — eine
-Farbänderung färbt alle Pixel mit diesem Index sofort um.
+**Eigene Paletten**: über `+ Palette` neu anlegen (mit `+ Farbe` / `− Letzte` auf jede
+Größe bis 255) oder mit `Kopie bearbeiten` aus einer eingebauten ableiten. Ein
+**Doppelklick** auf ein Feld im Raster ändert die Farbe — alle Pixel mit diesem Index
+färben sich mit.
 
 Jeder Sprite merkt sich seine eigene Palette.
 
@@ -278,7 +323,7 @@ ganzen Sprite bleibt die Fläche gleich und Ecken außerhalb fallen weg.
 
 ## Schablone (Foto-Vorlage)
 
-1. Bild laden, mit `Shift`+Linksklick ziehen positionieren
+1. Bild laden, mit `Shift`+`Alt`+Linksklick ziehen positionieren
 2. **Reduzieren auf N Farben** — Median-Cut, gibt flache Flächen statt Foto-Rauschen
 3. **Bild → Palette** — macht aus den Bildfarben eine editierbare Palette
 4. **Hintergrund entfernen**, **Glätten**, **Outline**
@@ -295,14 +340,16 @@ Die Schablone überlebt einen Reload (eigener localStorage-Key).
 | Linksklick | Malen (ziehen = durchgehend) |
 | Rechtsklick | Löschen (ziehen = durchgehend) |
 | `Alt` + Klick | Pipette auf das Grid |
-| `Shift` halten | Schablone in den Vordergrund |
-| `Shift` + Links + Ziehen | Schablone verschieben |
-| `Shift` + Rechtsklick | Schablonen-Pipette (exakter Hex) |
+| `Shift` + `Alt` halten | Schablone in den Vordergrund |
+| `Shift` + `Alt` + Links + Ziehen | Schablone verschieben |
+| `Shift` + `Alt` + Rechtsklick | Schablonen-Pipette (exakter Hex) |
+| Mausrad / `Shift` + Mausrad | hoch–runter / links–rechts scrollen |
+| `Strg` + Mausrad | Zoom auf den Mauszeiger |
+| `Leertaste` + Ziehen | Bild verschieben (auch mittlere Maustaste) |
 | `0`–`9` | Farb-Index wählen |
 | `P` `B` `S` `F` `E` `W` | Stift · Pinsel · Spray · Füllen · Radierer · Zauberstab |
 | `I` `R` `O` | Linie · Rechteck · Ellipse |
 | `A` `L` `K` | Auswahl · Lasso · Farbwahl |
-| `Strg` + Mausrad | Zoomen |
 | Ziehen in der Auswahl | Bereich ausschneiden und verschieben |
 | `Alt` + Ziehen | Kopie verschieben, Original bleibt |
 | Pfeiltasten | Auswahl pixelweise verschieben |
@@ -386,6 +433,9 @@ sprite-editor/
     ├── filesystem.js   ← Speicherort merken (File System Access API)
     ├── toast.js        ← Confirm-/Info-Toast statt window.confirm
     ├── pwa.js          ← meldet den Service Worker an (Startseite + Editor)
+    ├── dock.js         ← Seitenleisten als Icon-Spalte, unter 1280 px Kopfzeile als Menü
+    ├── icons.js        ← alle Pixel-Icons (8×8) + applyIcons() für [data-icon]
+    ├── layout.js       ← Panels/Leisten anpinnen, schweben lassen, verschieben, Größe ändern
     └── app.js          ← Init, Events, Verdrahtung
 ```
 

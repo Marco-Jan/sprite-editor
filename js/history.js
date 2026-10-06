@@ -5,6 +5,8 @@
 // nicht einzelne Pixel. Snapshot bei beginStroke(), Vergleich bei
 // commitStroke() — nur bei echter Änderung wird gespeichert.
 // Persistenz: bewusst nur in-memory (wie bei jedem Design-Tool).
+// Mit im Eintrag steckt die Palette des Sprites — so ist auch "Sprite
+// umfärben" (andere Palette zuweisen) ein normaler Undo-Schritt.
 import { state, sprites } from './state.js';
 import { dc } from './data.js';
 
@@ -44,15 +46,17 @@ export function beginStroke() {
   const id = state.curSprite;
   const grid = gridOf(id);
   if (!grid) return;
-  pendingSnapshot = { id, before: dc(grid) };
+  pendingSnapshot = { id, before: dc(grid), palBefore: sprites[id].palette };
 }
 
 // Abschluss: nur bei echter Änderung landet ein Eintrag im Undo-Stack.
 export function commitStroke() {
   if (!pendingSnapshot) return;
-  const after = gridOf(pendingSnapshot.id);
-  if (after && !gridsEqual(pendingSnapshot.before, after)) {
-    undoStack.push({ id: pendingSnapshot.id, before: pendingSnapshot.before, after: dc(after) });
+  const { id, before, palBefore } = pendingSnapshot;
+  const after = gridOf(id);
+  const palAfter = sprites[id]?.palette;
+  if (after && (!gridsEqual(before, after) || palBefore !== palAfter)) {
+    undoStack.push({ id, before, after: dc(after), palBefore, palAfter });
     if (undoStack.length > MAX_HISTORY) undoStack.shift();
     redoStack.length = 0;
     historyCallbacks.onChange();
@@ -87,6 +91,8 @@ function restore(entry, which) {
   // Der Sprite kann inzwischen gelöscht worden sein — Eintrag dann verwerfen.
   if (!sprites[entry.id]) return false;
   setGridOf(entry.id, dc(entry[which]));
+  const pal = which === 'before' ? entry.palBefore : entry.palAfter;
+  if (pal) sprites[entry.id].palette = pal;
   // Ansicht auf den betroffenen Sprite wechseln, sonst sieht man die Wirkung nicht.
   if (state.curSprite !== entry.id) state.curSprite = entry.id;
   return true;

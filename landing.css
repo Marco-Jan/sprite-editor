@@ -348,13 +348,19 @@ kbd {
   margin-inline: auto;
   padding: 0.7rem var(--gutter);
 }
-.brand { display: inline-flex; align-items: center; gap: 0.55rem; }
-.brand-mark { width: 22px; height: 22px; image-rendering: pixelated; }
+.brand { display: inline-flex; align-items: center; gap: 0.65rem; }
+/* 32 px = 2x das 16er-Raster des Icons, so bleiben die Stufen scharf. */
+.brand-mark { width: 32px; height: 32px; image-rendering: pixelated; }
 .brand-name {
   color: var(--text);
-  font-size: var(--fs-md);
-  font-weight: 650;
-  letter-spacing: -0.015em;
+  font-size: 1.375rem;
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+@media (max-width: 560px) {
+  .brand-mark { width: 24px; height: 24px; }
+  .brand-name { font-size: 1.125rem; }
 }
 .brand-bit { color: var(--ramp-1); }
 /* Sprachumschalter (DE / EN) — wird von js/landing-i18n.js eingesetzt.
@@ -954,6 +960,9 @@ kbd {
 .closer-inner h2 { max-width: 18ch; }
 .closer-inner .lead { max-width: 44ch; }
 .closer-inner .btn { margin-top: var(--sp-2); }
+/* .btn setzt display selbst — ohne das hier wäre der Installieren-Knopf
+   trotz hidden immer zu sehen. */
+[hidden] { display: none !important; }
 .closer-inner .note { color: var(--text-muted); }
 .closer-inner h2,
 .closer-inner .lead,
@@ -975,8 +984,9 @@ kbd {
   align-items: center;
   gap: 0.5rem;
   color: var(--text);
-  font-size: var(--fs-sm);
-  font-weight: 600;
+  font-size: 1.0625rem;
+  font-weight: 750;
+  letter-spacing: -0.03em;
 }
 .foot-brand img { image-rendering: pixelated; }
 .foot-note {
@@ -1330,4 +1340,25 @@ kbd {
    im title-Attribut und in aria-label. */
 @media (max-width: 700px) {
   .lang-btn { padding: 4px 6px; font-size: 0; gap: 0; letter-spacing: 0; }
+}
+
+/* ── Kopfzeile auf Tablet und Handy ─────────────────────────────────
+   Marke, Editor-Knopf und Sprachumschalter muessen nebeneinander passen.
+   Unter 900px (Tablet hochkant) faellt die Stationen-Navigation weg und
+   der Umschalter zeigt nur noch Flaggen; auf dem Handy wird alles enger. */
+@media (max-width: 900px) {
+  .topnav { display: none; }
+  .brand { margin-inline-end: auto; }
+  .lang-btn { padding: 4px 6px; font-size: 0; gap: 0; letter-spacing: 0; }
+}
+@media (max-width: 560px) {
+  .topbar-inner { gap: var(--sp-3); }
+  .topbar-inner .btn--sm { padding: 0.45rem 0.7rem; }
+  .lang-switch { gap: 0; padding: 1px; }
+  .lang-btn { padding: 3px; }
+}
+/* Sehr schmale Handys: die Marke behaelt nur das Icon, der Name steht
+   ohnehin gross in der Zeile ueber der Ueberschrift. */
+@media (max-width: 400px) {
+  .topbar .brand-name { display: none; }
 }

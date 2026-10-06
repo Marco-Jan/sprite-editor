@@ -61,7 +61,7 @@
     'hero.h1':      'Pixel art editor for sprites',
     'hero.lead':    'An empty grid, a handful of colors, and off you go. The editor runs entirely in the browser — no build, no account, no cloud.',
     'hero.watch':   'Just watch for now',
-    'hero.note':    'Your pixels stay in <code>localStorage</code> on your own machine. Nothing is uploaded.',
+    'hero.note':    'Your pixels stay in <code>localStorage</code> on your own machine. Nothing is uploaded — and once opened, the editor works offline too.',
 
     's1.eyebrow':   '<span class="st-num">01</span> The first pixel',
     's1.h2':        'This is how a sprite grows.',
@@ -157,7 +157,8 @@
 
     'end.h2':       'The grid is still empty.',
     'end.lead':     'No account, no server, no cost. The editor opens and waits for your first pixel.',
-    'end.note':     'Once loaded, the page keeps working offline.',
+    'end.note':     'Once opened, everything works without internet — even the PDF export. Installed as an app, spritebit starts like a program of its own.',
+    'end.install':  'Install as app',
 
     'foot.note':    'The pixel art in the backdrop comes from my own stream overlay.',
     'foot.license': 'MIT license',
@@ -206,7 +207,7 @@
     'hero.h1':      'Pixel Art Editor fia Sprites',
     'hero.lead':    'A laares Raster, a Handvoll Farben, und du moist los. Da Editor rennt komplett im Browser — ka Build, ka Konto, ka Cloud.',
     'hero.watch':   'Erst amoi zuaschaun',
-    'hero.note':    'Deine Pixel bleibn im <code>localStorage</code> auf deim Rechner. Es wird nix aufeglodn.',
+    'hero.note':    'Deine Pixel bleibn im <code>localStorage</code> auf deim Rechner. Es wird nix aufeglodn — und amoi offn, rennt da Editor a offline.',
 
     's1.eyebrow':   '<span class="st-num">01</span> Da erste Pixel',
     's1.h2':        'So entsteht a Sprite.',
@@ -235,7 +236,8 @@
 
     'end.h2':       'S’Raster is no laar.',
     'end.lead':     'Ka Konto, ka Server, kane Kostn. Da Editor geht auf und wart auf dein erstn Pixel.',
-    'end.note':     'Amoi glodn, rennt d’Seitn a offline weiter — außer da PDF-Export, der hoit sich sei Bibliothek bei da erstn Verwendung.',
+    'end.note':     'Amoi offn, rennt ois a ohne Internet — sogar da PDF-Export. Ois App installiert, startet spritebit wia a eigns Programm.',
+    'end.install':  'Ois App installiern',
 
     'foot.note':    'D’Pixel-Art in da Kulissn kummt aus’m eigenen Stream-Overlay.',
     'foot.license': 'MIT-Lizenz',

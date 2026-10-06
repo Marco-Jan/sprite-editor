@@ -73,18 +73,19 @@
     <span id="doc-title" class="doc-title"></span>
     <span id="save-indicator" class="save-indicator" data-i18n="tb.saved">gespeichert</span>
 
-    <div class="topbar-actions">
-      <button class="btn" id="help-btn" data-i18n="tb.help" data-i18n-attr="title:tb.helpTitle" title="Hilfe &amp; Erklärungen">Hilfe</button>
-      <button class="btn" id="save-dir-btn" data-i18n="tb.dir" data-i18n-attr="title:tb.dirTitle" title="Speicherort für Dateien wählen — wird gemerkt">Speicherort</button>
-      <button class="btn" id="save-file-btn" data-i18n="tb.save" data-i18n-attr="title:tb.saveTitle" title="Projekt als JSON-Datei sichern">Projekt sichern</button>
-      <button class="btn" id="load-file-btn" data-i18n="tb.open" data-i18n-attr="title:tb.openTitle" title="Projekt aus JSON-Datei laden">Öffnen</button>
+    <button class="btn menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="topbar-actions" data-i18n-attr="title:tb.menu;aria-label:tb.menu" title="Menü" aria-label="Menü"><span class="ico" data-icon="menu"></span></button>
+    <div class="topbar-actions" id="topbar-actions">
+      <button class="btn" id="help-btn" data-i18n-attr="title:tb.helpTitle" title="Hilfe &amp; Erklärungen"><span class="ico" data-icon="help"></span><span class="btn-label" data-i18n="tb.help">Hilfe</span></button>
+      <button class="btn" id="save-dir-btn" data-i18n-attr="title:tb.dirTitle" title="Speicherort für Dateien wählen — wird gemerkt"><span class="ico" data-icon="folder"></span><span class="btn-label" data-i18n="tb.dir">Speicherort</span></button>
+      <button class="btn" id="save-file-btn" data-i18n-attr="title:tb.saveTitle" title="Projekt als JSON-Datei sichern"><span class="ico" data-icon="save"></span><span class="btn-label" data-i18n="tb.save">Projekt sichern</span></button>
+      <button class="btn" id="load-file-btn" data-i18n-attr="title:tb.openTitle" title="Projekt aus JSON-Datei laden"><span class="ico" data-icon="open"></span><span class="btn-label" data-i18n="tb.open">Öffnen</span></button>
       <input type="file" id="load-file-input" accept=".json,application/json" hidden>
-      <button class="btn btn--danger" id="clear-storage-btn" data-i18n="tb.reset" data-i18n-attr="title:tb.resetTitle" title="Alles zurücksetzen">Zurücksetzen</button>
-      <div class="lang-switch" role="group" aria-label="Sprache / Language">
-        <button type="button" class="lang-btn" data-lang="de" lang="de" title="Deutsch" aria-label="Deutsch">DE</button>
-        <button type="button" class="lang-btn" data-lang="at" lang="de-AT" title="Österreichisch" aria-label="Österreichisch">AT</button>
-        <button type="button" class="lang-btn" data-lang="en" lang="en" title="English" aria-label="English">EN</button>
-      </div>
+      <button class="btn btn--danger" id="clear-storage-btn" data-i18n-attr="title:tb.resetTitle" title="Alles zurücksetzen"><span class="ico" data-icon="reset"></span><span class="btn-label" data-i18n="tb.reset">Zurücksetzen</span></button>
+    </div>
+    <div class="lang-switch" role="group" aria-label="Sprache / Language">
+      <button type="button" class="lang-btn" data-lang="de" lang="de" title="Deutsch" aria-label="Deutsch">DE</button>
+      <button type="button" class="lang-btn" data-lang="at" lang="de-AT" title="Österreichisch" aria-label="Österreichisch">AT</button>
+      <button type="button" class="lang-btn" data-lang="en" lang="en" title="English" aria-label="English">EN</button>
     </div>
   </header>
 
@@ -110,7 +111,7 @@
               <span class="field-label" data-i18n="sp.layer">Ebene</span>
               <select id="ref-select" class="input input--sm" data-i18n-attr="title:sp.refTitle"
                       title="Zweiter Sprite als halbdurchsichtige Vorlage — bearbeitet wird weiter der aktive"></select>
-              <button class="icon-btn" id="ref-visible-btn" data-i18n-attr="title:sp.refToggle" title="Ebene ein-/ausblenden" aria-pressed="true">👁</button>
+              <button class="icon-btn" id="ref-visible-btn" data-i18n-attr="title:sp.refToggle" title="Ebene ein-/ausblenden" aria-pressed="true"><span class="ico" data-icon="eye"></span></button>
             </div>
             <div class="field field--inline" id="ref-controls" hidden>
               <input type="range" id="ref-opacity" min="5" max="100" value="45" data-i18n-attr="title:sp.refOpacity" title="Deckkraft der Ebene">
@@ -190,8 +191,8 @@
 
         <div class="stage-head-right">
           <div class="btn-group">
-            <button class="btn" id="undo-btn" data-i18n-attr="title:stage.undo" title="Rückgängig (Strg+Z)" disabled>↶</button>
-            <button class="btn" id="redo-btn" data-i18n-attr="title:stage.redo" title="Wiederholen (Strg+Y)" disabled>↷</button>
+            <button class="btn" id="undo-btn" data-i18n-attr="title:stage.undo" title="Rückgängig (Strg+Z)" disabled><span class="ico" data-icon="undo"></span></button>
+            <button class="btn" id="redo-btn" data-i18n-attr="title:stage.redo" title="Wiederholen (Strg+Y)" disabled><span class="ico" data-icon="redo"></span></button>
           </div>
           <div class="btn-group" role="group" data-i18n-attr="aria-label:stage.bgGroup" aria-label="Editor-Hintergrund">
             <button class="btn is-active" id="bg-dark-btn" data-i18n="stage.bgDark" data-i18n-attr="title:stage.bgDarkTitle" title="Dunkler Hintergrund">Dunkel</button>
@@ -202,35 +203,39 @@
             <input type="range" id="cell-size" min="4" max="32" value="16">
             <span id="cell-size-val" class="field-value">16px</span>
           </label>
-          <button class="btn" id="fullscreen-btn" title="Vollbild (Esc zum Schließen)">⤢ Vollbild</button>
+          <button class="btn" id="fullscreen-btn" title="Vollbild (Esc zum Schließen)"><span class="ico" data-icon="expand"></span><span class="btn-label">Vollbild</span></button>
         </div>
       </div>
+
+      <!-- Andock-Zonen für Werkzeugleiste und Farbzeile: oben, links, rechts,
+           unten. Welche Leiste wo steht, entscheidet js/layout.js. -->
+      <div class="bar-zone" data-zone="top">
 
       <!-- Werkzeugleiste — eine einzige, auch im Vollbild -->
       <div id="toolbar">
         <div class="tool-group" role="group" data-i18n-attr="aria-label:tool.groupPaint" aria-label="Malwerkzeuge">
-          <button class="tool-btn is-active" data-tool="pencil" aria-pressed="true" data-i18n-attr="title:tool.pencilTitle" title="Stift — einzelne Pixel (P)"><span class="tool-ico">✎</span><span class="tool-name" data-i18n="tool.pencil">Stift</span></button>
-          <button class="tool-btn" data-tool="brush"  aria-pressed="false" data-i18n-attr="title:tool.brushTitle" title="Pinsel — Fläche, Stärke = Dichte (B)"><span class="tool-ico">🖌</span><span class="tool-name" data-i18n="tool.brush">Pinsel</span></button>
-          <button class="tool-btn" data-tool="spray"  aria-pressed="false" data-i18n-attr="title:tool.sprayTitle" title="Spray — zufällige Pixel (S)"><span class="tool-ico">✳</span><span class="tool-name" data-i18n="tool.spray">Spray</span></button>
-          <button class="tool-btn" data-tool="fill"   aria-pressed="false" data-i18n-attr="title:tool.fillTitle" title="Füllen — Flood-Fill (F)"><span class="tool-ico">◍</span><span class="tool-name" data-i18n="tool.fill">Füllen</span></button>
-          <button class="tool-btn" data-tool="eraser" aria-pressed="false" data-i18n-attr="title:tool.eraserTitle" title="Radierer (E)"><span class="tool-ico">⌫</span><span class="tool-name" data-i18n="tool.eraser">Radierer</span></button>
-          <button class="tool-btn" data-tool="wand"   aria-pressed="false" data-i18n-attr="title:tool.wandTitle" title="Zauberstab — ähnliche Fläche löschen (W)"><span class="tool-ico">✦</span><span class="tool-name" data-i18n="tool.wand">Zauberstab</span></button>
+          <button class="tool-btn is-active" data-tool="pencil" aria-pressed="true" data-i18n-attr="title:tool.pencilTitle" title="Stift — einzelne Pixel (P)"><span class="tool-ico" data-icon="pencil"></span><span class="tool-name" data-i18n="tool.pencil">Stift</span></button>
+          <button class="tool-btn" data-tool="brush"  aria-pressed="false" data-i18n-attr="title:tool.brushTitle" title="Pinsel — Fläche, Stärke = Dichte (B)"><span class="tool-ico" data-icon="brush"></span><span class="tool-name" data-i18n="tool.brush">Pinsel</span></button>
+          <button class="tool-btn" data-tool="spray"  aria-pressed="false" data-i18n-attr="title:tool.sprayTitle" title="Spray — zufällige Pixel (S)"><span class="tool-ico" data-icon="spray"></span><span class="tool-name" data-i18n="tool.spray">Spray</span></button>
+          <button class="tool-btn" data-tool="fill"   aria-pressed="false" data-i18n-attr="title:tool.fillTitle" title="Füllen — Flood-Fill (F)"><span class="tool-ico" data-icon="fill"></span><span class="tool-name" data-i18n="tool.fill">Füllen</span></button>
+          <button class="tool-btn" data-tool="eraser" aria-pressed="false" data-i18n-attr="title:tool.eraserTitle" title="Radierer (E)"><span class="tool-ico" data-icon="eraser"></span><span class="tool-name" data-i18n="tool.eraser">Radierer</span></button>
+          <button class="tool-btn" data-tool="wand"   aria-pressed="false" data-i18n-attr="title:tool.wandTitle" title="Zauberstab — ähnliche Fläche löschen (W)"><span class="tool-ico" data-icon="wand"></span><span class="tool-name" data-i18n="tool.wand">Zauberstab</span></button>
         </div>
 
         <div class="tool-sep" aria-hidden="true"></div>
 
         <div class="tool-group" role="group" data-i18n-attr="aria-label:tool.groupShapes" aria-label="Formen">
-          <button class="tool-btn" data-tool="line"    aria-pressed="false" data-i18n-attr="title:tool.lineTitle" title="Linie ziehen (I)"><span class="tool-ico">╱</span><span class="tool-name" data-i18n="tool.line">Linie</span></button>
-          <button class="tool-btn" data-tool="rect"    aria-pressed="false" data-i18n-attr="title:tool.rectTitle" title="Rechteck ziehen (R)"><span class="tool-ico">▭</span><span class="tool-name" data-i18n="tool.rect">Rechteck</span></button>
-          <button class="tool-btn" data-tool="ellipse" aria-pressed="false" data-i18n-attr="title:tool.ellipseTitle" title="Ellipse ziehen (O)"><span class="tool-ico">◯</span><span class="tool-name" data-i18n="tool.ellipse">Ellipse</span></button>
+          <button class="tool-btn" data-tool="line"    aria-pressed="false" data-i18n-attr="title:tool.lineTitle" title="Linie ziehen (I)"><span class="tool-ico" data-icon="line"></span><span class="tool-name" data-i18n="tool.line">Linie</span></button>
+          <button class="tool-btn" data-tool="rect"    aria-pressed="false" data-i18n-attr="title:tool.rectTitle" title="Rechteck ziehen (R)"><span class="tool-ico" data-icon="rect"></span><span class="tool-name" data-i18n="tool.rect">Rechteck</span></button>
+          <button class="tool-btn" data-tool="ellipse" aria-pressed="false" data-i18n-attr="title:tool.ellipseTitle" title="Ellipse ziehen (O)"><span class="tool-ico" data-icon="ellipse"></span><span class="tool-name" data-i18n="tool.ellipse">Ellipse</span></button>
         </div>
 
         <div class="tool-sep" aria-hidden="true"></div>
 
         <div class="tool-group" role="group" data-i18n-attr="aria-label:tool.groupSelect" aria-label="Auswahl">
-          <button class="tool-btn" data-tool="select" aria-pressed="false" data-i18n-attr="title:tool.marqueeTitle" title="Rechteck-Auswahl — aufziehen, ausschneiden, verschieben (A)"><span class="tool-ico">⬚</span><span class="tool-name" data-i18n="tool.marquee">Auswahl</span></button>
-          <button class="tool-btn" data-tool="lasso"  aria-pressed="false" data-i18n-attr="title:tool.lassoTitle" title="Lasso — Form frei umfahren, wird beim Loslassen geschlossen (L)"><span class="tool-ico">➰</span><span class="tool-name" data-i18n="tool.lasso">Lasso</span></button>
-          <button class="tool-btn" data-tool="magic"  aria-pressed="false" data-i18n-attr="title:tool.colorSelTitle" title="Farbauswahl — zusammenhängende ähnliche Fläche wählen, Toleranz steuert wie viel mitgeht (K)"><span class="tool-ico">✧</span><span class="tool-name" data-i18n="tool.colorSel">Farbwahl</span></button>
+          <button class="tool-btn" data-tool="select" aria-pressed="false" data-i18n-attr="title:tool.marqueeTitle" title="Rechteck-Auswahl — aufziehen, ausschneiden, verschieben (A)"><span class="tool-ico" data-icon="select"></span><span class="tool-name" data-i18n="tool.marquee">Auswahl</span></button>
+          <button class="tool-btn" data-tool="lasso"  aria-pressed="false" data-i18n-attr="title:tool.lassoTitle" title="Lasso — Form frei umfahren, wird beim Loslassen geschlossen (L)"><span class="tool-ico" data-icon="lasso"></span><span class="tool-name" data-i18n="tool.lasso">Lasso</span></button>
+          <button class="tool-btn" data-tool="magic"  aria-pressed="false" data-i18n-attr="title:tool.colorSelTitle" title="Farbauswahl — zusammenhängende ähnliche Fläche wählen, Toleranz steuert wie viel mitgeht (K)"><span class="tool-ico" data-icon="magic"></span><span class="tool-name" data-i18n="tool.colorSel">Farbwahl</span></button>
         </div>
 
         <div class="tool-sep" aria-hidden="true"></div>
@@ -238,8 +243,8 @@
         <div class="tool-group" id="mirror-group" role="group" data-i18n-attr="aria-label:tool.mirror" aria-label="Symmetrie">
           <span class="field-label" data-i18n="tool.mirror">Symmetrie</span>
           <div class="btn-group">
-            <button class="btn" id="mirror-x-btn" aria-pressed="false" data-i18n-attr="title:tool.mirrorX" title="Senkrechte Achse — was links entsteht, entsteht auch rechts">↔</button>
-            <button class="btn" id="mirror-y-btn" aria-pressed="false" data-i18n-attr="title:tool.mirrorY" title="Waagerechte Achse — oben und unten gespiegelt">↕</button>
+            <button class="btn" id="mirror-x-btn" aria-pressed="false" data-i18n-attr="title:tool.mirrorX" title="Senkrechte Achse — was links entsteht, entsteht auch rechts"><span class="ico" data-icon="mirrorX"></span></button>
+            <button class="btn" id="mirror-y-btn" aria-pressed="false" data-i18n-attr="title:tool.mirrorY" title="Waagerechte Achse — oben und unten gespiegelt"><span class="ico" data-icon="mirrorY"></span></button>
           </div>
         </div>
 
@@ -280,26 +285,56 @@
         <div class="tool-group" id="select-group" hidden>
           <span class="field-label" data-i18n="tool.selLabel">Auswahl</span>
           <div class="btn-group">
-            <button class="btn" id="sel-all-btn"    data-i18n="tool.selAll"    data-i18n-attr="title:tool.selAllTitle"    title="Alles auswählen (Strg+A)">Alles</button>
-            <button class="btn" id="sel-cut-btn"    data-i18n="tool.selCut"    data-i18n-attr="title:tool.selCutTitle"    title="Ausschneiden (Strg+X)">Ausschneiden</button>
-            <button class="btn" id="sel-copy-btn"   data-i18n="tool.selCopy"   data-i18n-attr="title:tool.selCopyTitle"   title="Kopieren (Strg+C)">Kopieren</button>
-            <button class="btn" id="sel-paste-btn"  data-i18n="tool.selPaste"  data-i18n-attr="title:tool.selPasteTitle"  title="Einfügen (Strg+V)">Einfügen</button>
-            <button class="btn" id="sel-fill-btn"   data-i18n="tool.selFill"   data-i18n-attr="title:tool.selFillTitle"   title="Auswahl mit der aktuellen Farbe füllen">Füllen</button>
-            <button class="btn btn--danger-soft" id="sel-delete-btn" data-i18n="tool.selDelete" data-i18n-attr="title:tool.selDeleteTitle" title="Auswahl leeren (Entf)">Leeren</button>
-            <button class="btn" id="sel-none-btn"   data-i18n="tool.selNone"   data-i18n-attr="title:tool.selNoneTitle"   title="Auswahl aufheben (Esc)">Aufheben</button>
+            <button class="btn" id="sel-all-btn"    data-i18n-attr="title:tool.selAllTitle"    title="Alles auswählen (Strg+A)"><span class="ico" data-icon="selAll"></span><span class="btn-label" data-i18n="tool.selAll">Alles</span></button>
+            <button class="btn" id="sel-cut-btn"    data-i18n-attr="title:tool.selCutTitle"    title="Ausschneiden (Strg+X)"><span class="ico" data-icon="cut"></span><span class="btn-label" data-i18n="tool.selCut">Ausschneiden</span></button>
+            <button class="btn" id="sel-copy-btn"   data-i18n-attr="title:tool.selCopyTitle"   title="Kopieren (Strg+C)"><span class="ico" data-icon="copy"></span><span class="btn-label" data-i18n="tool.selCopy">Kopieren</span></button>
+            <button class="btn" id="sel-paste-btn"  data-i18n-attr="title:tool.selPasteTitle"  title="Einfügen (Strg+V)"><span class="ico" data-icon="paste"></span><span class="btn-label" data-i18n="tool.selPaste">Einfügen</span></button>
+            <button class="btn" id="sel-fill-btn"   data-i18n-attr="title:tool.selFillTitle"   title="Auswahl mit der aktuellen Farbe füllen"><span class="ico" data-icon="fill"></span><span class="btn-label" data-i18n="tool.selFill">Füllen</span></button>
+            <button class="btn btn--danger-soft" id="sel-delete-btn" data-i18n-attr="title:tool.selDeleteTitle" title="Auswahl leeren (Entf)"><span class="ico" data-icon="trash"></span><span class="btn-label" data-i18n="tool.selDelete">Leeren</span></button>
+            <button class="btn" id="sel-none-btn"   data-i18n-attr="title:tool.selNoneTitle"   title="Auswahl aufheben (Esc)"><span class="ico" data-icon="deselect"></span><span class="btn-label" data-i18n="tool.selNone">Aufheben</span></button>
           </div>
         </div>
       </div>
 
-      <div id="quick-palette" role="group" data-i18n-attr="aria-label:tool.quickPal" aria-label="Farb-Schnellwahl"></div>
-
-      <div id="editor-canvas-area">
-        <div id="editor-canvas-wrap">
-          <canvas id="editor-canvas"></canvas>
-          <img id="template-overlay" alt="" hidden>
-          <div id="brush-cursor" hidden></div>
+      <!-- Aktuelle Farbe + Schnellwahl — immer sichtbar über der Zeichenfläche -->
+      <div id="color-bar">
+        <button type="button" id="current-color" class="current-color" data-i18n-attr="title:pal.currentTitle" title="Klicken — freien Farbwähler öffnen">
+          <span class="cc-swatch is-transparent"></span>
+          <span class="cc-info">
+            <span class="cc-label">Aktuelle Farbe</span>
+            <span class="cc-hex">—</span>
+          </span>
+          <span class="cc-pick ico" data-icon="picker" aria-hidden="true"></span>
+          <input type="color" id="free-color-picker" class="hidden-color-input" data-i18n-attr="aria-label:pal.freePicker" aria-label="Freie Farbe wählen">
+        </button>
+        <button type="button" class="btn" id="show-color-btn" aria-pressed="false"
+                data-i18n-attr="title:pal.showTitle" title="Zeigt, wo die aktuelle Farbe im Bild vorkommt — alles andere wird abgedunkelt"><span class="ico" data-icon="spot"></span><span class="btn-label" data-i18n="pal.show">Zeigen</span></button>
+        <div id="quick-palette" role="group" data-i18n-attr="aria-label:tool.quickPal" aria-label="Farb-Schnellwahl"></div>
+        <!-- Bildfarben: freie Farben im Sprite ohne Paletten-Platz (Rohfarben-Trace, Pipette) -->
+        <div class="free-colors" id="free-colors" hidden>
+          <div class="fc-top" id="free-colors-top"></div>
+          <button type="button" class="btn free-colors-btn" id="free-colors-btn" aria-expanded="false" aria-controls="free-colors-list"
+                  data-i18n-attr="title:fc.btnTitle" title="Farben im Sprite, die keinen Platz in der Palette haben">
+            <span class="fc-preview" aria-hidden="true"></span><span class="btn-label" id="free-colors-count"></span>
+          </button>
+          <div class="free-colors-list" id="free-colors-list" hidden></div>
         </div>
       </div>
+
+      </div>
+
+      <div id="stage-body">
+        <div class="bar-zone bar-zone--side" data-zone="left"></div>
+        <div id="editor-canvas-area">
+          <div id="editor-canvas-wrap">
+            <canvas id="editor-canvas"></canvas>
+            <img id="template-overlay" alt="" hidden>
+            <div id="brush-cursor" hidden></div>
+          </div>
+        </div>
+        <div class="bar-zone bar-zone--side" data-zone="right"></div>
+      </div>
+      <div class="bar-zone" data-zone="bottom"></div>
 
       <div id="info-bar" role="status" aria-live="polite"></div>
 
@@ -310,40 +345,41 @@
 
       <section class="panel" data-panel="palette">
         <div class="panel-head">
-          <h2 class="panel-title" data-i18n="pal.title">Farben</h2>
+          <h2 class="panel-title" data-i18n="pal.title">Palette</h2>
           <span class="badge badge--builtin" id="palette-origin">eingebaut</span>
           <button class="panel-toggle" type="button" aria-expanded="true"></button>
         </div>
         <div class="panel-body">
 
-          <button type="button" id="current-color" class="current-color" data-i18n-attr="title:pal.currentTitle" title="Klicken — freien Farbwähler öffnen">
-            <span class="cc-swatch is-transparent"></span>
-            <span class="cc-info">
-              <span class="cc-label">Aktuelle Farbe</span>
-              <span class="cc-hex">—</span>
-            </span>
-            <span class="cc-pick" aria-hidden="true">◈</span>
-            <input type="color" id="free-color-picker" class="hidden-color-input" data-i18n-attr="aria-label:pal.freePicker" aria-label="Freie Farbe wählen">
-          </button>
-
           <div class="palette-picker">
             <select id="palette-select" class="input" data-i18n-attr="aria-label:pal.select" aria-label="Palette wählen"></select>
-            <button class="icon-btn" id="palette-edit-btn" data-i18n-attr="title:pal.edit" title="Palette bearbeiten" hidden>✎</button>
-            <button class="icon-btn is-danger" id="palette-del-btn" data-i18n-attr="title:pal.del" title="Palette löschen" hidden>×</button>
+            <button class="icon-btn" id="palette-edit-btn" data-i18n-attr="title:pal.edit" title="Palette bearbeiten" hidden><span class="ico" data-icon="pencil"></span></button>
+            <button class="icon-btn is-danger" id="palette-del-btn" data-i18n-attr="title:pal.del" title="Palette löschen" hidden><span class="ico" data-icon="close"></span></button>
           </div>
 
           <input type="search" id="palette-search" class="input input--sm" data-i18n-attr="placeholder:pal.search" placeholder="Palette suchen…" autocomplete="off">
 
-          <div class="btn-row">
-            <button class="btn btn--primary" id="palette-add-btn" data-i18n="pal.add" data-i18n-attr="title:pal.addTitle" title="Neue eigene Palette anlegen">+ Palette</button>
-            <button class="btn" id="palette-fork-btn" data-i18n="pal.fork" data-i18n-attr="title:pal.forkTitle" title="Diese eingebaute Palette als eigene Kopie anlegen — dann ist sie änderbar">Kopie bearbeiten</button>
+          <!-- Auswählen zeigt die Palette nur an — die Zeichnung ändert sich
+               erst über einen der zwei Knöpfe darunter (js/palettes.js). -->
+          <p class="pal-status" id="palette-status"></p>
+          <div id="palette-items" class="pal-grid"></div>
+          <p class="pal-pick" id="palette-pick-info"></p>
+
+          <div class="btn-row" id="palette-assign-row" hidden>
+            <button class="btn btn--primary" id="palette-use-btn" data-i18n="pal.use" data-i18n-attr="title:pal.useTitle"
+                    title="Der Sprite bekommt diese Palette — die Zeichnung behält ihr Aussehen">Für Sprite nutzen</button>
+            <button class="btn" id="palette-recolor-btn" data-i18n="pal.recolor" data-i18n-attr="title:pal.recolorTitle"
+                    title="Alle Pixel bekommen die Farben dieser Palette — Strg+Z macht es rückgängig">Sprite umfärben</button>
           </div>
-          <button class="btn btn--accent btn--block" id="palette-from-image-btn" data-i18n="pal.fromImage" data-i18n-attr="title:pal.fromImageTitle"
-                  title="Die Farben des aktuellen Bildes als editierbare Palette übernehmen">Bild → Palette</button>
 
           <p class="panel-hint" id="palette-hint"></p>
 
-          <div id="palette-items" class="color-list"></div>
+          <div class="btn-row">
+            <button class="btn" id="palette-add-btn" data-i18n="pal.add" data-i18n-attr="title:pal.addTitle" title="Neue eigene Palette anlegen">+ Palette</button>
+            <button class="btn" id="palette-fork-btn" data-i18n="pal.fork" data-i18n-attr="title:pal.forkTitle" title="Diese eingebaute Palette als eigene Kopie anlegen — dann ist sie änderbar">Kopie bearbeiten</button>
+          </div>
+          <button class="btn btn--accent btn--block" id="palette-from-image-btn" data-i18n="pal.fromImage" data-i18n-attr="title:pal.fromImageTitle"
+                  title="Die Farben des aktuellen Bildes als Palette übernehmen — mit Wahl der Farbanzahl">Bild → Palette …</button>
         </div>
       </section>
 
@@ -353,7 +389,17 @@
           <button class="panel-toggle" type="button" aria-expanded="false"></button>
         </div>
         <div class="panel-body">
-          <input type="file" id="template-file" accept="image/*" class="file-input">
+          <!-- Geladene Schablone sichtbar machen: das Datei-Feld selbst kann nach
+               einem Neuladen nie zeigen, dass ein Bild da ist. -->
+          <div class="tpl-status" id="template-status" hidden>
+            <img id="template-thumb" alt="">
+            <span class="tpl-status-text">
+              <b id="template-name"></b>
+              <span id="template-note" class="field-note"></span>
+            </span>
+          </div>
+          <label class="btn btn--block" for="template-file"><span class="ico" data-icon="open"></span><span class="btn-label" id="template-pick-label">Bild laden …</span></label>
+          <input type="file" id="template-file" accept="image/*" hidden>
 
           <label class="field">
             <span class="field-label" data-i18n="tpl.opacity">Deckkraft</span>
@@ -608,13 +654,38 @@
     </label>
 
     <div class="form-row">
-      <span class="form-label" data-i18n="mod.palColors">Farben</span>
+      <span class="form-label"><span data-i18n="mod.palColors">Farben</span> <span class="form-note" id="pal-size"></span></span>
       <div id="pal-color-rows" class="pal-rows"></div>
+      <div class="btn-row">
+        <button type="button" class="btn" id="pal-add-color" data-i18n="mod.palAdd">+ Farbe</button>
+        <button type="button" class="btn" id="pal-remove-color" data-i18n="mod.palRemove">− Letzte</button>
+      </div>
     </div>
 
     <div class="modal-actions">
       <button class="btn" id="pal-modal-cancel" data-i18n="mod.cancel">Abbrechen</button>
       <button class="btn btn--primary" id="pal-modal-create">Erstellen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bild → Palette: Farbanzahl wählen, Vorher/Nachher sehen, dann anwenden -->
+<div id="reduce-modal-overlay" class="modal-overlay">
+  <div class="modal modal--lg" role="dialog" aria-modal="true" aria-labelledby="reduce-title">
+    <h2 class="modal-title" id="reduce-title" data-i18n="red.title">Bild → Palette</h2>
+    <p class="modal-intro" id="reduce-intro"></p>
+    <label class="form-row">
+      <span class="form-label" data-i18n="red.colors">Farben in der Palette</span>
+      <select id="reduce-count" class="input"></select>
+    </label>
+    <div class="reduce-preview">
+      <figure><canvas id="reduce-before"></canvas><figcaption data-i18n="red.before">Vorher</figcaption></figure>
+      <figure><canvas id="reduce-after"></canvas><figcaption id="reduce-after-cap"></figcaption></figure>
+    </div>
+    <div id="reduce-swatches" class="pal-grid reduce-swatches"></div>
+    <div class="modal-actions">
+      <button class="btn" id="reduce-cancel" data-i18n="mod.cancel">Abbrechen</button>
+      <button class="btn btn--primary" id="reduce-apply" data-i18n="red.apply">Palette anlegen</button>
     </div>
   </div>
 </div>
@@ -663,7 +734,7 @@
   <div class="modal modal--lg modal--scroll" role="dialog" aria-modal="true" aria-labelledby="help-title">
     <div class="modal-head">
       <h2 class="modal-title" id="help-title" data-i18n="help.title">Hilfe</h2>
-      <button class="icon-btn" id="help-close" data-i18n-attr="title:help.close" title="Schließen">×</button>
+      <button class="icon-btn" id="help-close" data-i18n-attr="title:help.close" title="Schließen"><span class="ico" data-icon="close"></span></button>
     </div>
 
     <p class="modal-intro" data-i18n-html="help.intro">
@@ -732,9 +803,9 @@
 
     <h3 class="help-h" data-i18n="help.h.stencil">Schablone</h3>
     <div class="help-list" data-i18n-html="help.stencil">
-      <div>Bild laden, mit <span class="kbd">Shift</span>+Linksklick ziehen verschieben, Deckkraft und Größe per Regler.</div>
-      <div><span class="kbd">Shift</span> halten → Schablone voll in den Vordergrund.</div>
-      <div><span class="kbd">Shift</span>+Rechtsklick → Schablonen-Pipette (exakte Farbe aus dem Bild).</div>
+      <div>Bild laden, mit <span class="kbd">Shift</span>+<span class="kbd">Alt</span>+Linksklick ziehen verschieben, Deckkraft und Größe per Regler.</div>
+      <div><span class="kbd">Shift</span>+<span class="kbd">Alt</span> halten → Schablone voll in den Vordergrund.</div>
+      <div><span class="kbd">Shift</span>+<span class="kbd">Alt</span>+Rechtsklick → Schablonen-Pipette (exakte Farbe aus dem Bild).</div>
       <div>Bleibt nach einem Reload erhalten.</div>
     </div>
 
@@ -772,14 +843,17 @@
       <div class="sc-row"><b>Klick</b><span>Malen</span></div>
       <div class="sc-row"><b>Rechtsklick</b><span>Löschen (gedrückt halten = durchgehend)</span></div>
       <div class="sc-row"><b>Alt + Klick</b><span>Pipette auf das Grid</span></div>
-      <div class="sc-row"><b>Shift halten</b><span>Schablone in den Vordergrund</span></div>
-      <div class="sc-row"><b>Shift + Links + Ziehen</b><span>Schablone verschieben</span></div>
-      <div class="sc-row"><b>Shift + Rechtsklick</b><span>Schablonen-Pipette</span></div>
+      <div class="sc-row"><b>Shift + Alt halten</b><span>Schablone in den Vordergrund</span></div>
+      <div class="sc-row"><b>Shift + Alt + Ziehen</b><span>Schablone verschieben</span></div>
+      <div class="sc-row"><b>Shift + Alt + Rechtsklick</b><span>Schablonen-Pipette</span></div>
       <div class="sc-row"><b>0 – 9</b><span>Farb-Index wählen</span></div>
       <div class="sc-row"><b>P B S F E W</b><span>Stift · Pinsel · Spray · Füllen · Radierer · Zauberstab</span></div>
       <div class="sc-row"><b>I R O</b><span>Linie · Rechteck · Ellipse</span></div>
       <div class="sc-row"><b>A L K</b><span>Auswahl · Lasso · Farbwahl</span></div>
-      <div class="sc-row"><b>Strg + Mausrad</b><span>Zoomen</span></div>
+      <div class="sc-row"><b>Mausrad</b><span>Hoch / runter scrollen</span></div>
+      <div class="sc-row"><b>Shift + Mausrad</b><span>Links / rechts scrollen</span></div>
+      <div class="sc-row"><b>Strg + Mausrad</b><span>Zoomen (auf den Mauszeiger)</span></div>
+      <div class="sc-row"><b>Leertaste + Ziehen</b><span>Bild verschieben (auch mit mittlerer Maustaste)</span></div>
       <div class="sc-row"><b>Ziehen in der Auswahl</b><span>Bereich ausschneiden und verschieben</span></div>
       <div class="sc-row"><b>Alt + Ziehen</b><span>Kopie verschieben (Original bleibt)</span></div>
       <div class="sc-row"><b>Pfeiltasten</b><span>Auswahl pixelweise verschieben</span></div>

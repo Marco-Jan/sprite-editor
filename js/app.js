@@ -3,16 +3,20 @@
 // ════════════════════════════════════════════════════════════════════
 import {
   state, sprites, customPalettes, selection,
-  getGrid, getSprite, getPal, getMaxIdx, getPaletteName, listSprites,
+  getGrid, getSprite, getPal, getMaxIdx, getPaletteName, getPreviewName, listSprites,
   createSprite, uniquePaletteName, clearSelection, isInSelection,
 } from './state.js';
-import { DEFAULT_PALETTE } from './data.js';
+import { DEFAULT_PALETTE, MAX_COLORS } from './data.js';
 import {
   t, tn, colorLabelShort, applyStatic, initLangSwitch, onLangChange,
 } from './i18n.js';
+import { initDock } from './dock.js';
+import { initLayout } from './layout.js';
+import { applyIcons, iconSvg } from './icons.js';
 import { showConfirmToast, showInfoToast } from './toast.js';
 import {
   renderAll, renderEditor, renderSpriteList, syncColorActive, updateOutput, renderMaterials,
+  renderFreeColorsList, countCurrentColor,
   cellFromEvent, cellFromEventClamped, cellToColor, paintCell, paintBrush, paintSpray, floodFill,
   fillPaletteSelect, renderCallbacks, shapeCells, commitShape,
 } from './render.js';
@@ -26,12 +30,14 @@ import {
 } from './sprites.js';
 import {
   openPaletteModal, initPaletteModal, deleteCustomPalette,
-  applyPaletteToCurrentSprite, forkCurrentPalette, createPaletteFromImport,
+  previewPalette, assignPalette, forkPreviewPalette, addFreeColorsToPalette,
+  createPaletteFromImport,
 } from './palettes.js';
 import {
   initTemplate, tplLoaded, tplHasOffscreen,
   startTplDrag, tplDragging, updateTplDrag, endTplDrag, getTplOffset,
   doTemplatePipette, sampleTemplateGrid,
+  forgetTemplate,
 } from './template.js';
 import {
   medianCut, nearestColor, rgbToHex, hexToRgb,
@@ -72,7 +78,7 @@ renderCallbacks.onResizeSprite     = openSizeModal;
 renderCallbacks.onDuplicateSprite  = duplicateSprite;
 renderCallbacks.onOpenPaletteModal = openPaletteModal;
 renderCallbacks.onEditPalette      = openPaletteModal;
-renderCallbacks.onImageToPalette   = imageToPalette;
+renderCallbacks.onImageToPalette   = openReduceModal;
 renderCallbacks.onSyncImagePanel   = () => syncImagePanel();
 
 renderCallbacks.onDeleteSprite = id => {
@@ -180,51 +186,134 @@ function nearestRgbIndex(rgb, list) {
   return best + 1;
 }
 
-function imageToPalette() {
+// Dialog: wie viele Farben soll die Palette haben? Mit Vorher/Nachher-
+// Vorschau; das Bild wird erst beim Bestätigen umgeschrieben.
+let reduce = null;   // { px, distinct, colorsByCount }
+
+function collectImageColors() {
   const sp = getSprite();
-  if (!sp) { showInfoToast(t('tpl.needSprite')); return; }
-
-  const grid = sp.grid;
-  const pal  = getPal(); // aktuelle (alte) Palette zum Auflösen der Indizes
-  const cap  = getMaxIdx();
-  const H = grid.length, W = grid[0].length;
-
-  const px = [];
-  const distinct = new Set();
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    const hex = cellToColor(grid[y][x], pal);
+  if (!sp) return null;
+  const pal = getPal();
+  const counts = new Map();
+  for (const row of sp.grid) for (const c of row) {
+    const hex = cellToColor(c, pal);
     if (!hex) continue;
-    distinct.add(hex.toLowerCase());
-    px.push(hexToRgb(hex));
+    const k = hex.toLowerCase();
+    counts.set(k, (counts.get(k) || 0) + 1);
   }
-  if (!px.length) {
-    showInfoToast(t('tpl.imageEmpty'));
-    return;
-  }
+  // Für den Median-Cut zählt jede Farbe so oft, wie sie vorkommt.
+  const px = [];
+  for (const [hex, n] of counts) { const rgb = hexToRgb(hex); for (let i = 0; i < n; i++) px.push(rgb); }
+  return { px, distinct: [...counts.keys()] };
+}
 
-  // ≤ Kapazität → Farben 1:1, sonst auf dominante Töne reduzieren.
-  const colors = distinct.size <= cap ? [...distinct].map(hexToRgb) : medianCut(px, cap);
+function reduceColors(count) {
+  if (reduce.cache.has(count)) return reduce.cache.get(count);
+  const colors = count >= reduce.distinct.length
+    ? reduce.distinct.map(hexToRgb)
+    : medianCut(reduce.px, count);
   // Hell → dunkel sortieren, damit Index 1 der hellste Ton ist.
   const lum = c => 0.299 * c.r + 0.587 * c.g + 0.114 * c.b;
   colors.sort((a, b) => lum(b) - lum(a));
+  // Jede Bildfarbe einmal zuordnen statt jedes Pixel einzeln.
+  const map = new Map(reduce.distinct.map(hex => [hex, nearestRgbIndex(hexToRgb(hex), colors)]));
+  const res = { colors, map };
+  reduce.cache.set(count, res);
+  return res;
+}
+
+function drawReduceCanvas(canvas, colorOf) {
+  const grid = getGrid(), pal = getPal();
+  const H = grid.length, W = grid[0].length;
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const hex = cellToColor(grid[y][x], pal);
+    if (!hex) continue;
+    ctx.fillStyle = colorOf(hex.toLowerCase());
+    ctx.fillRect(x, y, 1, 1);
+  }
+}
+
+function renderReducePreview() {
+  const count = Number($('reduce-count').value);
+  const { colors, map } = reduceColors(count);
+  const hexes = colors.map(c => rgbToHex(c.r, c.g, c.b));
+  drawReduceCanvas($('reduce-after'), hex => hexes[map.get(hex) - 1]);
+  $('reduce-after-cap').textContent = tn('red.after', colors.length);
+  const sw = $('reduce-swatches');
+  sw.innerHTML = '';
+  sw.style.setProperty('--cols', colors.length > 16 ? 16 : 8);
+  for (const hex of hexes) {
+    const el = document.createElement('span');
+    el.className = 'pal-sw';
+    el.style.background = hex;
+    el.title = hex;
+    sw.appendChild(el);
+  }
+}
+
+function openReduceModal() {
+  if (!getSprite()) { showInfoToast(t('tpl.needSprite')); return; }
+  const data = collectImageColors();
+  if (!data || !data.px.length) { showInfoToast(t('tpl.imageEmpty')); return; }
+  reduce = { ...data, cache: new Map() };
+  const n = data.distinct.length;
+
+  const sel = $('reduce-count');
+  sel.innerHTML = '';
+  const add = (value, label) => {
+    const o = document.createElement('option');
+    o.value = value; o.textContent = label;
+    sel.appendChild(o);
+  };
+  if (n <= MAX_COLORS) add(n, tn('red.all', n));
+  for (const c of [255, 128, 64, 32, 16, 8, 4]) if (c < n) add(c, tn('red.count', c));
+  sel.value = String(Math.min(n, MAX_COLORS));
+
+  $('reduce-intro').textContent = tn('red.intro', n, { max: MAX_COLORS });
+  drawReduceCanvas($('reduce-before'), hex => hex);
+  renderReducePreview();
+  $('reduce-modal-overlay').classList.add('open');
+}
+
+function applyReduce() {
+  const sp = getSprite();
+  if (!sp || !reduce) return;
+  const { colors, map } = reduceColors(Number($('reduce-count').value));
+  const pal = getPal();
 
   const name = uniquePaletteName('foto');
   const palObj = {};
   colors.forEach((c, i) => { palObj[i + 1] = rgbToHex(c.r, c.g, c.b); });
   customPalettes[name] = palObj;
 
-  // Grid auf die neuen Indizes umschreiben.
+  // Grid auf die neuen Indizes umschreiben — mit der Palette ein Undo-Schritt.
   recordOp(() => {
-    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-      const hex = cellToColor(grid[y][x], pal);
-      grid[y][x] = hex ? nearestRgbIndex(hexToRgb(hex), colors) : 0;
+    for (const row of sp.grid) for (let x = 0; x < row.length; x++) {
+      const hex = cellToColor(row[x], pal);
+      row[x] = hex ? map.get(hex.toLowerCase()) : 0;
     }
+    sp.palette = name;
   });
 
-  sp.palette = name;
+  $('reduce-modal-overlay').classList.remove('open');
+  reduce = null;
+  state.palPreview = null;
+  if (typeof state.curColor !== 'number' || state.curColor > colors.length) state.curColor = 1;
   renderAll();
   saveState();
   showInfoToast(t('pal.fromImage', { name, n: colors.length }));
+}
+
+function initReduceModal() {
+  const overlay = $('reduce-modal-overlay');
+  const close = () => { overlay.classList.remove('open'); reduce = null; };
+  $('reduce-count').addEventListener('change', renderReducePreview);
+  $('reduce-cancel').addEventListener('click', close);
+  $('reduce-apply').addEventListener('click', applyReduce);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -377,17 +466,81 @@ function info(msg) {
   if (el) el.textContent = msg;
 }
 
+// ────────────────────────────────────────────────────────────────────
+// Ansicht: zoomen auf den Zeiger, verschieben mit Leertaste / mittlerer Taste
+// ────────────────────────────────────────────────────────────────────
+let panKeyHeld = false;
+
+// Zoomt um `step` Pixel pro Zelle und hält dabei die Zelle unter dem Zeiger fest.
+function zoomAt(step, clientX, clientY) {
+  const next = Math.max(2, Math.min(40, state.cellSize + step));
+  if (next === state.cellSize) return;
+  const area = $('editor-canvas-area'), canvas = $('editor-canvas');
+  const before = canvas.getBoundingClientRect();
+  const fx = (clientX - before.left) / state.cellSize;   // Position in Zellen
+  const fy = (clientY - before.top) / state.cellSize;
+  state.cellSize = next;
+  $('cell-size').value = next;
+  $('cell-size-val').textContent = next + 'px';
+  renderEditor();
+  const after = canvas.getBoundingClientRect();
+  area.scrollLeft += (after.left + fx * next) - clientX;
+  area.scrollTop  += (after.top  + fy * next) - clientY;
+  saveState();
+}
+
+function initPan() {
+  const area = $('editor-canvas-area');
+  const setHeld = on => {
+    panKeyHeld = on;
+    area.classList.toggle('is-pannable', on);
+  };
+  window.addEventListener('keydown', e => {
+    if (e.code !== 'Space' || isTypingTarget(e.target) || document.querySelector('.modal-overlay.open')) return;
+    e.preventDefault();          // sonst scrollt/klickt der Browser
+    if (!e.repeat) setHeld(true);
+  });
+  window.addEventListener('keyup', e => { if (e.code === 'Space') setHeld(false); });
+  window.addEventListener('blur', () => setHeld(false));
+
+  area.addEventListener('pointerdown', e => {
+    if (!(panKeyHeld || e.button === 1)) return;
+    e.preventDefault();
+    const sx = e.clientX, sy = e.clientY, l0 = area.scrollLeft, t0 = area.scrollTop;
+    area.classList.add('is-panning');
+    try { area.setPointerCapture(e.pointerId); } catch {}
+    const move = ev => {
+      area.scrollLeft = l0 - (ev.clientX - sx);
+      area.scrollTop  = t0 - (ev.clientY - sy);
+    };
+    const up = () => {
+      area.classList.remove('is-panning');
+      area.removeEventListener('pointermove', move);
+      area.removeEventListener('pointerup', up);
+      area.removeEventListener('pointercancel', up);
+    };
+    area.addEventListener('pointermove', move);
+    area.addEventListener('pointerup', up);
+    area.addEventListener('pointercancel', up);
+  });
+  // Mittlere Taste: kein Auto-Scroll-Symbol des Browsers.
+  area.addEventListener('mousedown', e => { if (e.button === 1) e.preventDefault(); });
+}
+
 function initCanvasEvents() {
   const canvas = $('editor-canvas');
 
   canvas.addEventListener('pointerdown', e => {
+    // Leertaste gehalten oder mittlere Taste: verschieben, nicht malen (initPan).
+    if (panKeyHeld || e.button === 1) return;
     // Pointer einfangen → move/up feuern weiter, auch außerhalb des Canvas.
     try { canvas.setPointerCapture(e.pointerId); } catch {}
 
     // ── Rechtsklick ──
     if (e.button === 2) {
       e.preventDefault();
-      if (e.shiftKey && tplLoaded() && tplHasOffscreen()) {
+      // Schablonen-Kürzel liegen auf Shift+Alt — Shift allein scrollt seitlich.
+      if (e.shiftKey && e.altKey && tplLoaded() && tplHasOffscreen()) {
         const r = doTemplatePipette(e);
         if (r.status === 'outside')          info(t('info.tplOutside'));
         else if (r.status === 'transparent') info(t('info.tplTransp'));
@@ -404,8 +557,8 @@ function initCanvasEvents() {
     if (e.button !== 0) return; // Mittelklick ignorieren
     e.preventDefault();
 
-    // ── Shift+Links mit Schablone = verschieben ──
-    if (e.shiftKey && tplLoaded()) { startTplDrag(e); return; }
+    // ── Shift+Alt+Links mit Schablone = verschieben ──
+    if (e.shiftKey && e.altKey && tplLoaded()) { startTplDrag(e); return; }
 
     // ── Auswahl anfassen (vor der Pipette, damit Alt+Ziehen kopiert) ──
     if (isSelectTool(state.tool)) {
@@ -549,17 +702,17 @@ function initCanvasEvents() {
   canvas.addEventListener('contextmenu', e => e.preventDefault());
 
   // Strg + Mausrad zoomt — ohne Strg scrollt die Seite wie gewohnt weiter.
-  $('editor-canvas-area').addEventListener('wheel', e => {
-    if (!e.ctrlKey) return;
+  // Mausrad: hoch/runter · Shift: links/rechts · Strg: Zoom auf den Zeiger.
+  // Bewusst selbst gesteuert statt dem Browser überlassen — je nach Maus,
+  // Treiber und System scrollt der sonst unterschiedlich oder gar nicht.
+  const area = $('editor-canvas-area');
+  area.addEventListener('wheel', e => {
     e.preventDefault();
-    const step = e.deltaY < 0 ? 1 : -1;
-    const next = Math.max(2, Math.min(40, state.cellSize + step));
-    if (next === state.cellSize) return;
-    state.cellSize = next;
-    $('cell-size').value = next;
-    $('cell-size-val').textContent = next + 'px';
-    renderEditor();
-    saveState();
+    if (e.ctrlKey || e.metaKey) { zoomAt(e.deltaY < 0 ? 1 : -1, e.clientX, e.clientY); return; }
+    // Zeilen-Modus (manche Mäuse) in Pixel umrechnen.
+    const k = e.deltaMode === 1 ? 32 : e.deltaMode === 2 ? area.clientHeight : 1;
+    if (e.shiftKey) area.scrollLeft += (e.deltaX || e.deltaY) * k;
+    else { area.scrollTop += e.deltaY * k; area.scrollLeft += e.deltaX * k; }
   }, { passive: false });
 }
 
@@ -601,7 +754,9 @@ function initKeyboardEvents() {
       if (deselect()) { updateSelectionUI(); info(t('sel.dropped')); return; }
       if (document.body.classList.contains('editor-fullscreen')) { exitFullscreen(); return; }
     }
-    if (e.key === 'Alt') $('editor-canvas-wrap').classList.add('is-eyedrop');
+    // Alt allein = Pipette; Shift+Alt gehört der Schablone.
+    if (e.key === 'Alt' && !e.shiftKey) $('editor-canvas-wrap').classList.add('is-eyedrop');
+    if (e.key === 'Shift' && e.altKey) $('editor-canvas-wrap').classList.remove('is-eyedrop');
 
     // Undo/Redo — auch bei Fokus außerhalb von Formularfeldern.
     if ((e.ctrlKey || e.metaKey) && !e.altKey) {
@@ -707,7 +862,8 @@ function syncFullscreenBtn() {
   const btn = $('fullscreen-btn');
   if (!btn) return;
   const on = document.body.classList.contains('editor-fullscreen');
-  btn.textContent = t(on ? 'full.exit' : 'full.enter');
+  btn.innerHTML = iconSvg(on ? 'shrink' : 'expand')
+    + `<span class="btn-label">${t(on ? 'full.exit' : 'full.enter')}</span>`;
   btn.title       = t(on ? 'full.exitTitle' : 'full.enterTitle');
 }
 
@@ -801,20 +957,61 @@ function initToolbar() {
 // ────────────────────────────────────────────────────────────────────
 // Farb-Panel
 // ────────────────────────────────────────────────────────────────────
-function initPalettePanel() {
-  const sel = $('palette-select');
-  sel.addEventListener('change', () => {
-    if (sel.value) applyPaletteToCurrentSprite(sel.value);
+// Bildfarben-Liste in der Farbzeile auf-/zuklappen.
+function initFreeColors() {
+  const btn = $('free-colors-btn'), list = $('free-colors-list');
+  const setOpen = open => {
+    list.hidden = !open;
+    btn.setAttribute('aria-expanded', String(open));
+  };
+  btn.addEventListener('click', () => {
+    const open = list.hidden;
+    if (open) renderFreeColorsList();
+    setOpen(open);
   });
+  // Knöpfe unten in der Liste: in die Palette aufnehmen / reduzieren.
+  list.addEventListener('click', e => {
+    const action = e.target.closest('[data-action]')?.dataset.action;
+    if (!action) return;
+    setOpen(false);
+    if (action === 'to-palette') addFreeColorsToPalette();
+    else if (action === 'reduce') openReduceModal();
+  });
+  document.addEventListener('pointerdown', e => {
+    if (!list.hidden && !e.target.closest('#free-colors')) setOpen(false);
+  });
+  window.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !list.hidden) { e.stopPropagation(); setOpen(false); }
+  }, true);
+}
+
+// "Farbe zeigen": hebt die aktuelle Farbe auf der Zeichenfläche hervor.
+function initShowColor() {
+  const btn = $('show-color-btn');
+  btn.addEventListener('click', () => {
+    state.showColor = !state.showColor;
+    btn.setAttribute('aria-pressed', String(state.showColor));
+    btn.classList.toggle('is-active', state.showColor);
+    renderEditor();
+    if (state.showColor) info(tn('pal.showCount', countCurrentColor()));
+  });
+}
+
+function initPalettePanel() {
+  // Auswählen zeigt die Palette nur an — die Zeichnung bleibt unverändert.
+  const sel = $('palette-select');
+  sel.addEventListener('change', () => { if (sel.value) previewPalette(sel.value); });
 
   const search = $('palette-search');
-  search.addEventListener('input', () => fillPaletteSelect(sel, getPaletteName(), search.value));
+  search.addEventListener('input', () => fillPaletteSelect(sel, getPreviewName(), search.value));
 
+  $('palette-use-btn').addEventListener('click', () => assignPalette(getPreviewName(), { keepLook: true }));
+  $('palette-recolor-btn').addEventListener('click', () => assignPalette(getPreviewName(), { keepLook: false }));
   $('palette-add-btn').addEventListener('click', () => openPaletteModal());
-  $('palette-fork-btn').addEventListener('click', forkCurrentPalette);
-  $('palette-edit-btn').addEventListener('click', () => openPaletteModal(getPaletteName()));
-  $('palette-del-btn').addEventListener('click', () => renderCallbacks.onDeletePalette(getPaletteName()));
-  $('palette-from-image-btn').addEventListener('click', imageToPalette);
+  $('palette-fork-btn').addEventListener('click', forkPreviewPalette);
+  $('palette-edit-btn').addEventListener('click', () => openPaletteModal(getPreviewName()));
+  $('palette-del-btn').addEventListener('click', () => renderCallbacks.onDeletePalette(getPreviewName()));
+  $('palette-from-image-btn').addEventListener('click', openReduceModal);
 
   // Freier Farbwähler — Klick auf die aktuelle Farbe öffnet den Picker.
   const picker = $('free-color-picker');
@@ -1141,7 +1338,7 @@ function initTopbar() {
   });
 
   $('clear-storage-btn').addEventListener('click', () => {
-    showConfirmToast(t('file.confirmReset'), clearStorage, t('file.resetOk'));
+    showConfirmToast(t('file.confirmReset'), () => { forgetTemplate(); clearStorage(); }, t('file.resetOk'));
   });
 
   const help = $('help-modal-overlay');
@@ -1407,10 +1604,16 @@ function init() {
   if (!Object.keys(sprites).length) createDefaultSprite();
   if (!state.curSprite) state.curSprite = Object.keys(sprites)[0];
 
+  applyIcons();
   initPanels();
+  initDock();
+  initLayout();
   initTopbar();
   initToolbar();
   initPalettePanel();
+  initFreeColors();
+  initReduceModal();
+  initShowColor();
   initRefLayer();
   initImagePanel();
   initRotateSlider();
@@ -1425,6 +1628,7 @@ function init() {
   initOutputPanel();
   initImport();
   initCanvasEvents();
+  initPan();
   initKeyboardEvents();
 
   $('sprite-search').addEventListener('input', renderSpriteList);

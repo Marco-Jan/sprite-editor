@@ -216,6 +216,9 @@ function buildCHeader(d) {
     palArr.push(hit ? `0x${hit[1].slice(1).toUpperCase()}` : '0x000000');
   }
   const body = d.idxGrid.map(r => '  ' + r.map(v => String(v).padStart(2, ' ')).join(', ') + ',').join('\n');
+  // Ein Byte reicht für 255 Farben + Transparent. Volle Palette plus freie
+  // Farben kann darüber gehen — dann zwei Byte pro Pixel.
+  const cell = maxUsed > 255 ? 'uint16_t' : 'uint8_t';
 
   return t('gen.cHead', { name: d.name, w: d.W, h: d.H, n: d.entries.length }) + '\n'
     + t('gen.cNote') + '\n'
@@ -225,7 +228,7 @@ function buildCHeader(d) {
     + `#define ${d.id}_HEIGHT ${d.H}\n\n`
     + `static const uint32_t ${d.id}_PALETTE[${palArr.length}] = {\n  `
     + palArr.join(', ') + '\n};\n\n'
-    + `static const uint8_t ${d.id}_DATA[${d.W * d.H}] = {\n${body}\n};\n\n`
+    + `static const ${cell} ${d.id}_DATA[${d.W * d.H}] = {\n${body}\n};\n\n`
     + `#endif // ${guard}\n`;
 }
 
@@ -243,7 +246,7 @@ function buildPython(d) {
 // ────────────────────────────────────────────────────────────────────
 // Text-Raster — zum Draufschauen, für Diffs und zum Weiterreichen
 // ────────────────────────────────────────────────────────────────────
-const TXT_CHARS = '.123456789abcdefghijklmnopqrstuvwxyz';
+const TXT_CHARS = '.123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 function buildText(d) {
   const body = d.idxGrid.map(r => r.map(v => TXT_CHARS[v] || '?').join('')).join('\n');

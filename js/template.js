@@ -12,6 +12,7 @@
 import { state } from './state.js';
 import { syncColorActive } from './render.js';
 import { saveState } from './storage.js';
+import { t, onLangChange } from './i18n.js';
 
 // ────────────────────────────────────────────────────────────────────
 // DOM-Refs (werden in initTemplate() gesetzt, nicht beim Modul-Load —
@@ -21,6 +22,8 @@ let tplImg, tplFile, tplOpacity, tplOpacityNum, tplScale, tplScaleNum, tplClear,
 
 // Pixel-Offset gegenüber Mitte (state der Verschiebung)
 let tplOffsetX = 0, tplOffsetY = 0;
+let tplName = '';          // Dateiname der geladenen Schablone
+let tplRestored = false;   // true = aus dem letzten Besuch wiederhergestellt
 
 // Offscreen-Canvas mit dem Originalbild — Quelle für getImageData() bei der Pipette.
 // Wird neu aufgebaut sobald `tplImg.onload` feuert.
@@ -234,7 +237,7 @@ export function doTemplatePipette(e) {
 }
 
 // ────────────────────────────────────────────────────────────────────
-// Shift-Foreground: bringt Bild über die Pixel mit voller Deckkraft
+// Shift+Alt-Foreground: bringt Bild über die Pixel mit voller Deckkraft
 // ────────────────────────────────────────────────────────────────────
 function bringTplToFront() {
   if (!tplLoaded() || _shiftHeld) return;
@@ -269,12 +272,28 @@ function saveTplCfg() {
   try {
     localStorage.setItem(TPL_CFG_KEY, JSON.stringify({
       opacity: tplOpacity.value, scale: tplScale.value,
-      offsetX: tplOffsetX, offsetY: tplOffsetY,
+      offsetX: tplOffsetX, offsetY: tplOffsetY, name: tplName,
     }));
   } catch (e) { /* Config ist klein — Fehler ignorieren */ }
 }
 function clearTplStorage() {
   try { localStorage.removeItem(TPL_IMG_KEY); localStorage.removeItem(TPL_CFG_KEY); } catch (e) {}
+}
+// Für "Zurücksetzen" in der Kopfzeile: die Schablone gehört zu "alles".
+export function forgetTemplate() { clearTplStorage(); }
+
+// Zeigt im Panel, ob und welche Schablone geladen ist — inklusive Hinweis,
+// dass sie gespeichert bleibt, bis man sie entfernt.
+function syncTplStatus() {
+  const box = document.getElementById('template-status');
+  if (!box) return;
+  const loaded = !!tplImg.getAttribute('src');
+  box.hidden = !loaded;
+  document.getElementById('template-pick-label').textContent = t(loaded ? 'tpl.pickOther' : 'tpl.pick');
+  if (!loaded) return;
+  document.getElementById('template-thumb').src = tplImg.src;
+  document.getElementById('template-name').textContent = tplName || t('tpl.unnamed');
+  document.getElementById('template-note').textContent = t(tplRestored ? 'tpl.restored' : 'tpl.kept');
 }
 
 // Schablone-Bedienelemente ein-/ausblenden (Buttons + Quant-Zeile).
@@ -310,6 +329,8 @@ export function initTemplate() {
     // den Canvas nicht (getImageData für Pipette/Trace bleibt erlaubt).
     const reader = new FileReader();
     reader.onload = ev => {
+      tplName = file.name;
+      tplRestored = false;
       tplImg.src = ev.target.result;
       tplImg.hidden = false;
       centerTpl();
@@ -318,6 +339,8 @@ export function initTemplate() {
       showTplControls(true);
       saveTplImg();
       saveTplCfg();
+      syncTplStatus();
+      tplFile.value = '';   // gleiche Datei nochmal wählen löst wieder 'change' aus
     };
     reader.readAsDataURL(file);
   });
@@ -335,20 +358,24 @@ export function initTemplate() {
     tplOffscreen = null;
     centerTpl();
     clearTplStorage();
+    tplName = '';
+    syncTplStatus();
   });
 
   tplCenterBtn.addEventListener('click', () => { centerTpl(); saveTplCfg(); });
 
-  // Shift-Hold global: bringt Schablone in den Vordergrund
+  // Shift+Alt halten (egal in welcher Reihenfolge): Schablone in den
+  // Vordergrund. Shift allein ist fürs seitliche Scrollen da.
   document.addEventListener('keydown', e => {
-    if (e.key === 'Shift' && !e.repeat) {
-      // Nicht triggern wenn Fokus in einem Input — sonst kann man kein Shift+Buchstabe tippen
+    if ((e.key === 'Shift' || e.key === 'Alt') && e.shiftKey && e.altKey && !e.repeat) {
+      // Nicht triggern wenn Fokus in einem Input — sonst kann man nicht tippen
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+      e.preventDefault();   // Alt soll nicht das Browser-Menü ansteuern
       bringTplToFront();
     }
   });
   document.addEventListener('keyup', e => {
-    if (e.key === 'Shift') restoreTpl();
+    if (e.key === 'Shift' || e.key === 'Alt') restoreTpl();
   });
   // Falls Fokus weg geht während Shift gehalten — Reset
   window.addEventListener('blur', restoreTpl);
@@ -362,6 +389,8 @@ export function initTemplate() {
       if (cfg.scale != null)   { tplScale.value = cfg.scale; tplScaleNum.value = cfg.scale; }
       tplOffsetX = cfg.offsetX || 0;
       tplOffsetY = cfg.offsetY || 0;
+      tplName = cfg.name || '';
+      tplRestored = true;
       tplImg.src = src;                 // löst 'load' → buildTplOffscreen aus
       tplImg.hidden = false;
       applyTplOpacity();
@@ -372,4 +401,6 @@ export function initTemplate() {
   } catch (e) {
     console.warn('Schablone: Wiederherstellen fehlgeschlagen', e);
   }
+  syncTplStatus();
+  onLangChange(syncTplStatus);
 }

@@ -30,6 +30,7 @@ export const STATIC_AT = {
   // ── Kopfzeile ──
   'tb.home':       'Zruck auf d’Startseitn',
   'tb.saved':      'gsichert',
+  'tb.menu':       'Menü',
   'tb.help':       'Hüfe',
   'tb.helpTitle':  'Hüfe und Erklärungen',
   'tb.dir':        'Speicherort',
@@ -136,7 +137,7 @@ export const STATIC_AT = {
   'stage.fullTitle':  'Vollbüd (mit Esc wieder außa)',
 
   // ── Farb-Panel ──
-  'pal.title':          'Farben',
+  'pal.title':          'Palettn',
   'pal.builtin':        'eingebaut',
   'pal.current':        'Aktuelle Farb',
   'pal.currentTitle':   'Anklickn — freier Farbwöhler geht auf',
@@ -148,8 +149,8 @@ export const STATIC_AT = {
   'pal.add':            '+ Palettn',
   'pal.addTitle':       'A neie eigene Palettn anlegn',
   'pal.fork':           'Kopie bearbeitn',
-  'pal.fromImage':      'Buidl → Palettn',
-  'pal.fromImageTitle': 'Aus de Farben vom aktuelln Buidl a bearbeitbare Palettn mochn',
+  'pal.fromImage':      'Buidl → Palettn …',
+  'pal.fromImageTitle': 'Aus de Farben vom aktuelln Buidl a Palettn mochn — wia vü Farben, suachst da aus',
 
   // ── Schablone ──
   'tpl.title':    'Schablone',
@@ -298,7 +299,7 @@ export const MSG_AT = {
   // Paletten
   'pal.origin.custom':  'eigene',
   'pal.origin.builtin': 'eingebaut',
-  'pal.hint.custom':    'Swatch anklickn zum Ändern — s’Buidl färbt sich glei um.',
+  'pal.hint.custom':    'Doppelklick auf a Farb ändert’s — Buidln mit dera Palettn färbn si mit.',
   'pal.hint.builtin':   'Eingebaute Palettn san schreibgschützt. „Kopie bearbeitn“ mocht’s änderbar.',
   'pal.swatchTitle':    'Farb ändern',
   'pal.groupBuiltin':   'Eingebaut',
@@ -306,6 +307,18 @@ export const MSG_AT = {
   'pal.currentErase':   'Radiern (Index 0)',
   'pal.currentFree':    'Freie Farb',
   'pal.transparent':    'durchsichtig',
+  'lay.pin':            'Anpinnen — bleibt fix neben da Zeichenflächn',
+  'lay.unpin':          'Lösn — zruck in d’Lodn',
+  'lay.toolbar':        'Werkzeig',
+  'lay.grip':           'Ziagn zum Vaschiabn',
+  'pal.showCount_one':  'Hervorghobn: {n} Pixel in dera Farb.',
+  'pal.showCount_other':'Hervorghobn: {n} Pixel in dera Farb.',
+  'tpl.pick':           'Buidl lodn …',
+  'tpl.pickOther':      'Andas Buidl lodn …',
+  'tpl.restored':       'Vom letztn Moi — bleibt do gspeichert, bis’d as weghaust.',
+  'tpl.kept':           'Bleibt do gspeichert, bis’d as weghaust.',
+  'fc.count':           '+{n} Buidfarbn',
+  'fc.head':            '{n} Farbn ohne Plotz in da Palette — de häufigstn zerst. Klick nimmt de Farb.',
   'pal.optCurrent':     '— aktuelle Palettn —',
   'pal.optCustomSuffix': '{name} (eigene)',
   'pal.colorAria':      'Farb {i}',
@@ -317,7 +330,7 @@ export const MSG_AT = {
   'pal.exists':         'Palettn „{name}“ gibt’s scho — drüberschreibn?',
   'pal.overwrite':      'Drüberschreibn',
   'pal.confirmDelete':  'Palettn „{name}“ wirklich weghaun?{extra}',
-  'pal.forked':         'Palettn „{name}“ angelegt — d’Farb-Swatches rechts san jetzt änderbar.',
+  'pal.forked':         'Palettn „{name}“ angelegt — Doppelklick auf a Farb ändert’s.',
 
   // Ebene
   'ref.none':      'kane',
