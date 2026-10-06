@@ -1571,3 +1571,7 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
 .reduce-swatches { max-height: 9rem; overflow-y: auto; }
 .reduce-swatches .pal-sw { cursor: default; }
 .reduce-swatches .pal-sw:hover { transform: none; }
+
+/* Hilfe -> Sicherung */
+.backup-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); font-size: var(--fs-md); }
+.backup-row span { flex: 1 1 12rem; color: var(--text-muted); }

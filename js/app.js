@@ -8,7 +8,7 @@ import {
 } from './state.js';
 import { DEFAULT_PALETTE, MAX_COLORS } from './data.js';
 import {
-  t, tn, colorLabelShort, applyStatic, initLangSwitch, onLangChange,
+  t, tn, colorLabelShort, applyStatic, initLangSwitch, onLangChange, getLang,
 } from './i18n.js';
 import { initDock } from './dock.js';
 import { initLayout } from './layout.js';
@@ -22,6 +22,7 @@ import {
 } from './render.js';
 import {
   saveState, loadState, clearStorage, forceSaveBeforeUnload, saveToFile, loadFromFile,
+  backupInfo, downloadBackup, restoreBackup,
 } from './storage.js';
 import { supportsFsAccess, pickSaveDirectory, getStoredDirName, saveBlob } from './filesystem.js';
 import {
@@ -1342,7 +1343,13 @@ function initTopbar() {
   });
 
   const help = $('help-modal-overlay');
-  $('help-btn').addEventListener('click', () => help.classList.add('open'));
+  $('help-btn').addEventListener('click', () => { syncBackupRows(); help.classList.add('open'); });
+  help.addEventListener('click', e => {
+    const b = e.target.closest('[data-backup]');
+    if (!b) return;
+    if (b.dataset.do === 'download') downloadBackup(b.dataset.backup);
+    else showConfirmToast(t('help.backupConfirm'), () => restoreBackup(b.dataset.backup), t('help.backupRestore'));
+  });
   $('help-close').addEventListener('click', () => help.classList.remove('open'));
   help.addEventListener('click', e => { if (e.target === help) help.classList.remove('open'); });
 
@@ -1639,6 +1646,20 @@ function init() {
 
   if (loaded.fullscreen) enterFullscreen();
   if (loaded.note) showInfoToast(loaded.note);
+  // Gespeicherter Stand war unlesbar: er liegt gesichert daneben und wird
+  // nicht überschrieben. Gleich zum Herunterladen anbieten.
+  if (loaded.rescued) showConfirmToast(t('store.rescued'), () => downloadBackup('rescue'), t('help.backupDownload'));
+}
+
+// Hilfe → Sicherung: Zeilen nur für vorhandene Sicherungen, mit Datum.
+function syncBackupRows() {
+  const info = backupInfo();
+  const fmt = d => d.toLocaleString(getLang() === 'en' ? 'en-GB' : 'de-AT', { dateStyle: 'medium', timeStyle: 'short' });
+  for (const k of ['backup', 'rescue']) {
+    $(`backup-row-${k}`).hidden = !info[k];
+    if (info[k]) $(`backup-label-${k}`).textContent = t(`help.backupLabel.${k}`, { date: fmt(info[k]) });
+  }
+  $('backup-none').hidden = !!(info.backup || info.rescue);
 }
 
 init();

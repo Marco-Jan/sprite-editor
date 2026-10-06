@@ -155,7 +155,8 @@
         </p>
         <div class="cta-row">
           <a class="btn btn--primary btn--lg" href="editor.html" data-i18n="nav.open">Editor öffnen</a>
-          <a class="btn btn--ghost" href="#pixel" data-i18n="hero.watch">Erst mal zuschauen</a>
+          <!-- Nur sichtbar, wenn der Browser die Installation anbietet (js/pwa.js). -->
+          <button type="button" class="btn btn--ghost btn--lg" data-install hidden data-i18n="end.install">Als App installieren</button>
         </div>
         <p class="note" data-i18n-html="hero.note">
           Deine Pixel bleiben im <code>localStorage</code> auf deinem Rechner.

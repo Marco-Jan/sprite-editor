@@ -80,6 +80,8 @@
       <button class="btn" id="save-file-btn" data-i18n-attr="title:tb.saveTitle" title="Projekt als JSON-Datei sichern"><span class="ico" data-icon="save"></span><span class="btn-label" data-i18n="tb.save">Projekt sichern</span></button>
       <button class="btn" id="load-file-btn" data-i18n-attr="title:tb.openTitle" title="Projekt aus JSON-Datei laden"><span class="ico" data-icon="open"></span><span class="btn-label" data-i18n="tb.open">Öffnen</span></button>
       <input type="file" id="load-file-input" accept=".json,application/json" hidden>
+      <!-- Nur sichtbar, wenn der Browser die Installation anbietet (js/pwa.js). -->
+      <button class="btn" data-install hidden data-i18n-attr="title:tb.installTitle" title="spritebit als App installieren — startet dann wie ein eigenes Programm, auch offline"><span class="ico" data-icon="install"></span><span class="btn-label" data-i18n="tb.install">App installieren</span></button>
       <button class="btn btn--danger" id="clear-storage-btn" data-i18n-attr="title:tb.resetTitle" title="Alles zurücksetzen"><span class="ico" data-icon="reset"></span><span class="btn-label" data-i18n="tb.reset">Zurücksetzen</span></button>
     </div>
     <div class="lang-switch" role="group" aria-label="Sprache / Language">
@@ -864,6 +866,21 @@
       <div class="sc-row"><b>Strg + Y</b><span>Wiederholen</span></div>
       <div class="sc-row"><b>Esc</b><span>Auswahl aufheben, Dialog oder Vollbild schließen</span></div>
     </div>
+
+    <!-- Sicherungen aus js/storage.js — Zeilen erscheinen nur, wenn es sie gibt. -->
+    <h3 class="help-h" data-i18n="help.h.backup">Sicherung</h3>
+    <p class="field-note" data-i18n="help.backupIntro">Deine Arbeit liegt im Speicher dieses Browsers. Zusätzlich hebt spritebit den Stand vom Start einer Sitzung auf — falls nach einem Update etwas fehlt. Am sichersten ist trotzdem „Projekt sichern“.</p>
+    <div class="backup-row" id="backup-row-backup" hidden>
+      <span id="backup-label-backup"></span>
+      <button class="btn" data-backup="backup" data-do="download" data-i18n="help.backupDownload">Herunterladen</button>
+      <button class="btn" data-backup="backup" data-do="restore" data-i18n="help.backupRestore">Wiederherstellen</button>
+    </div>
+    <div class="backup-row" id="backup-row-rescue" hidden>
+      <span id="backup-label-rescue"></span>
+      <button class="btn" data-backup="rescue" data-do="download" data-i18n="help.backupDownload">Herunterladen</button>
+      <button class="btn" data-backup="rescue" data-do="restore" data-i18n="help.backupRestore">Wiederherstellen</button>
+    </div>
+    <p class="field-note" id="backup-none" data-i18n="help.backupNone">Noch keine Sicherung vorhanden.</p>
   </div>
 </div>
 

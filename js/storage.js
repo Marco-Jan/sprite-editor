@@ -14,6 +14,17 @@ import { MATERIALS } from './gamejson.js';
 const STORAGE_KEY = 'wb_sprite_tester_v1'; // Key bleibt — Migration passiert im Payload
 const SCHEMA_VERSION = 2;
 
+// Sicherheitsnetz. Beide Schlüssel schreibt das normale Speichern NIE.
+//   RESCUE_KEY — ein Stand, den der Editor beim Start nicht lesen konnte.
+//                Ohne ihn würde das nächste Auto-Save ihn überschreiben.
+//   BACKUP_KEY — der Stand beim Start einer Sitzung, höchstens alle 12 h
+//                erneuert. Geht nach einem Update etwas schief, ist der
+//                letzte gute Stand noch da (Hilfe → Sicherung).
+// Format beider: { at: ISO-Datum, raw: '…JSON wie eine Projektdatei…' }
+const RESCUE_KEY = STORAGE_KEY + '_rescue';
+const BACKUP_KEY = STORAGE_KEY + '_backup';
+const BACKUP_EVERY = 12 * 60 * 60 * 1000;
+
 let _saveTimer = null;
 let _flashTimer = null;
 
@@ -115,10 +126,70 @@ export function loadState() {
   let payload;
   try { payload = JSON.parse(raw); } catch (e) {
     console.warn('spritebit: Save unlesbar, starte frisch', e);
-    return { loaded: false };
+    rescue(raw);
+    return { loaded: false, rescued: true };
   }
 
-  return applyPayload(payload);
+  const r = applyPayload(payload);
+  if (r.loaded) keepBackup(raw);
+  else { rescue(raw); r.rescued = true; }
+  return r;
+}
+
+// ── Sicherheitsnetz ─────────────────────────────────────────────────
+function readSlot(key) {
+  try {
+    const v = JSON.parse(localStorage.getItem(key) || 'null');
+    return v && typeof v.raw === 'string' ? v : null;
+  } catch { return null; }
+}
+function writeSlot(key, raw) {
+  try { localStorage.setItem(key, JSON.stringify({ at: new Date().toISOString(), raw })); return true; }
+  catch (e) { console.warn('spritebit: Sicherung passt nicht mehr in den Speicher', e); return false; }
+}
+
+// Unlesbaren Stand beiseitelegen, bevor ihn das nächste Speichern überschreibt.
+// Gibt es schon eine Rettung, bleibt die ältere — die ist eher die gute.
+function rescue(raw) {
+  if (!readSlot(RESCUE_KEY)) writeSlot(RESCUE_KEY, raw);
+}
+
+function keepBackup(raw) {
+  const old = readSlot(BACKUP_KEY);
+  if (old && Date.now() - Date.parse(old.at) < BACKUP_EVERY) return;
+  if (old && old.raw === raw) return;
+  writeSlot(BACKUP_KEY, raw);
+}
+
+// Für die Hilfe: was gibt es an Sicherungen? → { backup: Date|null, rescue: Date|null }
+export function backupInfo() {
+  const b = readSlot(BACKUP_KEY), r = readSlot(RESCUE_KEY);
+  return { backup: b ? new Date(b.at) : null, rescue: r ? new Date(r.at) : null };
+}
+
+// Sicherung als Projektdatei herunterladen — "Öffnen" liest sie wieder ein.
+export async function downloadBackup(which) {
+  const slot = readSlot(which === 'rescue' ? RESCUE_KEY : BACKUP_KEY);
+  if (!slot) return;
+  const day = slot.at.slice(0, 10);
+  const blob = new Blob([slot.raw], { type: 'application/json' });
+  await saveBlob(blob, `spritebit-sicherung-${day}.json`);
+}
+
+// Sicherung zurückholen: ersetzt den aktuellen Stand, dann Neustart.
+// Der aktuelle Stand wird vorher selbst zur Rettung — nichts geht verloren.
+export function restoreBackup(which) {
+  const slot = readSlot(which === 'rescue' ? RESCUE_KEY : BACKUP_KEY);
+  if (!slot) return;
+  disableSaving();
+  try {
+    const cur = localStorage.getItem(STORAGE_KEY);
+    if (cur && cur !== slot.raw) localStorage.setItem(RESCUE_KEY, JSON.stringify({ at: new Date().toISOString(), raw: cur }));
+    localStorage.setItem(STORAGE_KEY, slot.raw);
+  } catch (e) {
+    console.warn('spritebit: Wiederherstellen fehlgeschlagen', e);
+  }
+  location.reload();
 }
 
 // Payload (v1 ODER v2) in den State übernehmen.
