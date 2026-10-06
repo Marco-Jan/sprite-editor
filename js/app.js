@@ -11,7 +11,7 @@ import {
   t, tn, colorLabelShort, applyStatic, initLangSwitch, onLangChange, getLang,
 } from './i18n.js';
 import { initDock } from './dock.js';
-import { initLayout } from './layout.js';
+import { initLayout, isMobileLayout, refreshToolOpts } from './layout.js';
 import { applyIcons, iconSvg } from './icons.js';
 import { showConfirmToast, showInfoToast } from './toast.js';
 import {
@@ -379,6 +379,7 @@ function updateToolUI() {
   $('shape-group').hidden      = !isShapeTool(state.tool);
   if (!isSelectTool(state.tool)) $('editor-canvas-wrap').classList.remove('is-move');
   updateSelectionUI();
+  refreshToolOpts();
 }
 
 // Symmetrie-Knöpfe und Achsenzustand zusammenhalten.
@@ -408,6 +409,7 @@ function toggleMirror(axis) {
 }
 
 // Auswahl-Buttons scharf schalten, je nachdem was gerade möglich ist.
+let hadSelection = false;
 function updateSelectionUI() {
   syncImagePanel();
   const has = !!selection.rect;
@@ -417,6 +419,10 @@ function updateSelectionUI() {
   });
   const paste = $('sel-paste-btn');
   if (paste) paste.disabled = !hasClipboard();
+  // Frisch gezogene Auswahl: die Aktionen dazu liegen auf dem Handy in der
+  // Options-Zeile — die klappt jetzt von selbst auf.
+  if (has && !hadSelection) refreshToolOpts(true);
+  hadSelection = has;
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -507,6 +513,25 @@ function zoomAt(step, clientX, clientY, save = true) {
   area.scrollLeft += (after.left + fx * next) - clientX;
   area.scrollTop  += (after.top  + fy * next) - clientY;
   if (save) saveState();
+}
+
+// Handy: beim Start so weit herauszoomen, dass der ganze Sprite ins Bild
+// passt. Sonst sieht man von einem 32x40-Sprite bei 16 px/Zelle nur ein
+// Viertel und muss erst schieben. Nur verkleinern — wer schon kleiner
+// gespeichert hat, behaelt seine Ansicht.
+function fitZoomToArea() {
+  const area = $('editor-canvas-area');
+  const grid = getGrid();
+  if (!grid?.length || !area.clientWidth) return;
+  const pad = 16;
+  const fit = Math.floor(Math.min((area.clientWidth - pad) / grid[0].length,
+                                  (area.clientHeight - pad) / grid.length));
+  const next = Math.max(4, Math.min(state.cellSize, fit));
+  if (next === state.cellSize) return;
+  state.cellSize = next;
+  $('cell-size').value = next;
+  $('cell-size-val').textContent = next + 'px';
+  renderEditor();
 }
 
 function initPan() {
@@ -1704,6 +1729,7 @@ function init() {
 
   syncUiFromState();
   renderAll();
+  if (isMobileLayout()) fitZoomToArea();
   syncHistoryButtons();
 
   if (loaded.fullscreen) enterFullscreen();

@@ -35,7 +35,7 @@ const BAR_DOCK = {
 const BAR_HOME = { 'toolbar': 'top', 'color-bar': 'top', 'timeline': 'bottom' };
 // Handy: Panels nur als Schublade (von unten), beide Leisten waagerecht
 // unter der Zeichenfläche. Die gespeicherte Anordnung bleibt unberührt.
-const MOBILE = window.matchMedia('(max-width: 700px)');
+const MOBILE = window.matchMedia('(max-width: 1100px)');
 
 let ws, layer, hint;
 let zTop = 40;
@@ -636,13 +636,41 @@ function initPinResizer(side) {
   });
 }
 
+// ── Handy: Rand ausblenden, wo die Leiste weitergeht ────────────────
+// Die drei Leisten scrollen waagerecht, ihre Scrollbalken sind versteckt.
+// Ohne Hinweis sieht eine abgeschnittene Reihe aus wie eine volle — darum
+// wird der Rand weich, solange dort noch etwas liegt. Rechts in der
+// Werkzeugleiste uebernimmt das der angeheftete Regler-Knopf.
+function syncBarFade(el) {
+  const rest = el.scrollWidth - el.clientWidth - el.scrollLeft;
+  const rightCovered = el.id === 'toolbar' && optsBtn && !optsBtn.hidden;
+  el.classList.toggle('is-more-l', MOBILE.matches && el.scrollLeft > 4);
+  el.classList.toggle('is-more-r', MOBILE.matches && rest > 4 && !rightCovered);
+}
+
+function initBarFades() {
+  for (const id of BARS) {
+    const el = $(id);
+    el.addEventListener('scroll', () => syncBarFade(el), { passive: true });
+    new ResizeObserver(() => syncBarFade(el)).observe(el);
+  }
+}
+
+const syncAllBarFades = () => BARS.forEach(id => syncBarFade($(id)));
+
 // ── Handy: Werkzeug-Optionen ────────────────────────────────────────
 // In der einzeiligen Werkzeugleiste stehen auf dem Handy nur die Werkzeuge.
-// Symmetrie, Größe, Stärke usw. wandern in eine eigene Zeile darüber, die
+// Größe, Stärke usw. wandern in eine eigene Zeile darüber, die
 // der Regler-Knopf oder ein zweiter Tipp aufs aktive Werkzeug aufklappt.
 // Am breiten Fenster kommen sie an ihren Platz zurück (Platzhalter).
-const OPT_IDS = ['mirror-group', 'brush-size-group', 'strength-group', 'tolerance-group', 'shape-group', 'select-group'];
+// Symmetrie bleibt in der Leiste: zwei schmale Knöpfe, die beim Scrollen
+// mitlaufen — dafür lohnt die Aufklapp-Zeile nicht.
+const OPT_IDS = ['brush-size-group', 'strength-group', 'tolerance-group', 'shape-group', 'select-group'];
 let optsBox, optsBtn, optsMarks;
+// Die Statuszeile liegt am Desktop unter den Leisten. Auf dem Handy ist
+// jede Zeile Hoehe zu schade dafuer — sie wandert als schwebende Pille in
+// die Zeichenflaeche (CSS) und braucht dort keinen eigenen Platz.
+let infoMark;
 
 function setToolOpts(open) {
   optsBox.hidden = !open;
@@ -650,9 +678,30 @@ function setToolOpts(open) {
   optsBtn.setAttribute('aria-expanded', String(open));
 }
 
+// Hat das aktive Werkzeug ueberhaupt Optionen? (app.js blendet die Gruppen
+// je Werkzeug aus.)
+const hasToolOpts = () => OPT_IDS.some(id => !$(id).hidden);
+
+// Nach jedem Werkzeugwechsel aufrufen: ohne Optionen gibt es nichts
+// aufzuklappen — dann verschwindet der Knopf, statt eine leere Zeile zu
+// oeffnen. `openIfAny` zieht die Zeile von selbst auf; das nutzt die
+// Auswahl, deren Aktionen sonst genau dann versteckt waeren, wenn man sie
+// braucht.
+export function refreshToolOpts(openIfAny = false) {
+  if (!optsBtn) return;
+  const any = hasToolOpts();
+  optsBtn.hidden = !MOBILE.matches || !any;
+  if (!MOBILE.matches) return;
+  if (!any) setToolOpts(false);
+  else if (openIfAny) setToolOpts(true);
+  syncAllBarFades();
+}
+
 function initToolOpts() {
   const tb = $('toolbar');
   optsMarks = OPT_IDS.map(id => { const c = document.createComment(id); $(id).before(c); return c; });
+  infoMark = document.createComment('info-bar');
+  $('info-bar').before(infoMark);
   optsBox = document.createElement('div');
   optsBox.id = 'tool-opts';
   optsBtn = headButton('tool-opts-btn', 'sliders');
@@ -670,12 +719,19 @@ function initToolOpts() {
 function syncToolOpts() {
   if (MOBILE.matches) {
     OPT_IDS.forEach(id => optsBox.append($(id)));
+    // Der Knopf sitzt am rechten Ende der Leiste und klebt dort fest (CSS).
+    $('toolbar').append(optsBtn);
     zoneOf('bottom').before(optsBox);
+    $('stage-body').append($('info-bar'));
   } else {
     OPT_IDS.forEach((id, i) => optsMarks[i].after($(id)));
+    $('toolbar').querySelector('.bar-handle').after(optsBtn);
+    infoMark.after($('info-bar'));
     optsBox.remove();
     setToolOpts(false);
   }
+  refreshToolOpts();
+  syncAllBarFades();
 }
 
 function relabel() {
@@ -720,6 +776,10 @@ function applyAll() {
   syncRail('right');
 }
 
+// Ob gerade das Handy-Layout gilt — damit app.js denselben Umbruchpunkt
+// benutzt und nicht eine zweite Zahl pflegen muss.
+export const isMobileLayout = () => MOBILE.matches;
+
 export function initLayout() {
   ws = $('workspace');
   layer = document.createElement('div');
@@ -742,6 +802,7 @@ export function initLayout() {
   document.querySelectorAll('[data-panel]').forEach(p => initPanelDockDrag(p.dataset.panel));
   BARS.forEach(initBar);
   initToolOpts();
+  initBarFades();
 
   load();
   applyAll();
