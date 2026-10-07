@@ -1,0 +1,16 @@
+{
+  "name": "spritebit",
+  "version": "3.1.5",
+  "private": true,
+  "type": "module",
+  "description": "Pixel-Art-Editor im Browser — ohne Build-Schritt, ohne Laufzeit-Abhängigkeiten.",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "check": "tsc -p jsconfig.json",
+    "precache": "python tools/make_sw.py",
+    "serve": "python -m http.server 8080"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  }
+}

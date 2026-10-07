@@ -38,6 +38,8 @@ export const renderCallbacks = {
   onSyncImagePanel:  () => {},
   // Timeline (frames.js): ganz neu zeichnen bzw. nur den aktuellen Frame.
   onRenderTimeline:  () => {},
+  // Wie viele Frames gerade markiert sind — der Export beschriftet sich danach.
+  onFrameSelection:  (_n) => {},
   onRenderLayers:    () => {},
   // Hilfslinien (guides.js) — zeichnet über Gitter und Auswahl.
   onDrawOverlay:     (_ctx, _W, _H, _cs) => {},
@@ -72,7 +74,7 @@ export function renderSpriteList() {
   if (!list) return;
   list.innerHTML = '';
 
-  const q = (document.getElementById('sprite-search')?.value || '').trim().toLowerCase();
+  const q = (/** @type {HTMLInputElement} */ (document.getElementById('sprite-search'))?.value || '').trim().toLowerCase();
   const all = listSprites();
   const shown = q ? all.filter(s => s.name.toLowerCase().includes(q)) : all;
 
@@ -81,7 +83,7 @@ export function renderSpriteList() {
 
   // Suchfeld erst einblenden, wenn die Liste lang genug ist, um Suchen zu
   // rechtfertigen — sonst ist es nur Rauschen. Bei aktivem Filter bleibt es da.
-  const searchEl = document.getElementById('sprite-search');
+  const searchEl = /** @type {HTMLInputElement} */ (document.getElementById('sprite-search'));
   if (searchEl) searchEl.hidden = all.length < 6 && !q;
 
   if (!all.length) {
@@ -147,7 +149,7 @@ function getPaletteFor(sp) {
 // EDITOR-CANVAS
 // ────────────────────────────────────────────────────────────────────
 export function renderEditor() {
-  const canvas = document.getElementById('editor-canvas');
+  const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById('editor-canvas'));
   if (!canvas) return;
   const grid = getGrid();
   const H = grid.length, W = grid[0].length;
@@ -371,7 +373,7 @@ export function updateStageTitle() {
 
 // Maus-/Touch-Event → Grid-Zelle (oder null wenn außerhalb)
 export function cellFromEvent(e) {
-  const canvas = document.getElementById('editor-canvas');
+  const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById('editor-canvas'));
   const r = canvas.getBoundingClientRect();
   const x = Math.floor((e.clientX - r.left) / state.cellSize);
   const y = Math.floor((e.clientY - r.top) / state.cellSize);
@@ -383,7 +385,7 @@ export function cellFromEvent(e) {
 // Wie cellFromEvent, aber ohne null: Werte außerhalb werden auf den Rand
 // gezogen. Für Aktionen, die über den Rand hinaus ziehen dürfen (Auswahl).
 export function cellFromEventClamped(e) {
-  const canvas = document.getElementById('editor-canvas');
+  const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById('editor-canvas'));
   const r = canvas.getBoundingClientRect();
   const g = getGrid();
   const W = g[0].length, H = g.length;
@@ -597,14 +599,14 @@ export function renderQuickPalette() {
     const color = pal[i];
     const el = document.createElement('button');
     el.type = 'button';
-    el.dataset.idx = i;
+    el.dataset.idx = String(i);
     el.className = 'qp-swatch' + (i === state.curColor ? ' is-active' : '') + (i === 0 ? ' is-transparent' : '');
     el.title = t('pal.quickTitle', { i, label: colorLabelShort(i), extra: color && i !== 0 ? ' · ' + color : '' });
     if (i !== 0) el.style.background = color || 'var(--surface-3)';
 
     const idx = document.createElement('span');
     idx.className = 'qp-idx';
-    idx.textContent = i;
+    idx.textContent = String(i);
     el.appendChild(idx);
 
     el.addEventListener('click', () => { state.curColor = i; syncColorActive(); });
@@ -624,7 +626,7 @@ export function renderQuickPalette() {
     for (let i = 10; i <= last; i++) {
       const el = document.createElement('button');
       el.type = 'button';
-      el.dataset.idx = i;
+      el.dataset.idx = String(i);
       el.className = 'qp-mini' + (i === state.curColor ? ' is-active' : '');
       el.style.background = pal[i] || 'var(--surface-3)';
       el.title = t('pal.miniTitle', { i, hex: pal[i] || '—' });
@@ -863,7 +865,7 @@ export function renderPalette() {
   const items = document.getElementById('palette-items');
   if (!items) return;
   items.innerHTML = '';
-  items.style.setProperty('--cols', size + 1 > 16 ? 16 : 8);
+  items.style.setProperty('--cols', size + 1 > 16 ? '16' : '8');
   items.dataset.palette = name;
 
   for (let i = 0; i <= size; i++) {
@@ -871,7 +873,7 @@ export function renderPalette() {
     const sw = document.createElement('button');
     sw.type = 'button';
     sw.className = 'pal-sw' + (i === 0 ? ' is-transparent' : '');
-    sw.dataset.idx = i;
+    sw.dataset.idx = String(i);
     if (i !== 0) sw.style.background = color || 'var(--surface-3)';
     sw.title = i === 0 ? colorLabel(0)
       : t('pal.swInfo', { i, label: colorLabel(i), hex: color || '—' })
@@ -955,11 +957,11 @@ function syncPaletteGridActive() {
 export function updateOutput() {
   // Hängt wie der Code am Inhalt des Rasters — darum hier mit aufgefrischt.
   renderFreeColors();
-  const ta = document.getElementById('output-textarea');
+  const ta = /** @type {HTMLTextAreaElement} */ (document.getElementById('output-textarea'));
   if (!ta) return;
   delete ta.dataset.error;
   if (!getSprite()) { ta.value = ''; return; }
-  const includePalette = document.getElementById('export-include-palette')?.checked;
+  const includePalette = /** @type {HTMLInputElement} */ (document.getElementById('export-include-palette'))?.checked;
   try {
     ta.value = buildCode(state.outputFormat, includePalette);
   } catch (e) {

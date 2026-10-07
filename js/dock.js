@@ -31,7 +31,7 @@ export function dockButtonFor(id) {
 export function sortDock(order) {
   document.querySelectorAll('.rail-dock').forEach(dock => {
     [...dock.children]
-      .sort((a, b) => order.indexOf(a.dataset.target) - order.indexOf(b.dataset.target))
+      .sort((a, b) => order.indexOf(/** @type {HTMLElement} */ (a).dataset.target) - order.indexOf(/** @type {HTMLElement} */ (b).dataset.target))
       .forEach(b => dock.append(b));
   });
 }
@@ -89,9 +89,9 @@ function initMenu() {
   if (!btn || !actions) return;
   btn.addEventListener('click', e => { e.stopPropagation(); setMenu(!menuOpen()); });
   // Ein Eintrag gewählt → Menü zu. Die Aktion selbst läuft normal weiter.
-  actions.addEventListener('click', e => { if (e.target.closest('button')) setMenu(false); });
+  actions.addEventListener('click', e => { if (/** @type {HTMLElement} */ (e.target).closest('button')) setMenu(false); });
   document.addEventListener('pointerdown', e => {
-    if (menuOpen() && !e.target.closest('.topbar-actions, #menu-btn')) setMenu(false);
+    if (menuOpen() && !/** @type {HTMLElement} */ (e.target).closest('.topbar-actions, #menu-btn')) setMenu(false);
   });
 }
 
@@ -103,9 +103,11 @@ function makeDockButton(el, id, icon, dock) {
   btn.setAttribute('aria-expanded', 'false');
   btn.innerHTML = iconSvg(icon) || iconSvg('sprites');
   btn.addEventListener('click', () => {
-    // Angepinnt oder schwebend: keine Schublade, sondern zeigen (layout.js).
+    // Angepinnt, in einer Zone oder schwebend: keine Schublade, sondern
+    // zeigen. `data-mode` ist die Art des Platzes, die layout.js ins DOM
+    // schreibt ('dock' | 'pinned' | 'zone' | 'float') — nur gelesen, nie gesetzt.
     const mode = el.dataset.mode;
-    if (mode && mode !== 'drawer') { show(null); el.dispatchEvent(new CustomEvent('panel-focus')); return; }
+    if (mode && mode !== 'dock') { show(null); el.dispatchEvent(new CustomEvent('panel-focus')); return; }
     show(openPanel === el ? null : el);
   });
   dock.append(btn);
@@ -150,7 +152,7 @@ export function initDock() {
   // dabei nicht als "woanders".
   document.addEventListener('pointerdown', e => {
     if (!openPanel || openPanel.contains(e.target)) return;
-    if (e.target.closest('.dock-btn, .modal-overlay, #confirm-toast, #info-toast')) return;
+    if (/** @type {HTMLElement} */ (e.target).closest('.dock-btn, .modal-overlay, #confirm-toast, #info-toast')) return;
     show(null);
   });
 

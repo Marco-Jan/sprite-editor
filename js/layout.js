@@ -1,18 +1,24 @@
 // ════════════════════════════════════════════════════════════════════
 // LAYOUT — Panels und Leisten anpinnen, lösen, verschieben, umsortieren
 // ════════════════════════════════════════════════════════════════════
-// Panels ([data-panel]) kennen drei Zustände:
-//   drawer  — Schublade hinter dem Icon im Dock (Standard, siehe dock.js)
-//   pinned  — feste Spalte neben der Zeichenfläche, Breite per Griff ziehbar
-//   float   — schwebendes Fenster, frei verschiebbar und in der Größe änderbar
-// Angepinnt wird NUR über den Pin. Zieht man ein Panel an den Rand, wechselt
-// es höchstens die Seite und den Platz in der Reihe — ein angepinntes bleibt
-// angepinnt, alle anderen werden zur Schublade.
+// Panels ([data-panel]) und die drei Leisten der Bühne (#toolbar, #color-bar,
+// #timeline) sind hier dasselbe: ein Ding mit einem **Platz**. Was ein Platz
+// ist und welcher Knopf wohin führt, steht in place.js — ohne DOM und darum
+// mit Tests abgedeckt (tests/place.test.js).
 //
-// Die drei Leisten der Bühne (#toolbar, #color-bar, #timeline) docken in einer von vier
-// Zonen um die Zeichenfläche an (oben, links, rechts, unten), schweben, oder
-// sitzen wie ein Panel als Icon im Dock (Modus drawer, senkrecht aufgeklappt).
-// Auch ihre Reihenfolge innerhalb einer Zone lässt sich ziehen.
+// Die eine Regel dieses Moduls:
+//
+//   Der Platz steht in `layout.places[id]`. Das DOM wird daraus GEZEICHNET.
+//   Keine Entscheidung liest ihn je aus dem DOM zurück.
+//
+// Vorher stand „auf welcher Seite sitzt das?" in `dataset.side`, im
+// gespeicherten Zustand, in einer Tabelle `homeSide` und im Aufrufargument —
+// mit zwei verschiedenen Vorrangregeln. Daher kamen Fehler wie „rechts
+// angepinnt, links gelandet" und „aus dem Dock angepinnt, nach oben gelöst".
+//
+// `render()` ist die einzige Stelle, die Eltern-Element und Klassen setzt.
+// `el.dataset.mode` schreibt sie als *Ausgabe* mit (dock.js und CSS lesen es);
+// eine Quelle ist es nicht.
 //
 // Umsortieren geht überall per Ziehen: Panel-Kopf, Dock-Icon, Leisten-Griff.
 // Die Anordnung ist eine Vorliebe dieses Browsers und liegt im localStorage,
@@ -20,10 +26,15 @@
 import { t, onLangChange } from './i18n.js';
 import { iconSvg } from './icons.js';
 import { closeDrawer, openDrawer, dockButtonFor, sortDock, addDockItem } from './dock.js';
+import {
+  dock, pinned, zone, float, isPinned, isFloat, sideOf, same,
+  togglePin, toggleFloat, dropTarget, nearerSide, fromJSON, toJSON, forMobile,
+} from './place.js';
+
+/** @typedef {import('./place.js').Place} Place */
+/** @typedef {import('./place.js').Side} Side */
 
 const KEY = 'spritebit_layout';
-const SIDE_REACH = 40;    // so weit neben der Leiste zählt ein Drop noch zur Seite
-const ZONE_REACH = 44;    // so nah am Rand der Zeichenfläche dockt eine Leiste an
 const PIN_MIN = 200, PIN_MAX = 560;
 const BARS = ['toolbar', 'color-bar', 'timeline'];
 const BAR_DOCK = {
@@ -33,53 +44,74 @@ const BAR_DOCK = {
 };
 // Wo eine Leiste ohne gespeicherte Anordnung andockt.
 const BAR_HOME = { 'toolbar': 'top', 'color-bar': 'top', 'timeline': 'bottom' };
-// Handy: Panels nur als Schublade (von unten), beide Leisten waagerecht
-// unter der Zeichenfläche. Die gespeicherte Anordnung bleibt unberührt.
+// Handy: Panels nur als Schublade (von unten), Leisten waagerecht unter der
+// Zeichenfläche. Die gespeicherte Anordnung bleibt unberührt.
 const MOBILE = window.matchMedia('(max-width: 1100px)');
 
 let ws, layer, hint;
 let zTop = 40;
+
+// Welche Art ist diese ID — Panel oder Leiste? Füllt initLayout().
+/** @type {Record<string, 'panel'|'bar'>} */
+const KIND = {};
+// Seite, auf der ein Panel im HTML steht: der Platz, wenn nichts gespeichert ist.
+/** @type {Record<string, Side>} */
+const homeSide = {};
+
+// ── Das Modell ──────────────────────────────────────────────────────
+//   places   wo jedes Ding sitzt — die einzige Wahrheit
+//   origins  wo es saß, bevor es angepinnt oder gelöst wurde (Rückweg)
+//   geom     letzte Fenstergröße, auch während es angedockt ist
+//   order    Reihenfolge der Panels und Dock-Icons
+//   barOrder Reihenfolge der Leisten innerhalb einer Zone
 // Handy — eigene Wahl, unabhängig von der Anordnung am Desktop:
 //   mobilePins  je Leiste true = unten angepinnt (Standard), false = im Dock
 //   mobileOrder Reihenfolge der Dock-Icons (leer = wie am Desktop)
 //   mobileSide  je Icon 'left' | 'right' (fehlt = wie am Desktop)
-let layout = { pinW: { left: 280, right: 300 }, items: {}, order: [], barOrder: [...BARS],
-  mobilePins: {}, mobileOrder: [], mobileSide: {} };
+let layout = {
+  pinW: { left: 280, right: 300 },
+  places: {}, origins: {}, geom: {}, lastSide: {},
+  order: [], barOrder: [...BARS],
+  mobilePins: {}, mobileOrder: [], mobileSide: {},
+};
 
-// Seite, auf der ein Panel im HTML steht — Rückfall, solange der Nutzer es
-// nirgends hingezogen hat (das Handy-Layout darf sie nicht verschieben).
-const homeSide = {};
+// Was gerade zu sehen ist. Am breiten Fenster ist das dasselbe wie
+// `layout.places`; am Handy die umgerechnete Fassung — die gespeicherte
+// Anordnung bleibt dabei unberührt, damit sie beim Zurückdrehen wieder da
+// ist. Getrennt zu halten ist wichtig: sonst zeigt der Bildschirm das eine
+// und die Knöpfe entscheiden nach dem anderen.
+/** @type {Record<string, Place>} */
+const shown = {};
+
+let applying = false;    // applyAll() stellt die Anordnung gerade her
+
+// Element-Helfer. Rueckgabe bewusst `any`: Felder wie .offsetWidth oder
+// .dataset gehoeren zu den konkreten Element-Arten, und ein Cast an jeder
+// Fundstelle waere mehr Laerm als Nutzen.
+/** @type {(id: string) => any} */
+const $ = id => document.getElementById(id);
+/** @type {(id: string) => any} */
+const panelEl = id => document.querySelector(`[data-panel="${id}"]`);
+/** @type {(id: string) => any} */
+const elOf = id => (KIND[id] === 'bar' ? $(id) : panelEl(id));
+/** @type {(side: string) => any} */
+const railOf = side => $(side === 'left' ? 'rail-left' : 'rail-right');
+/** @type {(side: string) => any} */
+const pinsOf = side => railOf(side).querySelector('.rail-pins');
+/** @type {(name: string) => any} */
+const zoneOf = name => document.querySelector(`.bar-zone[data-zone="${name}"]`);
+
+/** Angestammter Platz: wo etwas ohne gespeicherte Anordnung sitzt. */
+const homeOf = id => (KIND[id] === 'bar' ? zone(BAR_HOME[id] || 'top') : dock(homeSide[id] || 'right'));
+
+/** Der Platz, der gerade gilt — das, was man sieht. @returns {Place} */
+const placeOf = id => shown[id] || layout.places[id] || homeOf(id);
+
+/** Rückweg beim Lösen des Pins bzw. beim Andocken. @returns {Place} */
+const originOf = id => layout.origins[id] || homeOf(id);
 
 // Nur bekannte IDs übernehmen, fehlende hinten anhängen.
 const mergeOrder = (saved, all) => [...(saved || []).filter(id => all.includes(id)), ...all.filter(id => !(saved || []).includes(id))];
-
-const $ = id => document.getElementById(id);
-const panelEl = id => document.querySelector(`[data-panel="${id}"]`);
-const railOf = side => $(side === 'left' ? 'rail-left' : 'rail-right');
-const pinsOf = side => railOf(side).querySelector('.rail-pins');
-const zoneOf = name => document.querySelector(`.bar-zone[data-zone="${name}"]`);
-
-// ── Speichern ───────────────────────────────────────────────────────
-function load() {
-  try {
-    const raw = JSON.parse(localStorage.getItem(KEY) || 'null');
-    if (!raw || typeof raw !== 'object') return;
-    layout.pinW = { ...layout.pinW, ...(raw.pinW || {}) };
-    layout.items = raw.items || {};
-    layout.order = mergeOrder(raw.order, layout.order);
-    layout.barOrder = mergeOrder(raw.barOrder, BARS);
-    const obj = v => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});
-    layout.mobilePins = obj(raw.mobilePins);
-    layout.mobileSide = obj(raw.mobileSide);
-    layout.mobileOrder = Array.isArray(raw.mobileOrder) ? raw.mobileOrder : [];
-  } catch {}
-}
-let transient = false;   // gerade Handy-Anordnung angewendet → nicht speichern
-function save() {
-  if (transient) return;
-  try { localStorage.setItem(KEY, JSON.stringify(layout)); } catch {}
-}
-const itemState = id => (layout.items[id] ||= {});
 
 // Ein Element in einer Reihenfolge vor `beforeId` setzen (null = ans Ende).
 function moveInOrder(list, id, beforeId) {
@@ -87,6 +119,61 @@ function moveInOrder(list, id, beforeId) {
   if (i >= 0) list.splice(i, 1);
   const j = beforeId ? list.indexOf(beforeId) : -1;
   if (j >= 0) list.splice(j, 0, id); else list.push(id);
+}
+
+// ── Speichern ───────────────────────────────────────────────────────
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(layout)); } catch {}
+}
+
+function load() {
+  let raw;
+  try { raw = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch { return; }
+  if (!raw || typeof raw !== 'object') return;
+  const obj = v => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});
+
+  layout.pinW = { ...layout.pinW, ...obj(raw.pinW) };
+  layout.order = mergeOrder(raw.order, layout.order);
+  layout.barOrder = mergeOrder(raw.barOrder, BARS);
+  layout.mobilePins = obj(raw.mobilePins);
+  layout.mobileSide = obj(raw.mobileSide);
+  layout.mobileOrder = Array.isArray(raw.mobileOrder) ? raw.mobileOrder : [];
+  layout.geom = obj(raw.geom);
+  layout.lastSide = obj(raw.lastSide);
+
+  // Plätze lesen. Jeder einzelne wird geprüft; was nicht passt, fällt auf den
+  // angestammten Platz zurück, statt die Oberfläche lahmzulegen.
+  for (const [id, v] of Object.entries(obj(raw.places))) {
+    const p = KIND[id] && fromJSON(v, KIND[id]);
+    if (p) layout.places[id] = p;
+  }
+  for (const [id, v] of Object.entries(obj(raw.origins))) {
+    const p = KIND[id] && fromJSON(v, KIND[id]);
+    if (p) layout.origins[id] = p;
+  }
+  // Ältere Fassungen speicherten `items: { mode, side, zone, x, y, w, h }`.
+  if (!raw.places && raw.items) migrateItems(obj(raw.items));
+}
+
+// Anordnung aus der Zeit vor dem Platz-Modell übernehmen, damit niemand sein
+// eingerichtetes Fenster verliert.
+function migrateItems(items) {
+  for (const [id, st] of Object.entries(items)) {
+    const kind = KIND[id];
+    if (!kind || !st || typeof st !== 'object') continue;
+    const side = st.side === 'left' || st.side === 'right' ? st.side : null;
+    let p = null;
+    if (st.mode === 'float') p = float({ x: st.x || 0, y: st.y || 0, w: st.w || 320, h: st.h || 420 });
+    else if (st.mode === 'pinned' && kind === 'panel') p = pinned(side || homeSide[id] || 'right');
+    else if (st.mode === 'drawer') p = dock(side || homeSide[id] || 'right');
+    else if (kind === 'bar') p = zone(st.zone || BAR_HOME[id] || 'top');
+    else p = dock(side || homeSide[id] || 'right');
+    if (p) layout.places[id] = p;
+    if (Number.isFinite(st.w)) layout.geom[id] = { x: st.x || 0, y: st.y || 0, w: st.w, h: st.h || 0 };
+    // `unpinTo` war der Vorläufer von `origins`.
+    if (st.unpinTo === 'drawer') layout.origins[id] = dock(side || 'right');
+    else if (typeof st.unpinTo === 'string' && kind === 'bar') layout.origins[id] = zone(st.unpinTo);
+  }
 }
 
 // ── Hilfen ──────────────────────────────────────────────────────────
@@ -108,12 +195,13 @@ function syncRail(side) {
   rail.style.setProperty('--pins-w', layout.pinW[side] + 'px');
 }
 
-// Handy: unten angepinnte Leisten stehen zwischen Zeichenflaeche und Dock.
-// Eine Schublade faehrt als Blatt von unten hoch — ohne dieses Mass wuerde
-// sie genau ueber den angepinnten Leisten liegen und sie verdecken.
+// Handy: unten angepinnte Leisten stehen zwischen Zeichenfläche und Dock.
+// Eine Schublade fährt als Blatt von unten hoch — ohne dieses Maß läge sie
+// genau über den angepinnten Leisten und verdeckte sie.
 function syncMobilePins() {
-  const zone = zoneOf('bottom');
-  const h = MOBILE.matches && zone && zone.offsetParent !== null ? Math.round(zone.getBoundingClientRect().height) : 0;
+  const zoneEl = zoneOf('bottom');
+  const h = MOBILE.matches && zoneEl && zoneEl.offsetParent !== null
+    ? Math.round(zoneEl.getBoundingClientRect().height) : 0;
   document.documentElement.style.setProperty('--mpins-h', h + 'px');
 }
 
@@ -151,18 +239,23 @@ function placeFloat(el, g) {
   clampFloat(el);
 }
 
+/** Fenstergröße für ein Ding, das noch nie geschwebt hat. */
 function defaultGeom(id) {
-  const st = itemState(id), r = wsRect();
-  const w = st.w || 300, h = st.h || 420;
-  return { x: st.x ?? Math.max(0, (r.width - w) / 2), y: st.y ?? 40, w, h };
+  const g = layout.geom[id], r = wsRect();
+  const w = g?.w || (KIND[id] === 'bar' ? 380 : 300);
+  const h = g?.h || (KIND[id] === 'bar' ? 0 : 420);
+  return { x: g?.x ?? Math.max(0, (r.width - w) / 2), y: g?.y ?? 40, w, h };
 }
 
-function rememberFloat(id, el) {
-  Object.assign(itemState(id), {
+/** Geometrie eines Fensters merken — auch für später, wenn es angedockt ist. */
+function rememberGeom(id, el) {
+  layout.geom[id] = {
     x: Math.round(parseFloat(el.style.left) || 0),
     y: Math.round(parseFloat(el.style.top) || 0),
     w: el.offsetWidth, h: el.offsetHeight,
-  });
+  };
+  const p = placeOf(id);
+  if (isFloat(p)) layout.places[id] = float(layout.geom[id]);
 }
 
 function clearFloatStyle(el) {
@@ -187,61 +280,140 @@ function insertionPoint(els, pos, vertical) {
   return { before: null, line: last ? (vertical ? last.bottom : last.right) : null };
 }
 
-// ── Panels ──────────────────────────────────────────────────────────
-// opts: side, before (Panel-ID, vor der es in der Reihe steht), geom
-function setPanelMode(id, mode, opts = {}) {
-  const el = panelEl(id);
-  if (!el) return;
-  const st = itemState(id);
-  const side = opts.side || st.side || el.dataset.side;
-  if ('before' in opts) moveInOrder(layout.order, id, opts.before);
+// ════════════════════════════════════════════════════════════════════
+// Platz setzen und zeichnen
+// ════════════════════════════════════════════════════════════════════
 
-  if (el.classList.contains('is-shown')) closeDrawer();
-  el.classList.remove('is-shown', 'is-pinned', 'is-floating');
-  clearFloatStyle(el);
-  el.dataset.side = side;
+/**
+ * Der einzige Weg, einen Platz zu ändern.
+ * @param {string} id
+ * @param {Place} next
+ * @param {{before?:string|null, geom?:object}} [opts]
+ */
+function setPlace(id, next, opts = {}) {
+  const prev = placeOf(id);
+  shown[id] = next;
 
-  const btn = dockButtonFor(id);
-  if (btn) railOf(side).querySelector('.rail-dock').append(btn);
-  sortDock(layout.order);
-
-  if (mode === 'pinned') {
-    pinsOf(side).append(el);
-    sortPanels(pinsOf(side));
-    el.classList.add('is-pinned');
-    // Angepinnt und zugeklappt wäre eine leere Spalte — also aufklappen.
-    if (el.classList.contains('collapsed')) {
-      el.classList.remove('collapsed');
-      el.querySelector('.panel-toggle')?.setAttribute('aria-expanded', 'true');
+  // Am Handy gilt eine eigene, nicht gespeicherte Anordnung (applyAll). Was
+  // dort verschoben wird, darf die Anordnung am breiten Fenster nicht ändern.
+  if (!MOBILE.matches) {
+    // Ruhige Plätze (Dock, Zone) sind der Rückweg: von dort kommt man, dorthin
+    // führen Pin und Andocken zurück. Angepinnt und schwebend zählen nicht —
+    // sonst führte „zurück" wieder dorthin, wo man gerade weg will.
+    if (!applying && !isPinned(prev) && !isFloat(prev) && !same(prev, next)) {
+      layout.origins[id] = toJSON(prev);
     }
-  } else if (mode === 'float') {
-    el.classList.add('is-floating');
-    placeFloat(el, opts.geom || defaultGeom(id));
-  } else {
-    mode = 'drawer';
-    railOf(side).append(el);
-    sortPanels(railOf(side));
+    if ('before' in opts) {
+      const list = next.kind === 'zone' ? layout.barOrder : layout.order;
+      moveInOrder(list, id, opts.before);
+    }
+    layout.places[id] = next;
+    // Zuletzt benutzte Seite merken: beim nächsten Anpinnen ist sie der
+    // Vorschlag, wenn der aktuelle Platz keine Seite hat (oben/unten).
+    if (isPinned(next)) layout.lastSide[id] = sideOf(next);
   }
-
-  el.dataset.mode = mode;
-  Object.assign(st, { mode, side });
-  if (mode === 'float') rememberFloat(id, el);
-  syncRail('left');
-  syncRail('right');
-  syncHeadButtons(el);
-  save();
+  render(id, opts.geom);
+  if (!applying) save();
 }
 
-function syncHeadButtons(el) {
-  const pin = el.querySelector('.panel-pin');
-  if (!pin) return;
-  const pinned = el.dataset.mode === 'pinned';
-  pin.setAttribute('aria-pressed', String(pinned));
-  pin.title = t(pinned ? 'lay.unpin' : 'lay.pin');
-  pin.setAttribute('aria-label', pin.title);
-  const fl = el.querySelector('.panel-float');
-  fl.title = t('lay.float');
-  fl.setAttribute('aria-label', fl.title);
+/**
+ * Platz → DOM. Die einzige Stelle, die Eltern-Element und Klassen setzt.
+ * @param {string} id
+ * @param {object} [geom]  Geometrie für ein frisch gelöstes Fenster
+ */
+function render(id, geom) {
+  const el = elOf(id);
+  if (!el) return;
+  const kind = KIND[id];
+  const p = placeOf(id);
+  const side = sideOf(p) || homeSide[id] || 'right';
+
+  if (el.classList.contains('is-shown')) closeDrawer();
+  el.classList.remove('is-shown', 'is-pinned', 'is-floating', 'is-vertical', 'is-bar-drawer');
+  clearFloatStyle(el);
+
+  // Das Dock-Icon zieht mit, sobald der Platz eine Seite hat.
+  const btn = dockButtonFor(id);
+  if (btn && sideOf(p)) railOf(side).querySelector('.rail-dock').append(btn);
+  if (btn && kind === 'bar') btn.hidden = p.kind !== 'dock';
+
+  switch (p.kind) {
+    case 'pinned':
+      pinsOf(side).append(el);
+      sortPanels(pinsOf(side));
+      el.classList.add('is-pinned');
+      // Angepinnt und zugeklappt wäre eine leere Spalte — also aufklappen.
+      if (el.classList.contains('collapsed')) {
+        el.classList.remove('collapsed');
+        el.querySelector('.panel-toggle')?.setAttribute('aria-expanded', 'true');
+      }
+      break;
+
+    case 'float':
+      el.classList.add('is-floating');
+      placeFloat(el, geom || p.geom || defaultGeom(id));
+      break;
+
+    case 'zone':
+      placeBar(id, p.zone);
+      if (p.zone === 'left' || p.zone === 'right') el.classList.add('is-vertical');
+      break;
+
+    default:   // 'dock' — Icon im Dock, Inhalt als Schublade daneben
+      railOf(side).append(el);
+      if (kind === 'bar') {
+        el.classList.add('is-bar-drawer');
+        if (!MOBILE.matches) el.classList.add('is-vertical');
+      } else {
+        sortPanels(railOf(side));
+      }
+  }
+
+  // Ausgabe fürs CSS und für dock.js — niemals zurückgelesen.
+  el.dataset.mode = p.kind;
+  if (sideOf(p)) el.dataset.side = side;
+
+  sortDock(layout.order);
+  if (p.kind === 'float') rememberGeom(id, el);
+  syncRail('left');
+  syncRail('right');
+  syncButtons(el, id);
+}
+
+// Leiste in ihre Zone hängen, in der gespeicherten Reihenfolge.
+function placeBar(id, zoneName) {
+  const el = $(id);
+  const z = zoneOf(zoneName);
+  z.append(el);
+  [...z.children].sort((a, b) => layout.barOrder.indexOf(a.id) - layout.barOrder.indexOf(b.id)).forEach(c => z.append(c));
+}
+
+// ── Knopf-Beschriftungen ────────────────────────────────────────────
+// Panel und Leiste tragen dieselben zwei Knöpfe und dieselben Begriffe:
+// die Pinnadel zeigt einen Zustand (seitlich angepinnt oder nicht), das
+// Fenster-Symbol eine Handlung (lösen bzw. wieder andocken).
+function syncButtons(el, id) {
+  const p = placeOf(id);
+  const pin = el.querySelector('.panel-pin, .bar-pin');
+  const fl = el.querySelector('.panel-float, .bar-float');
+  if (pin) {
+    if (KIND[id] === 'bar' && MOBILE.matches) {
+      // Am Handy heißt der Pin etwas anderes: unten festmachen oder ins Dock.
+      const below = p.kind === 'zone';
+      pin.setAttribute('aria-pressed', String(below));
+      pin.title = t(below ? 'lay.mobileUnpin' : 'lay.mobilePin');
+    } else {
+      pin.setAttribute('aria-pressed', String(isPinned(p)));
+      pin.title = t(isPinned(p) ? 'lay.unpin' : 'lay.pin');
+    }
+    pin.setAttribute('aria-label', pin.title);
+  }
+  if (fl) {
+    fl.title = t(isFloat(p) ? 'lay.dockBar' : 'lay.float');
+    fl.setAttribute('aria-label', fl.title);
+  }
+  const grip = el.querySelector('.bar-grip');
+  if (grip) grip.title = t('lay.grip');
 }
 
 function headButton(cls, icon) {
@@ -252,338 +424,132 @@ function headButton(cls, icon) {
   return b;
 }
 
-// Wohin fällt ein Panel, wenn man es bei (cx, cy) loslässt?
-// → { side, pinned, before, hint } oder null (= schwebend lassen)
-function panelTarget(id, cx, cy, wasPinned) {
-  const w = wsRect();
-  const L = railOf('left').getBoundingClientRect(), R = railOf('right').getBoundingClientRect();
-  let side = null;
-  if (cx < L.right + SIDE_REACH) side = 'left';
-  else if (cx > R.left - SIDE_REACH) side = 'right';
-  if (!side) return null;
+// ════════════════════════════════════════════════════════════════════
+// Die drei Gesten: anpinnen, lösen, ziehen
+// ════════════════════════════════════════════════════════════════════
+// Alle drei gelten für Panels und Leisten gleich. Was dabei herauskommt,
+// rechnet place.js aus — hier wird nur gemessen und gezeichnet.
 
-  if (wasPinned) {
-    const pins = [...pinsOf(side).querySelectorAll(':scope > [data-panel]:not(.is-guest)')].filter(p => p.dataset.panel !== id);
-    const ip = insertionPoint(pins, cy, true);
-    const col = (pinsOf(side).classList && railOf(side).classList.contains('has-pins') && pins.length)
-      ? pinsOf(side).getBoundingClientRect()
-      : { left: side === 'left' ? L.left + 48 : R.right - 48 - layout.pinW[side], width: layout.pinW[side] };
-    const y = ip.line ?? w.top;
-    return { side, pinned: true, before: ip.before?.dataset.panel || null,
-      hint: { x: col.left - w.left, y: y - w.top - 2, w: col.width, h: 4 } };
-  }
-  return { ...dockSlot(id, side === 'left' ? -1e6 : 1e6, cy, 0), pinned: false };
+/** Mitte des Elements → nähere Hälfte der Bühne. */
+function nearSideOf(el) {
+  const r = el.getBoundingClientRect(), w = wsRect();
+  return nearerSide(r.left + r.width / 2, w.left, w.width);
 }
 
-function dropPanel(id, tgt) {
-  if (!tgt) return false;
-  if (tgt.pinned) { setPanelMode(id, 'pinned', { side: tgt.side, before: tgt.before }); return true; }
-  setPanelMode(id, 'drawer', { side: tgt.side, before: tgt.before });
-  openDrawer(panelEl(id));   // zeigen, wo es gelandet ist
-  return true;
-}
-
-function initPanel(el) {
-  const id = el.dataset.panel;
-  el.dataset.side = el.closest('#rail-left') ? 'left' : 'right';
-  homeSide[el.dataset.panel] = el.dataset.side;   // Ausgangsseite laut HTML
-  el.dataset.mode = 'drawer';
-  const head = el.querySelector('.panel-head');
-  const close = head.querySelector('.dock-close');
-  const fl = headButton('panel-float', 'float');
-  const pin = headButton('panel-pin', 'pin');
-  head.insertBefore(fl, close);
-  head.insertBefore(pin, close);
-
-  fl.addEventListener('click', () => {
-    const r = el.getBoundingClientRect(), w = wsRect();
-    const geom = r.width
-      ? { x: r.left - w.left + 24, y: r.top - w.top + 24, w: r.width, h: Math.min(r.height, 460) }
-      : null;
-    setPanelMode(id, 'float', { geom: { ...(geom || defaultGeom(id)), cascade: true } });
-  });
-  pin.addEventListener('click', () => {
-    if (el.dataset.mode === 'pinned') { setPanelMode(id, 'drawer'); return; }
-    let side = el.dataset.side;
-    if (el.dataset.mode === 'float') {
-      const r = el.getBoundingClientRect(), w = wsRect();
-      side = (r.left + r.width / 2) < (w.left + w.width / 2) ? 'left' : 'right';
-    }
-    setPanelMode(id, 'pinned', { side });
-  });
-  // × am schwebenden Fenster: zurück als (geschlossene) Schublade.
-  close.addEventListener('click', () => { if (el.dataset.mode === 'float') setPanelMode(id, 'drawer'); });
-  // Klick aufs Dock-Icon eines angepinnten/schwebenden Panels: zeigen.
-  el.addEventListener('panel-focus', () => {
-    if (el.dataset.mode === 'float') bringToFront(el);
-    el.scrollIntoView({ block: 'nearest' });
-    el.classList.remove('is-flash'); void el.offsetWidth; el.classList.add('is-flash');
-  });
-  el.addEventListener('pointerdown', () => { if (el.dataset.mode === 'float') bringToFront(el); });
-
-  let wasPinned = false;
-  makeDraggable(head, el, {
-    lift: () => {
-      wasPinned = el.dataset.mode === 'pinned';
-      if (el.dataset.mode === 'float') return;
-      const r = el.getBoundingClientRect(), w = wsRect();
-      setPanelMode(id, 'float', { geom: { x: r.left - w.left, y: r.top - w.top, w: r.width, h: Math.min(r.height, 460) } });
-    },
-    target: (cx, cy) => panelTarget(id, cx, cy, wasPinned),
-    drop: tgt => { if (!dropPanel(id, tgt)) { rememberFloat(id, el); save(); } },
-  });
-}
-
-// Dock-Icons lassen sich ziehen: umsortieren oder auf die andere Seite.
-// target/drop entscheiden, was mit dem dazugehörigen Element passiert.
-function initDockDrag(id, { target, drop }) {
-  const btn = dockButtonFor(id);
-  if (!btn) return;
-  let ghost = null;
-  // Der Klick direkt nach dem Ziehen gehört zum Ziehen, nicht zum Öffnen.
-  const swallow = e => { e.stopImmediatePropagation(); e.preventDefault(); };
-  makeDraggable(btn, null, {
-    mobile: true,   // Dock-Icons lassen sich auch auf dem Handy ordnen
-    lift: () => {
-      ghost = btn.cloneNode(true);
-      ghost.classList.add('dock-ghost');
-      layer.append(ghost);
-      btn.addEventListener('click', swallow, { capture: true });
-    },
-    follow: (cx, cy) => {
-      const w = wsRect();
-      Object.assign(ghost.style, { left: (cx - w.left - 18) + 'px', top: (cy - w.top - 18) + 'px' });
-    },
-    target: (cx, cy) => (MOBILE.matches ? mobileDockSlot(id, cx, cy) : target(cx, cy)),
-    drop: tgt => {
-      ghost?.remove();
-      ghost = null;
-      setTimeout(() => btn.removeEventListener('click', swallow, { capture: true }), 0);
-      if (!tgt) return;
-      if (MOBILE.matches) mobileDockDrop(id, tgt); else drop(tgt);
-    },
-  });
-}
-
-// Handy: die beiden Docks liegen als eine waagerechte Leiste unten. Die
-// linke Gruppe reicht bis zum Anfang der rechten.
-function mobileDockSlot(id, cx, cy) {
-  const w = wsRect();
-  const L = railOf('left').getBoundingClientRect(), R = railOf('right').getBoundingClientRect();
-  // Weit über der Leiste losgelassen → abbrechen.
-  if (cy < Math.min(L.top, R.top) - 60) return null;
-  const side = cx < R.left ? 'left' : 'right';
-  const dock = railOf(side).querySelector('.rail-dock');
-  const btns = [...dock.children].filter(b => b.dataset.target !== id && !b.hidden);
-  const ip = insertionPoint(btns, cx, false);
-  const d = dock.getBoundingClientRect();
-  const x = ip.line ?? d.left + 8;
-  return { side, before: ip.before?.dataset.target || null,
-    hint: { x: x - w.left - 2, y: d.top - w.top + 6, w: 4, h: d.height - 12 } };
-}
-
-function mobileDockDrop(id, tgt) {
-  layout.mobileSide = { ...layout.mobileSide, [id]: tgt.side };
-  const order = mergeOrder(layout.mobileOrder, layout.order);
-  moveInOrder(order, id, tgt.before);
-  layout.mobileOrder = order;
-  save();
-  applyAll();
-}
-
-function initPanelDockDrag(id) {
-  initDockDrag(id, {
-    target: (cx, cy) => panelTarget(id, cx, cy, panelEl(id).dataset.mode === 'pinned'),
-    drop: tgt => {
-      const el = panelEl(id);
-      const mode = el.dataset.mode === 'pinned' ? 'pinned' : el.dataset.mode === 'float' ? 'float' : 'drawer';
-      // Ein schwebendes Fenster bleibt schweben; nur Seite/Reihe ändern sich.
-      setPanelMode(id, mode, { side: tgt.side, before: tgt.before, geom: mode === 'float' ? defaultGeom(id) : undefined });
-    },
-  });
-}
-
-// Liegt der Zeiger über einer Seitenleiste (plus `reach` daneben)?
-// → { side, drawer, before, hint } für einen Platz in deren Dock.
-function dockSlot(id, cx, cy, reach) {
-  const w = wsRect();
-  const L = railOf('left').getBoundingClientRect(), R = railOf('right').getBoundingClientRect();
-  const side = cx < L.right + reach ? 'left' : cx > R.left - reach ? 'right' : null;
-  if (!side) return null;
-  const dock = railOf(side).querySelector('.rail-dock');
-  const btns = [...dock.children].filter(b => b.dataset.target !== id && !b.hidden);
-  const ip = insertionPoint(btns, cy, true);
-  const d = dock.getBoundingClientRect();
-  const y = ip.line ?? d.top + 8;
-  return { side, drawer: true, before: ip.before?.dataset.target || null,
-    hint: { x: d.left - w.left + 4, y: y - w.top - 2, w: d.width - 8, h: 4 } };
-}
-
-// ── Leisten (Werkzeuge, Farben) ─────────────────────────────────────
-function placeBar(id, zone, before) {
-  const el = $(id);
-  moveInOrder(layout.barOrder, id, before);
-  zoneOf(zone).append(el);
-  // Alle Leisten der Zone in die gespeicherte Reihenfolge bringen.
-  const z = zoneOf(zone);
-  [...z.children].sort((a, b) => layout.barOrder.indexOf(a.id) - layout.barOrder.indexOf(b.id)).forEach(c => z.append(c));
-}
-
-function setBarMode(id, mode, opts = {}) {
-  const el = $(id);
-  const st = itemState(id);
-  const btn = dockButtonFor(id);
-  if (el.classList.contains('is-shown')) closeDrawer();
-  el.classList.remove('is-floating', 'is-vertical', 'is-bar-drawer');
-  clearFloatStyle(el);
-  if (mode === 'float') {
-    el.classList.add('is-floating');
-    placeFloat(el, opts.geom || { x: st.x ?? 120, y: st.y ?? 60, w: st.w || 380, h: st.h || 0 });
-    rememberFloat(id, el);
-  } else if (mode === 'drawer') {
-    // Als Icon im Dock: aufgeklappt wie ein Panel, senkrecht angeordnet.
-    st.side = opts.side || st.side || 'right';
-    if ('before' in opts) moveInOrder(layout.order, id, opts.before);
-    railOf(st.side).append(el);
-    if (btn) railOf(st.side).querySelector('.rail-dock').append(btn);
-    el.classList.add('is-bar-drawer');
-    if (!MOBILE.matches) el.classList.add('is-vertical');
-  } else {
-    mode = 'docked';
-    st.zone = opts.zone || st.zone || BAR_HOME[id] || 'top';
-    placeBar(id, st.zone, 'before' in opts ? opts.before : layout.barOrder[layout.barOrder.indexOf(id) + 1] ?? null);
-    if (st.zone === 'left' || st.zone === 'right') el.classList.add('is-vertical');
-  }
-  // Das Dock-Icon gibt es nur, solange die Leiste im Dock wohnt.
-  if (btn) btn.hidden = mode !== 'drawer';
-  sortDock(layout.order);
-  el.dataset.mode = mode;
-  st.mode = mode;
-  syncBarButton(el);
-  save();
-}
-
-function syncBarButton(el) {
-  const pin = el.querySelector('.bar-pin');
-  if (MOBILE.matches) {
-    const pinned = el.dataset.mode === 'docked';
-    pin.setAttribute('aria-pressed', String(pinned));
-    pin.title = t(pinned ? 'lay.mobileUnpin' : 'lay.mobilePin');
-    pin.setAttribute('aria-label', pin.title);
+function doTogglePin(id) {
+  const el = elOf(id);
+  // Handy: der Pin schaltet zwischen „unten angepinnt" und „im Dock".
+  if (KIND[id] === 'bar' && MOBILE.matches) {
+    layout.mobilePins[id] = placeOf(id).kind !== 'zone';
+    save();
+    closeDrawer();
+    applyAll();
     return;
   }
-  const docked = el.dataset.mode !== 'float';
-  pin.setAttribute('aria-pressed', String(docked));
-  pin.title = t(docked ? 'lay.floatBar' : 'lay.dockBar');
-  pin.setAttribute('aria-label', pin.title);
-  el.querySelector('.bar-grip').title = t('lay.grip');
+  const cur = placeOf(id);
+  const next = togglePin(cur, {
+    kind: KIND[id],
+    origin: originOf(id),
+    home: homeOf(id),
+    // Die nähere Hälfte zählt nur für ein schwebendes Fenster. Eine Leiste
+    // von oben hat keine Seite — dann gilt die zuletzt benutzte, sonst links.
+    nearSide: isFloat(cur) ? nearSideOf(el) : undefined,
+    lastSide: layout.lastSide[id] || homeSide[id],
+  });
+  setPlace(id, next);
 }
 
-// Wohin fällt eine Leiste? → { zone, before, hint } oder null
-function barTarget(id, cx, cy) {
-  // Über einer Seitenleiste losgelassen → als Icon ins Dock.
-  const slot = dockSlot(id, cx, cy, 4);
-  if (slot) return slot;
+function doToggleFloat(id) {
+  const el = elOf(id);
+  const r = el.getBoundingClientRect(), w = wsRect();
+  const geom = r.width
+    ? { x: r.left - w.left + 24, y: r.top - w.top + 24,
+        w: KIND[id] === 'bar' ? Math.min(r.width, 420) : r.width,
+        h: KIND[id] === 'bar' ? 0 : Math.min(r.height, 460), cascade: true }
+    : { ...defaultGeom(id), cascade: true };
+  const next = toggleFloat(placeOf(id), { geom, origin: originOf(id), home: homeOf(id) });
+  setPlace(id, next, { geom: next.kind === 'float' ? geom : undefined });
+}
+
+/**
+ * Wohin fällt das Ding, das gerade am Zeiger hängt?
+ * Liefert zusätzlich die Einfügemarke und die Reihenfolge-Position.
+ * @returns {{place:Place, before:string|null, hint:object}|null}
+ */
+function targetAt(id, cx, cy, wasPinned) {
+  const kind = KIND[id];
   const w = wsRect();
   const body = $('stage-body').getBoundingClientRect();
-  // Eine leere Zone ist unsichtbar und hat keine Größe — dann zählt die
-  // Kante der Zeichenfläche.
-  const edge = (name, fallback) => {
-    const z = zoneOf(name);
-    return z.offsetHeight ? z.getBoundingClientRect() : { top: fallback, bottom: fallback };
-  };
-  const top = edge('top', body.top);
-  const bottom = edge('bottom', body.bottom);
-  if (cx < body.left || cx > body.right) return null;
-  let zone = null;
-  if (cy >= top.top - 12 && cy <= top.bottom + ZONE_REACH) zone = 'top';
-  else if (cy >= bottom.top - ZONE_REACH && cy <= bottom.bottom + 40) zone = 'bottom';
-  else if (cy > body.top && cy < body.bottom && cx < body.left + ZONE_REACH + zoneOf('left').offsetWidth) zone = 'left';
-  else if (cy > body.top && cy < body.bottom && cx > body.right - ZONE_REACH - zoneOf('right').offsetWidth) zone = 'right';
-  if (!zone) return null;
+  const zr = name => { const z = zoneOf(name); return z.offsetHeight ? z.getBoundingClientRect() : null; };
+  const place = dropTarget({
+    kind, x: cx, y: cy, wasPinned,
+    rects: {
+      railLeft: railOf('left').getBoundingClientRect(),
+      railRight: railOf('right').getBoundingClientRect(),
+      body,
+      zoneTop: zr('top'), zoneBottom: zr('bottom'),
+      zoneLeftW: zoneOf('left').offsetWidth, zoneRightW: zoneOf('right').offsetWidth,
+    },
+  });
+  if (!place) return null;
 
-  const z = zoneOf(zone);
-  const vertical = zone === 'top' || zone === 'bottom';
-  const others = [...z.children].filter(c => c.id !== id);
-  const ip = insertionPoint(others, vertical ? cy : cx, vertical);
-  // Leere Zonen sind unsichtbar (Größe 0) — dann markiert die Kante der
-  // Zeichenfläche den Platz.
-  const zr = z.offsetWidth || z.offsetHeight ? z.getBoundingClientRect() : null;
-  let h;
-  if (vertical) {
-    const y = ip.line ?? (zone === 'top' ? (zr ? zr.bottom : body.top) : (zr ? zr.top : body.bottom - 4));
-    h = { x: body.left - w.left, y: y - w.top - 2, w: body.width, h: 4 };
-  } else {
-    const x = ip.line ?? (zone === 'left' ? (zr ? zr.right : body.left + 4) : (zr ? zr.left : body.right - 4));
-    h = { x: x - w.left - 2, y: body.top - w.top, w: 4, h: body.height };
+  // Einfügemarke: wo genau in der Reihe landet es?
+  if (place.kind === 'zone') {
+    const z = zoneOf(place.zone);
+    const horizontal = place.zone === 'top' || place.zone === 'bottom';
+    const others = [...z.children].filter(c => c.id !== id);
+    const ip = insertionPoint(others, horizontal ? cy : cx, horizontal);
+    const r = z.offsetWidth || z.offsetHeight ? z.getBoundingClientRect() : null;
+    const hint = horizontal
+      ? { x: body.left - w.left,
+          y: (ip.line ?? (place.zone === 'top' ? (r ? r.bottom : body.top) : (r ? r.top : body.bottom - 4))) - w.top - 2,
+          w: body.width, h: 4 }
+      : { x: (ip.line ?? (place.zone === 'left' ? (r ? r.right : body.left + 4) : (r ? r.left : body.right - 4))) - w.left - 2,
+          y: body.top - w.top, w: 4, h: body.height };
+    return { place, before: ip.before?.id || null, hint };
   }
-  return { zone, before: ip.before?.id || null, hint: h };
-}
 
-function initBar(id) {
-  const el = $(id);
-  el.dataset.mode = 'docked';
-  const handle = document.createElement('div');
-  handle.className = 'bar-handle';
-  const grip = document.createElement('span');
-  grip.className = 'bar-grip';
-  grip.innerHTML = iconSvg('grip');
-  const pin = headButton('bar-pin', 'pin');
-  handle.append(grip, pin);
-  el.prepend(handle);
+  const side = sideOf(place);
+  if (place.kind === 'pinned') {
+    const pins = [...pinsOf(side).querySelectorAll(':scope > [data-panel]:not(.is-guest)')].filter(p => p.dataset.panel !== id);
+    const ip = insertionPoint(pins, cy, true);
+    const rail = railOf(side).getBoundingClientRect();
+    const col = railOf(side).classList.contains('has-pins') && pins.length
+      ? pinsOf(side).getBoundingClientRect()
+      : { left: side === 'left' ? rail.left + 48 : rail.right - 48 - layout.pinW[side], width: layout.pinW[side] };
+    return { place, before: ip.before?.dataset.panel || null,
+      hint: { x: col.left - w.left, y: (ip.line ?? w.top) - w.top - 2, w: col.width, h: 4 } };
+  }
 
-  pin.addEventListener('click', () => {
-    // Handy: zwischen "unten angepinnt" und "im Dock" wechseln.
-    if (MOBILE.matches) {
-      layout.mobilePins[id] = el.dataset.mode !== 'docked';
-      save();
-      closeDrawer();
-      applyAll();
-      return;
-    }
-    if (el.dataset.mode === 'float') { setBarMode(id, 'docked'); return; }
-    const r = el.getBoundingClientRect(), w = wsRect();
-    setBarMode(id, 'float', { geom: { x: r.left - w.left + 24, y: r.top - w.top + 24, w: Math.min(r.width, 420), cascade: true } });
-  });
-  el.addEventListener('pointerdown', () => { if (el.dataset.mode === 'float') bringToFront(el); });
-
-  makeDraggable(grip, el, {
-    lift: () => {
-      if (el.dataset.mode === 'float') return;
-      const r = el.getBoundingClientRect(), w = wsRect();
-      setBarMode(id, 'float', { geom: { x: r.left - w.left, y: r.top - w.top, w: Math.min(r.width, 420) } });
-    },
-    target: (cx, cy) => barTarget(id, cx, cy),
-    drop: tgt => {
-      if (tgt?.drawer) { setBarMode(id, 'drawer', { side: tgt.side, before: tgt.before }); openDrawer(el); }
-      else if (tgt) setBarMode(id, 'docked', { zone: tgt.zone, before: tgt.before });
-      else { rememberFloat(id, el); save(); }
-    },
-  });
-
-  // Dock-Icon (nur sichtbar im Modus drawer) — ziehbar wie die der Panels.
-  const [icon, label] = BAR_DOCK[id];
-  addDockItem(el, id, icon, label, 'right').hidden = true;
-  el.addEventListener('panel-focus', () => { if (el.dataset.mode === 'float') bringToFront(el); });
-  initDockDrag(id, {
-    target: (cx, cy) => barTarget(id, cx, cy),
-    drop: tgt => {
-      if (tgt.drawer) setBarMode(id, 'drawer', { side: tgt.side, before: tgt.before });
-      else setBarMode(id, 'docked', { zone: tgt.zone, before: tgt.before });
-    },
-  });
+  // dock
+  const dockEl = railOf(side).querySelector('.rail-dock');
+  const btns = [...dockEl.children].filter(b => b.dataset.target !== id && !b.hidden);
+  const ip = insertionPoint(btns, cy, true);
+  const d = dockEl.getBoundingClientRect();
+  return { place, before: ip.before?.dataset.target || null,
+    hint: { x: d.left - w.left + 4, y: (ip.line ?? d.top + 8) - w.top - 2, w: d.width - 8, h: 4 } };
 }
 
 // ── Ziehen ──────────────────────────────────────────────────────────
 // Erst ab ein paar Pixeln Bewegung wird gezogen — ein normaler Klick auf
 // Knöpfe im Kopf bleibt ein Klick. `el` folgt dem Zeiger (oder `follow`).
+/**
+ * @param {Element} handle            woran gezogen wird
+ * @param {any} el                    was dem Zeiger folgt (null = nur Geste)
+ * @param {object} opts
+ * @param {() => void} opts.lift      beim Anheben
+ * @param {(cx:number, cy:number) => any} opts.target   Ziel unter dem Zeiger
+ * @param {(tgt:any) => void} opts.drop                 beim Loslassen
+ * @param {(cx:number, cy:number) => void} [opts.follow] eigene Bewegung
+ * @param {boolean} [opts.mobile]     auch auf dem Handy ziehbar
+ */
 function makeDraggable(handle, el, { lift, follow, target, drop, mobile = false }) {
-  handle.addEventListener('pointerdown', e => {
+  handle.addEventListener('pointerdown', /** @param {PointerEvent} e */ e => {
     if (e.button !== 0 || (MOBILE.matches && !mobile)) return;
-    if (el && e.target.closest('button, input, select, a')) return;
+    if (el && /** @type {Element} */ (e.target).closest('button, input, select, a')) return;
     const sx = e.clientX, sy = e.clientY;
-    // Auf dem Handy scrollt die Dock-Leiste waagerecht, und die Icons fuellen
-    // sie komplett aus. Ein Wisch muss darum scrollen duerfen: dort beginnt
+    // Auf dem Handy scrollt die Dock-Leiste waagerecht, und die Icons füllen
+    // sie komplett aus. Ein Wisch muss darum scrollen dürfen: dort beginnt
     // das Ziehen erst nach kurzem Halten. Bewegt sich der Finger vorher,
     // geben wir die Geste frei und der Browser scrollt.
     const hold = MOBILE.matches && e.pointerType !== 'mouse';
@@ -639,6 +605,151 @@ function makeDraggable(handle, el, { lift, follow, target, drop, mobile = false 
   });
 }
 
+/**
+ * Ziehen am Kopf bzw. am Griff: das Ding hängt am Zeiger und landet dort,
+ * wo man es loslässt. Für Panels und Leisten derselbe Code.
+ */
+function initDrag(id, handle) {
+  const el = elOf(id);
+  let wasPinned = false;
+  makeDraggable(handle, el, {
+    lift: () => {
+      wasPinned = isPinned(placeOf(id));
+      if (isFloat(placeOf(id))) return;
+      const r = el.getBoundingClientRect(), w = wsRect();
+      setPlace(id, float({ x: r.left - w.left, y: r.top - w.top,
+        w: KIND[id] === 'bar' ? Math.min(r.width, 420) : r.width,
+        h: KIND[id] === 'bar' ? 0 : Math.min(r.height, 460) }));
+    },
+    target: (cx, cy) => targetAt(id, cx, cy, wasPinned),
+    drop: tgt => {
+      if (!tgt) { rememberGeom(id, el); save(); return; }   // nirgendwo: bleibt schwebend
+      setPlace(id, tgt.place, { before: tgt.before });
+      // Im Dock gelandet: einmal aufklappen, damit man sieht, wo es hin ist.
+      if (tgt.place.kind === 'dock') openDrawer(el);
+    },
+  });
+}
+
+/** Dock-Icons ziehen: Seite und Reihenfolge ändern, Art des Platzes bleibt. */
+function initDockDrag(id) {
+  const btn = dockButtonFor(id);
+  if (!btn) return;
+  let ghost = null;
+  // Der Klick direkt nach dem Ziehen gehört zum Ziehen, nicht zum Öffnen.
+  const swallow = e => { e.stopImmediatePropagation(); e.preventDefault(); };
+  makeDraggable(btn, null, {
+    mobile: true,   // Dock-Icons lassen sich auch auf dem Handy ordnen
+    lift: () => {
+      ghost = btn.cloneNode(true);
+      ghost.classList.add('dock-ghost');
+      layer.append(ghost);
+      btn.addEventListener('click', swallow, { capture: true });
+    },
+    follow: (cx, cy) => {
+      const w = wsRect();
+      Object.assign(ghost.style, { left: (cx - w.left - 18) + 'px', top: (cy - w.top - 18) + 'px' });
+    },
+    target: (cx, cy) => (MOBILE.matches ? mobileDockSlot(id, cx, cy) : targetAt(id, cx, cy, isPinned(placeOf(id)))),
+    drop: tgt => {
+      ghost?.remove();
+      ghost = null;
+      setTimeout(() => btn.removeEventListener('click', swallow, { capture: true }), 0);
+      if (!tgt) return;
+      if (MOBILE.matches) { mobileDockDrop(id, tgt); return; }
+      // Ein angepinntes bleibt angepinnt, ein schwebendes schwebt weiter —
+      // nur Seite und Reihe ändern sich.
+      const cur = placeOf(id);
+      const place = isFloat(cur) ? cur
+        : isPinned(cur) && tgt.place.kind !== 'zone' ? pinned(sideOf(tgt.place) || sideOf(cur))
+        : tgt.place;
+      setPlace(id, place, { before: tgt.before });
+    },
+  });
+}
+
+// Handy: die beiden Docks liegen als eine waagerechte Leiste unten. Die
+// linke Gruppe reicht bis zum Anfang der rechten.
+function mobileDockSlot(id, cx, cy) {
+  const w = wsRect();
+  const L = railOf('left').getBoundingClientRect(), R = railOf('right').getBoundingClientRect();
+  // Weit über der Leiste losgelassen → abbrechen.
+  if (cy < Math.min(L.top, R.top) - 60) return null;
+  const side = cx < R.left ? 'left' : 'right';
+  const dockEl = railOf(side).querySelector('.rail-dock');
+  const btns = [...dockEl.children].filter(b => b.dataset.target !== id && !b.hidden);
+  const ip = insertionPoint(btns, cx, false);
+  const d = dockEl.getBoundingClientRect();
+  const x = ip.line ?? d.left + 8;
+  return { side, before: ip.before?.dataset.target || null,
+    hint: { x: x - w.left - 2, y: d.top - w.top + 6, w: 4, h: d.height - 12 } };
+}
+
+function mobileDockDrop(id, tgt) {
+  layout.mobileSide = { ...layout.mobileSide, [id]: tgt.side };
+  const order = mergeOrder(layout.mobileOrder, layout.order);
+  moveInOrder(order, id, tgt.before);
+  layout.mobileOrder = order;
+  save();
+  applyAll();
+}
+
+// ── Aufbau: Panels ──────────────────────────────────────────────────
+function initPanel(el) {
+  const id = el.dataset.panel;
+  KIND[id] = 'panel';
+  homeSide[id] = el.closest('#rail-left') ? 'left' : 'right';
+
+  const head = el.querySelector('.panel-head');
+  const close = head.querySelector('.dock-close');
+  const fl = headButton('panel-float', 'float');
+  const pin = headButton('panel-pin', 'pin');
+  head.insertBefore(fl, close);
+  head.insertBefore(pin, close);
+
+  fl.addEventListener('click', () => doToggleFloat(id));
+  pin.addEventListener('click', () => doTogglePin(id));
+  // × am schwebenden Fenster: zurück, woher es kam.
+  close.addEventListener('click', () => { if (isFloat(placeOf(id))) setPlace(id, originOf(id)); });
+
+  // Klick aufs Dock-Icon eines angepinnten/schwebenden Panels: zeigen.
+  el.addEventListener('panel-focus', () => {
+    if (isFloat(placeOf(id))) bringToFront(el);
+    el.scrollIntoView({ block: 'nearest' });
+    el.classList.remove('is-flash'); void el.offsetWidth; el.classList.add('is-flash');
+  });
+  el.addEventListener('pointerdown', () => { if (isFloat(placeOf(id))) bringToFront(el); });
+
+  initDrag(id, head);
+}
+
+// ── Aufbau: Leisten ─────────────────────────────────────────────────
+function initBar(id) {
+  const el = $(id);
+  KIND[id] = 'bar';
+  const handle = document.createElement('div');
+  handle.className = 'bar-handle';
+  const grip = document.createElement('span');
+  grip.className = 'bar-grip';
+  grip.innerHTML = iconSvg('grip');
+  // Dieselben zwei Knöpfe wie im Panel-Kopf — und dieselbe Bedeutung.
+  const fl = headButton('bar-float', 'float');
+  const pin = headButton('bar-pin', 'pin');
+  handle.append(grip, fl, pin);
+  el.prepend(handle);
+
+  fl.addEventListener('click', () => doToggleFloat(id));
+  pin.addEventListener('click', () => doTogglePin(id));
+  el.addEventListener('pointerdown', () => { if (isFloat(placeOf(id))) bringToFront(el); });
+  el.addEventListener('panel-focus', () => { if (isFloat(placeOf(id))) bringToFront(el); });
+
+  initDrag(id, grip);
+
+  // Dock-Icon (nur sichtbar, solange die Leiste im Dock wohnt).
+  const [icon, label] = BAR_DOCK[id];
+  addDockItem(el, id, icon, label, 'right').hidden = true;
+}
+
 // ── Breite der angepinnten Spalte ───────────────────────────────────
 function initPinResizer(side) {
   const grip = document.createElement('div');
@@ -667,10 +778,10 @@ function initPinResizer(side) {
 }
 
 // ── Handy: Rand ausblenden, wo die Leiste weitergeht ────────────────
-// Die drei Leisten scrollen waagerecht, ihre Scrollbalken sind versteckt.
-// Ohne Hinweis sieht eine abgeschnittene Reihe aus wie eine volle — darum
-// wird der Rand weich, solange dort noch etwas liegt. Rechts in der
-// Werkzeugleiste uebernimmt das der angeheftete Regler-Knopf.
+// Die Leisten scrollen waagerecht, ihre Scrollbalken sind versteckt. Ohne
+// Hinweis sieht eine abgeschnittene Reihe aus wie eine volle — darum wird
+// der Rand weich, solange dort noch etwas liegt. Rechts in der
+// Werkzeugleiste übernimmt das der angeheftete Regler-Knopf.
 function syncBarFade(el) {
   const rest = el.scrollWidth - el.clientWidth - el.scrollLeft;
   const rightCovered = el.id === 'toolbar' && optsBtn && !optsBtn.hidden;
@@ -678,7 +789,7 @@ function syncBarFade(el) {
   el.classList.toggle('is-more-r', MOBILE.matches && rest > 4 && !rightCovered);
 }
 
-// Die Icon-Spalten unten koennen genauso ueberlaufen wie die Leisten.
+// Die Icon-Spalten unten können genauso überlaufen wie die Leisten.
 const fadeEls = () => [...BARS.map(id => $(id)), ...document.querySelectorAll('.rail-dock, .tl-frames')];
 
 function initBarFades() {
@@ -692,16 +803,14 @@ const syncAllBarFades = () => fadeEls().forEach(syncBarFade);
 
 // ── Handy: Werkzeug-Optionen ────────────────────────────────────────
 // In der einzeiligen Werkzeugleiste stehen auf dem Handy nur die Werkzeuge.
-// Größe, Stärke usw. wandern in eine eigene Zeile darüber, die
-// der Regler-Knopf oder ein zweiter Tipp aufs aktive Werkzeug aufklappt.
-// Am breiten Fenster kommen sie an ihren Platz zurück (Platzhalter).
-// Symmetrie bleibt in der Leiste: zwei schmale Knöpfe, die beim Scrollen
-// mitlaufen — dafür lohnt die Aufklapp-Zeile nicht.
+// Größe, Stärke usw. wandern in eine eigene Zeile darüber, die der
+// Regler-Knopf oder ein zweiter Tipp aufs aktive Werkzeug aufklappt. Am
+// breiten Fenster kommen sie an ihren Platz zurück (Platzhalter).
 const OPT_IDS = ['brush-size-group', 'strength-group', 'tolerance-group', 'shape-group', 'select-group'];
 let optsBox, optsBtn, optsMarks;
 // Die Statuszeile liegt am Desktop unter den Leisten. Auf dem Handy ist
-// jede Zeile Hoehe zu schade dafuer — sie wandert als schwebende Pille in
-// die Zeichenflaeche (CSS) und braucht dort keinen eigenen Platz.
+// jede Zeile Höhe zu schade dafür — sie wandert als schwebende Pille in die
+// Zeichenfläche (CSS) und braucht dort keinen eigenen Platz.
 let infoMark;
 
 function setToolOpts(open) {
@@ -710,15 +819,14 @@ function setToolOpts(open) {
   optsBtn.setAttribute('aria-expanded', String(open));
 }
 
-// Hat das aktive Werkzeug ueberhaupt Optionen? (app.js blendet die Gruppen
+// Hat das aktive Werkzeug überhaupt Optionen? (app.js blendet die Gruppen
 // je Werkzeug aus.)
 const hasToolOpts = () => OPT_IDS.some(id => !$(id).hidden);
 
 // Nach jedem Werkzeugwechsel aufrufen: ohne Optionen gibt es nichts
 // aufzuklappen — dann verschwindet der Knopf, statt eine leere Zeile zu
-// oeffnen. `openIfAny` zieht die Zeile von selbst auf; das nutzt die
-// Auswahl, deren Aktionen sonst genau dann versteckt waeren, wenn man sie
-// braucht.
+// öffnen. `openIfAny` zieht die Zeile von selbst auf; das nutzt die Auswahl,
+// deren Aktionen sonst genau dann versteckt wären, wenn man sie braucht.
 export function refreshToolOpts(openIfAny = false) {
   if (!optsBtn) return;
   const any = hasToolOpts();
@@ -769,40 +877,37 @@ function syncToolOpts() {
 function relabel() {
   optsBtn.title = t('lay.toolOpts');
   optsBtn.setAttribute('aria-label', optsBtn.title);
-  document.querySelectorAll('[data-panel]').forEach(syncHeadButtons);
-  BARS.forEach(id => syncBarButton($(id)));
-  document.querySelectorAll('.pins-resizer').forEach(g => { g.title = t('lay.resize'); });
+  for (const id of Object.keys(KIND)) {
+    const el = elOf(id);
+    if (el) syncButtons(el, id);
+  }
+  document.querySelectorAll('.pins-resizer').forEach(g => { /** @type {any} */ (g).title = t('lay.resize'); });
 }
 
-// Gespeicherte Anordnung anwenden — auf dem Handy abgewandelt: angepinnte
-// und schwebende Panels werden Schubladen, Leisten wandern nach unten.
-// Diese Abwandlung wird nicht gespeichert; zurück am breiten Fenster
-// steht alles wieder wie vorher.
+// ── Anordnung anwenden ──────────────────────────────────────────────
+// Auf dem Handy abgewandelt: angepinnte und schwebende Panels werden
+// Schubladen, Leisten wandern nach unten. Die Abwandlung wird nicht
+// gespeichert — zurück am breiten Fenster steht alles wieder wie vorher.
 function applyAll() {
   const mobile = MOBILE.matches;
-  const snapshot = mobile ? JSON.stringify(layout) : null;
-  transient = mobile;
-  const mSide = id => (mobile ? layout.mobileSide[id] : null);
-  for (const id of layout.order.filter(id => panelEl(id))) {
-    const st = layout.items[id] || {};
-    const mode = mobile ? 'drawer' : st.mode || 'drawer';
-    setPanelMode(id, mode, { side: mSide(id) || st.side || homeSide[id] });
+  // Beim Herstellen wird kein Rückweg gemerkt und nicht gespeichert: sonst
+  // überschriebe der Startplatz den gespeicherten Ursprung.
+  applying = true;
+
+  for (const id of Object.keys(KIND)) {
+    if (!elOf(id)) continue;
+    const saved = layout.places[id] || homeOf(id);
+    shown[id] = mobile
+      ? forMobile(saved, KIND[id], {
+          pinnedBelow: KIND[id] === 'bar' && layout.mobilePins[id] !== false,
+          side: layout.mobileSide[id] || sideOf(saved) || homeSide[id],
+        })
+      : saved;
+    render(id);
   }
-  for (const id of [...layout.barOrder]) {
-    const st = layout.items[id] || {};
-    if (mobile) {
-      if (layout.mobilePins[id] === false) setBarMode(id, 'drawer', { side: mSide(id) || st.side || 'right' });
-      else setBarMode(id, 'docked', { zone: 'bottom', before: null });
-    }
-    else if (st.mode === 'drawer') setBarMode(id, 'drawer', { side: st.side });
-    else if (st.mode === 'float') setBarMode(id, 'float');
-    else setBarMode(id, 'docked', { zone: st.zone || BAR_HOME[id], before: null });
-  }
-  if (mobile) {
-    layout = JSON.parse(snapshot);
-    if (layout.mobileOrder.length) sortDock(mergeOrder(layout.mobileOrder, layout.order));
-  }
-  transient = false;
+
+  applying = false;
+  if (mobile && layout.mobileOrder.length) sortDock(mergeOrder(layout.mobileOrder, layout.order));
   syncToolOpts();
   syncRail('left');
   syncRail('right');
@@ -829,33 +934,35 @@ export function initLayout() {
     initPinResizer(side);
   }
 
-  layout.order = [...document.querySelectorAll('[data-panel]')].map(p => p.dataset.panel).concat(BARS);
+  layout.order = [...document.querySelectorAll('[data-panel]')].map(p => /** @type {any} */ (p).dataset.panel).concat(BARS);
   document.querySelectorAll('[data-panel]').forEach(initPanel);
-  document.querySelectorAll('[data-panel]').forEach(p => initPanelDockDrag(p.dataset.panel));
   BARS.forEach(initBar);
+  // Erst jetzt gibt es alle Dock-Icons — Ziehen daran hängt daran.
+  Object.keys(KIND).forEach(initDockDrag);
   initToolOpts();
   initBarFades();
 
-  load();
+  load();          // braucht KIND: nur bekannte IDs und passende Plätze zählen
   applyAll();
   MOBILE.addEventListener('change', () => { applyAll(); syncMobilePins(); });
   relabel();
   onLangChange(relabel);
 
-  // Fenster gespeichert, wenn der Nutzer sie mit dem Eck-Griff vergrößert.
+  // Fenstergröße merken, wenn der Nutzer sie mit dem Eck-Griff ändert.
   const ro = new ResizeObserver(entries => {
     let changed = false;
-    for (const { target } of entries) {
+    for (const e of entries) {
+      const target = /** @type {any} */ (e.target);
       if (!target.classList.contains('is-floating')) continue;
-      rememberFloat(target.dataset.panel || target.id, target);
+      rememberGeom(target.dataset.panel || target.id, target);
       changed = true;
     }
     if (changed) save();
   });
   document.querySelectorAll('[data-panel], #toolbar, #color-bar, #timeline').forEach(el => ro.observe(el));
 
-  // Die Hoehe der unten angepinnten Leisten aendert sich beim An- und
-  // Abpinnen, beim Drehen und wenn eine Leiste selbst umbricht.
+  // Die Höhe der unten angepinnten Leisten ändert sich beim An- und Abpinnen,
+  // beim Drehen und wenn eine Leiste selbst umbricht.
   syncMobilePins();
   new ResizeObserver(syncMobilePins).observe(zoneOf('bottom'));
 

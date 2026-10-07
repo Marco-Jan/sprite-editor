@@ -5,19 +5,21 @@
 // PNG und PDF zeigen den aktuellen Frame, GIF und Spritesheet alle Frames.
 import { getPal, getSprite, listSprites, getPaletteByName, frameDuration, flatGrid, emptyGrid } from './state.js';
 import { encodeGif } from './gif.js';
-import { cellToColor } from './render.js';
+import { cellToColor, renderCallbacks } from './render.js';
+import { selectedFrameIndices } from './frames.js';
 import { showInfoToast } from './toast.js';
 import { saveBlob } from './filesystem.js';
 import { flashSaved } from './storage.js';
-import { t } from './i18n.js';
+import { t, onLangChange } from './i18n.js';
 
 // Sauberer Sprite-Render auf neuen Canvas (ohne Grid-Linien, ohne Schachbrett).
 // Hintergrund bleibt transparent (default-state des Canvas).
 // Der aktuelle Frame, so wie man ihn sieht (alle sichtbaren Ebenen).
-const shownGrid = () => (getSprite() ? flatGrid(getSprite()) : emptyGrid(24));
+// `i` = Frame-Nummer; ohne Angabe der Frame, den man gerade sieht.
+const shownGrid = (i) => (getSprite() ? flatGrid(getSprite(), i) : emptyGrid(24));
 
-function renderSpriteToCanvas(scale) {
-  const grid = shownGrid();
+function renderSpriteToCanvas(scale, i) {
+  const grid = shownGrid(i);
   const pal  = getPal();
   const H = grid.length, W = grid[0].length;
 
@@ -145,11 +147,11 @@ function renderLegendCanvas(colors, minWidth) {
 }
 
 // Export-Canvas: Sprite oben, optional Farb-Legende darunter.
-function buildExportCanvas(scale, includePalette) {
-  const sprite = renderSpriteToCanvas(scale);
+function buildExportCanvas(scale, includePalette, i) {
+  const sprite = renderSpriteToCanvas(scale, i);
   if (!includePalette) return sprite;
 
-  const grid = shownGrid();
+  const grid = shownGrid(i);
   const pal  = getPal();
   const colors = collectUsedColors(grid, pal);
   if (!colors.length) return sprite;
@@ -170,9 +172,36 @@ function buildExportCanvas(scale, includePalette) {
   return c;
 }
 
+function exportBase() {
+  return (getSprite()?.name || 'sprite').replace(/[^a-zA-Z0-9_-]/g, '_') || 'sprite';
+}
+
 function exportFilename(ext) {
-  const base = (getSprite()?.name || 'sprite').replace(/[^a-zA-Z0-9_-]/g, '_') || 'sprite';
-  return `${base}.${ext}`;
+  return `${exportBase()}.${ext}`;
+}
+
+// Ein Frame je Datei: name_f01.png, name_f02.png … Die Nummer ist so lang
+// wie die höchste Frame-Nummer, damit die Dateien in jedem Dateimanager in
+// der richtigen Reihenfolge stehen.
+function frameFilename(ext, i, total) {
+  const pad = String(total).length;
+  return `${exportBase()}_f${String(i + 1).padStart(pad, '0')}.${ext}`;
+}
+
+// Welche Frames exportiert werden: die in der Timeline markierten, sonst der
+// aktive. Mehr als einer heißt: eine Datei je Frame.
+function framesToExport() {
+  const sp = getSprite();
+  if (!sp) return [];
+  return selectedFrameIndices().filter(i => i >= 0 && i < sp.frames.length);
+}
+
+// Mehrere Dateien am Stück: einmal melden statt einmal pro Datei.
+function reportSavedMany(result, n, first, last) {
+  flashSaved();
+  const where = result.fallback ? t('exp.framesDownload')
+    : result.dir ? t('exp.framesIn', { dir: result.dir }) : '';
+  showInfoToast(t('exp.framesSaved', { n, first, last, where }));
 }
 
 // Canvas → PNG-Blob (Promise).
@@ -197,13 +226,16 @@ function reportSaved(result, filename) {
 // GIF — die Animation des aktiven Sprites (ein Frame: ein stilles Bild)
 // ────────────────────────────────────────────────────────────────────
 // Farben über alle Frames einsammeln; GIF fasst 255 plus Transparent.
-function buildGif(scale) {
+function buildGif(scale, only) {
   const sp = getSprite();
   if (!sp) return { ok: false, reason: t('exp.noSprites') };
   const pal = getPal();
   const H = sp.grid.length, W = sp.grid[0].length;
   const index = new Map();
-  const shown = sp.frames.map((_, i) => flatGrid(sp, i));
+  // Markierte Frames: nur die kommen ins GIF — so schneidet man einen
+  // Abschnitt einer langen Animation heraus, ohne etwas zu löschen.
+  const use = only && only.length > 1 ? only : sp.frames.map((_, i) => i);
+  const shown = use.map(i => flatGrid(sp, i));
   for (const g of shown) for (const row of g) for (const c of row) {
     const hex = cellToColor(c, pal);
     if (hex && !index.has(hex.toLowerCase())) index.set(hex.toLowerCase(), index.size + 1);
@@ -223,7 +255,7 @@ function buildGif(scale) {
   });
   const bytes = encodeGif({
     width: w, height: h, colors: [...index.keys()], frames,
-    delays: sp.frames.map((_, i) => frameDuration(sp, i)),
+    delays: use.map(i => frameDuration(sp, i)),
   });
   return { ok: true, blob: new Blob([bytes], { type: 'image/gif' }), n: frames.length };
 }
@@ -286,26 +318,55 @@ function buildSheet(scale) {
 }
 
 export function initExport() {
-  const scaleSel = document.getElementById('export-scale');
+  const scaleSel = /** @type {HTMLSelectElement} */ (document.getElementById('export-scale'));
+
+  // Hinweiszeile: sie macht sichtbar, dass PNG/PDF/GIF sich gerade auf die
+  // markierten Frames beziehen — ein Titel-Tooltip sieht auf dem Handy keiner.
+  const note = document.getElementById('export-frames-note');
+  const syncFrameNote = (n) => {
+    if (!note) return;
+    const many = n > 1;
+    note.hidden = !many;
+    if (many) note.textContent = t('exp.framesNote', { n });
+  };
+  renderCallbacks.onFrameSelection = syncFrameNote;
+  onLangChange(() => syncFrameNote(framesToExport().length));
 
   document.getElementById('export-gif-btn').addEventListener('click', async () => {
     const scale = Number(scaleSel.value) || 8;
-    const r = buildGif(scale);
+    const r = buildGif(scale, framesToExport());
     if (!r.ok) { showInfoToast(r.reason); return; }
     const filename = exportFilename('gif');
     const result = await saveBlob(r.blob, filename);
     reportSaved(result, filename);
   });
 
-  const embedPalette = () => document.getElementById('export-embed-palette')?.checked;
+  const embedPalette = () => /** @type {HTMLInputElement} */ (document.getElementById('export-embed-palette'))?.checked;
 
   document.getElementById('export-png-btn').addEventListener('click', async () => {
     const scale = Number(scaleSel.value) || 8;
-    const canvas = buildExportCanvas(scale, embedPalette());
-    const blob = await canvasToPngBlob(canvas);
-    const filename = exportFilename('png');
-    const result = await saveBlob(blob, filename);
-    reportSaved(result, filename);
+    const ids = framesToExport();
+    const sp = getSprite();
+    if (!sp) { showInfoToast(t('exp.noSprites')); return; }
+
+    // Ein markierter Frame (oder gar keine Auswahl): eine Datei wie bisher.
+    if (ids.length < 2) {
+      const canvas = buildExportCanvas(scale, embedPalette());
+      const blob = await canvasToPngBlob(canvas);
+      const filename = exportFilename('png');
+      reportSaved(await saveBlob(blob, filename), filename);
+      return;
+    }
+
+    let result = null, first = '', last = '';
+    for (const i of ids) {
+      const name = frameFilename('png', i, sp.frames.length);
+      const blob = await canvasToPngBlob(buildExportCanvas(scale, embedPalette(), i));
+      result = await saveBlob(blob, name);
+      first = first || name;
+      last = name;
+    }
+    reportSavedMany(result, ids.length, first, last);
   });
 
   document.getElementById('export-sheet-btn').addEventListener('click', async () => {
@@ -336,21 +397,38 @@ export function initExport() {
       return;
     }
     const scale = Number(scaleSel.value) || 8;
-    const canvas = buildExportCanvas(scale, embedPalette());
-    const W = canvas.width, H = canvas.height;
-    const dataUrl = canvas.toDataURL('image/png');
+    const sp = getSprite();
+    if (!sp) { showInfoToast(t('exp.noSprites')); return; }
+    const ids = framesToExport();
 
     // PDF in exakter Pixel-Größe — Transparenz bleibt durch PNG-Embed erhalten
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF({
-      unit: 'px',
-      format: [W, H],
-      orientation: W >= H ? 'landscape' : 'portrait',
-      hotfixes: ['px_scaling'],
-    });
-    pdf.addImage(dataUrl, 'PNG', 0, 0, W, H, undefined, 'NONE');
-    const filename = exportFilename('pdf');
-    const result = await saveBlob(pdf.output('blob'), filename);
-    reportSaved(result, filename);
+    const makePdf = (i) => {
+      const canvas = buildExportCanvas(scale, embedPalette(), i);
+      const W = canvas.width, H = canvas.height;
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({
+        unit: 'px',
+        format: [W, H],
+        orientation: W >= H ? 'landscape' : 'portrait',
+        hotfixes: ['px_scaling'],
+      });
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, W, H, undefined, 'NONE');
+      return pdf.output('blob');
+    };
+
+    if (ids.length < 2) {
+      const filename = exportFilename('pdf');
+      reportSaved(await saveBlob(makePdf(undefined), filename), filename);
+      return;
+    }
+
+    let result = null, first = '', last = '';
+    for (const i of ids) {
+      const name = frameFilename('pdf', i, sp.frames.length);
+      result = await saveBlob(makePdf(i), name);
+      first = first || name;
+      last = name;
+    }
+    reportSavedMany(result, ids.length, first, last);
   });
 }

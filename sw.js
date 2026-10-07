@@ -66,7 +66,9 @@ const PRECACHE = [
   'js/migrate.js',
   'js/palettes.js',
   'js/palpicker.js',
+  'js/place.js',
   'js/pwa.js',
+  'js/reduce.js',
   'js/render.js',
   'js/selection.js',
   'js/spritefx.js',
@@ -77,6 +79,7 @@ const PRECACHE = [
   'js/toast.js',
   'js/transform.js',
   'js/tsimport.js',
+  'js/view.js',
   'landing.css',
   'site.webmanifest',
   'styles.css',
@@ -84,12 +87,18 @@ const PRECACHE = [
 ];
 // ── Ende generiert ──────────────────────────────────────────────────
 
+// `self` ist hier der ServiceWorkerGlobalScope, nicht `window`. Die
+// Standard-Typen kennen in dieser Datei nur das Fenster — darum einmal
+// benennen statt an jeder Stelle hinzuschreiben.
+/** @type {any} */
+const sw = self;
+
 // Nur ändern, wenn sich die Cache-Struktur grundlegend ändert — dann
 // werfen alle Clients ihren alten Cache weg.
 const CACHE = 'spritebit-v1';
 const NET_TIMEOUT = 4000;
 
-self.addEventListener('install', (event) => {
+sw.addEventListener('install', (event) => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE);
     // Einzeln statt addAll: eine fehlende Datei soll nicht den ganzen
@@ -103,23 +112,23 @@ self.addEventListener('install', (event) => {
   })());
 });
 
-self.addEventListener('activate', (event) => {
+sw.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
     await Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)));
-    await self.clients.claim();
+    await sw.clients.claim();
   })());
 });
 
 // Die Seite sagt Bescheid, wenn der Nutzer das Update annimmt.
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'skip-waiting') self.skipWaiting();
+sw.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'skip-waiting') sw.skipWaiting();
 });
 
-self.addEventListener('fetch', (event) => {
+sw.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
-  if (new URL(req.url).origin !== self.location.origin) return;
+  if (new URL(req.url).origin !== sw.location.origin) return;
 
   const net = fetch(req);
   // Cache im Hintergrund auffrischen — auch wenn die Antwort zu spät kommt

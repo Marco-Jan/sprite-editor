@@ -2,9 +2,9 @@
 // APP — Haupt-Entry: Init + Event-Bindings + Wiring zwischen Modulen
 // ════════════════════════════════════════════════════════════════════
 import {
-  state, sprites, customPalettes, paletteMaterials, selection, allGrids, flatGrid, defaultLayer,
+  state, sprites, paletteMaterials, selection, flatGrid, defaultLayer,
   getGrid, getSprite, getPal, getMaxIdx, getPaletteName, getPreviewName, listSprites,
-  createSprite, uniquePaletteName, clearSelection, isInSelection,
+  createSprite, clearSelection, isInSelection,
 } from './state.js';
 import { DEFAULT_PALETTE, MAX_COLORS } from './data.js';
 import {
@@ -45,6 +45,8 @@ import {
   despeckleGrid, outlineGrid, magicWandDelete, autoRemoveBackground,
 } from './spritefx.js';
 import { initExport } from './export.js';
+import { openReduceModal, initReduceModal } from './reduce.js';
+import { zoomAt, fitZoomToArea, isPanKeyHeld, initPan, initPinch } from './view.js';
 import { initFrames, togglePlay, nextFrame, prevFrame, isPlaying, stop as stopPlayback } from './frames.js';
 import { initLayers } from './layers.js';
 import { initGuides, guidePointerDown, toggleEdit as toggleGuideEdit, toggleShow as toggleGuides } from './guides.js';
@@ -52,7 +54,7 @@ import { parseTsSprite } from './tsimport.js';
 import { CODE_FORMATS, getFormat, codeFilename } from './codegen.js';
 import {
   beginStroke, commitStroke, recordOp, undo, redo,
-  canUndo, canRedo, clearHistory, historyCallbacks, undoDepth, rollbackTo,
+  canUndo, canRedo, clearHistory, historyCallbacks, rollbackTo,
 } from './history.js';
 import {
   startMarquee, updateMarquee, startLasso, updateLasso, startMove, updateMove,
@@ -65,6 +67,10 @@ import {
   beginFreeRotate, previewFreeRotate, applyFreeRotate, cancelFreeRotate, isRotating,
 } from './transform.js';
 
+// Kurz fuer document.getElementById. Der Rueckgabetyp ist bewusst `any`:
+// die Felder (.value, .checked, .disabled) gehoeren zu den konkreten
+// Element-Arten, und ein Cast an jeder Fundstelle waere mehr Laerm als Nutzen.
+/** @type {(id: string) => any} */
 const $ = id => document.getElementById(id);
 
 // ────────────────────────────────────────────────────────────────────
@@ -178,150 +184,6 @@ function applyTemplateTrace(mode, n) {
 }
 
 // ────────────────────────────────────────────────────────────────────
-// BILD → PALETTE — Bildfarben in eine editierbare eigene Palette überführen
-// ────────────────────────────────────────────────────────────────────
-function nearestRgbIndex(rgb, list) {
-  let best = 0, bd = Infinity;
-  for (let i = 0; i < list.length; i++) {
-    const p = list[i];
-    const d = (rgb.r - p.r) ** 2 + (rgb.g - p.g) ** 2 + (rgb.b - p.b) ** 2;
-    if (d < bd) { bd = d; best = i; }
-  }
-  return best + 1;
-}
-
-// Dialog: wie viele Farben soll die Palette haben? Mit Vorher/Nachher-
-// Vorschau; das Bild wird erst beim Bestätigen umgeschrieben.
-let reduce = null;   // { px, distinct, colorsByCount }
-
-function collectImageColors() {
-  const sp = getSprite();
-  if (!sp) return null;
-  const pal = getPal();
-  const counts = new Map();
-  for (const row of allGrids(sp).flat()) for (const c of row) {
-    const hex = cellToColor(c, pal);
-    if (!hex) continue;
-    const k = hex.toLowerCase();
-    counts.set(k, (counts.get(k) || 0) + 1);
-  }
-  // Für den Median-Cut zählt jede Farbe so oft, wie sie vorkommt.
-  const px = [];
-  for (const [hex, n] of counts) { const rgb = hexToRgb(hex); for (let i = 0; i < n; i++) px.push(rgb); }
-  return { px, distinct: [...counts.keys()] };
-}
-
-function reduceColors(count) {
-  if (reduce.cache.has(count)) return reduce.cache.get(count);
-  const colors = count >= reduce.distinct.length
-    ? reduce.distinct.map(hexToRgb)
-    : medianCut(reduce.px, count);
-  // Hell → dunkel sortieren, damit Index 1 der hellste Ton ist.
-  const lum = c => 0.299 * c.r + 0.587 * c.g + 0.114 * c.b;
-  colors.sort((a, b) => lum(b) - lum(a));
-  // Jede Bildfarbe einmal zuordnen statt jedes Pixel einzeln.
-  const map = new Map(reduce.distinct.map(hex => [hex, nearestRgbIndex(hexToRgb(hex), colors)]));
-  const res = { colors, map };
-  reduce.cache.set(count, res);
-  return res;
-}
-
-function drawReduceCanvas(canvas, colorOf) {
-  const grid = getGrid(), pal = getPal();
-  const H = grid.length, W = grid[0].length;
-  canvas.width = W; canvas.height = H;
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, W, H);
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    const hex = cellToColor(grid[y][x], pal);
-    if (!hex) continue;
-    ctx.fillStyle = colorOf(hex.toLowerCase());
-    ctx.fillRect(x, y, 1, 1);
-  }
-}
-
-function renderReducePreview() {
-  const count = Number($('reduce-count').value);
-  const { colors, map } = reduceColors(count);
-  const hexes = colors.map(c => rgbToHex(c.r, c.g, c.b));
-  drawReduceCanvas($('reduce-after'), hex => hexes[map.get(hex) - 1]);
-  $('reduce-after-cap').textContent = tn('red.after', colors.length);
-  const sw = $('reduce-swatches');
-  sw.innerHTML = '';
-  sw.style.setProperty('--cols', colors.length > 16 ? 16 : 8);
-  for (const hex of hexes) {
-    const el = document.createElement('span');
-    el.className = 'pal-sw';
-    el.style.background = hex;
-    el.title = hex;
-    sw.appendChild(el);
-  }
-}
-
-function openReduceModal() {
-  if (!getSprite()) { showInfoToast(t('tpl.needSprite')); return; }
-  const data = collectImageColors();
-  if (!data || !data.px.length) { showInfoToast(t('tpl.imageEmpty')); return; }
-  reduce = { ...data, cache: new Map() };
-  const n = data.distinct.length;
-
-  const sel = $('reduce-count');
-  sel.innerHTML = '';
-  const add = (value, label) => {
-    const o = document.createElement('option');
-    o.value = value; o.textContent = label;
-    sel.appendChild(o);
-  };
-  if (n <= MAX_COLORS) add(n, tn('red.all', n));
-  for (const c of [255, 128, 64, 32, 16, 8, 4]) if (c < n) add(c, tn('red.count', c));
-  sel.value = String(Math.min(n, MAX_COLORS));
-
-  $('reduce-intro').textContent = tn('red.intro', n, { max: MAX_COLORS });
-  drawReduceCanvas($('reduce-before'), hex => hex);
-  renderReducePreview();
-  $('reduce-modal-overlay').classList.add('open');
-}
-
-function applyReduce() {
-  const sp = getSprite();
-  if (!sp || !reduce) return;
-  const { colors, map } = reduceColors(Number($('reduce-count').value));
-  const pal = getPal();
-
-  const name = uniquePaletteName('foto');
-  const palObj = {};
-  colors.forEach((c, i) => { palObj[i + 1] = rgbToHex(c.r, c.g, c.b); });
-  customPalettes[name] = palObj;
-
-  // Grid auf die neuen Indizes umschreiben — mit der Palette ein Undo-Schritt.
-  recordOp(() => {
-    for (const row of allGrids(sp).flat()) for (let x = 0; x < row.length; x++) {
-      const hex = cellToColor(row[x], pal);
-      row[x] = hex ? map.get(hex.toLowerCase()) : 0;
-    }
-    sp.palette = name;
-  });
-
-  $('reduce-modal-overlay').classList.remove('open');
-  reduce = null;
-  state.palPreview = null;
-  if (typeof state.curColor !== 'number' || state.curColor > colors.length) state.curColor = 1;
-  renderAll();
-  saveState();
-  showInfoToast(t('pal.fromImage', { name, n: colors.length }));
-}
-
-function initReduceModal() {
-  const overlay = $('reduce-modal-overlay');
-  const close = () => { overlay.classList.remove('open'); reduce = null; };
-  $('reduce-count').addEventListener('change', renderReducePreview);
-  $('reduce-cancel').addEventListener('click', close);
-  $('reduce-apply').addEventListener('click', applyReduce);
-  // Kein Schließen per Klick daneben — ein Fehlklick (oder Text markieren und
-  // außerhalb loslassen) soll die Eingaben nicht verwerfen. Abbrechen oder Esc.
-}
-
-// ────────────────────────────────────────────────────────────────────
 // Tool-Dispatch + UI-Sync
 // ────────────────────────────────────────────────────────────────────
 function applyTool(x, y) {
@@ -386,7 +248,9 @@ function updateToolUI() {
 function updateMirrorUI() {
   const x = state.mirror === 'x' || state.mirror === 'both';
   const y = state.mirror === 'y' || state.mirror === 'both';
-  for (const [id, on] of [['mirror-x-btn', x], ['mirror-y-btn', y]]) {
+  /** @type {[string, boolean][]} */
+  const pairs = [['mirror-x-btn', x], ['mirror-y-btn', y]];
+  for (const [id, on] of pairs) {
     const b = $(id);
     if (!b) continue;
     b.classList.toggle('is-active', on);
@@ -491,170 +355,12 @@ function layerBlocked(toast = false) {
   return true;
 }
 
-// ────────────────────────────────────────────────────────────────────
-// Ansicht: zoomen auf den Zeiger, verschieben mit Leertaste / mittlerer Taste
-// ────────────────────────────────────────────────────────────────────
-let panKeyHeld = false;
-
-// Zoomt um `step` Pixel pro Zelle und hält dabei die Zelle unter dem Zeiger fest.
-// `save` = false während einer laufenden Geste — gespeichert wird am Ende.
-function zoomAt(step, clientX, clientY, save = true) {
-  const next = Math.max(2, Math.min(40, state.cellSize + step));
-  if (next === state.cellSize) return;
-  const area = $('editor-canvas-area'), canvas = $('editor-canvas');
-  const before = canvas.getBoundingClientRect();
-  const fx = (clientX - before.left) / state.cellSize;   // Position in Zellen
-  const fy = (clientY - before.top) / state.cellSize;
-  state.cellSize = next;
-  $('cell-size').value = next;
-  $('cell-size-val').textContent = next + 'px';
-  renderEditor();
-  const after = canvas.getBoundingClientRect();
-  area.scrollLeft += (after.left + fx * next) - clientX;
-  area.scrollTop  += (after.top  + fy * next) - clientY;
-  if (save) saveState();
-}
-
-// Handy: beim Start so weit herauszoomen, dass der ganze Sprite ins Bild
-// passt. Sonst sieht man von einem 32x40-Sprite bei 16 px/Zelle nur ein
-// Viertel und muss erst schieben. Nur verkleinern — wer schon kleiner
-// gespeichert hat, behaelt seine Ansicht.
-function fitZoomToArea() {
-  const area = $('editor-canvas-area');
-  const grid = getGrid();
-  if (!grid?.length || !area.clientWidth) return;
-  const pad = 16;
-  const fit = Math.floor(Math.min((area.clientWidth - pad) / grid[0].length,
-                                  (area.clientHeight - pad) / grid.length));
-  const next = Math.max(4, Math.min(state.cellSize, fit));
-  if (next === state.cellSize) return;
-  state.cellSize = next;
-  $('cell-size').value = next;
-  $('cell-size-val').textContent = next + 'px';
-  renderEditor();
-}
-
-function initPan() {
-  const area = $('editor-canvas-area');
-  const setHeld = on => {
-    panKeyHeld = on;
-    area.classList.toggle('is-pannable', on);
-  };
-  window.addEventListener('keydown', e => {
-    if (e.code !== 'Space' || isTypingTarget(e.target) || document.querySelector('.modal-overlay.open')) return;
-    e.preventDefault();          // sonst scrollt/klickt der Browser
-    if (!e.repeat) setHeld(true);
-  });
-  window.addEventListener('keyup', e => { if (e.code === 'Space') setHeld(false); });
-  window.addEventListener('blur', () => setHeld(false));
-
-  area.addEventListener('pointerdown', e => {
-    if (!(panKeyHeld || e.button === 1)) return;
-    e.preventDefault();
-    const sx = e.clientX, sy = e.clientY, l0 = area.scrollLeft, t0 = area.scrollTop;
-    area.classList.add('is-panning');
-    try { area.setPointerCapture(e.pointerId); } catch {}
-    const move = ev => {
-      area.scrollLeft = l0 - (ev.clientX - sx);
-      area.scrollTop  = t0 - (ev.clientY - sy);
-    };
-    const up = () => {
-      area.classList.remove('is-panning');
-      area.removeEventListener('pointermove', move);
-      area.removeEventListener('pointerup', up);
-      area.removeEventListener('pointercancel', up);
-    };
-    area.addEventListener('pointermove', move);
-    area.addEventListener('pointerup', up);
-    area.addEventListener('pointercancel', up);
-  });
-  // Mittlere Taste: kein Auto-Scroll-Symbol des Browsers.
-  area.addEventListener('mousedown', e => { if (e.button === 1) e.preventDefault(); });
-}
-
-// ── Finger: zwei zum Zoomen und Verschieben, einer neben dem Bild schiebt ──
-// Der erste Finger hat beim Aufsetzen schon gemalt (oder gefüllt, eine Form
-// begonnen …). Kommt kurz danach ein zweiter, war es eine Zoom-Geste — dann
-// wird alles seit dem ersten Finger zurückgenommen. Läuft in der Capture-
-// Phase vor den Canvas-Handlern, damit die Bewegung nicht weitermalt.
-const PINCH_GRACE = 400;   // ms: so spät darf der zweite Finger kommen
-
-function initPinch() {
-  const area = $('editor-canvas-area');
-  const pts = new Map();
-  let pinch = null, slide = null;
-  let depth0 = 0, t0 = 0;
-
-  const two = () => {
-    const [a, b] = [...pts.values()];
-    return { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
-  };
-
-  area.addEventListener('pointerdown', e => {
-    if (e.pointerType !== 'touch') return;
-    pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    if (pts.size === 1) {
-      depth0 = undoDepth();
-      t0 = e.timeStamp;
-      // Neben dem Bild: mit einem Finger verschieben.
-      if (e.target === area || !e.target.closest('#editor-canvas')) {
-        slide = { x: e.clientX, y: e.clientY, l: area.scrollLeft, t: area.scrollTop };
-      }
-      return;
-    }
-    if (pts.size !== 2) return;
-    e.stopPropagation();
-    e.preventDefault();
-    slide = null;
-    // Was der erste Finger begonnen hat, verwerfen.
-    if (shapeStart) { shapeStart = null; state.shape.cells = []; }
-    if (selection.mode) endSelectionPointer();
-    if (e.timeStamp - t0 < PINCH_GRACE) rollbackTo(depth0);
-    else if (state.isDrawing || state.isErasing) commitStroke();
-    state.isDrawing = false;
-    state.isErasing = false;
-    renderAll();
-    const g = two();
-    pinch = { d0: g.d, c0: state.cellSize, x: g.x, y: g.y };
-  }, true);
-
-  area.addEventListener('pointermove', e => {
-    if (!pts.has(e.pointerId)) return;
-    pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    if (slide) {
-      area.scrollLeft = slide.l - (e.clientX - slide.x);
-      area.scrollTop  = slide.t - (e.clientY - slide.y);
-      return;
-    }
-    if (!pinch) return;
-    e.stopPropagation();
-    const g = two();
-    const target = Math.round(pinch.c0 * g.d / pinch.d0);
-    if (target !== state.cellSize) zoomAt(target - state.cellSize, g.x, g.y, false);
-    area.scrollLeft -= g.x - pinch.x;
-    area.scrollTop  -= g.y - pinch.y;
-    pinch.x = g.x;
-    pinch.y = g.y;
-  }, true);
-
-  const lift = e => {
-    if (!pts.delete(e.pointerId)) return;
-    if (pinch && pts.size < 2) { pinch = null; saveState(); }
-    if (!pts.size) slide = null;
-  };
-  // Am Fenster, nicht nur an der Fläche: ein Finger, der woanders losgelassen
-  // oder vom Browser abgebrochen wird, darf nicht als "noch aufgesetzt"
-  // hängen bleiben — sonst gälte der nächste einzelne Finger als zweiter.
-  window.addEventListener('pointerup', lift, true);
-  window.addEventListener('pointercancel', lift, true);
-}
-
 function initCanvasEvents() {
   const canvas = $('editor-canvas');
 
   canvas.addEventListener('pointerdown', e => {
-    // Leertaste gehalten oder mittlere Taste: verschieben, nicht malen (initPan).
-    if (panKeyHeld || e.button === 1) return;
+    // Leertaste gehalten oder mittlere Taste: verschieben, nicht malen (view.js).
+    if (isPanKeyHeld() || e.button === 1) return;
     // Beim Abspielen wird nicht gemalt — der Tipp hält an.
     if (isPlaying()) { e.preventDefault(); stopPlayback(); return; }
     // Hilfslinien verschieben: die Zeichenfläche gehört den Linien.
@@ -957,7 +663,7 @@ function initKeyboardEvents() {
     // ── Frames: , und . blättern, Enter spielt ab ──
     if (e.key === ',') { prevFrame(); return; }
     if (e.key === '.') { nextFrame(); return; }
-    if (e.key === 'Enter' && !e.target.closest?.('button, a, select, [role="option"]')) {
+    if (e.key === 'Enter' && !/** @type {HTMLElement} */ (e.target).closest?.('button, a, select, [role="option"]')) {
       e.preventDefault();
       togglePlay();
       return;
@@ -1129,7 +835,7 @@ function initFreeColors() {
     else if (action === 'reduce') openReduceModal();
   });
   document.addEventListener('pointerdown', e => {
-    if (!list.hidden && !e.target.closest('#free-colors')) setOpen(false);
+    if (!list.hidden && !/** @type {HTMLElement} */ (e.target).closest('#free-colors')) setOpen(false);
   });
   window.addEventListener('keydown', e => {
     if (e.key === 'Escape' && !list.hidden) { e.stopPropagation(); setOpen(false); }
@@ -1721,8 +1427,21 @@ function init() {
   initOutputPanel();
   initImport();
   initCanvasEvents();
-  initPan();
-  initPinch();
+  initPan({ ignoreKey: e => isTypingTarget(e.target) || anyModalOpen() });
+  // Zweiter Finger auf der Fläche: was der erste begonnen hat, zurücknehmen.
+  // Die Ansicht weiß, dass es eine Zoom-Geste ist — was dabei angefangen
+  // wurde, weiß nur app.js.
+  initPinch({
+    cancelFirstFinger: (sinceDepth, quick) => {
+      if (shapeStart) { shapeStart = null; state.shape.cells = []; }
+      if (selection.mode) endSelectionPointer();
+      if (quick) rollbackTo(sinceDepth);
+      else if (state.isDrawing || state.isErasing) commitStroke();
+      state.isDrawing = false;
+      state.isErasing = false;
+      renderAll();
+    },
+  });
   initKeyboardEvents();
 
   $('sprite-search').addEventListener('input', renderSpriteList);

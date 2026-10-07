@@ -19,6 +19,7 @@ import { contentBounds } from './transform.js';
 import { saveState } from './storage.js';
 import { t } from './i18n.js';
 
+/** @type {(id: string) => any} */
 const $ = id => document.getElementById(id);
 const FREE = 'rgba(47, 211, 255, 0.9)';
 const FIG = 'rgba(255, 128, 200, 0.9)';

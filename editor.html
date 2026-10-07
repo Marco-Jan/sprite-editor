@@ -155,6 +155,8 @@
             <button class="btn" id="export-sheet-btn" data-i18n="out.sheet" data-i18n-attr="title:out.sheetTitle"
                     title="Alle Sprites in einem Bild — plus JSON-Atlas mit Namen und Koordinaten">Spritesheet</button>
           </div>
+          <!-- Sagt, worauf sich PNG/PDF/GIF gerade beziehen (js/export.js) -->
+          <p class="field-note" id="export-frames-note" hidden></p>
 
           <label class="check" data-i18n-attr="title:out.legendTitle" title="Bettet eine Farb-Legende ins Bild ein, damit die Farbwerte nicht verloren gehen">
             <input type="checkbox" id="export-embed-palette" checked>
@@ -926,6 +928,7 @@
         <div><b>Text-Raster</b> — ein Zeichen pro Pixel mit Legende; praktisch für Diffs und Doku.</div>
       </div>
       <div><b>PNG / PDF</b> exportieren den aktuellen Frame transparent; mit <i>Farb-Legende</i> wird die Palette ins Bild gerendert. <b>GIF</b> enthält die ganze Animation.</div>
+      <div>Sind in der Timeline <b>mehrere Frames markiert</b> (Strg/Shift+Klick), speichern PNG und PDF <b>je eine Datei pro Frame</b> — durchnummeriert als <code>name_f01.png</code>, <code>name_f02.png</code> … Das GIF enthält dann nur die markierten Frames; so schneidet man einen Abschnitt heraus, ohne etwas zu löschen.</div>
       <div><b>Spritesheet</b> packt alle Sprites in gleich große Zellen — bei Animationen eine Zeile je Sprite mit allen Frames — und legt einen JSON-Atlas mit Namen, Koordinaten und Dauer daneben. So lesen Engines es direkt ein.</div>
       <div><b>Projekt sichern / Öffnen</b> schreibt alle Sprites und Paletten in eine JSON-Datei.</div>
     </div>
