@@ -49,6 +49,25 @@ let selSprite = null;   // zu welchem Sprite die Auswahl gehört
 
 function resetSel() { sel = new Set(); anchor = null; }
 
+// Am Handy gibt es weder Strg noch Shift. Statt dessen ein Schalter: ist er
+// an, markiert ein Tipp den Frame, statt zu ihm zu wechseln — wie die
+// Mehrfachauswahl in einer Foto-App. Am breiten Fenster bleibt es bei
+// Strg/Shift, dort ist der Knopf ausgeblendet (styles.css).
+let multiMode = false;
+
+function setMultiMode(on) {
+  multiMode = on;
+  if (!on) resetSel();
+  const b = $('tl-multi');
+  if (b) {
+    b.classList.toggle('is-active', on);
+    b.setAttribute('aria-pressed', String(on));
+    b.title = t(on ? 'tl.multiOff' : 'tl.multi');
+    b.setAttribute('aria-label', b.title);
+  }
+  renderTimeline();
+}
+
 // Die Frames, auf die eine Aktion wirkt — immer aufsteigend.
 function selectedFrames() {
   const sp = getSprite();
@@ -470,6 +489,15 @@ function initThumbDrag(b) {
     const i = Number(b.dataset.i);
     const sp = getSprite();
     if (!sp) return;
+    if (multiMode) {
+      // Auswahl-Modus: jeder Tipp nimmt einen Frame dazu oder wieder weg.
+      // Der erste Tipp erbt den aktiven Frame, damit er nicht verloren geht.
+      if (sel.size < 2) sel = new Set([sp.frame]);
+      if (sel.has(i) && sel.size > 1) sel.delete(i);
+      else { sel.add(i); anchor = i; goFrame(i); }
+      renderTimeline();
+      return;
+    }
     if (e.shiftKey) {
       // Spanne vom Anker bis hierher. Ohne Anker gilt der aktive Frame.
       const a = anchor != null && anchor < sp.frames.length ? anchor : sp.frame;
@@ -501,6 +529,7 @@ export function initFrames() {
   $('tl-add').addEventListener('click', addFrame);
   $('tl-dup').addEventListener('click', duplicateFrame);
   $('tl-del').addEventListener('click', deleteFrame);
+  $('tl-multi').addEventListener('click', () => setMultiMode(!multiMode));
   $('tl-onion').addEventListener('click', toggleOnion);
   $('tl-fps').addEventListener('change', e => setFps(e.target.value));
   $('tl-dur').addEventListener('change', e => setDuration(e.target.value));

@@ -409,6 +409,13 @@ Werkzeugleiste und Farbzeile (Standard: unter der Zeichenfläche) und lässt sic
 andocken, schweben lassen oder ins Dock legen.
 
 - **Vorschaubilder** aller Frames: antippen wählt, ziehen sortiert um.
+- **Mehrere Frames** wählt man mit `Strg`+Klick (einzeln) und `Shift`+Klick (Spanne),
+  wie im Dateimanager — Löschen nimmt dann alle markierten in einem Undo-Schritt mit,
+  und PNG/PDF schreiben je eine Datei pro Frame. Am Handy gibt es dafür einen
+  Schalter in der Leiste (`#tl-multi`): ist er an, markiert ein Tipp den Frame, statt
+  zu ihm zu wechseln. Am Rechner ist der Schalter ausgeblendet — dort genügen die Tasten.
+- Am Handy fallen in der Timeline die Schritt-Knöpfe und das Sprung-Feld weg: den
+  Nachbar-Frame tippt man direkt an, und für die Enden gibt es |◀◀ und ▶▶|.
 - **+** fügt dahinter einen leeren Frame ein, daneben **duplizieren** und **löschen**
   (der letzte Frame bleibt).
 - **▶** spielt in der Zeichenfläche ab (`Enter`); ein Tipp auf die Fläche, `Esc` oder

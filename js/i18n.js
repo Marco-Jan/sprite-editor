@@ -265,6 +265,7 @@ const STATIC = {
     'tl.prev': 'Previous frame (,)',
     'tl.next': 'Next frame (.)',
     'tl.last': 'Last frame (End)',
+    'tl.multi': 'Select several frames — tapping marks instead of switching',
     'tl.play': 'Play / pause (Enter)',
     'tl.frames': 'Frames',
     'tl.add': 'Insert an empty frame after this one',
@@ -539,6 +540,7 @@ const STATIC = {
     'help.h.anim': 'Animation — frames',
     'help.anim': ''
       + '<div>Every sprite can have several <b>frames</b>. The <b>timeline</b> (at the bottom) shows them as small pictures: tap to select, drag to reorder. <b>+</b> inserts an empty frame, next to it duplicate and delete.</div>'
+      + '<div>On a phone the <b>select several</b> button (next to duplicate) turns on selection mode: a tap then marks the frame instead of switching to it. Press it again to leave and clear the marks.</div>'
       + '<div><span class="kbd">Ctrl</span>+click picks single frames, <span class="kbd">Shift</span>+click a whole range — as in a file manager. <b>Delete</b> then removes all selected ones in one step (<span class="kbd">Ctrl</span>+<span class="kbd">Z</span> brings them back). A plain click clears the selection. The <b>frame</b> field jumps to a typed number.</div>'
       + '<div>▶ plays in the drawing area (<span class="kbd">Enter</span>), a tap on the area stops it. <b>FPS</b> applies to the whole sprite, <b>duration</b> lets single frames stay longer (e.g. a blink).</div>'
       + '<div><b>Onion skin</b> shows the previous frame in red and the next one in blue — for lining up the motion.</div>'
@@ -728,6 +730,8 @@ const MSG = {
     'tl.frameTitle': 'Frame {i} · {ms} ms — antippen zum Wählen, ziehen zum Verschieben, Strg/Shift wählt mehrere',
     'tl.frameOf':   'Frame {i}/{n}',
     'tl.lastFrame': 'Der letzte Frame bleibt — ein Sprite braucht mindestens einen.',
+    'tl.multi':     'Mehrere Frames wählen — antippen markiert, statt zu wechseln',
+    'tl.multiOff':  'Mehrfachauswahl beenden',
     'tl.delOne':    'Frame löschen',
     'tl.delMany':   '{n} markierte Frames löschen',
 
@@ -1142,6 +1146,8 @@ const MSG = {
     'tl.frameTitle': 'Frame {i} · {ms} ms — tap to select, drag to move, Ctrl/Shift picks several',
     'tl.frameOf':   'frame {i}/{n}',
     'tl.lastFrame': 'The last frame stays — a sprite needs at least one.',
+    'tl.multi':     'Select several frames — tapping marks instead of switching',
+    'tl.multiOff':  'Leave multi-select',
     'tl.delOne':    'Delete frame',
     'tl.delMany':   'Delete {n} selected frames',
 
