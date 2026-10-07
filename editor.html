@@ -201,6 +201,12 @@
 
       <!-- Werkzeugleiste — eine einzige, auch im Vollbild -->
       <div id="toolbar">
+        <div class="tool-group" role="group" data-i18n-attr="aria-label:tool.groupView" aria-label="Ansicht">
+          <button class="tool-btn" data-tool="pan" aria-pressed="false" data-i18n-attr="title:tool.panTitle" title="Hand — Ansicht verschieben, ohne zu zeichnen (H)"><span class="tool-ico" data-icon="hand"></span><span class="tool-name" data-i18n="tool.pan">Hand</span></button>
+        </div>
+
+        <div class="tool-sep" aria-hidden="true"></div>
+
         <div class="tool-group" role="group" data-i18n-attr="aria-label:tool.groupPaint" aria-label="Malwerkzeuge">
           <button class="tool-btn is-active" data-tool="pencil" aria-pressed="true" data-i18n-attr="title:tool.pencilTitle" title="Stift — einzelne Pixel (P)"><span class="tool-ico" data-icon="pencil"></span><span class="tool-name" data-i18n="tool.pencil">Stift</span></button>
           <button class="tool-btn" data-tool="brush"  aria-pressed="false" data-i18n-attr="title:tool.brushTitle" title="Pinsel — Fläche, Stärke = Dichte (B)"><span class="tool-ico" data-icon="brush"></span><span class="tool-name" data-i18n="tool.brush">Pinsel</span></button>
@@ -224,12 +230,6 @@
           <button class="tool-btn" data-tool="select" aria-pressed="false" data-i18n-attr="title:tool.marqueeTitle" title="Rechteck-Auswahl — aufziehen, ausschneiden, verschieben (A)"><span class="tool-ico" data-icon="select"></span><span class="tool-name" data-i18n="tool.marquee">Auswahl</span></button>
           <button class="tool-btn" data-tool="lasso"  aria-pressed="false" data-i18n-attr="title:tool.lassoTitle" title="Lasso — Form frei umfahren, wird beim Loslassen geschlossen (L)"><span class="tool-ico" data-icon="lasso"></span><span class="tool-name" data-i18n="tool.lasso">Lasso</span></button>
           <button class="tool-btn" data-tool="magic"  aria-pressed="false" data-i18n-attr="title:tool.colorSelTitle" title="Farbauswahl — zusammenhängende ähnliche Fläche wählen, Toleranz steuert wie viel mitgeht (K)"><span class="tool-ico" data-icon="magic"></span><span class="tool-name" data-i18n="tool.colorSel">Farbwahl</span></button>
-        </div>
-
-        <div class="tool-sep" aria-hidden="true"></div>
-
-        <div class="tool-group" role="group" data-i18n-attr="aria-label:tool.groupView" aria-label="Ansicht">
-          <button class="tool-btn" data-tool="pan" aria-pressed="false" data-i18n-attr="title:tool.panTitle" title="Hand — Ansicht verschieben, ohne zu zeichnen (H)"><span class="tool-ico" data-icon="hand"></span><span class="tool-name" data-i18n="tool.pan">Hand</span></button>
         </div>
 
         <div class="tool-sep" aria-hidden="true"></div>
