@@ -551,6 +551,7 @@ sprite-editor/
     ├── template.js     ← Schablone: Upload, Drag, Pipette, Abtasten
     ├── spritefx.js     ← Median-Cut, Glätten, Outline, Zauberstab
     ├── reduce.js       ← Dialog „Bild → Palette“: Farben zusammenfassen, Bild umschreiben
+    ├── view.js         ← Ansicht: zoomen, verschieben, Finger-Gesten (fasst keine Pixel an)
     ├── export.js       ← PNG, PDF, GIF, Spritesheet
     ├── filesystem.js   ← Speicherort merken (File System Access API)
     ├── toast.js        ← Confirm-/Info-Toast statt window.confirm
