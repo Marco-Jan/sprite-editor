@@ -95,8 +95,11 @@ sich als Schublade. Im Panel-Kopf:
 - Die Reihenfolge lässt sich überall ziehen: Panels in der angepinnten Spalte und die
   Icons im Dock (auch auf die andere Seite).
 
-Werkzeugleiste, Farbzeile und Timeline haben vorn einen Griff und einen Pin: lösen, frei schweben
-lassen, Größe ändern.
+Werkzeugleiste, Farbzeile und Timeline tragen vorn im Griff **dieselben zwei Knöpfe wie ein
+Panel-Kopf**: die Pinnadel heftet sie seitlich an (feste Spalte links oder rechts der
+Zeichenfläche, senkrecht angeordnet), nochmal klicken schickt sie an ihren angestammten
+Platz zurück — oben für Werkzeuge und Farben, unten für die Timeline. Das Fenster-Symbol
+löst sie als schwebendes Fenster. Am Griff ziehen geht weiterhin überallhin.
 Auf dem Handy (bis 700 px) hat jede dieser Leisten nur den Pin: angepinnt sitzt sie fest unter
 der Zeichenfläche (Standard), ohne Pin liegt sie im Dock. Diese Wahl gilt nur fürs Handy.
 Auch die Dock-Icons unten lassen sich dort ziehen: Reihenfolge ändern und zwischen linker
@@ -234,6 +237,12 @@ geprüft und mit `JSON.parse` gelesen.
 
 - **PNG** transparent, Skalierung 1× bis 32× — der aktuelle Frame
 - **PDF** mit eingebettetem PNG — der aktuelle Frame
+- **Mehrere Frames auf einmal**: Sind in der Timeline Frames markiert (Strg/Shift+Klick,
+  siehe `js/frames.js`), schreiben PNG und PDF **eine Datei je Frame** — `name_f01.png`,
+  `name_f02.png` …, die Nummer so lang wie die höchste Frame-Nummer, damit die
+  Reihenfolge im Dateimanager stimmt. Das GIF enthält dann nur die markierten Frames;
+  so schneidet man einen Abschnitt heraus, ohne etwas zu löschen. Eine Zeile unter den
+  Export-Knöpfen sagt, worauf sie sich gerade beziehen.
 - **GIF** die ganze Animation des aktiven Sprites, läuft endlos, Dauer je Frame wie im
   Editor (GIF rechnet in 1/100 s). Höchstens 255 Farben plus Transparent; bei mehr
   Farben erst mit „Bild → Palette …“ reduzieren. Eigener Encoder (`js/gif.js`).
@@ -508,10 +517,16 @@ sprite-editor/
 │                          icon-192/512, icon-maskable-512, og-image
 ├── docs/
 │   └── csharp-loader.md ← Format „JSON (Spiel)“ + C#-Loader
-├── tests/
+├── jsconfig.json       ← Typprüfung ohne Build (npm run check)
+├── package.json        ← nur Skripte + TypeScript als Entwicklungs-Abhängigkeit
+├── tests/              ← alle Tests: npm test
+│   ├── place.test.js   ← Andocken: anpinnen, lösen, schweben, Ziehen
+│   ├── sprite.test.js  ← Sprite-Modell: Frames, Ebenen, Dauer
+│   ├── migrate.test.js ← alte Projektstände überleben die Migration
+│   ├── gif.test.js     ← GIF-Encoder erzeugt gültige Dateien
+│   ├── i18n.test.js    ← keine fehlenden Texte in irgendeiner Sprache
 │   ├── gamejson.test.js ← Tests für „JSON (Spiel)“
 │   └── sw.test.js      ← Offline-Liste vollständig, nichts von fremden Servern
-│                          (alle Tests: node --test tests/*.test.js)
 ├── tools/
 │   ├── make_icons.py   ← erzeugt alles in assets/ neu (nur Standardbibliothek)
 │   └── make_sw.py      ← schreibt die Offline-Dateiliste in sw.js
@@ -535,13 +550,16 @@ sprite-editor/
     ├── tsimport.js     ← Import aller Formate (Frames + Palette)
     ├── template.js     ← Schablone: Upload, Drag, Pipette, Abtasten
     ├── spritefx.js     ← Median-Cut, Glätten, Outline, Zauberstab
+    ├── reduce.js       ← Dialog „Bild → Palette“: Farben zusammenfassen, Bild umschreiben
     ├── export.js       ← PNG, PDF, GIF, Spritesheet
     ├── filesystem.js   ← Speicherort merken (File System Access API)
     ├── toast.js        ← Confirm-/Info-Toast statt window.confirm
     ├── pwa.js          ← meldet den Service Worker an (Startseite + Editor)
     ├── dock.js         ← Seitenleisten als Icon-Spalte, unter 1280 px Kopfzeile als Menü
     ├── icons.js        ← alle Linien-Icons (SVG) + applyIcons() für [data-icon]
-    ├── layout.js       ← Panels/Leisten anpinnen, schweben lassen, verschieben, Größe ändern
+    ├── place.js        ← wo ein Panel/eine Leiste sitzt, als EIN Wert (ohne DOM, getestet)
+    ├── layout.js       ← zeichnet Plätze ins DOM: anpinnen, lösen, verschieben, Größe
+    ├── globals.d.ts    ← Typen für Browser-Felder außerhalb des Standards (nie ausgeliefert)
     ├── palpicker.js    ← Paletten-Auswahl: Suche, Filter, klappbare Gruppen, Farbstreifen
     └── app.js          ← Init, Events, Verdrahtung
 ```
@@ -568,6 +586,90 @@ state.js
 
 `render.js` ruft Aktionen aus anderen Modulen nur über `renderCallbacks` auf, die
 `app.js` verdrahtet — das hält den Graph zyklenfrei.
+
+`place.js` hängt an nichts: es kennt weder DOM noch andere Module. Das ist
+Absicht — dadurch lässt sich die Andock-Logik ohne Browser prüfen. `layout.js`
+benutzt es und ist die einzige Stelle, die daraus DOM macht.
+
+---
+
+## Mitarbeiten — die Regeln des Hauses
+
+Dieser Abschnitt richtet sich an alle, die hier etwas ändern. Er ist kurz, weil
+es nur wenige Regeln gibt — aber an die sollte man sich halten, sonst entstehen
+genau die Fehler, die wir uns schon einmal eingefangen haben.
+
+### Vor dem Commit
+
+```
+npm test        # alle Tests (braucht nichts zu installieren)
+npm run check   # Typprüfung (npx -p typescript tsc -p jsconfig.json)
+```
+
+`npm run check` braucht TypeScript — entweder `npm install` oder einmalig
+`npx -p typescript tsc -p jsconfig.json`. Geprüft wird der Browser-Code, der
+dabei **nicht** übersetzt wird: es gibt weiterhin keinen Build-Schritt, die
+Dateien im Browser sind dieselben wie im Editor. Beide Läufe müssen sauber
+durchgehen. Nach neuen, umbenannten oder gelöschten Dateien zusätzlich
+`python tools/make_sw.py` (sonst meldet es der Test).
+
+### Regel 1 — eine Wahrheit, und das DOM ist sie nie
+
+Zustand lebt in einem Objekt, das DOM wird daraus **gezeichnet**. Keine
+Entscheidung liest ihn zurück aus `dataset`, aus einer CSS-Klasse oder aus der
+Stellung eines Elements im Baum.
+
+Woran man das sieht: `js/layout.js` hält `layout.places[id]`, und nur `render()`
+fasst Eltern-Element und Klassen an. Attribute wie `data-mode` schreibt sie als
+*Ausgabe* mit — lesen darf sie davon nichts. Vorher stand „auf welcher Seite
+sitzt dieses Panel?" an vier Stellen gleichzeitig, mit zwei verschiedenen
+Vorrangregeln; daher kamen „rechts angepinnt, links gelandet" und Verwandte.
+
+### Regel 2 — Entscheidungen gehören in eine Funktion ohne DOM
+
+Was wohin gehört, wie ein Knopf wirkt, was aus einem Drop folgt: solche Logik
+kommt in ein Modul, das ohne Browser läuft — dann kann ein Test sie prüfen.
+`js/place.js` ist das Muster dafür: reine Funktionen auf Werten, 24 Tests in
+`tests/place.test.js`, kein `document` in Sicht.
+
+### Regel 3 — Texte an beiden Stellen
+
+Deutsch steht im HTML, Englisch in `STATIC.en` (js/i18n.js). Laufzeit-Texte
+(`t('…')`) brauchen einen Eintrag in **MSG.de und MSG.en**. Die österreichische
+Fassung (`js/i18n-at.js`) ist optional — was dort fehlt, fällt auf Deutsch
+zurück. `tests/i18n.test.js` prüft das alles; es hat beim ersten Lauf drei
+Texte gefunden, die auf Deutsch nur den Schlüsselnamen anzeigten.
+
+### Was die Tests bewachen
+
+| Datei | wacht über |
+|---|---|
+| `tests/place.test.js` | Andocken: anpinnen, lösen, schweben, Ziehen — inklusive der Fehler, die es schon gab |
+| `tests/sprite.test.js` | Das Sprite-Modell: Frames, Ebenen, Dauer, Daten aus fremden Dateien |
+| `tests/migrate.test.js` | Alte Projektstände überleben die Migration |
+| `tests/gif.test.js` | Der GIF-Encoder erzeugt gültige Dateien |
+| `tests/gamejson.test.js` | Das Spiel-JSON-Format |
+| `tests/i18n.test.js` | Keine fehlenden Texte in irgendeiner Sprache |
+| `tests/sw.test.js` | Die Offline-Liste ist vollständig, nichts lädt von fremden Servern |
+
+Wer ein Verhalten ändert, ändert den passenden Test mit — und wer einen Fehler
+behebt, schreibt zuerst den Test, der ihn zeigt. Die Fehler dieses Projekts
+kamen bisher doppelt zurück, weil sie nur „von Hand im Browser" geprüft waren.
+
+### Etwas Neues andocken
+
+Ein Panel braucht nur `[data-panel="name"]` im HTML und einen Eintrag in
+`js/icons.js`; `layout.js` findet es von allein und gibt ihm Kopfzeile, Pin,
+Lösen-Knopf und Dock-Icon. Eine neue Leiste kommt zusätzlich in `BARS` und
+`BAR_DOCK` in `js/layout.js`. Beides erbt damit automatisch dieselbe Bedienung
+— das ist der Sinn des gemeinsamen Modells.
+
+### Typen ohne TypeScript
+
+Typen stehen als JSDoc im normalen JS (`/** @type {…} */`, `@param`,
+`@typedef`). Nicht-standardisierte Browser-Felder stehen gesammelt in
+`js/globals.d.ts`. Diese Datei wird nie ausgeliefert — `tools/make_sw.py` und
+der Offline-Test lassen `.d.ts` bewusst aus.
 
 ---
 
