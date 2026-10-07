@@ -240,7 +240,11 @@ geprüft und mit `JSON.parse` gelesen.
 - **Mehrere Frames auf einmal**: Sind in der Timeline Frames markiert (Strg/Shift+Klick,
   siehe `js/frames.js`), schreiben PNG und PDF **eine Datei je Frame** — `name_f01.png`,
   `name_f02.png` …, die Nummer so lang wie die höchste Frame-Nummer, damit die
-  Reihenfolge im Dateimanager stimmt. Das GIF enthält dann nur die markierten Frames;
+  Reihenfolge im Dateimanager stimmt. Der Zielordner wird **vor** dem ersten Bild
+  erfragt — danach gilt der Klick dem Browser als zu alt und der Dialog bliebe zu.
+  Kann der Browser keine Ordner (Firefox, Safari) oder mag man keinen wählen, kommt
+  alles zusammen in **ein ZIP** (`js/zip.js`, ohne Kompression, ohne Bibliothek):
+  einzeln herunterladen lässt der Browser pro Klick nur eine Datei zu. Das GIF enthält dann nur die markierten Frames;
   so schneidet man einen Abschnitt heraus, ohne etwas zu löschen. Eine Zeile unter den
   Export-Knöpfen sagt, worauf sie sich gerade beziehen.
 - **GIF** die ganze Animation des aktiven Sprites, läuft endlos, Dauer je Frame wie im
@@ -467,6 +471,7 @@ die FPS-Zahl des Sprites.
 | `Entf` | Auswahl leeren |
 | `Enter` | Drehung übernehmen · sonst Animation abspielen / anhalten |
 | `,` / `.` | Voriger / nächster Frame |
+| `Pos1` / `Ende` | Zum ersten / letzten Frame |
 | `G` | Hilfslinien ein / aus |
 | Zwei Finger (Touch) | Zoomen und verschieben |
 | `Strg+Z` / `Strg+Y` | Rückgängig / Wiederholen |

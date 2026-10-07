@@ -261,8 +261,10 @@ const STATIC = {
     'ly.opacity': 'Opacity',
     'ly.note': 'Double-click the name to rename, drag to reorder. Export and preview show all visible layers on top of each other.',
     // Timeline (frames.js) und GIF-Export
+    'tl.first': 'First frame (Home)',
     'tl.prev': 'Previous frame (,)',
     'tl.next': 'Next frame (.)',
+    'tl.last': 'Last frame (End)',
     'tl.play': 'Play / pause (Enter)',
     'tl.frames': 'Frames',
     'tl.add': 'Insert an empty frame after this one',
@@ -601,6 +603,7 @@ const STATIC = {
       + '<div class="sc-row"><b>Ctrl + A / C / X / V</b><span>All · Copy · Cut · Paste</span></div>'
       + '<div class="sc-row"><b>Del</b><span>Erase the selection</span></div>'
       + '<div class="sc-row"><b>Enter</b><span>Apply the rotation · otherwise play / pause the animation</span></div>'
+      + '<div class="sc-row"><b>Home / End</b><span>First / last frame</span></div>'
       + '<div class="sc-row"><b>, / .</b><span>Previous / next frame</span></div>'
       + '<div class="sc-row"><b>G</b><span>Guides on / off</span></div>'
       + '<div class="sc-row"><b>Two fingers</b><span>Zoom and pan (touch)</span></div>'
@@ -953,6 +956,7 @@ const MSG = {
     'exp.framesSaved':   '{n} Frames gespeichert — von „{first}“ bis „{last}“{where}',
     'exp.framesDownload': ' (im Download-Ordner).',
     'exp.framesIn':      ' in „{dir}“.',
+    'exp.framesZip':     '{n} Frames als „{name}“ gespeichert — ein Archiv, weil dein Browser keine Ordner wählen kann. Entpacken und fertig.',
     'exp.pdfMissing':    'PDF-Library noch nicht geladen — kurz warten und nochmal versuchen.',
 
     // Format-Hinweise unter dem Format-Dropdown
@@ -1353,6 +1357,7 @@ const MSG = {
     'exp.framesSaved':   '{n} frames saved — from “{first}” to “{last}”{where}',
     'exp.framesDownload': ' (in the downloads folder).',
     'exp.framesIn':      ' in “{dir}”.',
+    'exp.framesZip':     'Saved {n} frames as “{name}” — one archive, because your browser cannot pick a folder. Unpack and you are done.',
     'exp.pdfMissing':    'The PDF library has not loaded yet — wait a moment and try again.',
 
     'fmt.ts':   'number[][] with types — the classic for TypeScript projects.',
