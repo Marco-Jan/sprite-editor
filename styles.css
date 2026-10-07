@@ -1776,8 +1776,11 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
 
   #topbar { gap: var(--sp-2); padding: var(--sp-1) var(--sp-3); }
 
+  /* Unten stehen beide Dock-Spalten nebeneinander in einer Zeile. Die linke
+     nimmt nur, was ihre Icons brauchen, die rechte den Rest — und scrollt in
+     sich, statt ihre letzten Icons aus dem Bild zu schieben. */
   #workspace {
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, auto) minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr) auto;
   }
   #stage { grid-column: 1 / -1; grid-row: 1; }
@@ -1786,13 +1789,21 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
   .rail { min-width: 0; padding-bottom: env(safe-area-inset-bottom); }
   .rail-dock {
     flex-direction: row;
+    /* Nicht breiter werden als die Spalte: sonst stehen die letzten Icons
+       ausserhalb des Bildes statt in der Zeile zu scrollen. */
+    flex: 1 1 auto;
     width: auto;
+    min-width: 0;
     height: var(--mbar-h);
     padding: 0 var(--sp-2);
     overflow-x: auto;
     scrollbar-width: none;
   }
   .rail-dock .dock-btn { flex: none; width: 40px; height: 40px; }
+  /* Kein Abstand zwischen den beiden Spalten — er sah aus wie ein Trenner,
+     hinter dem Icons liegen. */
+  #rail-left .rail-dock { padding-inline-end: 0; }
+  #rail-right .rail-dock { padding-inline-start: 0; }
   .rail-pins, .pins-resizer { display: none !important; }
 
   /* Schublade → Blatt von unten über der Dock-Leiste. */
@@ -1835,12 +1846,13 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
     scrollbar-width: none;
   }
   /* Weicher Rand dort, wo die Reihe weitergeht (js/layout.js). */
-  #toolbar.is-more-l, #color-bar.is-more-l, #timeline.is-more-l {
+  .rail-dock.is-more-l, #toolbar.is-more-l, #color-bar.is-more-l, #timeline.is-more-l {
     mask-image: linear-gradient(to right, transparent, #000 24px);
   }
-  #toolbar.is-more-r, #color-bar.is-more-r, #timeline.is-more-r {
+  .rail-dock.is-more-r, #toolbar.is-more-r, #color-bar.is-more-r, #timeline.is-more-r {
     mask-image: linear-gradient(to left, transparent, #000 24px);
   }
+  .rail-dock.is-more-l.is-more-r,
   #toolbar.is-more-l.is-more-r, #color-bar.is-more-l.is-more-r, #timeline.is-more-l.is-more-r {
     mask-image: linear-gradient(to right, transparent, #000 24px, #000 calc(100% - 24px), transparent);
   }

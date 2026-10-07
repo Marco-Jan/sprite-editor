@@ -648,15 +648,17 @@ function syncBarFade(el) {
   el.classList.toggle('is-more-r', MOBILE.matches && rest > 4 && !rightCovered);
 }
 
+// Die Icon-Spalten unten koennen genauso ueberlaufen wie die Leisten.
+const fadeEls = () => [...BARS.map(id => $(id)), ...document.querySelectorAll('.rail-dock')];
+
 function initBarFades() {
-  for (const id of BARS) {
-    const el = $(id);
+  for (const el of fadeEls()) {
     el.addEventListener('scroll', () => syncBarFade(el), { passive: true });
     new ResizeObserver(() => syncBarFade(el)).observe(el);
   }
 }
 
-const syncAllBarFades = () => BARS.forEach(id => syncBarFade($(id)));
+const syncAllBarFades = () => fadeEls().forEach(syncBarFade);
 
 // ── Handy: Werkzeug-Optionen ────────────────────────────────────────
 // In der einzeiligen Werkzeugleiste stehen auf dem Handy nur die Werkzeuge.
@@ -821,5 +823,8 @@ export function initLayout() {
     if (changed) save();
   });
   document.querySelectorAll('[data-panel], #toolbar, #color-bar, #timeline').forEach(el => ro.observe(el));
-  window.addEventListener('resize', () => layer.querySelectorAll('.is-floating').forEach(clampFloat));
+  window.addEventListener('resize', () => {
+    layer.querySelectorAll('.is-floating').forEach(clampFloat);
+    syncAllBarFades();
+  });
 }
