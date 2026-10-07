@@ -57,6 +57,9 @@ export const state = {
   /** @type {string|null} */
   palPreview:    null,
 
+  // Vorschau-Panel: Pixelgröße, 0 = einpassen (js/preview.js).
+  previewScale:  0,
+
   // Animation: Nachbar-Frames durchscheinen lassen; Abspielen läuft gerade.
   onion:         false,
   playing:       false,

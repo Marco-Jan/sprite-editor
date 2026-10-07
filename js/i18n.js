@@ -253,6 +253,10 @@ const STATIC = {
     'gd.fitTitle': 'Set the top and bottom of the division to what is drawn',
     'gd.note': 'Drawing aid only — the lines never show up in an export. In “Move” mode drag the lines; dragging a free line out of the image deletes it, a tap next to the lines ends the mode.',
     // Ebenen-Panel (layers.js)
+    'pv.title': 'Preview',
+    'pv.scale': 'Pixel size',
+    'pv.scaleTitle': 'How large one pixel is shown in the preview',
+    'pv.fit': 'Fit',
     'ly.title': 'Layers',
     'ly.add': 'New layer above the active one',
     'ly.dup': 'Duplicate layer',
@@ -531,6 +535,10 @@ const STATIC = {
       + '<div><b>Free lines</b>: “+ Horizontal” / “+ Vertical” puts a line in the middle. In <b>Move</b> mode you drag lines into place on the drawing area (always on a pixel edge); dragged out of the image, a line is deleted. No painting meanwhile — a tap next to the lines or <span class="kbd">Esc</span> ends the mode; with no lines left it ends by itself.</div>'
       + '<div><b>Figure</b>: divides a figure into 2 (chibi), 3, 4, 6 or 8 head heights and marks chin, chest, hip, knee etc. plus the body axis. “Fit to figure” sets the top and bottom to what is drawn; both can be dragged in Move mode.</div>'
       + '<div>The lines belong to the sprite and are saved with the project.</div>',
+    'help.preview': ''
+      + '<div>The <b>preview</b> panel always shows the <b>whole sprite</b>, however far you are zoomed in on the canvas — no grid, no guides, exactly what the export gives you.</div>'
+      + '<div>It redraws with every stroke and plays the animation along. As a drawer it closes when you click the canvas — <b>pin it</b> (the pin in the panel head) and it stays open while you draw.</div>'
+      + '<div><b>Pixel size</b>: <i>fit</i> uses the room the panel has; <b>1×</b> shows the sprite at its real size — the way it will look in a game.</div>',
     'help.h.layers': 'Layers',
     'help.layers': ''
       + '<div>Every sprite can have several <b>layers</b> — the <b>Layers</b> panel in the dock. You always paint into the <b>active</b> layer; all visible ones are shown on top of each other, the top one in the list lies on top.</div>'
@@ -727,6 +735,7 @@ const MSG = {
     'lay.timeline':        'Timeline',
 
     // Timeline (js/frames.js) — die Knopf-Titel stehen in STATIC
+    'pv.info':      '{w}×{h} Pixel · {scale}× dargestellt',
     'tl.frameTitle': 'Frame {i} · {ms} ms — antippen zum Wählen, ziehen zum Verschieben, Strg/Shift wählt mehrere',
     'tl.frameOf':   'Frame {i}/{n}',
     'tl.lastFrame': 'Der letzte Frame bleibt — ein Sprite braucht mindestens einen.',
@@ -1143,6 +1152,7 @@ const MSG = {
     'lay.colorbar':        'Color bar',
     'lay.timeline':        'Timeline',
 
+    'pv.info':      '{w}×{h} pixels · shown at {scale}×',
     'tl.frameTitle': 'Frame {i} · {ms} ms — tap to select, drag to move, Ctrl/Shift picks several',
     'tl.frameOf':   'frame {i}/{n}',
     'tl.lastFrame': 'The last frame stays — a sprite needs at least one.',

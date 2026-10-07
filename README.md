@@ -73,8 +73,8 @@ Zum Testen: DevTools → Application → Service Workers zeigt den Worker. Unter
 ```
 ┌── Kopfzeile: Projekt sichern/öffnen, Speicherort, Hilfe ──────────┐
 ├───────────┬───────────────────────────────────┬──────────────────┤
-│ Sprites   │  Werkzeugleiste                   │ Ebenen, Farben   │
-│ Code &    │  Farb-Schnellwahl (0–9)           │ Schablone        │
+│ Sprites   │  Werkzeugleiste                   │ Vorschau, Ebenen │
+│ Code &    │  Farb-Schnellwahl (0–9)           │ Farben, Schablone │
 │ Export    │  Zeichenfläche                    │ Aufräumen        │
 │           │  Timeline (Frames)                │                  │
 │           │  Statuszeile                      │                  │
@@ -257,6 +257,20 @@ geprüft und mit `JSON.parse` gelesen.
   zusätzlich `frame` und `duration` (ms). Jeder Frame sitzt mittig in seiner Zelle, der
   Atlas nennt die echte Lage — auch für Sprites, die kleiner als die Zelle sind.
 - *Farb-Legende ins Bild* rendert die verwendeten Farben mit Hex-Codes unter den Sprite
+
+---
+
+## Vorschau
+
+Beim Arbeiten ist man meist weit hineingezoomt. Das Panel **Vorschau** zeigt daneben
+immer den **ganzen Sprite** — ohne Gitter, ohne Schachbrett, ohne Hilfslinien und ohne
+Onion Skin, also genau das, was auch der Export liefert. Es zeichnet bei jedem Strich
+mit und läuft beim Abspielen als Animation mit. Als Schublade schließt es sich beim
+Klick auf die Zeichenfläche — zum Mitschauen beim Malen also **anpinnen**.
+
+**Pixelgröße** stellt ein, wie groß ein Pixel dargestellt wird: *Einpassen* nutzt den
+Platz des Panels, 1× zeigt den Sprite in seiner echten Größe — so, wie er später im
+Spiel wirkt. Die Wahl wird gespeichert.
 
 ---
 
@@ -560,6 +574,7 @@ sprite-editor/
     ├── history.js      ← Undo/Redo pro Strich (sichert den ganzen Sprite mit allen Frames)
     ├── frames.js       ← Frames: anlegen, wechseln, abspielen, Onion Skin, Timeline
     ├── layers.js       ← Ebenen: anlegen, ordnen, ausblenden, sperren, Deckkraft, Panel
+    ├── preview.js      ← Vorschau-Panel: der ganze Sprite, Pixelgröße einstellbar
     ├── guides.js       ← Hilfslinien: freie Linien, Figuren-Proportionen, Verschieben-Modus
     ├── gif.js          ← GIF89a-Encoder (LZW, Endlosschleife, Dauer je Frame)
     ├── sprites.js      ← anlegen, umbenennen, duplizieren, löschen
