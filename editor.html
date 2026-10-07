@@ -336,6 +336,11 @@
           <button class="btn" id="tl-del" data-i18n-attr="title:tl.del" title="Frame löschen"><span class="ico" data-icon="trash"></span></button>
         </div>
         <button class="btn" id="tl-onion" aria-pressed="false" data-i18n-attr="title:tl.onion" title="Onion Skin — vorigen und nächsten Frame durchscheinen lassen"><span class="ico" data-icon="onion"></span></button>
+        <label class="field field--inline tl-num tl-go-field" data-i18n-attr="title:tl.goTitle" title="Zu einem Frame springen — Nummer eintippen">
+          <span class="field-label" data-i18n="tl.go">Frame</span>
+          <input type="number" id="tl-go" class="input input--sm" min="1" step="1">
+          <span class="field-value" id="tl-total">/ 1</span>
+        </label>
         <label class="field field--inline tl-num">
           <span class="field-label" data-i18n="tl.fps">FPS</span>
           <input type="number" id="tl-fps" class="input input--sm" min="1" max="60" step="1" value="8">
@@ -881,6 +886,7 @@
     <h3 class="help-h" data-i18n="help.h.anim">Animation — Frames</h3>
     <div class="help-list" data-i18n-html="help.anim">
       <div>Jeder Sprite kann mehrere <b>Frames</b> haben. Die <b>Timeline</b> (unten) zeigt sie als kleine Bilder: antippen wählt, ziehen sortiert um. <b>+</b> fügt einen leeren Frame ein, daneben duplizieren und löschen.</div>
+      <div>Mit <span class="kbd">Strg</span>+Klick wählt man einzelne Frames dazu, mit <span class="kbd">Shift</span>+Klick eine ganze Spanne — wie im Dateimanager. <b>Löschen</b> nimmt dann alle markierten in einem Schritt mit (ein <span class="kbd">Strg</span>+<span class="kbd">Z</span> holt sie zurück). Ein einfacher Klick hebt die Auswahl wieder auf. Das Feld <b>Frame</b> springt auf eine eingetippte Nummer.</div>
       <div>▶ spielt in der Zeichenfläche ab (<span class="kbd">Enter</span>), ein Tipp auf die Fläche hält an. <b>FPS</b> gilt für den ganzen Sprite, <b>Dauer</b> lässt einzelne Frames länger stehen (z. B. ein Blinzeln).</div>
       <div><b>Onion Skin</b> lässt den vorigen Frame rot und den nächsten blau durchscheinen — zum Ausrichten der Bewegung.</div>
       <div>Größe ändern, drehen, spiegeln, zuschneiden und Paletten umfärben wirken auf <b>alle Frames</b>. Gezeichnet wird immer im aktuellen Frame.</div>

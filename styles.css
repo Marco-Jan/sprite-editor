@@ -737,11 +737,13 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   background: var(--surface-1);
 }
 #timeline .btn { padding: 5px 8px; }
+/* Die Reihe nimmt den Platz, den Knöpfe und Felder übrig lassen — die
+   Bildchen wachsen darin mit (--tl-cell aus js/frames.js fitThumbs). */
 .tl-frames {
   display: flex;
   align-items: center;
   gap: var(--sp-1);
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   min-width: 0;
   padding: 2px;
   overflow-x: auto;
@@ -753,9 +755,9 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   display: grid;
   place-items: center;
   flex: none;
-  min-width: 40px;
-  height: 44px;
-  padding: 2px 4px 12px;
+  width: var(--tl-cell, 44px);
+  height: var(--tl-cell, 44px);
+  padding: 2px;
   border: 1px solid var(--line);
   border-radius: var(--r-md);
   background: var(--surface-2);
@@ -768,20 +770,36 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   background:
     repeating-conic-gradient(var(--surface-3) 0% 25%, transparent 0% 50%) 0 0 / 8px 8px;
 }
+/* Die Nummer liegt auf dem Bild statt darunter: das spart die ganze Zeile
+   und das Bildchen bekommt den Platz. Der Verlauf hält sie auch über hellen
+   Pixeln lesbar. */
 .tl-n {
   position: absolute;
-  left: 0; right: 0; bottom: 1px;
+  left: 0; right: 0; bottom: 0;
+  padding: 3px 0 1px;
+  border-radius: 0 0 var(--r-sm) var(--r-sm);
   font: 600 10px/1 var(--mono);
   color: var(--text-dim);
   text-align: center;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0));
+  pointer-events: none;
 }
 .tl-frame.has-dur .tl-n::after { content: ' ⏱'; }
 .tl-frame:hover { border-color: var(--line-strong); }
+/* Mehrfachauswahl (Strg/Shift): gefuellt statt umrandet — so bleibt der
+   aktive Frame auch innerhalb einer Auswahl erkennbar (js/frames.js). */
+.tl-frame.is-marked { border-color: var(--accent-line); background: var(--accent-bg); }
+.tl-frame.is-marked .tl-n { color: var(--accent); }
 .tl-frame.is-active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 .tl-frame.is-active .tl-n { color: var(--accent); }
 .tl-frame.is-dragging { z-index: 2; opacity: 0.85; cursor: grabbing; box-shadow: var(--shadow-md); }
 #tl-play.is-active, #tl-onion.is-active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent-line); }
 .tl-num input { width: 4.5rem; }
+/* Sprungfeld: hier stehen nur Frame-Nummern, drei Stellen reichen. Das
+   "/ n" klebt direkt am Feld statt hinter der breiten Wertspalte. */
+.tl-go-field { gap: var(--sp-1); }
+.tl-go-field input { width: 3.5rem; }
+#tl-total { min-width: 0; text-align: left; }
 #timeline.is-vertical .tl-frames { flex-direction: column; overflow-x: hidden; overflow-y: auto; max-height: 50vh; }
 #timeline.is-vertical .tl-frame { touch-action: pan-y; }
 #timeline.is-vertical .tl-num { flex-direction: row; }

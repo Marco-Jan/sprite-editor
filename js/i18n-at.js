@@ -229,6 +229,7 @@ export const STATIC_AT = {
   'tl.add':       'An laarn Frame dahinter einischiabn',
   'tl.dup':       'Frame verdoppln',
   'tl.del':       'Frame weghaun',
+  'tl.goTitle':   'Zu an Frame hupfn — Nummer eintippn',
   'tl.onion':     'Onion Skin — da Frame davor (rot) und da nächste (blau) scheinan durch',
   'tl.dur':       'Wia lang',
   'tl.durTitle':  'Wia lang der Frame steht — laar = noch FPS',
@@ -416,6 +417,8 @@ export const MSG_AT = {
 
   // Timeline
   'tl.frameTitle':     'Frame {i} · {ms} ms — antippn zum Wöhln, ziagn zum Vaschiabn',
+  'tl.delOne':         'Frame weghaun',
+  'tl.delMany':        '{n} markierte Frames weghaun',
   'tl.lastFrame':      'Da letzte Frame bleibt — a Sprite braucht mindestens oan.',
 
   // Ebenen

@@ -268,6 +268,8 @@ const STATIC = {
     'tl.add': 'Insert an empty frame after this one',
     'tl.dup': 'Duplicate frame',
     'tl.del': 'Delete frame',
+    'tl.go': 'Frame',
+    'tl.goTitle': 'Jump to a frame — type its number',
     'tl.onion': 'Onion skin — show the previous (red) and next frame (blue) through',
     'tl.fps': 'FPS',
     'tl.dur': 'Duration',
@@ -531,6 +533,7 @@ const STATIC = {
     'help.h.anim': 'Animation — frames',
     'help.anim': ''
       + '<div>Every sprite can have several <b>frames</b>. The <b>timeline</b> (at the bottom) shows them as small pictures: tap to select, drag to reorder. <b>+</b> inserts an empty frame, next to it duplicate and delete.</div>'
+      + '<div><span class="kbd">Ctrl</span>+click picks single frames, <span class="kbd">Shift</span>+click a whole range — as in a file manager. <b>Delete</b> then removes all selected ones in one step (<span class="kbd">Ctrl</span>+<span class="kbd">Z</span> brings them back). A plain click clears the selection. The <b>frame</b> field jumps to a typed number.</div>'
       + '<div>▶ plays in the drawing area (<span class="kbd">Enter</span>), a tap on the area stops it. <b>FPS</b> applies to the whole sprite, <b>duration</b> lets single frames stay longer (e.g. a blink).</div>'
       + '<div><b>Onion skin</b> shows the previous frame in red and the next one in blue — for lining up the motion.</div>'
       + '<div>Resizing, rotating, flipping, trimming and recoloring with a palette act on <b>all frames</b>. You always draw into the current frame.</div>'
@@ -711,9 +714,11 @@ const MSG = {
     'lay.timeline':        'Timeline',
 
     // Timeline (js/frames.js) — die Knopf-Titel stehen in STATIC
-    'tl.frameTitle': 'Frame {i} · {ms} ms — antippen zum Wählen, ziehen zum Verschieben',
+    'tl.frameTitle': 'Frame {i} · {ms} ms — antippen zum Wählen, ziehen zum Verschieben, Strg/Shift wählt mehrere',
     'tl.frameOf':   'Frame {i}/{n}',
     'tl.lastFrame': 'Der letzte Frame bleibt — ein Sprite braucht mindestens einen.',
+    'tl.delOne':    'Frame löschen',
+    'tl.delMany':   '{n} markierte Frames löschen',
 
     // Hilfslinien (js/guides.js)
     'gd.chin':     'Kinn',
@@ -1111,9 +1116,11 @@ const MSG = {
     'lay.colorbar':        'Color bar',
     'lay.timeline':        'Timeline',
 
-    'tl.frameTitle': 'Frame {i} · {ms} ms — tap to select, drag to move',
+    'tl.frameTitle': 'Frame {i} · {ms} ms — tap to select, drag to move, Ctrl/Shift picks several',
     'tl.frameOf':   'frame {i}/{n}',
     'tl.lastFrame': 'The last frame stays — a sprite needs at least one.',
+    'tl.delOne':    'Delete frame',
+    'tl.delMany':   'Delete {n} selected frames',
 
     'gd.chin':     'chin',
     'gd.chest':    'chest',

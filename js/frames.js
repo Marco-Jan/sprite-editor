@@ -20,9 +20,41 @@ import { saveState } from './storage.js';
 import { showInfoToast } from './toast.js';
 import { iconSvg } from './icons.js';
 import { t } from './i18n.js';
+import { isMobileLayout } from './layout.js';
 
 const $ = id => document.getElementById(id);
-const THUMB = 32;   // Kantenlänge der Vorschaubilder in px
+// Die Vorschaubilder wachsen mit dem Platz, den die Leiste hergibt: bei
+// wenigen Frames werden sie groß, bei vielen schrumpfen sie bis CELL_MIN und
+// die Reihe scrollt. CELL ist die Kantenlänge des ganzen Knopfes, das Bild
+// sitzt abzüglich Rand und Polsterung darin.
+const CELL_MIN = 30;
+const CELL_MIN_TOUCH = 44;   // Handy: so groß wie die Styles es ohnehin erzwingen
+const CELL_MAX = 56;    // waagerecht: mehr würde die Zeichenfläche beschneiden
+const CELL_MAX_V = 80;  // senkrecht angeordnet ist Höhe kein Engpass
+const CELL_PAD = 6;   // 1 px Rand + 2 px Polsterung je Seite
+let cell = 44;        // zuletzt berechnete Kantenlänge
+
+// ── Mehrfachauswahl ─────────────────────────────────────────────────
+// Wie im Dateimanager: Strg/Cmd klickt einzelne Frames dazu, Shift eine
+// Spanne, ein einfacher Klick setzt alles zurück. `sel` ist die *zusätzliche*
+// Auswahl — zählt sie weniger als zwei Frames, gilt schlicht der aktive.
+// Darum muss nichts synchron gehalten werden: eine veraltete Auswahl fällt
+// von selbst auf den aktiven Frame zurück.
+let sel = new Set();
+let anchor = null;      // Ankerpunkt für Shift
+let selSprite = null;   // zu welchem Sprite die Auswahl gehört
+
+function resetSel() { sel = new Set(); anchor = null; }
+
+// Die Frames, auf die eine Aktion wirkt — immer aufsteigend.
+function selectedFrames() {
+  const sp = getSprite();
+  if (!sp) return [];
+  const ids = [...sel].filter(i => Number.isInteger(i) && i >= 0 && i < sp.frames.length);
+  return ids.length > 1 ? ids.sort((a, b) => a - b) : [sp.frame];
+}
+
+const selectedCount = () => selectedFrames().length;
 
 // Schwebender Inhalt und Auswahl gehören zum Frame, den man verlässt.
 function leaveFrame() {
@@ -53,6 +85,17 @@ function showFrame(i, quiet = false) {
 }
 
 export function goFrame(i) { stop(); showFrame(i); }
+
+// Sprung auf eine eingetippte Nummer (1-basiert, wie in der Timeline).
+export function goFrameNumber(v) {
+  const sp = getSprite();
+  if (!sp) return;
+  const n = Math.round(Number(v));
+  if (!n || n < 1 || n > sp.frames.length) { renderTimeline(); return; }
+  resetSel();
+  goFrame(n - 1);
+  renderTimeline();
+}
 export function nextFrame() { const sp = getSprite(); if (sp) goFrame(sp.frame + 1); }
 export function prevFrame() { const sp = getSprite(); if (sp) goFrame(sp.frame - 1); }
 
@@ -70,6 +113,7 @@ function edit(fn) {
 }
 
 export function addFrame() {
+  resetSel();
   edit(sp => {
     const cels = sp.frames[sp.frame].cels.map(blankLike);
     sp.frames.splice(sp.frame + 1, 0, { cels, dur: 0 });
@@ -78,6 +122,7 @@ export function addFrame() {
 }
 
 export function duplicateFrame() {
+  resetSel();
   edit(sp => {
     const f = sp.frames[sp.frame];
     sp.frames.splice(sp.frame + 1, 0, { cels: f.cels.map(dc), dur: f.dur });
@@ -85,19 +130,25 @@ export function duplicateFrame() {
   });
 }
 
+// Löscht die markierten Frames (oder, ohne Mehrfachauswahl, den aktiven).
+// Ein Undo-Schritt für alle. Danach steht der Frame dort, wo der erste
+// gelöschte war — das ist die Stelle, auf die man schaut.
 export function deleteFrame() {
   const sp = getSprite();
   if (!sp) return;
-  if (sp.frames.length < 2) { showInfoToast(t('tl.lastFrame')); return; }
+  const ids = selectedFrames();
+  if (sp.frames.length - ids.length < 1) { showInfoToast(t('tl.lastFrame')); return; }
+  resetSel();
   edit(s => {
-    s.frames.splice(s.frame, 1);
-    s.frame = Math.min(s.frame, s.frames.length - 1);
+    for (const i of [...ids].reverse()) s.frames.splice(i, 1);
+    s.frame = Math.min(ids[0], s.frames.length - 1);
   });
 }
 
 export function moveFrame(from, to) {
   const sp = getSprite();
   if (!sp || from === to || to < 0 || to >= sp.frames.length) return;
+  resetSel();
   edit(s => {
     const [f] = s.frames.splice(from, 1);
     s.frames.splice(to, 0, f);
@@ -197,15 +248,23 @@ function rgbOf(hex) {
   return v;
 }
 
+// Anzeigegröße des Bildchens: größte Kante auf `cell` minus Polsterung,
+// das Seitenverhältnis des Sprites bleibt erhalten.
+function sizeThumb(cv) {
+  const W = cv.width, H = cv.height;
+  if (!W || !H) return;
+  const k = (cell - CELL_PAD) / Math.max(W, H);
+  cv.style.width = Math.max(1, Math.round(W * k)) + 'px';
+  cv.style.height = Math.max(1, Math.round(H * k)) + 'px';
+}
+
 function drawThumb(cv, grid, pal) {
   const H = grid.length, W = grid[0].length;
   if (cv.width !== W || cv.height !== H) {
     cv.width = W;
     cv.height = H;
-    const k = THUMB / Math.max(W, H);
-    cv.style.width = Math.max(1, Math.round(W * k)) + 'px';
-    cv.style.height = Math.max(1, Math.round(H * k)) + 'px';
   }
+  sizeThumb(cv);
   const ctx = cv.getContext('2d');
   const img = ctx.createImageData(W, H);
   const d = img.data;
@@ -217,6 +276,28 @@ function drawThumb(cv, grid, pal) {
     d[o] = r; d[o + 1] = g; d[o + 2] = b; d[o + 3] = 255;
   }
   ctx.putImageData(img, 0, 0);
+}
+
+// Platz aufteilen: waagerecht teilen sich alle Frames die Breite der Reihe,
+// senkrecht gibt die Spaltenbreite das Maß. Mehr als CELL_MAX wird es nie —
+// sonst frisst die Leiste die Zeichenfläche. Passen die Frames nicht mehr,
+// bleibt es bei CELL_MIN und die Reihe scrollt wie bisher.
+function fitThumbs() {
+  const box = $('tl-frames');
+  const sp = getSprite();
+  if (!box || !sp) return;
+  const w = box.clientWidth;
+  if (!w) return;   // noch nicht sichtbar — beim nächsten Mal
+  const n = sp.frames.length;
+  const gap = 4;
+  const vertical = getComputedStyle(box).flexDirection === 'column';
+  const room = vertical ? w - gap : Math.floor((w - gap * (n - 1)) / n);
+  const min = isMobileLayout() ? CELL_MIN_TOUCH : CELL_MIN;
+  const next = Math.max(min, Math.min(vertical ? CELL_MAX_V : CELL_MAX, room));
+  if (next === cell) return;
+  cell = next;
+  box.style.setProperty('--tl-cell', cell + 'px');
+  [...box.children].forEach(b => sizeThumb(b.firstChild));
 }
 
 function makeThumb() {
@@ -237,10 +318,13 @@ export function renderTimeline() {
   if (!box) return;
   const sp = getSprite();
   if (!sp) { box.innerHTML = ''; return; }
+  // Die Auswahl gehört zu einem Sprite, nicht zur Timeline.
+  if (selSprite !== state.curSprite) { resetSel(); selSprite = state.curSprite; }
   const pal = getPaletteByName(sp.palette);
   const n = sp.frames.length;
   while (box.children.length > n) box.lastChild.remove();
   while (box.children.length < n) box.append(makeThumb());
+  fitThumbs();
 
   sp.frames.forEach((f, i) => {
     const b = box.children[i];
@@ -252,11 +336,19 @@ export function renderTimeline() {
   });
   markActive();
 
-  const fps = $('tl-fps'), dur = $('tl-dur');
+  const fps = $('tl-fps'), dur = $('tl-dur'), go = $('tl-go');
   if (document.activeElement !== fps) fps.value = sp.fps;
   if (document.activeElement !== dur) dur.value = sp.frames[sp.frame].dur || '';
   dur.placeholder = Math.round(1000 / sp.fps);
+  if (go) {
+    go.max = n;
+    if (document.activeElement !== go) go.value = sp.frame + 1;
+    $('tl-total').textContent = '/ ' + n;
+  }
   for (const id of ['tl-play', 'tl-prev', 'tl-next', 'tl-del']) $(id).disabled = n < 2;
+  // Der Löschen-Knopf sagt, wie viele Frames er mitnimmt.
+  const m = selectedCount();
+  $('tl-del').title = m > 1 ? t('tl.delMany', { n: m }) : t('tl.delOne');
   const onion = $('tl-onion');
   onion.classList.toggle('is-active', state.onion);
   onion.setAttribute('aria-pressed', String(state.onion));
@@ -274,10 +366,12 @@ function markActive() {
   const box = $('tl-frames');
   const sp = getSprite();
   if (!box || !sp) return;
+  const marked = sel.size > 1 ? sel : null;
   [...box.children].forEach((b, i) => {
     const on = i === sp.frame;
     b.classList.toggle('is-active', on);
-    b.setAttribute('aria-selected', String(on));
+    b.classList.toggle('is-marked', !!marked && marked.has(i));
+    b.setAttribute('aria-selected', String(on || (!!marked && marked.has(i))));
     // Sichtbar halten, ohne die Seite zu scrollen.
     if (on) {
       const vertical = box.scrollHeight > box.clientHeight + 1 && box.scrollWidth <= box.clientWidth + 1;
@@ -295,8 +389,9 @@ function markActive() {
 
 function updateFrameLabel() {
   const sp = getSprite();
-  const dur = $('tl-dur');
+  const dur = $('tl-dur'), go = $('tl-go');
   if (sp && dur && document.activeElement !== dur) dur.value = sp.frames[sp.frame].dur || '';
+  if (sp && go && document.activeElement !== go) go.value = sp.frame + 1;
 }
 
 // Ziehen sortiert um, ein Tipp wählt den Frame. Erst ab ein paar Pixeln
@@ -317,6 +412,7 @@ function initThumbDrag(b) {
         if (Math.abs(d) < 8) return;
         dragging = true;
         stop();
+        resetSel();
         b.classList.add('is-dragging');
         try { b.setPointerCapture(ev.pointerId); } catch {}
       }
@@ -348,7 +444,31 @@ function initThumbDrag(b) {
     window.addEventListener('pointerup', up);
     window.addEventListener('pointercancel', up);
   });
-  b.addEventListener('click', () => { if (!b.dataset.dragged) goFrame(Number(b.dataset.i)); });
+  b.addEventListener('click', e => {
+    if (b.dataset.dragged) return;
+    const i = Number(b.dataset.i);
+    const sp = getSprite();
+    if (!sp) return;
+    if (e.shiftKey) {
+      // Spanne vom Anker bis hierher. Ohne Anker gilt der aktive Frame.
+      const a = anchor != null && anchor < sp.frames.length ? anchor : sp.frame;
+      sel = new Set();
+      for (let k = Math.min(a, i); k <= Math.max(a, i); k++) sel.add(k);
+      anchor = a;
+      goFrame(i);
+    } else if (e.ctrlKey || e.metaKey) {
+      // Einzeln dazu oder weg. Der erste Strg-Klick erbt den aktiven Frame,
+      // damit nicht die bisherige Auswahl verloren geht.
+      if (sel.size < 2) sel = new Set([sp.frame]);
+      if (sel.has(i) && sel.size > 1) sel.delete(i);
+      else { sel.add(i); anchor = i; goFrame(i); }
+    } else {
+      resetSel();
+      anchor = i;
+      goFrame(i);
+    }
+    renderTimeline();
+  });
 }
 
 export function initFrames() {
@@ -361,9 +481,15 @@ export function initFrames() {
   $('tl-onion').addEventListener('click', toggleOnion);
   $('tl-fps').addEventListener('change', e => setFps(e.target.value));
   $('tl-dur').addEventListener('change', e => setDuration(e.target.value));
-  for (const id of ['tl-fps', 'tl-dur']) {
+  $('tl-go').addEventListener('change', e => goFrameNumber(e.target.value));
+  for (const id of ['tl-fps', 'tl-dur', 'tl-go']) {
     $(id).addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
   }
+  // Wird die Leiste breiter oder schmaler (Fenster, Schublade, senkrechte
+  // Anordnung), bekommen die Bildchen die neue Größe.
+  const box = $('tl-frames');
+  if (box && window.ResizeObserver) new ResizeObserver(() => fitThumbs()).observe(box);
+
   renderCallbacks.onRenderTimeline = renderTimeline;
   renderCallbacks.onEditorRendered = refreshCurrentThumb;
 }
