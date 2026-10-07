@@ -570,6 +570,7 @@ const STATIC = {
       +   '<div><b>Text grid</b> — one character per pixel with a key; handy for diffs and docs.</div>'
       + '</div>'
       + '<div><b>PNG / PDF</b> export the current frame with transparency; with <i>color key</i> the palette is rendered into the image. <b>GIF</b> holds the whole animation.</div>'
+      + '<div>With <b>several frames selected</b> in the timeline (Ctrl/Shift+click), PNG and PDF save <b>one file per frame</b> — numbered <code>name_f01.png</code>, <code>name_f02.png</code> … The GIF then holds just those frames, so you can cut out a section without deleting anything.</div>'
       + '<div><b>Spritesheet</b> packs all sprites into equally sized cells — for animations one row per sprite with all its frames — and drops a JSON atlas with names, coordinates and duration next to it. Engines read that straight away.</div>'
       + '<div><b>Save project / Open</b> writes all sprites and palettes into one JSON file.</div>',
 
@@ -702,10 +703,12 @@ const MSG = {
     'pal.currentIndex':    'Index {i} — {label}',
     'pal.transparent':     'transparent',
     'lay.pin':             'Anpinnen — fest neben der Zeichenfläche',
-    'lay.unpin':           'Lösen — zurück in die Schublade',
+    'lay.unpin':           'Lösen — zurück an den vorherigen Platz',
     'lay.float':           'Als schwebendes Fenster lösen',
     'lay.floatBar':        'Leiste lösen — frei verschieben',
-    'lay.dockBar':         'Wieder oben anpinnen',
+    'lay.dockBar':         'Wieder andocken',
+    'lay.pinBar':          'Seitlich anpinnen — feste Spalte neben der Zeichenfläche',
+    'lay.unpinBar':        'Lösen — zurück an den angestammten Platz',
     'lay.grip':            'Ziehen zum Verschieben',
     'lay.toolbar':         'Werkzeuge',
     'lay.mobilePin':       'Unten anpinnen — bleibt immer offen',
@@ -751,6 +754,11 @@ const MSG = {
     'tpl.unnamed':         'Schablone',
     'tpl.restored':        'Aus dem letzten Besuch — bleibt in diesem Browser gespeichert, bis du sie entfernst.',
     'tpl.kept':            'Bleibt in diesem Browser gespeichert, bis du sie entfernst.',
+    // Werden zur Laufzeit ueber t() geholt — sie muessen hier stehen, nicht
+    // nur in STATIC (tests/i18n.test.js wacht darueber).
+    'help.close':          'Schließen',
+    'help.backupRestore':  'Wiederherstellen',
+    'help.backupDownload': 'Herunterladen',
     'store.rescued':       'Dein gespeicherter Stand ließ sich nicht laden. Er ist gesichert und wird nicht überschrieben — unter Hilfe → Sicherung kannst du ihn jederzeit holen.',
     'help.backupConfirm':  'Den aktuellen Stand durch diese Sicherung ersetzen? Der aktuelle Stand wird dabei selbst gesichert.',
     'help.backupLabel.backup': 'Stand vom {date}',
@@ -936,6 +944,10 @@ const MSG = {
     'exp.sheetSaved':    'Spritesheet mit {n} Sprites gespeichert — „{png}“ und „{json}“{where}',
     'exp.sheetDownload': ' (im Download-Ordner).',
     'exp.sheetIn':       ' in „{dir}“.',
+    'exp.framesNote':    '{n} Frames markiert — PNG und PDF speichern je eine Datei, das GIF enthält nur diese Frames.',
+    'exp.framesSaved':   '{n} Frames gespeichert — von „{first}“ bis „{last}“{where}',
+    'exp.framesDownload': ' (im Download-Ordner).',
+    'exp.framesIn':      ' in „{dir}“.',
     'exp.pdfMissing':    'PDF-Library noch nicht geladen — kurz warten und nochmal versuchen.',
 
     // Format-Hinweise unter dem Format-Dropdown
@@ -1105,10 +1117,12 @@ const MSG = {
     'pal.currentIndex':    'Index {i} — {label}',
     'pal.transparent':     'transparent',
     'lay.pin':             'Pin — keep it next to the canvas',
-    'lay.unpin':           'Unpin — back into the drawer',
+    'lay.unpin':           'Unpin — back to where it came from',
     'lay.float':           'Detach as a floating window',
     'lay.floatBar':        'Detach bar — move it freely',
-    'lay.dockBar':         'Pin back to the top',
+    'lay.dockBar':         'Dock it again',
+    'lay.pinBar':          'Pin to the side — a fixed column next to the canvas',
+    'lay.unpinBar':        'Unpin — back to its usual place',
     'lay.grip':            'Drag to move',
     'lay.toolbar':         'Tools',
     'lay.mobilePin':       'Pin to the bottom — stays open',
@@ -1151,6 +1165,9 @@ const MSG = {
     'tpl.unnamed':         'Stencil',
     'tpl.restored':        'From your last visit — stays saved in this browser until you remove it.',
     'tpl.kept':            'Stays saved in this browser until you remove it.',
+    'help.close':          'Close',
+    'help.backupRestore':  'Restore',
+    'help.backupDownload': 'Download',
     'store.rescued':       'Your saved work could not be loaded. It has been kept safe and will not be overwritten — get it any time under Help → Backup.',
     'help.backupConfirm':  'Replace the current state with this backup? The current state is backed up first.',
     'help.backupLabel.backup': 'State from {date}',
@@ -1327,6 +1344,10 @@ const MSG = {
     'exp.sheetSaved':    'Spritesheet with {n} sprites saved — “{png}” and “{json}”{where}',
     'exp.sheetDownload': ' (in the downloads folder).',
     'exp.sheetIn':       ' in “{dir}”.',
+    'exp.framesNote':    '{n} frames selected — PNG and PDF save one file each, the GIF holds just these frames.',
+    'exp.framesSaved':   '{n} frames saved — from “{first}” to “{last}”{where}',
+    'exp.framesDownload': ' (in the downloads folder).',
+    'exp.framesIn':      ' in “{dir}”.',
     'exp.pdfMissing':    'The PDF library has not loaded yet — wait a moment and try again.',
 
     'fmt.ts':   'number[][] with types — the classic for TypeScript projects.',
