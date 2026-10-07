@@ -307,6 +307,9 @@ const STATIC = {
     'tool.ellipse':     'Ellipse',
     'tool.ellipseTitle': 'Drag an ellipse (O)',
     'tool.groupSelect': 'Selection',
+    'tool.groupView':   'View',
+    'tool.pan':         'Hand',
+    'tool.panTitle':    'Hand — move the view without drawing (H)',
     'tool.marquee':     'Marquee',
     'tool.marqueeTitle': 'Rectangular marquee — drag it open, cut, move (A)',
     'tool.lasso':       'Lasso',
@@ -488,7 +491,8 @@ const STATIC = {
       + '<div><b>Eraser</b> — sets pixels back to transparent.</div>'
       + '<div><b>Magic wand</b> — erases a connected <i>similar</i> area; <i>tolerance</i> decides how much deviation still counts.</div>'
       + '<div><b>Line · Rectangle · Ellipse</b> — drag it open, the preview shows the result, letting go draws it. <i>Filled</i> switches between outline and area.</div>'
-      + '<div><b>Marquee · Lasso · Color select</b> — three ways to the same thing: an area you move as a whole.</div>',
+      + '<div><b>Marquee · Lasso · Color select</b> — three ways to the same thing: an area you move as a whole.</div>'
+      + '<div><b>Hand</b> — moves the view only and changes nothing in the image. Useful when you work zoomed in, or when showing someone around without painting by accident. The same works any time by holding <span class="kbd">Space</span>.</div>',
 
     'help.h.mirror': 'Symmetry',
     'help.mirror': ''
@@ -586,6 +590,7 @@ const STATIC = {
       + '<div class="sc-row"><b>P B S F E W</b><span>Pencil · Brush · Spray · Fill · Eraser · Magic wand</span></div>'
       + '<div class="sc-row"><b>I R O</b><span>Line · Rectangle · Ellipse</span></div>'
       + '<div class="sc-row"><b>A L K</b><span>Marquee · Lasso · Color select</span></div>'
+      + '<div class="sc-row"><b>H</b><span>Hand — move the view without drawing</span></div>'
       + '<div class="sc-row"><b>Mouse wheel</b><span>Scroll up / down</span></div>'
       + '<div class="sc-row"><b>Shift + mouse wheel</b><span>Scroll left / right</span></div>'
       + '<div class="sc-row"><b>Ctrl + mouse wheel</b><span>Zoom (towards the pointer)</span></div>'

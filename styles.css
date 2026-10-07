@@ -880,6 +880,10 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 #editor-canvas-wrap[data-tool="rect"],
 #editor-canvas-wrap[data-tool="ellipse"] { cursor: crosshair; }
 #editor-canvas-wrap[data-tool="magic"] { cursor: cell; }
+/* Hand-Werkzeug: greifen statt zeichnen (js/view.js setzt .is-pannable auf
+   der Flaeche drumherum, damit auch neben dem Bild geschoben wird). */
+#editor-canvas-wrap[data-tool="pan"] { cursor: grab; }
+#editor-canvas-area.is-panning #editor-canvas-wrap[data-tool="pan"] { cursor: grabbing; }
 #editor-canvas-wrap.is-move { cursor: move; }
 
 /* Auswahl-Buttons in der Werkzeugleiste — kompakter als normale Buttons */

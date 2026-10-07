@@ -46,7 +46,7 @@ import {
 } from './spritefx.js';
 import { initExport } from './export.js';
 import { openReduceModal, initReduceModal } from './reduce.js';
-import { zoomAt, fitZoomToArea, isPanKeyHeld, initPan, initPinch } from './view.js';
+import { zoomAt, fitZoomToArea, isPanMode, setPanTool, initPan, initPinch } from './view.js';
 import { initFrames, togglePlay, nextFrame, prevFrame, isPlaying, stop as stopPlayback } from './frames.js';
 import { initLayers } from './layers.js';
 import { initGuides, guidePointerDown, toggleEdit as toggleGuideEdit, toggleShow as toggleGuides } from './guides.js';
@@ -231,6 +231,8 @@ function updateToolUI() {
     b.setAttribute('aria-pressed', String(on));
   });
   $('editor-canvas-wrap').dataset.tool = state.tool;
+  // Die Hand malt nicht, sie schiebt nur — das weiss die Ansicht.
+  setPanTool(state.tool === 'pan');
 
   const hasSize = ['brush', 'spray', 'eraser'].includes(state.tool);
   const needsTolerance = state.tool === 'wand' || state.tool === 'magic';
@@ -359,8 +361,8 @@ function initCanvasEvents() {
   const canvas = $('editor-canvas');
 
   canvas.addEventListener('pointerdown', e => {
-    // Leertaste gehalten oder mittlere Taste: verschieben, nicht malen (view.js).
-    if (isPanKeyHeld() || e.button === 1) return;
+    // Leertaste, Hand-Werkzeug oder mittlere Taste: verschieben, nicht malen (view.js).
+    if (isPanMode() || e.button === 1) return;
     // Beim Abspielen wird nicht gemalt — der Tipp hält an.
     if (isPlaying()) { e.preventDefault(); stopPlayback(); return; }
     // Hilfslinien verschieben: die Zeichenfläche gehört den Linien.
@@ -559,6 +561,7 @@ const TOOL_KEYS = {
   p: 'pencil', b: 'brush', s: 'spray', f: 'fill', e: 'eraser', w: 'wand',
   a: 'select', l: 'lasso', k: 'magic',
   i: 'line', r: 'rect', o: 'ellipse',
+  h: 'pan',
 };
 
 function isTypingTarget(el) {

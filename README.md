@@ -263,6 +263,7 @@ geprüft und mit `JSON.parse` gelesen.
 | Malen | Stift `P` · Pinsel `B` · Spray `S` · Füllen `F` · Radierer `E` · Zauberstab `W` |
 | Formen | Linie `I` · Rechteck `R` · Ellipse `O` — mit Live-Vorschau, *Gefüllt* schaltet Kontur/Fläche |
 | Auswahl | Rechteck `A` · Lasso `L` · Farbwahl `K` |
+| Ansicht | Hand `H` — schiebt nur die Ansicht, verändert nichts am Bild |
 
 **Symmetrie** (↔ / ↕ in der Werkzeugleiste) spiegelt jeden Strich an der Mittelachse;
 beide Achsen zusammen ergeben vier Spiegelungen. Gilt für alle Mal- und Formwerkzeuge,
@@ -458,6 +459,7 @@ die FPS-Zahl des Sprites.
 | `P` `B` `S` `F` `E` `W` | Stift · Pinsel · Spray · Füllen · Radierer · Zauberstab |
 | `I` `R` `O` | Linie · Rechteck · Ellipse |
 | `A` `L` `K` | Auswahl · Lasso · Farbwahl |
+| `H` | Hand — Ansicht verschieben, ohne zu zeichnen |
 | Ziehen in der Auswahl | Bereich ausschneiden und verschieben |
 | `Alt` + Ziehen | Kopie verschieben, Original bleibt |
 | Pfeiltasten | Auswahl pixelweise verschieben |

@@ -22,10 +22,22 @@ const $ = id => document.getElementById(id);
 
 const MIN_CELL = 2, MAX_CELL = 40;
 
-// Leertaste gehalten? Dann schiebt die Maus, statt zu malen — app.js fragt
-// das ab, bevor es einen Strich beginnt.
+// Wird gerade geschoben statt gemalt? Zwei Wege führen dahin: die Leertaste
+// gedrückt halten, oder das Hand-Werkzeug wählen. app.js fragt das ab, bevor
+// es einen Strich beginnt.
 let panKeyHeld = false;
-export const isPanKeyHeld = () => panKeyHeld;
+let panTool = false;
+export const isPanMode = () => panKeyHeld || panTool;
+
+/** Das Hand-Werkzeug ist aktiv (app.js beim Werkzeugwechsel). */
+export function setPanTool(on) {
+  panTool = on;
+  syncCursor();
+}
+
+function syncCursor() {
+  $('editor-canvas-area').classList.toggle('is-pannable', panKeyHeld || panTool);
+}
 
 /**
  * Zoomt um `step` Pixel je Zelle und hält dabei die Zelle unter dem Zeiger
@@ -85,7 +97,7 @@ export function initPan({ ignoreKey = () => false } = {}) {
   const area = $('editor-canvas-area');
   const setHeld = on => {
     panKeyHeld = on;
-    area.classList.toggle('is-pannable', on);
+    syncCursor();
   };
   window.addEventListener('keydown', e => {
     if (e.code !== 'Space' || ignoreKey(e)) return;
@@ -96,7 +108,7 @@ export function initPan({ ignoreKey = () => false } = {}) {
   window.addEventListener('blur', () => setHeld(false));
 
   area.addEventListener('pointerdown', e => {
-    if (!(panKeyHeld || e.button === 1)) return;
+    if (!(isPanMode() || e.button === 1)) return;
     e.preventDefault();
     const sx = e.clientX, sy = e.clientY, l0 = area.scrollLeft, t0 = area.scrollTop;
     area.classList.add('is-panning');
