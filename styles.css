@@ -1800,6 +1800,14 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
     scrollbar-width: none;
   }
   .rail-dock .dock-btn { flex: none; width: 40px; height: 40px; }
+  /* Die Icons fuellen die Leiste komplett aus. Mit `touch-action: none`
+     (siehe Abschnitt Dock) schluckten sie jeden Wisch, und die Leiste liess
+     sich nicht mehr scrollen. Waagerecht scrollt jetzt der Browser; zum
+     Umsortieren haelt man ein Icon kurz fest (js/layout.js makeDraggable). */
+  .rail-dock .dock-btn { touch-action: pan-x; }
+  /* Die linke Gruppe darf die Zeile nicht komplett belegen: `auto` nimmt sich
+     sonst die ganze Breite und fuer die rechte Spalte bleibt nichts uebrig. */
+  #rail-left { max-width: 50vw; }
   /* Kein Abstand zwischen den beiden Spalten — er sah aus wie ein Trenner,
      hinter dem Icons liegen. */
   #rail-left .rail-dock { padding-inline-end: 0; }

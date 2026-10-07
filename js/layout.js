@@ -573,36 +573,57 @@ function makeDraggable(handle, el, { lift, follow, target, drop, mobile = false 
     if (e.button !== 0 || (MOBILE.matches && !mobile)) return;
     if (el && e.target.closest('button, input, select, a')) return;
     const sx = e.clientX, sy = e.clientY;
-    let dragging = false, offX = 0, offY = 0, tgt = null;
+    // Auf dem Handy scrollt die Dock-Leiste waagerecht, und die Icons fuellen
+    // sie komplett aus. Ein Wisch muss darum scrollen duerfen: dort beginnt
+    // das Ziehen erst nach kurzem Halten. Bewegt sich der Finger vorher,
+    // geben wir die Geste frei und der Browser scrollt.
+    const hold = MOBILE.matches && e.pointerType !== 'mouse';
+    let dragging = false, armed = !hold, offX = 0, offY = 0, tgt = null, timer = 0;
 
-    const move = ev => {
-      if (!dragging) {
-        if (Math.hypot(ev.clientX - sx, ev.clientY - sy) < 6) return;
-        dragging = true;
-        lift();
-        if (el) { const r = el.getBoundingClientRect(); offX = sx - r.left; offY = sy - r.top; }
-        document.body.classList.add('is-dragging-ui');
-      }
-      ev.preventDefault();
+    const step = (cx, cy) => {
       if (el) {
         const w = wsRect();
-        el.style.left = (ev.clientX - w.left - offX) + 'px';
-        el.style.top = (ev.clientY - w.top - offY) + 'px';
+        el.style.left = (cx - w.left - offX) + 'px';
+        el.style.top = (cy - w.top - offY) + 'px';
       }
-      follow?.(ev.clientX, ev.clientY);
-      tgt = target(ev.clientX, ev.clientY);
+      follow?.(cx, cy);
+      tgt = target(cx, cy);
       showHint(tgt?.hint);
     };
-    const up = () => {
+    const begin = (cx, cy) => {
+      dragging = true;
+      lift();
+      if (el) { const r = el.getBoundingClientRect(); offX = sx - r.left; offY = sy - r.top; }
+      document.body.classList.add('is-dragging-ui');
+      navigator.vibrate?.(10);
+      step(cx, cy);
+    };
+    const stop = () => {
+      clearTimeout(timer);
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
       window.removeEventListener('pointercancel', up);
+    };
+    const move = ev => {
+      if (!dragging) {
+        if (Math.hypot(ev.clientX - sx, ev.clientY - sy) < 6) return;
+        if (!armed) { stop(); return; }   // Wischen statt Ziehen: scrollen lassen
+        begin(ev.clientX, ev.clientY);
+        ev.preventDefault();
+        return;
+      }
+      ev.preventDefault();
+      step(ev.clientX, ev.clientY);
+    };
+    const up = () => {
+      stop();
       if (!dragging) return;
       document.body.classList.remove('is-dragging-ui');
       showHint(null);
       if (el) clampFloat(el);
       drop(tgt);
     };
+    if (hold) timer = setTimeout(() => { armed = true; begin(sx, sy); }, 320);
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
     window.addEventListener('pointercancel', up);
