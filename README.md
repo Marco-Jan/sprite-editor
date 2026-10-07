@@ -34,6 +34,23 @@ eine eigene App.
 - Projekte liegen wie immer im `localStorage` bzw. in der Projektdatei. Mit dem Cache haben
   sie nichts zu tun.
 
+### Update-Band
+
+Ein neuer Service Worker **übernimmt nicht von selbst**. Er installiert sich im Hintergrund
+und bleibt auf `waiting` stehen, bis die Seite neu geladen wird — sonst tauscht er einer
+offenen App den Unterbau unter den Füßen aus (genau daher kam der Fehler, dass die PWA nach
+einem Deploy nichts mehr anzeigte).
+
+`js/pwa.js` merkt das Warten und blendet oben ein Band ein: „Eine neue Version ist da —
+neu laden“. Ein Klick schickt `{type:'skip-waiting'}` an den wartenden Worker und lädt
+danach neu; das × lässt es bis zum nächsten Start liegen. Das Band schiebt die Seite um
+seine Höhe nach unten (`body.sb-has-update`), verdeckt also die Kopfzeile nicht, und steht
+in der gerade gewählten Sprache — wechselt man sie bei offenem Band, wandert der Text mit.
+
+Eine Versionsnummer braucht es dafür nicht: dass ein zweiter Worker existiert, **ist** das
+Update. Von sich aus sucht der Browser nur beim Navigieren danach, darum fragt `pwa.js`
+zusätzlich bei jedem Zurückschalten auf den Tab und alle 30 Minuten nach (`registration.update()`).
+
 Welche Dateien vorab in den Cache kommen, steht in der `PRECACHE`-Liste von `sw.js`. Die
 Liste wird erzeugt, nicht von Hand gepflegt. **Nach neuen, umbenannten oder gelöschten
 Dateien:**

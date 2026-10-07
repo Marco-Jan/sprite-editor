@@ -336,12 +336,12 @@
           <button class="btn" id="tl-del" data-i18n-attr="title:tl.del" title="Frame löschen"><span class="ico" data-icon="trash"></span></button>
         </div>
         <button class="btn" id="tl-onion" aria-pressed="false" data-i18n-attr="title:tl.onion" title="Onion Skin — vorigen und nächsten Frame durchscheinen lassen"><span class="ico" data-icon="onion"></span></button>
-        <label class="field field--inline tl-num tl-go-field" data-i18n-attr="title:tl.goTitle" title="Zu einem Frame springen — Nummer eintippen">
+        <label class="field field--inline tl-num tl-go-field" id="tl-go-field" data-i18n-attr="title:tl.goTitle" title="Zu einem Frame springen — Nummer eintippen">
           <span class="field-label" data-i18n="tl.go">Frame</span>
           <input type="number" id="tl-go" class="input input--sm" min="1" step="1">
           <span class="field-value" id="tl-total">/ 1</span>
         </label>
-        <label class="field field--inline tl-num">
+        <label class="field field--inline tl-num" id="tl-fps-field">
           <span class="field-label" data-i18n="tl.fps">FPS</span>
           <input type="number" id="tl-fps" class="input input--sm" min="1" max="60" step="1" value="8">
         </label>

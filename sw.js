@@ -8,6 +8,11 @@
 // auf einer alten Version, und niemand muss nach einem Deploy eine
 // Versionsnummer hochzählen.
 //
+// Ein neuer Worker übernimmt NICHT von selbst: er wartet, bis die Seite neu
+// geladen wird. Sonst tauscht er einer offenen App den Unterbau unter den
+// Füßen aus. js/pwa.js merkt das Warten, zeigt oben ein Band ("neue Version")
+// und schickt auf Klick 'skip-waiting' herunter.
+//
 // Die Dateiliste erzeugt tools/make_sw.py — nach neuen/gelöschten Dateien:
 //   python tools/make_sw.py
 
@@ -95,7 +100,6 @@ self.addEventListener('install', (event) => {
         if (res.ok) await cache.put(url, res);
       } catch {}
     }));
-    await self.skipWaiting();
   })());
 });
 
@@ -105,6 +109,11 @@ self.addEventListener('activate', (event) => {
     await Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)));
     await self.clients.claim();
   })());
+});
+
+// Die Seite sagt Bescheid, wenn der Nutzer das Update annimmt.
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'skip-waiting') self.skipWaiting();
 });
 
 self.addEventListener('fetch', (event) => {

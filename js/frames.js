@@ -28,10 +28,12 @@ const $ = id => document.getElementById(id);
 // die Reihe scrollt. CELL ist die Kantenlänge des ganzen Knopfes, das Bild
 // sitzt abzüglich Rand und Polsterung darin.
 const CELL_MIN = 30;
-const CELL_MIN_TOUCH = 44;   // Handy: so groß wie die Styles es ohnehin erzwingen
+const CELL_MIN_TOUCH = 34;   // Handy: so groß wie die Styles es ohnehin erzwingen
 const CELL_MAX = 56;    // waagerecht: mehr würde die Zeichenfläche beschneiden
 const CELL_MAX_V = 80;  // senkrecht angeordnet ist Höhe kein Engpass
 const CELL_PAD = 6;   // 1 px Rand + 2 px Polsterung je Seite
+const VISIBLE_MAX = 20;         // so viele Frames passen höchstens nebeneinander
+const VISIBLE_MAX_TOUCH = 6;    // Handy: lieber sechs kleine als zwei grosse
 let cell = 44;        // zuletzt berechnete Kantenlänge
 
 // ── Mehrfachauswahl ─────────────────────────────────────────────────
@@ -278,21 +280,29 @@ function drawThumb(cv, grid, pal) {
   ctx.putImageData(img, 0, 0);
 }
 
-// Platz aufteilen: waagerecht teilen sich alle Frames die Breite der Reihe,
+// Platz aufteilen: waagerecht teilen sich die Frames die Breite der Reihe,
 // senkrecht gibt die Spaltenbreite das Maß. Mehr als CELL_MAX wird es nie —
-// sonst frisst die Leiste die Zeichenfläche. Passen die Frames nicht mehr,
-// bleibt es bei CELL_MIN und die Reihe scrollt wie bisher.
+// sonst frisst die Leiste die Zeichenfläche.
+//
+// Nach unten ist bei VISIBLE_MAX Schluss: die Bildchen schrumpfen nur so weit,
+// bis zwanzig nebeneinander stehen. Ab dem einundzwanzigsten Frame bleibt die
+// Größe, wie sie ist, und die Reihe scrollt — sonst würde eine lange Animation
+// die Vorschau zu Briefmarken zusammenquetschen.
 function fitThumbs() {
   const box = $('tl-frames');
   const sp = getSprite();
   if (!box || !sp) return;
-  const w = box.clientWidth;
-  if (!w) return;   // noch nicht sichtbar — beim nächsten Mal
-  const n = sp.frames.length;
+  const cs = getComputedStyle(box);
+  // Innenmaß: die Polsterung der Reihe gehört nicht den Bildchen, sonst
+  // passt genau eines weniger hinein, als die Rechnung verspricht.
+  const w = box.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
+  if (w <= 0) return;   // noch nicht sichtbar — beim nächsten Mal
+  const mobile = isMobileLayout();
+  const k = Math.min(sp.frames.length, mobile ? VISIBLE_MAX_TOUCH : VISIBLE_MAX);
   const gap = 4;
-  const vertical = getComputedStyle(box).flexDirection === 'column';
-  const room = vertical ? w - gap : Math.floor((w - gap * (n - 1)) / n);
-  const min = isMobileLayout() ? CELL_MIN_TOUCH : CELL_MIN;
+  const vertical = cs.flexDirection === 'column';
+  const room = vertical ? w : Math.floor((w - gap * (k - 1)) / k);
+  const min = mobile ? CELL_MIN_TOUCH : CELL_MIN;
   const next = Math.max(min, Math.min(vertical ? CELL_MAX_V : CELL_MAX, room));
   if (next === cell) return;
   cell = next;

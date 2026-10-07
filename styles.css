@@ -1832,13 +1832,15 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
   #rail-right .rail-dock { padding-inline-start: 0; }
   .rail-pins, .pins-resizer { display: none !important; }
 
-  /* Schublade → Blatt von unten über der Dock-Leiste. */
+  /* Schublade → Blatt von unten über der Dock-Leiste. Stehen unten schon
+     angepinnte Leisten, beginnt das Blatt darüber: --mpins-h ist ihre Hoehe
+     (js/layout.js syncMobilePins), ohne sie 0. */
   #workspace > .rail > [data-dock].is-shown {
     position: fixed;
     top: auto;
     left: 0;
     right: 0;
-    bottom: calc(var(--mbar-h) + env(safe-area-inset-bottom));
+    bottom: calc(var(--mbar-h) + var(--mpins-h, 0px) + env(safe-area-inset-bottom));
     width: auto;
     max-height: 70dvh;
     overflow-y: auto;
@@ -1872,12 +1874,13 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
     scrollbar-width: none;
   }
   /* Weicher Rand dort, wo die Reihe weitergeht (js/layout.js). */
-  .rail-dock.is-more-l, #toolbar.is-more-l, #color-bar.is-more-l, #timeline.is-more-l {
+  .tl-frames.is-more-l, .rail-dock.is-more-l, #toolbar.is-more-l, #color-bar.is-more-l, #timeline.is-more-l {
     mask-image: linear-gradient(to right, transparent, #000 24px);
   }
-  .rail-dock.is-more-r, #toolbar.is-more-r, #color-bar.is-more-r, #timeline.is-more-r {
+  .tl-frames.is-more-r, .rail-dock.is-more-r, #toolbar.is-more-r, #color-bar.is-more-r, #timeline.is-more-r {
     mask-image: linear-gradient(to left, transparent, #000 24px);
   }
+  .tl-frames.is-more-l.is-more-r,
   .rail-dock.is-more-l.is-more-r,
   #toolbar.is-more-l.is-more-r, #color-bar.is-more-l.is-more-r, #timeline.is-more-l.is-more-r {
     mask-image: linear-gradient(to right, transparent, #000 24px, #000 calc(100% - 24px), transparent);
@@ -1888,7 +1891,41 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
   /* Die Frames scrollen selbst — die Leiste drumherum nicht doppelt. */
   #timeline > .tl-frames { flex: 1 1 auto; min-width: 96px; scrollbar-width: none; }
   #timeline > .tl-frames::-webkit-scrollbar { display: none; }
+
+  /* Timeline in zwei Zeilen: oben die Abspiel-Knoepfe und die Frames, unten
+     der Rest. Dadurch bekommt die Frame-Reihe die ganze Breite, statt sich
+     mit sechs Feldern eine scrollende Zeile zu teilen.
+     Die Umbruchstelle macht die Breite der Frame-Reihe: sie ist so breit
+     angesetzt, dass hinter ihr nichts mehr in die erste Zeile passt. */
+  #timeline {
+    flex-wrap: wrap;
+    gap: var(--sp-1);
+    overflow-x: hidden;
+  }
+  #timeline > .tl-frames { flex: 1 1 50%; }
+  /* Die zweite Zeile soll eine bleiben: enge Felder und kleinere Knoepfe
+     (siehe unten) schaffen den Platz dafuer — und damit auch fuer "ms" und
+     ein kurzes "F" vor der Frame-Nummer. Ohne die beiden Hinweise stuenden
+     dort drei nackte Zahlen nebeneinander. */
+  /* Die Pfeilchen im Zahlenfeld trifft auf dem Handy niemand — ohne sie
+     passen drei Felder mit Beschriftung in eine Zeile. */
+  #timeline .tl-num input { width: 2.4rem; }
+  #timeline .tl-num input::-webkit-inner-spin-button,
+  #timeline .tl-num input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  #timeline .tl-num input { -moz-appearance: textfield; appearance: textfield; }
+  #timeline .tl-num .field-value { min-width: 0; }
   #timeline .tl-num .field-label { display: none; }
+  #timeline #tl-fps-field .field-label { display: inline; }
+  /* Beim Sprungfeld bleibt nur der Anfangsbuchstabe stehen: "Frame" waere
+     hier zu lang, drei nackte Zahlen nebeneinander zu wenig. */
+  #timeline #tl-go-field .field-label {
+    display: inline;
+    font-size: 0;
+  }
+  #timeline #tl-go-field .field-label::after {
+    content: 'F';
+    font-size: var(--fs-xs);
+  }
   .tool-group { flex: none; }
   /* Die Trennstriche kosten in der scrollenden Zeile nur Platz und schieben
      Icons aus dem Bild — der Abstand zwischen den Gruppen reicht. */
@@ -1904,13 +1941,19 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
   #color-bar .btn,
   #color-bar .icon-btn,
   #color-bar .qp-swatch,
-  #timeline .btn,
-  #timeline .icon-btn,
   #stage-head .btn,
   #stage-head .icon-btn,
   .rail-dock .dock-btn,
-  #color-bar .current-color,
-  #timeline .tl-frame { min-width: 44px; min-height: 44px; }
+  #color-bar .current-color { min-width: 44px; min-height: 44px; }
+  /* Die Timeline-Knoepfe duerfen etwas kleiner sein: sie stehen in zwei
+     ruhigen Zeilen und nicht in einer scrollenden Reihe — dafuer passt die
+     zweite Zeile am Stueck aufs Display. */
+  #timeline .btn,
+  #timeline .icon-btn { min-width: 38px; min-height: 38px; }
+  /* Die Frames sind die Ausnahme von den 44 px: sie stehen in einer eigenen
+     Zeile und man muss mehrere auf einmal sehen, sonst scrollt man blind.
+     34 px bleiben treffsicher genug (js/frames.js CELL_MIN_TOUCH). */
+  #timeline .tl-frame { min-width: 34px; min-height: 34px; }
   /* Die Griff-Knoepfe sitzen schmal am Anfang jeder Leiste — sie bekommen
      die Hoehe, aber nicht die volle Breite, sonst kostet jede Leiste 44 px. */
   #toolbar > .bar-handle .icon-btn,

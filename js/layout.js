@@ -108,6 +108,15 @@ function syncRail(side) {
   rail.style.setProperty('--pins-w', layout.pinW[side] + 'px');
 }
 
+// Handy: unten angepinnte Leisten stehen zwischen Zeichenflaeche und Dock.
+// Eine Schublade faehrt als Blatt von unten hoch — ohne dieses Mass wuerde
+// sie genau ueber den angepinnten Leisten liegen und sie verdecken.
+function syncMobilePins() {
+  const zone = zoneOf('bottom');
+  const h = MOBILE.matches && zone && zone.offsetParent !== null ? Math.round(zone.getBoundingClientRect().height) : 0;
+  document.documentElement.style.setProperty('--mpins-h', h + 'px');
+}
+
 function bringToFront(el) { el.style.zIndex = String(++zTop); }
 
 function clampFloat(el) {
@@ -670,7 +679,7 @@ function syncBarFade(el) {
 }
 
 // Die Icon-Spalten unten koennen genauso ueberlaufen wie die Leisten.
-const fadeEls = () => [...BARS.map(id => $(id)), ...document.querySelectorAll('.rail-dock')];
+const fadeEls = () => [...BARS.map(id => $(id)), ...document.querySelectorAll('.rail-dock, .tl-frames')];
 
 function initBarFades() {
   for (const el of fadeEls()) {
@@ -829,7 +838,7 @@ export function initLayout() {
 
   load();
   applyAll();
-  MOBILE.addEventListener('change', applyAll);
+  MOBILE.addEventListener('change', () => { applyAll(); syncMobilePins(); });
   relabel();
   onLangChange(relabel);
 
@@ -844,8 +853,15 @@ export function initLayout() {
     if (changed) save();
   });
   document.querySelectorAll('[data-panel], #toolbar, #color-bar, #timeline').forEach(el => ro.observe(el));
+
+  // Die Hoehe der unten angepinnten Leisten aendert sich beim An- und
+  // Abpinnen, beim Drehen und wenn eine Leiste selbst umbricht.
+  syncMobilePins();
+  new ResizeObserver(syncMobilePins).observe(zoneOf('bottom'));
+
   window.addEventListener('resize', () => {
     layer.querySelectorAll('.is-floating').forEach(clampFloat);
     syncAllBarFades();
+    syncMobilePins();
   });
 }

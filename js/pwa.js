@@ -6,8 +6,123 @@
 (function () {
   if (!('serviceWorker' in navigator) || location.protocol === 'file:') return;
   window.addEventListener('load', function () {
-    navigator.serviceWorker.register('sw.js').catch(function () {});
+    navigator.serviceWorker.register('sw.js').then(watchUpdate, function () {});
   });
+
+  // ── Neue Version da? ──────────────────────────────────────────────
+  // Der neue Worker installiert sich im Hintergrund und bleibt dann auf
+  // "waiting" stehen (sw.js). Genau das ist das Signal: ab jetzt liegt eine
+  // neuere Fassung bereit, die laufende Seite kennt sie aber nicht. Statt
+  // sie heimlich auszutauschen — die offene App zeigte danach schon mal
+  // nichts mehr an — fragen wir oben nach.
+  //
+  // Ohne `controller` ist es die Erstinstallation, da gibt es nichts zu melden.
+  var reloading = false;
+  // Beim allerersten Besuch übernimmt der Worker die schon offene Seite
+  // (clients.claim) — das ist kein Update und darf nicht neu laden.
+  var hadController = !!navigator.serviceWorker.controller;
+
+  // Der neue Worker kann schon warten, bevor register() überhaupt antwortet
+  // — darum beide Fälle: den fertigen und den, der noch installiert.
+  function track(sw) {
+    if (!sw || !hadController) return;
+    if (sw.state === 'installed') { offerUpdate(sw); return; }
+    sw.addEventListener('statechange', function () {
+      if (sw.state === 'installed') offerUpdate(sw);
+    });
+  }
+
+  function watchUpdate(reg) {
+    if (!reg) return;
+    track(reg.waiting);
+    track(reg.installing);
+    reg.addEventListener('updatefound', function () { track(reg.installing); });
+    // Von sich aus sieht der Browser nur beim Navigieren (und höchstens
+    // einmal am Tag) nach. Eine App, die wochenlang offen steht, erführe
+    // sonst nie von einem Update.
+    var look = function () { if (!document.hidden) reg.update().catch(function () {}); };
+    document.addEventListener('visibilitychange', look);
+    setInterval(look, 30 * 60 * 1000);
+
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      if (!hadController || reloading) return;   // Erstinstallation bzw. schon unterwegs
+      reloading = true;
+      location.reload();
+    });
+  }
+
+  function offerUpdate(worker) {
+    if (document.querySelector('.sb-update')) return;
+    addCss('sb-update-css', BANNER_CSS);
+    var bar = document.createElement('div');
+    bar.className = 'sb-update';
+    bar.setAttribute('role', 'status');
+    bar.innerHTML = '<span class="sb-update-text"></span>'
+      + '<button type="button" class="sb-update-go"></button>'
+      + '<button type="button" class="sb-update-x">×</button>';
+    fillBanner(bar);
+    bar.querySelector('.sb-update-go').addEventListener('click', function () {
+      reloading = true;
+      hide(bar);
+      // Der wartende Worker übernimmt, sobald er darf; danach neu laden.
+      // Antwortet er nicht (abgestürzt, schon ersetzt), laden wir trotzdem.
+      try { worker.postMessage({ type: 'skip-waiting' }); } catch (e) {}
+      setTimeout(function () { location.reload(); }, 400);
+    });
+    bar.querySelector('.sb-update-x').addEventListener('click', function () { hide(bar); });
+    document.body.appendChild(bar);
+    // Das Band schiebt die Seite herunter, statt die Kopfzeile zu verdecken.
+    // Der Editor füllt genau den Bildschirm — er muss um dieselbe Höhe
+    // kürzer werden, sonst rutscht die Timeline unten heraus.
+    document.documentElement.style.setProperty('--sb-banner', bar.offsetHeight + 'px');
+    document.body.classList.add('sb-has-update');
+  }
+
+  function hide(bar) {
+    bar.remove();
+    document.body.classList.remove('sb-has-update');
+  }
+
+  // Beschriftung des Bands in der gerade gewählten Sprache. i18n.js schreibt
+  // bei jedem Wechsel <html data-lang> um — ist das Band offen, wandert es
+  // mit, statt in der alten Sprache stehen zu bleiben.
+  function fillBanner(bar) {
+    var tx = texts();
+    bar.querySelector('.sb-update-text').textContent = tx.updateText;
+    bar.querySelector('.sb-update-go').textContent = tx.updateGo;
+    var x = bar.querySelector('.sb-update-x');
+    x.setAttribute('aria-label', tx.updateLater);
+    x.setAttribute('title', tx.updateLater);
+  }
+
+  if (window.MutationObserver) {
+    new MutationObserver(function () {
+      var bar = document.querySelector('.sb-update');
+      if (bar) fillBanner(bar);
+    }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-lang'] });
+  }
+
+  function addCss(id, css) {
+    if (document.getElementById(id)) return;
+    var st = document.createElement('style');
+    st.id = id;
+    st.textContent = css;
+    document.head.appendChild(st);
+  }
+
+  var BANNER_CSS = ''
+    + '.sb-update{position:fixed;top:0;left:0;right:0;z-index:2500;display:flex;align-items:center;gap:12px;'
+    + 'padding:8px 12px;padding-top:calc(8px + env(safe-area-inset-top));'
+    + 'border-bottom:1px solid var(--accent-line,#2d4870);background:var(--accent-bg,#17253c);'
+    + 'color:var(--text,#e6e6ea);font:14px/1.3 var(--font,system-ui,sans-serif);box-shadow:0 6px 20px rgba(0,0,0,.45)}'
+    + '.sb-update-text{flex:1;min-width:0}'
+    + '.sb-update-go{flex:none;padding:6px 12px;border:0;border-radius:8px;background:var(--accent,#6ea8fe);'
+    + 'color:#0d1420;font:600 14px var(--font,system-ui,sans-serif);cursor:pointer}'
+    + '.sb-update-x{flex:none;width:28px;height:28px;padding:0;border:0;border-radius:8px;background:transparent;'
+    + 'color:var(--text-muted,#9a9aa6);font-size:20px;line-height:1;cursor:pointer}'
+    + '.sb-update-x:hover{color:var(--text,#e6e6ea)}'
+    + 'body.sb-has-update{padding-top:var(--sb-banner,44px)}'
+    + 'body.sb-has-update #app{height:calc(100dvh - var(--sb-banner,44px))}';
 
   // "Als App installieren": Knöpfe mit [data-install] erscheinen, wenn der
   // Browser die Installation anbietet (Chrome, Edge). Apple-Geräte kennen
@@ -62,6 +177,9 @@
             'Bestätige mit <b>Hinzufügen</b>.'],
       after: 'Danach startet spritebit wie eine eigene App — auch ohne Internet.',
       ok: 'Verstanden',
+      updateText: 'Eine neue Version von spritebit ist da — neu laden, damit alles passt. Deine Sprites bleiben gespeichert.',
+      updateGo: 'Neu laden',
+      updateLater: 'Später',
     },
     at: {
       title: 'spritebit auf’n Home-Bildschirm',
@@ -74,6 +192,9 @@
             'Bestätig mit <b>Hinzufügen</b>.'],
       after: 'Danoch startet spritebit wia a eigene App — a ohne Internet.',
       ok: 'Passt',
+      updateText: 'A neue Version von spritebit is do — neu lodn, damit ois passt. Deine Sprites bleibm gsichert.',
+      updateGo: 'Neu lodn',
+      updateLater: 'Später',
     },
     en: {
       title: 'Add spritebit to your Home Screen',
@@ -86,6 +207,9 @@
             'Confirm with <b>Add</b>.'],
       after: 'From then on spritebit starts like an app of its own — offline too.',
       ok: 'Got it',
+      updateText: 'A new version of spritebit is available — reload so everything matches. Your sprites stay saved.',
+      updateGo: 'Reload',
+      updateLater: 'Later',
     },
   };
 
@@ -100,6 +224,11 @@
     + '.ios-guide li svg{display:inline-block;vertical-align:-3px;color:var(--accent,#6ea8fe)}'
     + '.ios-guide button{display:block;width:100%;padding:10px;border:0;border-radius:10px;background:var(--accent,#6ea8fe);color:#0d1420;font:600 15px var(--font,system-ui,sans-serif);cursor:pointer}';
 
+  function texts() {
+    var lang = (document.documentElement.getAttribute('data-lang') || document.documentElement.lang || 'de').slice(0, 2);
+    return TEXT[lang] || TEXT.de;
+  }
+
   function openGuide() {
     if (document.querySelector('.ios-guide')) return;
     if (!document.getElementById('ios-guide-css')) {
@@ -108,8 +237,7 @@
       st.textContent = CSS;
       document.head.appendChild(st);
     }
-    var lang = (document.documentElement.getAttribute('data-lang') || document.documentElement.lang || 'de').slice(0, 2);
-    var tx = TEXT[lang] || TEXT.de;
+    var tx = texts();
     var steps = IOS ? tx.ios : tx.mac;
 
     var wrap = document.createElement('div');
