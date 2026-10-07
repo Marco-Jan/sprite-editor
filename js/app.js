@@ -47,7 +47,7 @@ import {
 import { initExport } from './export.js';
 import { openReduceModal, initReduceModal } from './reduce.js';
 import { zoomAt, fitZoomToArea, isPanMode, setPanTool, initPan, initPinch } from './view.js';
-import { initFrames, togglePlay, nextFrame, prevFrame, isPlaying, stop as stopPlayback } from './frames.js';
+import { initFrames, togglePlay, nextFrame, prevFrame, firstFrame, lastFrame, isPlaying, stop as stopPlayback } from './frames.js';
 import { initLayers } from './layers.js';
 import { initGuides, guidePointerDown, toggleEdit as toggleGuideEdit, toggleShow as toggleGuides } from './guides.js';
 import { parseTsSprite } from './tsimport.js';
@@ -663,9 +663,11 @@ function initKeyboardEvents() {
     // ── G: Hilfslinien ein/aus ──
     if (e.key === 'g' || e.key === 'G') { toggleGuides(); return; }
 
-    // ── Frames: , und . blättern, Enter spielt ab ──
+    // ── Frames: , und . blättern, Pos1/Ende springen, Enter spielt ab ──
     if (e.key === ',') { prevFrame(); return; }
     if (e.key === '.') { nextFrame(); return; }
+    if (e.key === 'Home') { e.preventDefault(); firstFrame(); return; }
+    if (e.key === 'End')  { e.preventDefault(); lastFrame(); return; }
     if (e.key === 'Enter' && !/** @type {HTMLElement} */ (e.target).closest?.('button, a, select, [role="option"]')) {
       e.preventDefault();
       togglePlay();

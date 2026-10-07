@@ -333,9 +333,11 @@
       <!-- Timeline — Frames des aktiven Sprites, Abspielen, Onion Skin (js/frames.js) -->
       <div id="timeline">
         <div class="btn-group tl-transport">
+          <button class="btn" id="tl-first" data-i18n-attr="title:tl.first" title="Zum ersten Frame (Pos1)"><span class="ico" data-icon="first"></span></button>
           <button class="btn" id="tl-prev" data-i18n-attr="title:tl.prev" title="Voriger Frame (,)"><span class="ico" data-icon="prev"></span></button>
           <button class="btn" id="tl-play" aria-pressed="false" data-i18n-attr="title:tl.play" title="Abspielen / Anhalten (Enter)"><span class="ico" data-icon="play"></span></button>
           <button class="btn" id="tl-next" data-i18n-attr="title:tl.next" title="Nächster Frame (.)"><span class="ico" data-icon="next"></span></button>
+          <button class="btn" id="tl-last" data-i18n-attr="title:tl.last" title="Zum letzten Frame (Ende)"><span class="ico" data-icon="last"></span></button>
         </div>
         <div class="tl-frames" id="tl-frames" role="listbox" data-i18n-attr="aria-label:tl.frames" aria-label="Frames"></div>
         <div class="btn-group tl-edit">
@@ -963,6 +965,7 @@
       <div class="sc-row"><b>Strg + A / C / X / V</b><span>Alles · Kopieren · Ausschneiden · Einfügen</span></div>
       <div class="sc-row"><b>Entf</b><span>Auswahl leeren</span></div>
       <div class="sc-row"><b>Enter</b><span>Drehung übernehmen · sonst Animation abspielen / anhalten</span></div>
+      <div class="sc-row"><b>Pos1 / Ende</b><span>Zum ersten / letzten Frame</span></div>
       <div class="sc-row"><b>, / .</b><span>Voriger / nächster Frame</span></div>
       <div class="sc-row"><b>G</b><span>Hilfslinien ein / aus</span></div>
       <div class="sc-row"><b>Zwei Finger</b><span>Zoomen und verschieben (Touch)</span></div>

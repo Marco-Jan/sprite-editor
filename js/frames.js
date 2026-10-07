@@ -104,6 +104,10 @@ export function goFrameNumber(v) {
   renderTimeline();
 }
 export function nextFrame() { const sp = getSprite(); if (sp) goFrame(sp.frame + 1); }
+// Ganz an den Anfang bzw. ans Ende — bei langen Animationen spart das
+// vierzig Klicks. Die Auswahl fällt dabei weg, wie bei jedem einfachen Klick.
+export function firstFrame() { const sp = getSprite(); if (sp) { resetSel(); goFrame(0); renderTimeline(); } }
+export function lastFrame() { const sp = getSprite(); if (sp) { resetSel(); goFrame(sp.frames.length - 1); renderTimeline(); } }
 export function prevFrame() { const sp = getSprite(); if (sp) goFrame(sp.frame - 1); }
 
 // ────────────────────────────────────────────────────────────────────
@@ -360,7 +364,7 @@ export function renderTimeline() {
     if (document.activeElement !== go) go.value = sp.frame + 1;
     $('tl-total').textContent = '/ ' + n;
   }
-  for (const id of ['tl-play', 'tl-prev', 'tl-next', 'tl-del']) $(id).disabled = n < 2;
+  for (const id of ['tl-play', 'tl-prev', 'tl-next', 'tl-del', 'tl-first', 'tl-last']) $(id).disabled = n < 2;
   // Der Löschen-Knopf sagt, wie viele Frames er mitnimmt — und der
   // Export-Bereich, auf wie viele er sich bezieht.
   const m = selectedCount();
@@ -489,8 +493,10 @@ function initThumbDrag(b) {
 }
 
 export function initFrames() {
+  $('tl-first').addEventListener('click', firstFrame);
   $('tl-prev').addEventListener('click', prevFrame);
   $('tl-next').addEventListener('click', nextFrame);
+  $('tl-last').addEventListener('click', lastFrame);
   $('tl-play').addEventListener('click', togglePlay);
   $('tl-add').addEventListener('click', addFrame);
   $('tl-dup').addEventListener('click', duplicateFrame);

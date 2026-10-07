@@ -62,7 +62,11 @@ export const ICONS = {
   close:   '<path d="M18 6L6 18M6 6l12 12"/>',
   play:    '<path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.5-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5z"/>',
   pause:   '<rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>',
+  // Ein Frame weiter (prev/next) gegen ganz an den Anfang bzw. ans Ende
+  // (first/last): ein Dreieck gegen zwei, der Balken steht bei beiden.
   prev:    '<path d="M18 5l-9 7 9 7z"/><path d="M6 5v14"/>',
+  first:   '<path d="M13 6l-5 6 5 6z"/><path d="M20 6l-5 6 5 6z"/><path d="M4 5v14"/>',
+  last:    '<path d="M11 6l5 6-5 6z"/><path d="M4 6l5 6-5 6z"/><path d="M20 5v14"/>',
   next:    '<path d="M6 5l9 7-9 7z"/><path d="M18 5v14"/>',
   plus:    '<path d="M12 5v14M5 12h14"/>',
   onion:   '<rect x="2" y="6" width="11" height="11" rx="2" stroke-dasharray="2 2.5"/><rect x="7" y="4" width="11" height="11" rx="2" opacity=".55"/><rect x="11" y="9" width="11" height="11" rx="2"/>',
