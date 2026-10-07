@@ -2000,11 +2000,6 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
      fallen die Schritt-Knoepfe weg — den Nachbar-Frame tippt man direkt an,
      und die Leiste bleibt zweizeilig. */
   #tl-multi { display: inline-grid; }
-  /* Schritt-Knoepfe weg: den Nachbar-Frame tippt man direkt an. Und das
-     Sprung-Feld weg: eine Frame-Nummer tippt am Telefon niemand, waehrend es
-     als breitestes Element eine ganze Zeile kosten wuerde. Springen
-     uebernehmen hier die beiden Knoepfe an den Enden. */
-  #tl-prev, #tl-next, #tl-go-field { display: none; }
   /* Die Frames sind die Ausnahme von den 44 px: sie stehen in einer eigenen
      Zeile und man muss mehrere auf einmal sehen, sonst scrollt man blind.
      34 px bleiben treffsicher genug (js/frames.js CELL_MIN_TOUCH). */
@@ -2114,3 +2109,13 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
   #tool-opts input[type="range"] { width: 120px; }
 }
 .tool-opts-btn { display: none; }
+
+/* ── Sehr schmale Geraete (Telefon hochkant) ────────────────────────
+   Bis hierher passt die Timeline einzeilig in die zweite Zeile. Darunter
+   wird es eng, und zwei Dinge gehen zuerst: die Schritt-Knoepfe (den
+   Nachbar-Frame tippt man direkt an) und das Sprung-Feld (eine Frame-Nummer
+   tippt am Telefon niemand, es ist aber das breiteste Element). Springen
+   uebernehmen dort die beiden Knoepfe an den Enden. */
+@media (max-width: 500px) {
+  #tl-prev, #tl-next, #tl-go-field { display: none; }
+}

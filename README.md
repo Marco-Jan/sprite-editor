@@ -414,8 +414,10 @@ andocken, schweben lassen oder ins Dock legen.
   und PNG/PDF schreiben je eine Datei pro Frame. Am Handy gibt es dafür einen
   Schalter in der Leiste (`#tl-multi`): ist er an, markiert ein Tipp den Frame, statt
   zu ihm zu wechseln. Am Rechner ist der Schalter ausgeblendet — dort genügen die Tasten.
-- Am Handy fallen in der Timeline die Schritt-Knöpfe und das Sprung-Feld weg: den
-  Nachbar-Frame tippt man direkt an, und für die Enden gibt es |◀◀ und ▶▶|.
+- **Unter 500 px** (Telefon hochkant) fallen in der Timeline die Schritt-Knöpfe und das
+  Sprung-Feld weg, damit die Leiste zweizeilig bleibt: den Nachbar-Frame tippt man direkt
+  an, und für die Enden gibt es |◀◀ und ▶▶|. Darueber — Tablet, schmales Fenster — ist
+  alles da.
 - **+** fügt dahinter einen leeren Frame ein, daneben **duplizieren** und **löschen**
   (der letzte Frame bleibt).
 - **▶** spielt in der Zeichenfläche ab (`Enter`); ein Tipp auf die Fläche, `Esc` oder
