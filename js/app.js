@@ -2,9 +2,9 @@
 // APP — Haupt-Entry: Init + Event-Bindings + Wiring zwischen Modulen
 // ════════════════════════════════════════════════════════════════════
 import {
-  state, sprites, customPalettes, paletteMaterials, selection, allGrids, flatGrid, defaultLayer,
+  state, sprites, paletteMaterials, selection, flatGrid, defaultLayer,
   getGrid, getSprite, getPal, getMaxIdx, getPaletteName, getPreviewName, listSprites,
-  createSprite, uniquePaletteName, clearSelection, isInSelection,
+  createSprite, clearSelection, isInSelection,
 } from './state.js';
 import { DEFAULT_PALETTE, MAX_COLORS } from './data.js';
 import {
@@ -45,6 +45,7 @@ import {
   despeckleGrid, outlineGrid, magicWandDelete, autoRemoveBackground,
 } from './spritefx.js';
 import { initExport } from './export.js';
+import { openReduceModal, initReduceModal } from './reduce.js';
 import { initFrames, togglePlay, nextFrame, prevFrame, isPlaying, stop as stopPlayback } from './frames.js';
 import { initLayers } from './layers.js';
 import { initGuides, guidePointerDown, toggleEdit as toggleGuideEdit, toggleShow as toggleGuides } from './guides.js';
@@ -65,6 +66,10 @@ import {
   beginFreeRotate, previewFreeRotate, applyFreeRotate, cancelFreeRotate, isRotating,
 } from './transform.js';
 
+// Kurz fuer document.getElementById. Der Rueckgabetyp ist bewusst `any`:
+// die Felder (.value, .checked, .disabled) gehoeren zu den konkreten
+// Element-Arten, und ein Cast an jeder Fundstelle waere mehr Laerm als Nutzen.
+/** @type {(id: string) => any} */
 const $ = id => document.getElementById(id);
 
 // ────────────────────────────────────────────────────────────────────
@@ -178,150 +183,6 @@ function applyTemplateTrace(mode, n) {
 }
 
 // ────────────────────────────────────────────────────────────────────
-// BILD → PALETTE — Bildfarben in eine editierbare eigene Palette überführen
-// ────────────────────────────────────────────────────────────────────
-function nearestRgbIndex(rgb, list) {
-  let best = 0, bd = Infinity;
-  for (let i = 0; i < list.length; i++) {
-    const p = list[i];
-    const d = (rgb.r - p.r) ** 2 + (rgb.g - p.g) ** 2 + (rgb.b - p.b) ** 2;
-    if (d < bd) { bd = d; best = i; }
-  }
-  return best + 1;
-}
-
-// Dialog: wie viele Farben soll die Palette haben? Mit Vorher/Nachher-
-// Vorschau; das Bild wird erst beim Bestätigen umgeschrieben.
-let reduce = null;   // { px, distinct, colorsByCount }
-
-function collectImageColors() {
-  const sp = getSprite();
-  if (!sp) return null;
-  const pal = getPal();
-  const counts = new Map();
-  for (const row of allGrids(sp).flat()) for (const c of row) {
-    const hex = cellToColor(c, pal);
-    if (!hex) continue;
-    const k = hex.toLowerCase();
-    counts.set(k, (counts.get(k) || 0) + 1);
-  }
-  // Für den Median-Cut zählt jede Farbe so oft, wie sie vorkommt.
-  const px = [];
-  for (const [hex, n] of counts) { const rgb = hexToRgb(hex); for (let i = 0; i < n; i++) px.push(rgb); }
-  return { px, distinct: [...counts.keys()] };
-}
-
-function reduceColors(count) {
-  if (reduce.cache.has(count)) return reduce.cache.get(count);
-  const colors = count >= reduce.distinct.length
-    ? reduce.distinct.map(hexToRgb)
-    : medianCut(reduce.px, count);
-  // Hell → dunkel sortieren, damit Index 1 der hellste Ton ist.
-  const lum = c => 0.299 * c.r + 0.587 * c.g + 0.114 * c.b;
-  colors.sort((a, b) => lum(b) - lum(a));
-  // Jede Bildfarbe einmal zuordnen statt jedes Pixel einzeln.
-  const map = new Map(reduce.distinct.map(hex => [hex, nearestRgbIndex(hexToRgb(hex), colors)]));
-  const res = { colors, map };
-  reduce.cache.set(count, res);
-  return res;
-}
-
-function drawReduceCanvas(canvas, colorOf) {
-  const grid = getGrid(), pal = getPal();
-  const H = grid.length, W = grid[0].length;
-  canvas.width = W; canvas.height = H;
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, W, H);
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    const hex = cellToColor(grid[y][x], pal);
-    if (!hex) continue;
-    ctx.fillStyle = colorOf(hex.toLowerCase());
-    ctx.fillRect(x, y, 1, 1);
-  }
-}
-
-function renderReducePreview() {
-  const count = Number($('reduce-count').value);
-  const { colors, map } = reduceColors(count);
-  const hexes = colors.map(c => rgbToHex(c.r, c.g, c.b));
-  drawReduceCanvas($('reduce-after'), hex => hexes[map.get(hex) - 1]);
-  $('reduce-after-cap').textContent = tn('red.after', colors.length);
-  const sw = $('reduce-swatches');
-  sw.innerHTML = '';
-  sw.style.setProperty('--cols', colors.length > 16 ? 16 : 8);
-  for (const hex of hexes) {
-    const el = document.createElement('span');
-    el.className = 'pal-sw';
-    el.style.background = hex;
-    el.title = hex;
-    sw.appendChild(el);
-  }
-}
-
-function openReduceModal() {
-  if (!getSprite()) { showInfoToast(t('tpl.needSprite')); return; }
-  const data = collectImageColors();
-  if (!data || !data.px.length) { showInfoToast(t('tpl.imageEmpty')); return; }
-  reduce = { ...data, cache: new Map() };
-  const n = data.distinct.length;
-
-  const sel = $('reduce-count');
-  sel.innerHTML = '';
-  const add = (value, label) => {
-    const o = document.createElement('option');
-    o.value = value; o.textContent = label;
-    sel.appendChild(o);
-  };
-  if (n <= MAX_COLORS) add(n, tn('red.all', n));
-  for (const c of [255, 128, 64, 32, 16, 8, 4]) if (c < n) add(c, tn('red.count', c));
-  sel.value = String(Math.min(n, MAX_COLORS));
-
-  $('reduce-intro').textContent = tn('red.intro', n, { max: MAX_COLORS });
-  drawReduceCanvas($('reduce-before'), hex => hex);
-  renderReducePreview();
-  $('reduce-modal-overlay').classList.add('open');
-}
-
-function applyReduce() {
-  const sp = getSprite();
-  if (!sp || !reduce) return;
-  const { colors, map } = reduceColors(Number($('reduce-count').value));
-  const pal = getPal();
-
-  const name = uniquePaletteName('foto');
-  const palObj = {};
-  colors.forEach((c, i) => { palObj[i + 1] = rgbToHex(c.r, c.g, c.b); });
-  customPalettes[name] = palObj;
-
-  // Grid auf die neuen Indizes umschreiben — mit der Palette ein Undo-Schritt.
-  recordOp(() => {
-    for (const row of allGrids(sp).flat()) for (let x = 0; x < row.length; x++) {
-      const hex = cellToColor(row[x], pal);
-      row[x] = hex ? map.get(hex.toLowerCase()) : 0;
-    }
-    sp.palette = name;
-  });
-
-  $('reduce-modal-overlay').classList.remove('open');
-  reduce = null;
-  state.palPreview = null;
-  if (typeof state.curColor !== 'number' || state.curColor > colors.length) state.curColor = 1;
-  renderAll();
-  saveState();
-  showInfoToast(t('pal.fromImage', { name, n: colors.length }));
-}
-
-function initReduceModal() {
-  const overlay = $('reduce-modal-overlay');
-  const close = () => { overlay.classList.remove('open'); reduce = null; };
-  $('reduce-count').addEventListener('change', renderReducePreview);
-  $('reduce-cancel').addEventListener('click', close);
-  $('reduce-apply').addEventListener('click', applyReduce);
-  // Kein Schließen per Klick daneben — ein Fehlklick (oder Text markieren und
-  // außerhalb loslassen) soll die Eingaben nicht verwerfen. Abbrechen oder Esc.
-}
-
-// ────────────────────────────────────────────────────────────────────
 // Tool-Dispatch + UI-Sync
 // ────────────────────────────────────────────────────────────────────
 function applyTool(x, y) {
@@ -386,7 +247,9 @@ function updateToolUI() {
 function updateMirrorUI() {
   const x = state.mirror === 'x' || state.mirror === 'both';
   const y = state.mirror === 'y' || state.mirror === 'both';
-  for (const [id, on] of [['mirror-x-btn', x], ['mirror-y-btn', y]]) {
+  /** @type {[string, boolean][]} */
+  const pairs = [['mirror-x-btn', x], ['mirror-y-btn', y]];
+  for (const [id, on] of pairs) {
     const b = $(id);
     if (!b) continue;
     b.classList.toggle('is-active', on);
@@ -957,7 +820,7 @@ function initKeyboardEvents() {
     // ── Frames: , und . blättern, Enter spielt ab ──
     if (e.key === ',') { prevFrame(); return; }
     if (e.key === '.') { nextFrame(); return; }
-    if (e.key === 'Enter' && !e.target.closest?.('button, a, select, [role="option"]')) {
+    if (e.key === 'Enter' && !/** @type {HTMLElement} */ (e.target).closest?.('button, a, select, [role="option"]')) {
       e.preventDefault();
       togglePlay();
       return;
@@ -1129,7 +992,7 @@ function initFreeColors() {
     else if (action === 'reduce') openReduceModal();
   });
   document.addEventListener('pointerdown', e => {
-    if (!list.hidden && !e.target.closest('#free-colors')) setOpen(false);
+    if (!list.hidden && !/** @type {HTMLElement} */ (e.target).closest('#free-colors')) setOpen(false);
   });
   window.addEventListener('keydown', e => {
     if (e.key === 'Escape' && !list.hidden) { e.stopPropagation(); setOpen(false); }
