@@ -799,7 +799,10 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
    "/ n" klebt direkt am Feld statt hinter der breiten Wertspalte. */
 .tl-go-field { gap: var(--sp-1); }
 .tl-go-field input { width: 3.5rem; }
-#tl-total { min-width: 0; text-align: left; }
+/* "/ 21" bleibt zusammen: wird die Zeile eng (ab zwei Stellen plus
+   Scrollbalken in der Frame-Reihe), rutschte die Zahl sonst unter den
+   Schrägstrich. */
+#tl-total { min-width: 0; text-align: left; white-space: nowrap; }
 #timeline.is-vertical .tl-frames { flex-direction: column; overflow-x: hidden; overflow-y: auto; max-height: 50vh; }
 #timeline.is-vertical .tl-frame { touch-action: pan-y; }
 #timeline.is-vertical .tl-num { flex-direction: row; }
@@ -1247,6 +1250,10 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 @keyframes confirmBoxIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: none; } }
 @keyframes infoIn       { from { opacity: 0; transform: translate(-50%, 12px); }
                           to   { opacity: 1; transform: translate(-50%, 0); } }
+/* Auf dem Handy steht der Hinweis ueber die volle Breite — er wird nicht
+   per translateX zentriert, also darf die Animation ihn nicht verschieben. */
+@keyframes infoInMobile { from { opacity: 0; transform: translateY(12px); }
+                          to   { opacity: 1; transform: none; } }
 
 @media (prefers-reduced-motion: reduce) {
   #confirm-toast, #confirm-toast-box { animation: none; }
@@ -1659,6 +1666,37 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
 .is-vertical .size-btns { flex-wrap: wrap; justify-content: center; max-width: 64px; }
 .is-vertical #quick-palette { flex-direction: column; flex-wrap: nowrap; }
 .is-vertical .qp-sep { width: 22px; height: 1px; }
+/* Timeline in der schmalen Spalte: die Gruppen sind kurz (drei Knoepfe) und
+   stehen nebeneinander statt untereinander — sonst wird aus der Leiste ein
+   Stapel aus sieben vollbreiten Knopf-Zeilen. Die Frames liegen als Streifen
+   ueber die volle Breite dazwischen. */
+#timeline.is-vertical {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  /* Ohne feste Breite zieht sich die umbrechende Reihe so breit wie ihr
+     laengster Inhalt — die Spalte waere dann breiter als die Zeichenflaeche. */
+  width: 13rem;
+}
+#timeline.is-vertical > * { flex: none; }
+#timeline.is-vertical > .bar-handle,
+#timeline.is-vertical > .tl-frames { flex: 1 1 100%; }
+#timeline.is-vertical .btn-group { flex-direction: row; }
+#timeline.is-vertical .btn-group .btn { flex: 1 1 0; }
+/* Die drei Zahlenfelder stehen untereinander — dann muessen sie auch
+   uebereinander stehen: Beschriftung rechtsbuendig in einer festen Spalte,
+   alle Eingabefelder gleich breit und an derselben Kante. Zentriert sahen
+   die Zeilen aus, als haette sie jemand zufaellig hingeschoben. */
+#timeline.is-vertical .tl-num {
+  flex: 1 1 100%;
+  justify-content: flex-start;
+  gap: var(--sp-2);
+}
+#timeline.is-vertical .tl-num .field-label { flex: none; width: 4rem; text-align: right; }
+#timeline.is-vertical .tl-num input { width: 4rem; }
+#timeline.is-vertical .tl-num .field-value { flex: none; min-width: 0; text-align: left; }
+
 #color-bar.is-vertical .current-color { min-width: 0; padding: 3px; }
 #color-bar.is-vertical .cc-info,
 #color-bar.is-vertical .cc-pick,
@@ -1852,7 +1890,7 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
   #workspace > .rail > #color-bar.is-shown,
   #workspace > .rail > #timeline.is-shown { padding: var(--sp-3); }
   /* Panels werden hier nicht angepinnt; Leisten schon — nur der Griff fehlt. */
-  .panel-pin, .panel-float, .bar-grip { display: none !important; }
+  .panel-pin, .panel-float, .bar-float, .bar-grip { display: none !important; }
   .bar-handle { margin-inline-end: 0; }
 
   /* Kopf der Bühne in einer Zeile. */
@@ -1965,6 +2003,33 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
   #color-bar .cc-info, #color-bar .cc-pick,
   #color-bar #show-color-btn .btn-label { display: none; }
   #quick-palette { flex-wrap: nowrap; }
+
+  /* ── Toast auf dem Handy ──────────────────────────────────────────
+     Der Hinweis sass unter der Dock-Leiste und den angepinnten Leisten —
+     halb verdeckt und mit Rand mitten im Nichts. Jetzt steht er sauber
+     darueber, ueber die volle Breite. Die Rueckfrage bekommt Knoepfe, die
+     man trifft: nebeneinander, gleich breit, nicht am rechten Rand. */
+  #confirm-toast.is-info {
+    left: var(--sp-3);
+    right: var(--sp-3);
+    bottom: calc(var(--mbar-h) + var(--mpins-h, 0px) + env(safe-area-inset-bottom) + var(--sp-2));
+    max-width: none;
+    transform: none;
+    animation: infoInMobile 0.18s ease-out;
+  }
+  #confirm-toast.is-info #confirm-toast-box { padding: var(--sp-3) var(--sp-4); }
+  #confirm-toast.is-info #confirm-toast-msg { font-size: var(--fs-md); line-height: 1.45; }
+
+  #confirm-toast.is-confirm { padding: var(--sp-3); }
+  #confirm-toast.is-confirm #confirm-toast-box {
+    gap: var(--sp-4);
+    padding: var(--sp-4);
+    max-height: calc(100dvh - 2 * var(--sp-3));
+    overflow-y: auto;
+  }
+  #confirm-toast.is-confirm #confirm-toast-msg { font-size: var(--fs-lg); }
+  #confirm-toast.is-confirm #confirm-toast-btns > .btn { flex: 1 1 0; min-height: 44px; }
+  #confirm-toast.is-confirm .btn { padding: 10px 12px; font-size: var(--fs-md); }
 
   /* Im scrollenden Streifen würde die Liste abgeschnitten — als Blatt. */
   #color-bar .free-colors-list {

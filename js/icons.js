@@ -74,7 +74,9 @@ export const ICONS = {
   lock:    '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
   unlock:  '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/>',
   mergeDown:'<path d="M12 3v10M8 9l4 4 4-4"/><path d="M4 17h16M4 21h16"/>',
-  output:  '<path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/>',
+  // Export, nicht Code: Pfeil, der aus einer Ablage heraus zeigt. Die
+  // Chevrons davor liessen das Panel wie einen Code-Editor aussehen.
+  output:  '<path d="M12 3v11M8.5 6.5L12 3l3.5 3.5"/><path d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/>',
   palette: `<path d="M12 22a10 10 0 1 1 10-10c0 2.8-2.2 4-4 4h-2a2 2 0 0 0-1.5 3.3A1.7 1.7 0 0 1 12 22z"/><g ${DOT}><circle cx="7.5" cy="11" r="1.4"/><circle cx="10" cy="6.5" r="1.4"/><circle cx="15" cy="6.5" r="1.4"/></g>`,
   template:'<rect x="7" y="3" width="14" height="14" rx="2"/><path d="M3 7v12a2 2 0 0 0 2 2h12"/><path d="M21 13l-4-4-6 6"/>',
   image:   '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/>',

@@ -22,6 +22,7 @@ import { iconSvg } from './icons.js';
 import { t } from './i18n.js';
 import { isMobileLayout } from './layout.js';
 
+/** @type {(id: string) => any} */
 const $ = id => document.getElementById(id);
 // Die Vorschaubilder wachsen mit dem Platz, den die Leiste hergibt: bei
 // wenigen Frames werden sie groß, bei vielen schrumpfen sie bis CELL_MIN und
@@ -57,6 +58,10 @@ function selectedFrames() {
 }
 
 const selectedCount = () => selectedFrames().length;
+
+// Für den Export: auf welche Frames wirkt eine Aktion gerade? Ohne
+// Mehrfachauswahl ist das schlicht der aktive Frame (js/export.js).
+export const selectedFrameIndices = () => selectedFrames();
 
 // Schwebender Inhalt und Auswahl gehören zum Frame, den man verlässt.
 function leaveFrame() {
@@ -356,9 +361,11 @@ export function renderTimeline() {
     $('tl-total').textContent = '/ ' + n;
   }
   for (const id of ['tl-play', 'tl-prev', 'tl-next', 'tl-del']) $(id).disabled = n < 2;
-  // Der Löschen-Knopf sagt, wie viele Frames er mitnimmt.
+  // Der Löschen-Knopf sagt, wie viele Frames er mitnimmt — und der
+  // Export-Bereich, auf wie viele er sich bezieht.
   const m = selectedCount();
   $('tl-del').title = m > 1 ? t('tl.delMany', { n: m }) : t('tl.delOne');
+  renderCallbacks.onFrameSelection?.(m);
   const onion = $('tl-onion');
   onion.classList.toggle('is-active', state.onion);
   onion.setAttribute('aria-pressed', String(state.onion));
