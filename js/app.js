@@ -46,8 +46,8 @@ import {
 } from './spritefx.js';
 import { initExport } from './export.js';
 import { openReduceModal, initReduceModal } from './reduce.js';
-import { zoomAt, fitZoomToArea, isPanKeyHeld, initPan, initPinch } from './view.js';
-import { initFrames, togglePlay, nextFrame, prevFrame, isPlaying, stop as stopPlayback } from './frames.js';
+import { zoomAt, fitZoomToArea, isPanMode, setPanTool, initPan, initPinch } from './view.js';
+import { initFrames, togglePlay, nextFrame, prevFrame, firstFrame, lastFrame, isPlaying, stop as stopPlayback } from './frames.js';
 import { initLayers } from './layers.js';
 import { initGuides, guidePointerDown, toggleEdit as toggleGuideEdit, toggleShow as toggleGuides } from './guides.js';
 import { parseTsSprite } from './tsimport.js';
@@ -231,6 +231,8 @@ function updateToolUI() {
     b.setAttribute('aria-pressed', String(on));
   });
   $('editor-canvas-wrap').dataset.tool = state.tool;
+  // Die Hand malt nicht, sie schiebt nur — das weiss die Ansicht.
+  setPanTool(state.tool === 'pan');
 
   const hasSize = ['brush', 'spray', 'eraser'].includes(state.tool);
   const needsTolerance = state.tool === 'wand' || state.tool === 'magic';
@@ -359,8 +361,8 @@ function initCanvasEvents() {
   const canvas = $('editor-canvas');
 
   canvas.addEventListener('pointerdown', e => {
-    // Leertaste gehalten oder mittlere Taste: verschieben, nicht malen (view.js).
-    if (isPanKeyHeld() || e.button === 1) return;
+    // Leertaste, Hand-Werkzeug oder mittlere Taste: verschieben, nicht malen (view.js).
+    if (isPanMode() || e.button === 1) return;
     // Beim Abspielen wird nicht gemalt — der Tipp hält an.
     if (isPlaying()) { e.preventDefault(); stopPlayback(); return; }
     // Hilfslinien verschieben: die Zeichenfläche gehört den Linien.
@@ -559,6 +561,7 @@ const TOOL_KEYS = {
   p: 'pencil', b: 'brush', s: 'spray', f: 'fill', e: 'eraser', w: 'wand',
   a: 'select', l: 'lasso', k: 'magic',
   i: 'line', r: 'rect', o: 'ellipse',
+  h: 'pan',
 };
 
 function isTypingTarget(el) {
@@ -660,9 +663,11 @@ function initKeyboardEvents() {
     // ── G: Hilfslinien ein/aus ──
     if (e.key === 'g' || e.key === 'G') { toggleGuides(); return; }
 
-    // ── Frames: , und . blättern, Enter spielt ab ──
+    // ── Frames: , und . blättern, Pos1/Ende springen, Enter spielt ab ──
     if (e.key === ',') { prevFrame(); return; }
     if (e.key === '.') { nextFrame(); return; }
+    if (e.key === 'Home') { e.preventDefault(); firstFrame(); return; }
+    if (e.key === 'End')  { e.preventDefault(); lastFrame(); return; }
     if (e.key === 'Enter' && !/** @type {HTMLElement} */ (e.target).closest?.('button, a, select, [role="option"]')) {
       e.preventDefault();
       togglePlay();

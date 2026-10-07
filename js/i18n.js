@@ -261,8 +261,11 @@ const STATIC = {
     'ly.opacity': 'Opacity',
     'ly.note': 'Double-click the name to rename, drag to reorder. Export and preview show all visible layers on top of each other.',
     // Timeline (frames.js) und GIF-Export
+    'tl.first': 'First frame (Home)',
     'tl.prev': 'Previous frame (,)',
     'tl.next': 'Next frame (.)',
+    'tl.last': 'Last frame (End)',
+    'tl.multi': 'Select several frames — tapping marks instead of switching',
     'tl.play': 'Play / pause (Enter)',
     'tl.frames': 'Frames',
     'tl.add': 'Insert an empty frame after this one',
@@ -307,6 +310,9 @@ const STATIC = {
     'tool.ellipse':     'Ellipse',
     'tool.ellipseTitle': 'Drag an ellipse (O)',
     'tool.groupSelect': 'Selection',
+    'tool.groupView':   'View',
+    'tool.pan':         'Hand',
+    'tool.panTitle':    'Hand — move the view without drawing (H)',
     'tool.marquee':     'Marquee',
     'tool.marqueeTitle': 'Rectangular marquee — drag it open, cut, move (A)',
     'tool.lasso':       'Lasso',
@@ -488,7 +494,8 @@ const STATIC = {
       + '<div><b>Eraser</b> — sets pixels back to transparent.</div>'
       + '<div><b>Magic wand</b> — erases a connected <i>similar</i> area; <i>tolerance</i> decides how much deviation still counts.</div>'
       + '<div><b>Line · Rectangle · Ellipse</b> — drag it open, the preview shows the result, letting go draws it. <i>Filled</i> switches between outline and area.</div>'
-      + '<div><b>Marquee · Lasso · Color select</b> — three ways to the same thing: an area you move as a whole.</div>',
+      + '<div><b>Marquee · Lasso · Color select</b> — three ways to the same thing: an area you move as a whole.</div>'
+      + '<div><b>Hand</b> — moves the view only and changes nothing in the image. Useful when you work zoomed in, or when showing someone around without painting by accident. The same works any time by holding <span class="kbd">Space</span>.</div>',
 
     'help.h.mirror': 'Symmetry',
     'help.mirror': ''
@@ -533,6 +540,7 @@ const STATIC = {
     'help.h.anim': 'Animation — frames',
     'help.anim': ''
       + '<div>Every sprite can have several <b>frames</b>. The <b>timeline</b> (at the bottom) shows them as small pictures: tap to select, drag to reorder. <b>+</b> inserts an empty frame, next to it duplicate and delete.</div>'
+      + '<div>On a phone the <b>select several</b> button (next to duplicate) turns on selection mode: a tap then marks the frame instead of switching to it. Press it again to leave and clear the marks.</div>'
       + '<div><span class="kbd">Ctrl</span>+click picks single frames, <span class="kbd">Shift</span>+click a whole range — as in a file manager. <b>Delete</b> then removes all selected ones in one step (<span class="kbd">Ctrl</span>+<span class="kbd">Z</span> brings them back). A plain click clears the selection. The <b>frame</b> field jumps to a typed number.</div>'
       + '<div>▶ plays in the drawing area (<span class="kbd">Enter</span>), a tap on the area stops it. <b>FPS</b> applies to the whole sprite, <b>duration</b> lets single frames stay longer (e.g. a blink).</div>'
       + '<div><b>Onion skin</b> shows the previous frame in red and the next one in blue — for lining up the motion.</div>'
@@ -586,6 +594,7 @@ const STATIC = {
       + '<div class="sc-row"><b>P B S F E W</b><span>Pencil · Brush · Spray · Fill · Eraser · Magic wand</span></div>'
       + '<div class="sc-row"><b>I R O</b><span>Line · Rectangle · Ellipse</span></div>'
       + '<div class="sc-row"><b>A L K</b><span>Marquee · Lasso · Color select</span></div>'
+      + '<div class="sc-row"><b>H</b><span>Hand — move the view without drawing</span></div>'
       + '<div class="sc-row"><b>Mouse wheel</b><span>Scroll up / down</span></div>'
       + '<div class="sc-row"><b>Shift + mouse wheel</b><span>Scroll left / right</span></div>'
       + '<div class="sc-row"><b>Ctrl + mouse wheel</b><span>Zoom (towards the pointer)</span></div>'
@@ -596,6 +605,7 @@ const STATIC = {
       + '<div class="sc-row"><b>Ctrl + A / C / X / V</b><span>All · Copy · Cut · Paste</span></div>'
       + '<div class="sc-row"><b>Del</b><span>Erase the selection</span></div>'
       + '<div class="sc-row"><b>Enter</b><span>Apply the rotation · otherwise play / pause the animation</span></div>'
+      + '<div class="sc-row"><b>Home / End</b><span>First / last frame</span></div>'
       + '<div class="sc-row"><b>, / .</b><span>Previous / next frame</span></div>'
       + '<div class="sc-row"><b>G</b><span>Guides on / off</span></div>'
       + '<div class="sc-row"><b>Two fingers</b><span>Zoom and pan (touch)</span></div>'
@@ -720,6 +730,8 @@ const MSG = {
     'tl.frameTitle': 'Frame {i} · {ms} ms — antippen zum Wählen, ziehen zum Verschieben, Strg/Shift wählt mehrere',
     'tl.frameOf':   'Frame {i}/{n}',
     'tl.lastFrame': 'Der letzte Frame bleibt — ein Sprite braucht mindestens einen.',
+    'tl.multi':     'Mehrere Frames wählen — antippen markiert, statt zu wechseln',
+    'tl.multiOff':  'Mehrfachauswahl beenden',
     'tl.delOne':    'Frame löschen',
     'tl.delMany':   '{n} markierte Frames löschen',
 
@@ -948,6 +960,7 @@ const MSG = {
     'exp.framesSaved':   '{n} Frames gespeichert — von „{first}“ bis „{last}“{where}',
     'exp.framesDownload': ' (im Download-Ordner).',
     'exp.framesIn':      ' in „{dir}“.',
+    'exp.framesZip':     '{n} Frames als „{name}“ gespeichert — ein Archiv, weil dein Browser keine Ordner wählen kann. Entpacken und fertig.',
     'exp.pdfMissing':    'PDF-Library noch nicht geladen — kurz warten und nochmal versuchen.',
 
     // Format-Hinweise unter dem Format-Dropdown
@@ -1133,6 +1146,8 @@ const MSG = {
     'tl.frameTitle': 'Frame {i} · {ms} ms — tap to select, drag to move, Ctrl/Shift picks several',
     'tl.frameOf':   'frame {i}/{n}',
     'tl.lastFrame': 'The last frame stays — a sprite needs at least one.',
+    'tl.multi':     'Select several frames — tapping marks instead of switching',
+    'tl.multiOff':  'Leave multi-select',
     'tl.delOne':    'Delete frame',
     'tl.delMany':   'Delete {n} selected frames',
 
@@ -1348,6 +1363,7 @@ const MSG = {
     'exp.framesSaved':   '{n} frames saved — from “{first}” to “{last}”{where}',
     'exp.framesDownload': ' (in the downloads folder).',
     'exp.framesIn':      ' in “{dir}”.',
+    'exp.framesZip':     'Saved {n} frames as “{name}” — one archive, because your browser cannot pick a folder. Unpack and you are done.',
     'exp.pdfMissing':    'The PDF library has not loaded yet — wait a moment and try again.',
 
     'fmt.ts':   'number[][] with types — the classic for TypeScript projects.',

@@ -793,7 +793,11 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 .tl-frame.is-active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 .tl-frame.is-active .tl-n { color: var(--accent); }
 .tl-frame.is-dragging { z-index: 2; opacity: 0.85; cursor: grabbing; box-shadow: var(--shadow-md); }
-#tl-play.is-active, #tl-onion.is-active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent-line); }
+#tl-play.is-active, #tl-onion.is-active,
+#tl-multi.is-active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent-line); }
+/* Mehrfachauswahl gibt es am Rechner ueber Strg und Shift — der Knopf ist
+   nur fuer Finger da (styles.css, Abschnitt Responsive). */
+#tl-multi { display: none; }
 .tl-num input { width: 4.5rem; }
 /* Sprungfeld: hier stehen nur Frame-Nummern, drei Stellen reichen. Das
    "/ n" klebt direkt am Feld statt hinter der breiten Wertspalte. */
@@ -880,6 +884,10 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 #editor-canvas-wrap[data-tool="rect"],
 #editor-canvas-wrap[data-tool="ellipse"] { cursor: crosshair; }
 #editor-canvas-wrap[data-tool="magic"] { cursor: cell; }
+/* Hand-Werkzeug: greifen statt zeichnen (js/view.js setzt .is-pannable auf
+   der Flaeche drumherum, damit auch neben dem Bild geschoben wird). */
+#editor-canvas-wrap[data-tool="pan"] { cursor: grab; }
+#editor-canvas-area.is-panning #editor-canvas-wrap[data-tool="pan"] { cursor: grabbing; }
 #editor-canvas-wrap.is-move { cursor: move; }
 
 /* Auswahl-Buttons in der Werkzeugleiste — kompakter als normale Buttons */
@@ -1988,6 +1996,10 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
      zweite Zeile am Stueck aufs Display. */
   #timeline .btn,
   #timeline .icon-btn { min-width: 38px; min-height: 38px; }
+  /* Finger statt Strg/Shift: der Schalter fuer die Mehrfachauswahl. Dafuer
+     fallen die Schritt-Knoepfe weg — den Nachbar-Frame tippt man direkt an,
+     und die Leiste bleibt zweizeilig. */
+  #tl-multi { display: inline-grid; }
   /* Die Frames sind die Ausnahme von den 44 px: sie stehen in einer eigenen
      Zeile und man muss mehrere auf einmal sehen, sonst scrollt man blind.
      34 px bleiben treffsicher genug (js/frames.js CELL_MIN_TOUCH). */
@@ -2097,3 +2109,13 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
   #tool-opts input[type="range"] { width: 120px; }
 }
 .tool-opts-btn { display: none; }
+
+/* ── Sehr schmale Geraete (Telefon hochkant) ────────────────────────
+   Bis hierher passt die Timeline einzeilig in die zweite Zeile. Darunter
+   wird es eng, und zwei Dinge gehen zuerst: die Schritt-Knoepfe (den
+   Nachbar-Frame tippt man direkt an) und das Sprung-Feld (eine Frame-Nummer
+   tippt am Telefon niemand, es ist aber das breiteste Element). Springen
+   uebernehmen dort die beiden Knoepfe an den Enden. */
+@media (max-width: 500px) {
+  #tl-prev, #tl-next, #tl-go-field { display: none; }
+}

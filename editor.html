@@ -201,6 +201,12 @@
 
       <!-- Werkzeugleiste — eine einzige, auch im Vollbild -->
       <div id="toolbar">
+        <div class="tool-group" role="group" data-i18n-attr="aria-label:tool.groupView" aria-label="Ansicht">
+          <button class="tool-btn" data-tool="pan" aria-pressed="false" data-i18n-attr="title:tool.panTitle" title="Hand — Ansicht verschieben, ohne zu zeichnen (H)"><span class="tool-ico" data-icon="hand"></span><span class="tool-name" data-i18n="tool.pan">Hand</span></button>
+        </div>
+
+        <div class="tool-sep" aria-hidden="true"></div>
+
         <div class="tool-group" role="group" data-i18n-attr="aria-label:tool.groupPaint" aria-label="Malwerkzeuge">
           <button class="tool-btn is-active" data-tool="pencil" aria-pressed="true" data-i18n-attr="title:tool.pencilTitle" title="Stift — einzelne Pixel (P)"><span class="tool-ico" data-icon="pencil"></span><span class="tool-name" data-i18n="tool.pencil">Stift</span></button>
           <button class="tool-btn" data-tool="brush"  aria-pressed="false" data-i18n-attr="title:tool.brushTitle" title="Pinsel — Fläche, Stärke = Dichte (B)"><span class="tool-ico" data-icon="brush"></span><span class="tool-name" data-i18n="tool.brush">Pinsel</span></button>
@@ -327,14 +333,17 @@
       <!-- Timeline — Frames des aktiven Sprites, Abspielen, Onion Skin (js/frames.js) -->
       <div id="timeline">
         <div class="btn-group tl-transport">
+          <button class="btn" id="tl-first" data-i18n-attr="title:tl.first" title="Zum ersten Frame (Pos1)"><span class="ico" data-icon="first"></span></button>
           <button class="btn" id="tl-prev" data-i18n-attr="title:tl.prev" title="Voriger Frame (,)"><span class="ico" data-icon="prev"></span></button>
           <button class="btn" id="tl-play" aria-pressed="false" data-i18n-attr="title:tl.play" title="Abspielen / Anhalten (Enter)"><span class="ico" data-icon="play"></span></button>
           <button class="btn" id="tl-next" data-i18n-attr="title:tl.next" title="Nächster Frame (.)"><span class="ico" data-icon="next"></span></button>
+          <button class="btn" id="tl-last" data-i18n-attr="title:tl.last" title="Zum letzten Frame (Ende)"><span class="ico" data-icon="last"></span></button>
         </div>
         <div class="tl-frames" id="tl-frames" role="listbox" data-i18n-attr="aria-label:tl.frames" aria-label="Frames"></div>
         <div class="btn-group tl-edit">
           <button class="btn" id="tl-add" data-i18n-attr="title:tl.add" title="Leeren Frame dahinter einfügen"><span class="ico" data-icon="plus"></span></button>
           <button class="btn" id="tl-dup" data-i18n-attr="title:tl.dup" title="Frame duplizieren"><span class="ico" data-icon="copy"></span></button>
+          <button class="btn" id="tl-multi" aria-pressed="false" data-i18n-attr="title:tl.multi" title="Mehrere Frames wählen — antippen markiert, statt zu wechseln"><span class="ico" data-icon="selAll"></span></button>
           <button class="btn" id="tl-del" data-i18n-attr="title:tl.del" title="Frame löschen"><span class="ico" data-icon="trash"></span></button>
         </div>
         <button class="btn" id="tl-onion" aria-pressed="false" data-i18n-attr="title:tl.onion" title="Onion Skin — vorigen und nächsten Frame durchscheinen lassen"><span class="ico" data-icon="onion"></span></button>
@@ -836,6 +845,7 @@
       <div><b>Zauberstab</b> — löscht zusammenhängende <i>ähnliche</i> Fläche; <i>Toleranz</i> steuert, wie viel Abweichung mitgeht.</div>
       <div><b>Linie · Rechteck · Ellipse</b> — aufziehen, die Vorschau zeigt das Ergebnis, Loslassen zeichnet. <i>Gefüllt</i> schaltet zwischen Kontur und Fläche.</div>
       <div><b>Auswahl · Lasso · Farbwahl</b> — drei Wege zur selben Sache: ein Bereich, den man als Ganzes bewegt.</div>
+      <div><b>Hand</b> — schiebt nur die Ansicht und verändert nichts am Bild. Nützlich, wenn man herangezoomt arbeitet oder jemandem etwas zeigt, ohne versehentlich zu malen. Dasselbe geht jederzeit mit gehaltener <span class="kbd">Leertaste</span>.</div>
     </div>
 
     <h3 class="help-h" data-i18n="help.h.mirror">Symmetrie</h3>
@@ -888,6 +898,7 @@
     <h3 class="help-h" data-i18n="help.h.anim">Animation — Frames</h3>
     <div class="help-list" data-i18n-html="help.anim">
       <div>Jeder Sprite kann mehrere <b>Frames</b> haben. Die <b>Timeline</b> (unten) zeigt sie als kleine Bilder: antippen wählt, ziehen sortiert um. <b>+</b> fügt einen leeren Frame ein, daneben duplizieren und löschen.</div>
+      <div>Am Handy schaltet der Knopf <b>Mehrere wählen</b> (neben Duplizieren) den Auswahl-Modus ein: dann markiert ein Tipp den Frame, statt zu ihm zu wechseln. Nochmal drücken beendet ihn und hebt die Markierung auf.</div>
       <div>Mit <span class="kbd">Strg</span>+Klick wählt man einzelne Frames dazu, mit <span class="kbd">Shift</span>+Klick eine ganze Spanne — wie im Dateimanager. <b>Löschen</b> nimmt dann alle markierten in einem Schritt mit (ein <span class="kbd">Strg</span>+<span class="kbd">Z</span> holt sie zurück). Ein einfacher Klick hebt die Auswahl wieder auf. Das Feld <b>Frame</b> springt auf eine eingetippte Nummer.</div>
       <div>▶ spielt in der Zeichenfläche ab (<span class="kbd">Enter</span>), ein Tipp auf die Fläche hält an. <b>FPS</b> gilt für den ganzen Sprite, <b>Dauer</b> lässt einzelne Frames länger stehen (z. B. ein Blinzeln).</div>
       <div><b>Onion Skin</b> lässt den vorigen Frame rot und den nächsten blau durchscheinen — zum Ausrichten der Bewegung.</div>
@@ -945,6 +956,7 @@
       <div class="sc-row"><b>P B S F E W</b><span>Stift · Pinsel · Spray · Füllen · Radierer · Zauberstab</span></div>
       <div class="sc-row"><b>I R O</b><span>Linie · Rechteck · Ellipse</span></div>
       <div class="sc-row"><b>A L K</b><span>Auswahl · Lasso · Farbwahl</span></div>
+      <div class="sc-row"><b>H</b><span>Hand — Ansicht verschieben, ohne zu zeichnen</span></div>
       <div class="sc-row"><b>Mausrad</b><span>Hoch / runter scrollen</span></div>
       <div class="sc-row"><b>Shift + Mausrad</b><span>Links / rechts scrollen</span></div>
       <div class="sc-row"><b>Strg + Mausrad</b><span>Zoomen (auf den Mauszeiger)</span></div>
@@ -955,6 +967,7 @@
       <div class="sc-row"><b>Strg + A / C / X / V</b><span>Alles · Kopieren · Ausschneiden · Einfügen</span></div>
       <div class="sc-row"><b>Entf</b><span>Auswahl leeren</span></div>
       <div class="sc-row"><b>Enter</b><span>Drehung übernehmen · sonst Animation abspielen / anhalten</span></div>
+      <div class="sc-row"><b>Pos1 / Ende</b><span>Zum ersten / letzten Frame</span></div>
       <div class="sc-row"><b>, / .</b><span>Voriger / nächster Frame</span></div>
       <div class="sc-row"><b>G</b><span>Hilfslinien ein / aus</span></div>
       <div class="sc-row"><b>Zwei Finger</b><span>Zoomen und verschieben (Touch)</span></div>

@@ -8,7 +8,8 @@ import { encodeGif } from './gif.js';
 import { cellToColor, renderCallbacks } from './render.js';
 import { selectedFrameIndices } from './frames.js';
 import { showInfoToast } from './toast.js';
-import { saveBlob } from './filesystem.js';
+import { saveBlob, getSaveDirectory } from './filesystem.js';
+import { zipBlob } from './zip.js';
 import { flashSaved } from './storage.js';
 import { t, onLangChange } from './i18n.js';
 
@@ -196,9 +197,37 @@ function framesToExport() {
   return selectedFrameIndices().filter(i => i >= 0 && i < sp.frames.length);
 }
 
+// Mehrere Dateien am Stück.
+//
+// Einzeln herunterladen geht nicht: der Browser erlaubt pro Klick nur eine
+// Datei und blockt ab der zweiten. Es gibt also zwei Wege, und der Ordner
+// muss VOR dem ersten Bild erfragt werden — danach gilt der Klick dem
+// Browser als zu alt, und der Ordner-Dialog bleibt zu.
+//
+//   Ordner gewählt   jede Datei wandert still hinein
+//   sonst            alles zusammen in EIN ZIP (Firefox, Safari, oder
+//                    wenn niemand einen Ordner wählen mag)
+//
+// @param {{name: string, blob: Blob}[]} files
+async function saveMany(files, zipName, dir) {
+  if (dir) {
+    let result = { dir: dir.name, fallback: false };
+    for (const f of files) result = await saveBlob(f.blob, f.name, { promptIfMissing: false });
+    return { ...result, count: files.length };
+  }
+  const entries = await Promise.all(
+    files.map(async f => ({ name: f.name, data: new Uint8Array(await f.blob.arrayBuffer()) })));
+  const result = await saveBlob(zipBlob(entries), zipName, { promptIfMissing: false });
+  return { ...result, count: files.length, zip: zipName };
+}
+
 // Mehrere Dateien am Stück: einmal melden statt einmal pro Datei.
 function reportSavedMany(result, n, first, last) {
   flashSaved();
+  if (result.zip) {
+    showInfoToast(t('exp.framesZip', { n, name: result.zip }));
+    return;
+  }
   const where = result.fallback ? t('exp.framesDownload')
     : result.dir ? t('exp.framesIn', { dir: result.dir }) : '';
   showInfoToast(t('exp.framesSaved', { n, first, last, where }));
@@ -358,15 +387,17 @@ export function initExport() {
       return;
     }
 
-    let result = null, first = '', last = '';
+    // Zuerst den Ordner — der Klick ist jetzt noch frisch genug dafür.
+    const dir = await getSaveDirectory({ promptIfMissing: true });
+    const files = [];
     for (const i of ids) {
-      const name = frameFilename('png', i, sp.frames.length);
-      const blob = await canvasToPngBlob(buildExportCanvas(scale, embedPalette(), i));
-      result = await saveBlob(blob, name);
-      first = first || name;
-      last = name;
+      files.push({
+        name: frameFilename('png', i, sp.frames.length),
+        blob: await canvasToPngBlob(buildExportCanvas(scale, embedPalette(), i)),
+      });
     }
-    reportSavedMany(result, ids.length, first, last);
+    const result = await saveMany(files, `${exportBase()}_frames.zip`, dir);
+    reportSavedMany(result, ids.length, files[0].name, files[files.length - 1].name);
   });
 
   document.getElementById('export-sheet-btn').addEventListener('click', async () => {
@@ -422,13 +453,9 @@ export function initExport() {
       return;
     }
 
-    let result = null, first = '', last = '';
-    for (const i of ids) {
-      const name = frameFilename('pdf', i, sp.frames.length);
-      result = await saveBlob(makePdf(i), name);
-      first = first || name;
-      last = name;
-    }
-    reportSavedMany(result, ids.length, first, last);
+    const dir = await getSaveDirectory({ promptIfMissing: true });
+    const files = ids.map(i => ({ name: frameFilename('pdf', i, sp.frames.length), blob: makePdf(i) }));
+    const result = await saveMany(files, `${exportBase()}_frames.zip`, dir);
+    reportSavedMany(result, ids.length, files[0].name, files[files.length - 1].name);
   });
 }

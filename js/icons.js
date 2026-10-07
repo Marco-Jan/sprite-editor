@@ -24,6 +24,8 @@ export const ICONS = {
   rect:    '<rect x="3" y="5" width="18" height="14" rx="1.5"/>',
   ellipse: '<ellipse cx="12" cy="12" rx="9" ry="7"/>',
   // ── Auswahl ──
+  // Hand: Ansicht schieben, ohne zu zeichnen.
+  hand:    '<path d="M18 11V6a2 2 0 0 0-4 0"/><path d="M14 10V4a2 2 0 0 0-4 0v2"/><path d="M10 10.5V6a2 2 0 0 0-4 0v8"/><path d="M18 8a2 2 0 0 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.9-6-2.3l-3.6-3.6a2 2 0 0 1 2.8-2.8L7 15"/>',
   select:  `<rect x="4" y="4" width="16" height="16" rx="1" ${DASH}/>`,
   lasso:   '<path d="M7 21.5a4 4 0 0 1-2-3.5"/><path d="M4 14.5A6.5 6.5 0 0 1 2.5 10.5c0-4.1 4.3-7.5 9.5-7.5s9.5 3.4 9.5 7.5S17.2 18 12 18a11 11 0 0 1-4.5-1"/><circle cx="5.5" cy="16" r="2"/>',
   magic:   `<circle cx="12" cy="12" r="9" ${DASH}/><path d="M12 7.5s3 3.3 3 5.3a3 3 0 0 1-6 0c0-2 3-5.3 3-5.3z"/>`,
@@ -60,7 +62,11 @@ export const ICONS = {
   close:   '<path d="M18 6L6 18M6 6l12 12"/>',
   play:    '<path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.5-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5z"/>',
   pause:   '<rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>',
+  // Ein Frame weiter (prev/next) gegen ganz an den Anfang bzw. ans Ende
+  // (first/last): ein Dreieck gegen zwei, der Balken steht bei beiden.
   prev:    '<path d="M18 5l-9 7 9 7z"/><path d="M6 5v14"/>',
+  first:   '<path d="M13 6l-5 6 5 6z"/><path d="M20 6l-5 6 5 6z"/><path d="M4 5v14"/>',
+  last:    '<path d="M11 6l5 6-5 6z"/><path d="M4 6l5 6-5 6z"/><path d="M20 5v14"/>',
   next:    '<path d="M6 5l9 7-9 7z"/><path d="M18 5v14"/>',
   plus:    '<path d="M12 5v14M5 12h14"/>',
   onion:   '<rect x="2" y="6" width="11" height="11" rx="2" stroke-dasharray="2 2.5"/><rect x="7" y="4" width="11" height="11" rx="2" opacity=".55"/><rect x="11" y="9" width="11" height="11" rx="2"/>',

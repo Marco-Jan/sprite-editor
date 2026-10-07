@@ -240,7 +240,11 @@ geprüft und mit `JSON.parse` gelesen.
 - **Mehrere Frames auf einmal**: Sind in der Timeline Frames markiert (Strg/Shift+Klick,
   siehe `js/frames.js`), schreiben PNG und PDF **eine Datei je Frame** — `name_f01.png`,
   `name_f02.png` …, die Nummer so lang wie die höchste Frame-Nummer, damit die
-  Reihenfolge im Dateimanager stimmt. Das GIF enthält dann nur die markierten Frames;
+  Reihenfolge im Dateimanager stimmt. Der Zielordner wird **vor** dem ersten Bild
+  erfragt — danach gilt der Klick dem Browser als zu alt und der Dialog bliebe zu.
+  Kann der Browser keine Ordner (Firefox, Safari) oder mag man keinen wählen, kommt
+  alles zusammen in **ein ZIP** (`js/zip.js`, ohne Kompression, ohne Bibliothek):
+  einzeln herunterladen lässt der Browser pro Klick nur eine Datei zu. Das GIF enthält dann nur die markierten Frames;
   so schneidet man einen Abschnitt heraus, ohne etwas zu löschen. Eine Zeile unter den
   Export-Knöpfen sagt, worauf sie sich gerade beziehen.
 - **GIF** die ganze Animation des aktiven Sprites, läuft endlos, Dauer je Frame wie im
@@ -263,6 +267,7 @@ geprüft und mit `JSON.parse` gelesen.
 | Malen | Stift `P` · Pinsel `B` · Spray `S` · Füllen `F` · Radierer `E` · Zauberstab `W` |
 | Formen | Linie `I` · Rechteck `R` · Ellipse `O` — mit Live-Vorschau, *Gefüllt* schaltet Kontur/Fläche |
 | Auswahl | Rechteck `A` · Lasso `L` · Farbwahl `K` |
+| Ansicht | Hand `H` — schiebt nur die Ansicht, verändert nichts am Bild |
 
 **Symmetrie** (↔ / ↕ in der Werkzeugleiste) spiegelt jeden Strich an der Mittelachse;
 beide Achsen zusammen ergeben vier Spiegelungen. Gilt für alle Mal- und Formwerkzeuge,
@@ -404,6 +409,15 @@ Werkzeugleiste und Farbzeile (Standard: unter der Zeichenfläche) und lässt sic
 andocken, schweben lassen oder ins Dock legen.
 
 - **Vorschaubilder** aller Frames: antippen wählt, ziehen sortiert um.
+- **Mehrere Frames** wählt man mit `Strg`+Klick (einzeln) und `Shift`+Klick (Spanne),
+  wie im Dateimanager — Löschen nimmt dann alle markierten in einem Undo-Schritt mit,
+  und PNG/PDF schreiben je eine Datei pro Frame. Am Handy gibt es dafür einen
+  Schalter in der Leiste (`#tl-multi`): ist er an, markiert ein Tipp den Frame, statt
+  zu ihm zu wechseln. Am Rechner ist der Schalter ausgeblendet — dort genügen die Tasten.
+- **Unter 500 px** (Telefon hochkant) fallen in der Timeline die Schritt-Knöpfe und das
+  Sprung-Feld weg, damit die Leiste zweizeilig bleibt: den Nachbar-Frame tippt man direkt
+  an, und für die Enden gibt es |◀◀ und ▶▶|. Darueber — Tablet, schmales Fenster — ist
+  alles da.
 - **+** fügt dahinter einen leeren Frame ein, daneben **duplizieren** und **löschen**
   (der letzte Frame bleibt).
 - **▶** spielt in der Zeichenfläche ab (`Enter`); ein Tipp auf die Fläche, `Esc` oder
@@ -458,6 +472,7 @@ die FPS-Zahl des Sprites.
 | `P` `B` `S` `F` `E` `W` | Stift · Pinsel · Spray · Füllen · Radierer · Zauberstab |
 | `I` `R` `O` | Linie · Rechteck · Ellipse |
 | `A` `L` `K` | Auswahl · Lasso · Farbwahl |
+| `H` | Hand — Ansicht verschieben, ohne zu zeichnen |
 | Ziehen in der Auswahl | Bereich ausschneiden und verschieben |
 | `Alt` + Ziehen | Kopie verschieben, Original bleibt |
 | Pfeiltasten | Auswahl pixelweise verschieben |
@@ -465,6 +480,7 @@ die FPS-Zahl des Sprites.
 | `Entf` | Auswahl leeren |
 | `Enter` | Drehung übernehmen · sonst Animation abspielen / anhalten |
 | `,` / `.` | Voriger / nächster Frame |
+| `Pos1` / `Ende` | Zum ersten / letzten Frame |
 | `G` | Hilfslinien ein / aus |
 | Zwei Finger (Touch) | Zoomen und verschieben |
 | `Strg+Z` / `Strg+Y` | Rückgängig / Wiederholen |

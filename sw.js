@@ -80,6 +80,7 @@ const PRECACHE = [
   'js/transform.js',
   'js/tsimport.js',
   'js/view.js',
+  'js/zip.js',
   'landing.css',
   'site.webmanifest',
   'styles.css',
