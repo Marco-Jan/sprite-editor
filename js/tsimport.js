@@ -521,6 +521,39 @@ const FORMAT_LABEL = {
   svg: 'SVG', css: 'CSS', c: 'C-Header', txt: 'Text-Raster', game: 'JSON (Spiel)', array: 'Array',
 };
 
+/**
+ * Was beim Import herauskommt. Entweder `ok: false` mit einem Grund, den man
+ * dem Nutzer zeigen kann — oder `ok: true` mit dem fertigen Sprite. Ohne
+ * diese Beschreibung musste man sich bisher durch acht `return`-Stellen
+ * lesen, um zu wissen, welche Felder es gibt.
+ *
+ * @typedef {object} ImportStats
+ * @property {number} w
+ * @property {number} h
+ * @property {number} frames
+ * @property {number} paletteCount
+ * @property {number} restored          aus Rohfarben zurückgewonnene Indizes
+ * @property {number[]} unknown         Indizes ohne Platz in der Palette
+ * @property {string} format            Name des erkannten Formats
+ *
+ * @typedef {object} ImportResult
+ * @property {boolean} ok
+ * @property {string} [error]           Grund, wenn ok === false
+ * @property {number[][]} [grid]        erster Frame
+ * @property {number[][][]} [frames]    alle Frames
+ * @property {number[]} [durations]     Dauer je Frame in ms
+ * @property {Record<string, string>|null} [palette]
+ * @property {Record<string, string>|null} [materials]
+ * @property {string} [name]
+ * @property {ImportStats} [stats]
+ */
+
+/**
+ * Text (TypeScript-Array, SVG, CSS, C-Header, Textraster oder Spiel-JSON)
+ * in ein Sprite verwandeln.
+ * @param {string} text
+ * @returns {ImportResult}
+ */
 export function parseTsSprite(text) {
   if (!text || !text.trim()) return { ok: false, error: t('imp.nothing') };
 
@@ -530,6 +563,7 @@ export function parseTsSprite(text) {
   const fmt = detectFormat(text);
   if (fmt !== 'array') {
     const parse = { svg: parseSvg, css: parseCss, c: parseCHeader, txt: parseTextRaster, game: parseGame }[fmt];
+    /** @type {ImportResult} */
     const r = parse(text);
     if (!r.ok) return r;
     const frames = r.frames || [r.grid];

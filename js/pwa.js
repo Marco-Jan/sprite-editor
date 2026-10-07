@@ -152,7 +152,7 @@
   });
   window.addEventListener('appinstalled', function () { offer = null; show(false); });
   document.addEventListener('click', function (e) {
-    if (!e.target.closest('[data-install]')) return;
+    if (!/** @type {HTMLElement} */ (e.target).closest('[data-install]')) return;
     if (offer) {
       offer.prompt();
       offer.userChoice.then(function () { offer = null; show(false); }, function () {});
@@ -254,7 +254,7 @@
       document.removeEventListener('keydown', onKey, true);
     }
     function onKey(e) { if (e.key === 'Escape') { e.stopPropagation(); close(); } }
-    wrap.addEventListener('click', function (e) { if (e.target === wrap || e.target.closest('button')) close(); });
+    wrap.addEventListener('click', function (e) { if (e.target === wrap || /** @type {HTMLElement} */ (e.target).closest('button')) close(); });
     document.addEventListener('keydown', onKey, true);
     document.body.appendChild(wrap);
     wrap.querySelector('button').focus();

@@ -86,18 +86,18 @@ export function clearCurrentGrid() {
 // ────────────────────────────────────────────────────────────────────
 export function initNewSpriteModal() {
   const overlay = document.getElementById('new-modal-overlay');
-  const nameInp = document.getElementById('new-name');
-  const sizeSel = document.getElementById('new-size');
+  const nameInp = /** @type {HTMLInputElement} */ (document.getElementById('new-name'));
+  const sizeSel = /** @type {HTMLSelectElement} */ (document.getElementById('new-size'));
   // Paletten-Auswahl wie im Panel: Suche, Filter, klappbare Gruppen.
   let chosenPalette = DEFAULT_PALETTE;
   const palPicker = createPalettePicker(document.getElementById('new-palette'), {
     onSelect: n => { chosenPalette = n; },
     activeName: () => getSprite()?.palette || null,
   });
-  const tplSel  = document.getElementById('new-template');
+  const tplSel  = /** @type {HTMLSelectElement} */ (document.getElementById('new-template'));
   const customRow = document.getElementById('new-size-custom');
-  const wInp    = document.getElementById('new-w');
-  const hInp    = document.getElementById('new-h');
+  const wInp    = /** @type {HTMLInputElement} */ (document.getElementById('new-w'));
+  const hInp    = /** @type {HTMLInputElement} */ (document.getElementById('new-h'));
   const cancel  = document.getElementById('new-modal-cancel');
   const create  = document.getElementById('new-modal-create');
 
@@ -205,7 +205,7 @@ export function openRenameModal(id) {
   if (!sp) return;
   _renameId = id;
   const overlay = document.getElementById('rename-modal-overlay');
-  const inp = document.getElementById('rename-input');
+  const inp = /** @type {HTMLInputElement} */ (document.getElementById('rename-input'));
   inp.value = sp.name;
   overlay.classList.add('open');
   inp.focus();
@@ -214,7 +214,7 @@ export function openRenameModal(id) {
 
 export function initRenameModal() {
   const overlay = document.getElementById('rename-modal-overlay');
-  const inp = document.getElementById('rename-input');
+  const inp = /** @type {HTMLInputElement} */ (document.getElementById('rename-input'));
   const ok = document.getElementById('rename-modal-ok');
   const close = () => { overlay.classList.remove('open'); _renameId = null; };
 
@@ -247,21 +247,21 @@ export function openSizeModal(id) {
   if (!sp) return;
   _sizeId = id;
   const w = sp.grid[0].length, h = sp.grid.length;
-  document.getElementById('size-w').value = w;
-  document.getElementById('size-h').value = h;
-  document.getElementById('size-anchor').value = 'center';
+  /** @type {HTMLInputElement} */ (document.getElementById('size-w')).value = w;
+  /** @type {HTMLInputElement} */ (document.getElementById('size-h')).value = h;
+  /** @type {HTMLSelectElement} */ (document.getElementById('size-anchor')).value = 'center';
   document.getElementById('size-modal-current').textContent =
     t('mod.sizeCurrent', { name: sp.name, w, h });
   document.getElementById('size-modal-overlay').classList.add('open');
-  const inp = document.getElementById('size-w');
+  const inp = /** @type {HTMLInputElement} */ (document.getElementById('size-w'));
   inp.focus();
   inp.select();
 }
 
 export function initSizeModal() {
   const overlay = document.getElementById('size-modal-overlay');
-  const wInp = document.getElementById('size-w');
-  const hInp = document.getElementById('size-h');
+  const wInp = /** @type {HTMLInputElement} */ (document.getElementById('size-w'));
+  const hInp = /** @type {HTMLInputElement} */ (document.getElementById('size-h'));
   const ok = document.getElementById('size-modal-ok');
   const close = () => { overlay.classList.remove('open'); _sizeId = null; };
 
@@ -281,7 +281,7 @@ export function initSizeModal() {
       showInfoToast(t('mod.sizeInvalid'));
       return;
     }
-    const anchor = document.getElementById('size-anchor').value;
+    const anchor = /** @type {HTMLSelectElement} */ (document.getElementById('size-anchor')).value;
     const apply = () => {
       const r = resizeSpriteCanvas(id, w, h, anchor);
       if (!r) return;

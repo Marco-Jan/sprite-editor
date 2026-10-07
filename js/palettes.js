@@ -176,7 +176,7 @@ export function deleteCustomPalette(name) {
 // ────────────────────────────────────────────────────────────────────
 export function openPaletteModal(editName) {
   const overlay   = document.getElementById('pal-modal-overlay');
-  const nameInp   = document.getElementById('pal-name');
+  const nameInp   = /** @type {HTMLInputElement} */ (document.getElementById('pal-name'));
   const srcRow    = document.getElementById('pal-source-row');
   const heading   = document.getElementById('pal-modal-title');
   const createBtn = document.getElementById('pal-modal-create');
@@ -205,7 +205,7 @@ export function openPaletteModal(editName) {
 
 // Dropdown "Basis-Palette" mit allen verfügbaren Paletten füllen.
 function refreshPaletteSourceSelect() {
-  const src = document.getElementById('pal-source');
+  const src = /** @type {HTMLSelectElement} */ (document.getElementById('pal-source'));
   src.innerHTML = '';
   const none = document.createElement('option');
   none.value = '';
@@ -229,7 +229,7 @@ function colorRow(i, hexValue) {
     `<span class="pal-hex">${hexValue}</span>`;
   const input = row.querySelector('input');
   const hex = row.querySelector('.pal-hex');
-  input.addEventListener('input', () => { hex.textContent = input.value; });
+  input.addEventListener('input', () => { hex.textContent = /** @type {HTMLInputElement} */ (input).value; });
   return row;
 }
 
@@ -250,8 +250,8 @@ function rowCount() {
 
 function syncSizeButtons() {
   const n = rowCount();
-  document.getElementById('pal-add-color').disabled = n >= MAX_COLORS;
-  document.getElementById('pal-remove-color').disabled = n <= 1;
+  /** @type {HTMLInputElement} */ (document.getElementById('pal-add-color')).disabled = n >= MAX_COLORS;
+  /** @type {HTMLInputElement} */ (document.getElementById('pal-remove-color')).disabled = n <= 1;
   document.getElementById('pal-size').textContent = tn('pal.sizeCount', n);
 }
 
@@ -259,8 +259,9 @@ export function initPaletteModal() {
   const overlay = document.getElementById('pal-modal-overlay');
   const close = () => { overlay.classList.remove('open'); _editName = null; };
 
-  document.getElementById('pal-source').addEventListener('change', e => {
-    buildPaletteColorRows(e.target.value ? getPaletteByName(e.target.value) : getPaletteByName(getPreviewName()));
+  /** @type {HTMLSelectElement} */ (document.getElementById('pal-source')).addEventListener('change', e => {
+    const chosen = /** @type {HTMLSelectElement} */ (e.target).value;
+    buildPaletteColorRows(chosen ? getPaletteByName(chosen) : getPaletteByName(getPreviewName()));
   });
 
   // Farben hinzufügen/entfernen — neue Farbe übernimmt die letzte.
@@ -268,7 +269,7 @@ export function initPaletteModal() {
     const container = document.getElementById('pal-color-rows');
     const n = rowCount();
     if (n >= MAX_COLORS) return;
-    const last = container.querySelector('.pal-color-row:last-child input')?.value || '#888888';
+    const last = /** @type {HTMLInputElement} */ (container.querySelector('.pal-color-row:last-child input'))?.value || '#888888';
     const row = colorRow(n + 1, last);
     container.appendChild(row);
     row.scrollIntoView({ block: 'nearest' });
@@ -285,7 +286,7 @@ export function initPaletteModal() {
   // außerhalb loslassen) soll die Eingaben nicht verwerfen. Abbrechen oder Esc.
 
   document.getElementById('pal-modal-create').addEventListener('click', () => {
-    const raw = document.getElementById('pal-name').value.trim();
+    const raw = /** @type {HTMLInputElement} */ (document.getElementById('pal-name')).value.trim();
     if (!raw) { showInfoToast(t('pal.needName')); return; }
     const name = raw.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
 
@@ -296,7 +297,7 @@ export function initPaletteModal() {
 
     const pal = {};
     document.querySelectorAll('#pal-color-rows input[type="color"]').forEach(inp => {
-      pal[Number(inp.dataset.idx)] = inp.value;
+      pal[Number(inp.dataset.idx)] = /** @type {HTMLInputElement} */ (inp).value;
     });
 
     const commit = (finalName, oldName) => {

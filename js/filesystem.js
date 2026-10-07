@@ -37,6 +37,7 @@ async function idbGet(key) {
   });
 }
 
+/** @returns {Promise<void>} */
 async function idbSet(key, val) {
   const db = await openDb();
   return new Promise((resolve, reject) => {
@@ -47,6 +48,7 @@ async function idbSet(key, val) {
   });
 }
 
+/** @returns {Promise<void>} */
 async function idbDel(key) {
   const db = await openDb();
   return new Promise((resolve, reject) => {

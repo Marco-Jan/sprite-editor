@@ -34,7 +34,7 @@
   }
 
   document.addEventListener('click', function (e) {
-    var a = e.target.closest('[data-set-lang]');
+    var a = /** @type {HTMLElement} */ (e.target).closest('[data-set-lang]');
     if (!a) return;
     e.preventDefault();
     var lang = a.getAttribute('data-set-lang');

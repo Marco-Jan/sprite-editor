@@ -20,6 +20,7 @@ import { showInfoToast } from './toast.js';
 import { iconSvg } from './icons.js';
 import { t } from './i18n.js';
 
+/** @type {(id: string) => any} */
 const $ = id => document.getElementById(id);
 const THUMB = 28;
 
@@ -219,7 +220,7 @@ export function renderLayers() {
   for (let i = n - 1; i >= 0; i--) {
     const L = sp.layers[i];
     const row = makeRow();
-    row.dataset.i = i;
+    row.dataset.i = String(i);
     row.classList.toggle('is-active', i === sp.layer);
     row.classList.toggle('is-hidden', !L.visible);
     row.setAttribute('aria-selected', String(i === sp.layer));

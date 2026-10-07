@@ -166,7 +166,7 @@ export function sampleTplAt(clientX, clientY) {
 // ────────────────────────────────────────────────────────────────────
 export function sampleTemplateGrid(W, H) {
   if (!tplOffscreen) return null;
-  const canvas = document.getElementById('editor-canvas');
+  const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById('editor-canvas'));
   const cr = canvas.getBoundingClientRect();  // Zeichenfläche am Bildschirm
   const tr = tplImg.getBoundingClientRect();   // Schablonen-Box am Bildschirm
   if (!cr.width || !cr.height || !tr.width || !tr.height) return null;
@@ -291,7 +291,7 @@ function syncTplStatus() {
   box.hidden = !loaded;
   document.getElementById('template-pick-label').textContent = t(loaded ? 'tpl.pickOther' : 'tpl.pick');
   if (!loaded) return;
-  document.getElementById('template-thumb').src = tplImg.src;
+  /** @type {HTMLImageElement} */ (document.getElementById('template-thumb')).src = tplImg.src;
   document.getElementById('template-name').textContent = tplName || t('tpl.unnamed');
   document.getElementById('template-note').textContent = t(tplRestored ? 'tpl.restored' : 'tpl.kept');
 }
@@ -369,7 +369,8 @@ export function initTemplate() {
   document.addEventListener('keydown', e => {
     if ((e.key === 'Shift' || e.key === 'Alt') && e.shiftKey && e.altKey && !e.repeat) {
       // Nicht triggern wenn Fokus in einem Input — sonst kann man nicht tippen
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+      const tag = /** @type {HTMLElement} */ (e.target).tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
       e.preventDefault();   // Alt soll nicht das Browser-Menü ansteuern
       bringTplToFront();
     }

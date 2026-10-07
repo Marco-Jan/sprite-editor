@@ -58,8 +58,9 @@ function _show(msg, okLabel, isConfirm, onConfirm) {
     toast.removeEventListener('pointerdown', onBackdrop);
     cancelEl.hidden = false;
     _cleanup = null;
-    if (previous && previous.focus) {
-      try { previous.focus(); } catch { /* Element ist weg — egal */ }
+    const prevEl = /** @type {HTMLElement} */ (previous);
+    if (prevEl && prevEl.focus) {
+      try { prevEl.focus(); } catch { /* Element ist weg — egal */ }
     }
   }
 

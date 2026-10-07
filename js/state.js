@@ -36,8 +36,10 @@ export const paletteMaterials = {};
 
 // UI-Zustand (alles veränderlich)
 export const state = {
-  curSprite:     null,     // id in `sprites`, null solange keiner existiert
-  curColor:      1,        // Zahl = Palette-Index | String "#RRGGBB" = freie Farbe
+  /** @type {string|null} id in `sprites`, null solange keiner existiert */
+  curSprite:     null,
+  /** @type {number|string} Zahl = Palette-Index | String "#RRGGBB" = freie Farbe */
+  curColor:      1,
   cellSize:      16,
   tool:          'pencil', // 'pencil' | 'brush' | 'spray' | 'fill' | 'eraser' | 'wand' | 'select'
   brushSize:     1,        // Kantenlänge / Radius in Zellen
@@ -52,6 +54,7 @@ export const state = {
   showColor:     false,    // aktuelle Farbe im Bild hervorheben (alles andere abgedunkelt)
   // Palette, die das Paletten-Panel gerade ZEIGT. null = die des Sprites.
   // Anschauen ändert nichts am Sprite — zugewiesen wird nur per Knopf.
+  /** @type {string|null} */
   palPreview:    null,
 
   // Animation: Nachbar-Frames durchscheinen lassen; Abspielen läuft gerade.
@@ -64,6 +67,7 @@ export const state = {
 
   // Vorschau der Formen-Werkzeuge zwischen pointerdown und pointerup.
   // Liegt hier, damit renderEditor sie ohne Umweg zeichnen kann.
+  /** @type {{cells: [number, number][], color: number|string}} Zellen als [x, y] */
   shape: { cells: [], color: 0 },
 };
 
@@ -248,7 +252,7 @@ export function frameDuration(sp, i) {
 
 // Sprite anlegen und zurückgeben. Setzt ihn NICHT automatisch aktiv.
 // `frames` ([{ grid | cels, dur }]) geht vor `grid` (ein einzelnes Bild).
-export function createSprite({ name, size = 24, palette = DEFAULT_PALETTE, grid = null, frames = null, fps, layers = null, layer = 0, guides = null }) {
+export function createSprite({ name, size = 24, palette = DEFAULT_PALETTE, grid = null, frames = null, fps = DEFAULT_FPS, layers = null, layer = 0, guides = null }) {
   const id = makeSpriteId(name);
   sprites[id] = makeSprite({
     name: (name || id).trim() || id,

@@ -340,14 +340,16 @@ export async function saveToFile() {
 // Load) in den Storage geschrieben; danach Reload für einen sauberen Start.
 export function loadFromFile(file, onError) {
   const reader = new FileReader();
-  reader.onload = e => {
+  reader.onload = () => {
+    // readAsText (unten) liefert immer einen String, nie einen ArrayBuffer.
+    const text = /** @type {string} */ (reader.result);
     try {
-      const p = JSON.parse(e.target.result);
+      const p = JSON.parse(text);
       if (!p || typeof p !== 'object' || (!p.sprites && !p.grids)) {
         throw new Error('kein Sprite-Projekt');
       }
       disableSaving(); // sonst überschreibt beforeunload die frisch geladene Datei
-      localStorage.setItem(STORAGE_KEY, e.target.result);
+      localStorage.setItem(STORAGE_KEY, text);
       location.reload();
     } catch {
       if (onError) onError(t('file.badProject'));
