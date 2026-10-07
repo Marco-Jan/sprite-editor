@@ -19,7 +19,8 @@ test('jede Datei in PRECACHE existiert', () => {
 });
 
 test('alle Module und Seiten sind offline verfügbar', () => {
-  const js = readdirSync(join(ROOT, 'js')).map((n) => 'js/' + n);
+  // .d.ts beschreibt nur Typen (jsconfig.json) und wird nie ausgeliefert.
+  const js = readdirSync(join(ROOT, 'js')).filter((n) => !n.endsWith('.d.ts')).map((n) => 'js/' + n);
   for (const f of ['./', 'index.html', 'editor.html', 'styles.css', 'vendor/jspdf.umd.min.js', ...js]) {
     assert.ok(list.includes(f), `nicht in PRECACHE: ${f} — python tools/make_sw.py ausführen`);
   }

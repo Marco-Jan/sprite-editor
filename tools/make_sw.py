@@ -23,6 +23,9 @@ FILES = ['./', 'index.html', 'editor.html', 'impressum.html', 'datenschutz.html'
 DIRS = ['js', 'vendor', 'assets']
 # Nur für Suchmaschinen/Link-Vorschauen, offline nutzlos
 SKIP = {'assets/og-image.png'}
+# Endungen, die nie ausgeliefert werden: .d.ts beschreibt nur Typen für
+# `npm run check` und wird weder vom Browser noch vom Worker geladen.
+SKIP_EXT = ('.d.ts',)
 
 BEGIN = '// ── generiert von tools/make_sw.py'
 END = '// ── Ende generiert'
@@ -34,7 +37,7 @@ def collect():
         for base, _, names in os.walk(os.path.join(ROOT, d)):
             for n in names:
                 rel = os.path.relpath(os.path.join(base, n), ROOT).replace(os.sep, '/')
-                if rel not in SKIP:
+                if rel not in SKIP and not rel.endswith(SKIP_EXT):
                     out.append(rel)
     return sorted(set(out), key=lambda p: (p != './', p))
 
