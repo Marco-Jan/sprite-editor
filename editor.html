@@ -396,6 +396,30 @@
       </section>
 
       <!-- Hilfslinien: frei und Figuren-Proportionen (js/guides.js) -->
+      <!-- Vorschau: der ganze Sprite, unabhängig vom Zoom (js/preview.js) -->
+      <section class="panel" data-panel="preview">
+        <div class="panel-head">
+          <h2 class="panel-title" data-i18n="pv.title">Vorschau</h2>
+          <button class="panel-toggle" type="button" aria-expanded="true"></button>
+        </div>
+        <div class="panel-body">
+          <div class="preview-box">
+            <canvas id="preview-canvas"></canvas>
+          </div>
+          <label class="field field--inline">
+            <span class="field-label" data-i18n="pv.scale">Pixelgröße</span>
+            <select id="preview-scale" class="input input--sm" data-i18n-attr="title:pv.scaleTitle" title="Wie groß ein Pixel in der Vorschau dargestellt wird">
+              <option value="0" data-i18n="pv.fit">Einpassen</option>
+              <option value="1">1×</option>
+              <option value="2">2×</option>
+              <option value="4">4×</option>
+              <option value="8">8×</option>
+            </select>
+          </label>
+          <p class="field-note" id="preview-info"></p>
+        </div>
+      </section>
+
       <section class="panel" data-panel="guides">
         <div class="panel-head">
           <h2 class="panel-title" data-i18n="gd.title">Hilfslinien</h2>
@@ -885,6 +909,13 @@
       <div><b>Freie Linien</b>: „+ Waagerecht“ / „+ Senkrecht“ setzt eine Linie in die Mitte. Im Modus <b>Verschieben</b> zieht man Linien auf der Zeichenfläche an ihren Platz (immer auf einer Pixelgrenze); aus dem Bild gezogen ist eine Linie gelöscht. Solange wird nicht gemalt — ein Tipp neben die Linien oder <span class="kbd">Esc</span> beendet den Modus; ohne Linien endet er von selbst.</div>
       <div><b>Figur</b>: teilt eine Figur in 2 (Chibi), 3, 4, 6 oder 8 Kopfhöhen und markiert Kinn, Brust, Hüfte, Knie usw. samt Körperachse. „An Figur anpassen“ setzt Ober- und Unterkante auf das Gezeichnete; beide lassen sich im Modus Verschieben ziehen.</div>
       <div>Die Linien gehören zum Sprite und werden mit dem Projekt gespeichert.</div>
+    </div>
+
+    <h3 class="help-h" data-i18n="pv.title">Vorschau</h3>
+    <div class="help-list" data-i18n-html="help.preview">
+      <div>Das Panel <b>Vorschau</b> zeigt immer den <b>ganzen Sprite</b>, egal wie weit du auf der Zeichenfläche hineingezoomt hast — ohne Gitter, ohne Hilfslinien, so wie der Export ihn liefert.</div>
+      <div>Es zeichnet bei jedem Strich mit und spielt die Animation mit ab. Als Schublade schließt es sich beim Klick auf die Zeichenfläche — <b>anpinnen</b> (Pinnadel im Panel-Kopf), dann bleibt es beim Malen offen.</div>
+      <div><b>Pixelgröße</b>: <i>Einpassen</i> nutzt den Platz des Panels; <b>1×</b> zeigt den Sprite in seiner echten Größe — so wirkt er später im Spiel.</div>
     </div>
 
     <h3 class="help-h" data-i18n="help.h.layers">Ebenen</h3>

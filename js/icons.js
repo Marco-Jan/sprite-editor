@@ -86,6 +86,8 @@ export const ICONS = {
   palette: `<path d="M12 22a10 10 0 1 1 10-10c0 2.8-2.2 4-4 4h-2a2 2 0 0 0-1.5 3.3A1.7 1.7 0 0 1 12 22z"/><g ${DOT}><circle cx="7.5" cy="11" r="1.4"/><circle cx="10" cy="6.5" r="1.4"/><circle cx="15" cy="6.5" r="1.4"/></g>`,
   template:'<rect x="7" y="3" width="14" height="14" rx="2"/><path d="M3 7v12a2 2 0 0 0 2 2h12"/><path d="M21 13l-4-4-6 6"/>',
   image:   '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/>',
+  // Vorschau: ein Bild im Bild — das Ganze und der Ausschnitt darin.
+  preview: '<rect x="2" y="4" width="20" height="16" rx="2"/><rect x="7" y="9" width="7" height="6" rx="1" stroke-dasharray="2 2"/>',
   cleanup: '<path d="M11 3l1.9 5.1L18 10l-5.1 1.9L11 17l-1.9-5.1L4 10l5.1-1.9z"/><path d="M19 14v4M17 16h4M5 2v3M3.5 3.5h3"/>',
 };
 

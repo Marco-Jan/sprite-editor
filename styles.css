@@ -815,6 +815,27 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 #editor-canvas-wrap.is-guide-edit #brush-cursor { display: none; }
 #gd-show.is-active, #gd-edit.is-active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent-line); }
 
+/* Vorschau-Panel (js/preview.js) — der ganze Sprite, ohne Gitter.
+   Das Schachbrett zeigt, was transparent ist; der Rahmen gibt dem Bild
+   einen Rand, auch wenn der Sprite fast leer ist. */
+.preview-box {
+  display: grid;
+  place-items: center;
+  min-height: 96px;
+  max-height: 40vh;
+  overflow: auto;
+  padding: var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background:
+    repeating-conic-gradient(var(--surface-3) 0% 25%, transparent 0% 50%) 0 0 / 12px 12px,
+    var(--surface-1);
+}
+#preview-canvas {
+  display: block;
+  image-rendering: pixelated;
+}
+
 /* Ebenen-Panel (js/layers.js) — oberste Ebene oben */
 .layer-list {
   display: flex;

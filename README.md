@@ -73,8 +73,8 @@ Zum Testen: DevTools → Application → Service Workers zeigt den Worker. Unter
 ```
 ┌── Kopfzeile: Projekt sichern/öffnen, Speicherort, Hilfe ──────────┐
 ├───────────┬───────────────────────────────────┬──────────────────┤
-│ Sprites   │  Werkzeugleiste                   │ Ebenen, Farben   │
-│ Code &    │  Farb-Schnellwahl (0–9)           │ Schablone        │
+│ Sprites   │  Werkzeugleiste                   │ Vorschau, Ebenen │
+│ Code &    │  Farb-Schnellwahl (0–9)           │ Farben, Schablone │
 │ Export    │  Zeichenfläche                    │ Aufräumen        │
 │           │  Timeline (Frames)                │                  │
 │           │  Statuszeile                      │                  │
@@ -257,6 +257,20 @@ geprüft und mit `JSON.parse` gelesen.
   zusätzlich `frame` und `duration` (ms). Jeder Frame sitzt mittig in seiner Zelle, der
   Atlas nennt die echte Lage — auch für Sprites, die kleiner als die Zelle sind.
 - *Farb-Legende ins Bild* rendert die verwendeten Farben mit Hex-Codes unter den Sprite
+
+---
+
+## Vorschau
+
+Beim Arbeiten ist man meist weit hineingezoomt. Das Panel **Vorschau** zeigt daneben
+immer den **ganzen Sprite** — ohne Gitter, ohne Schachbrett, ohne Hilfslinien und ohne
+Onion Skin, also genau das, was auch der Export liefert. Es zeichnet bei jedem Strich
+mit und läuft beim Abspielen als Animation mit. Als Schublade schließt es sich beim
+Klick auf die Zeichenfläche — zum Mitschauen beim Malen also **anpinnen**.
+
+**Pixelgröße** stellt ein, wie groß ein Pixel dargestellt wird: *Einpassen* nutzt den
+Platz des Panels, 1× zeigt den Sprite in seiner echten Größe — so, wie er später im
+Spiel wirkt. Die Wahl wird gespeichert.
 
 ---
 
@@ -545,7 +559,8 @@ sprite-editor/
 │   └── sw.test.js      ← Offline-Liste vollständig, nichts von fremden Servern
 ├── tools/
 │   ├── make_icons.py   ← erzeugt alles in assets/ neu (nur Standardbibliothek)
-│   └── make_sw.py      ← schreibt die Offline-Dateiliste in sw.js
+│   ├── make_sw.py      ← schreibt die Offline-Dateiliste in sw.js
+│   └── make_itch.py    ← baut dist/spritebit-itch.zip für itch.io
 └── js/
     ├── data.js         ← Farb-Labels, eingebaute Paletten, cellToColor, Konstanten
     ├── state.js        ← Sprites, Paletten, UI-State + Lookups
@@ -559,6 +574,7 @@ sprite-editor/
     ├── history.js      ← Undo/Redo pro Strich (sichert den ganzen Sprite mit allen Frames)
     ├── frames.js       ← Frames: anlegen, wechseln, abspielen, Onion Skin, Timeline
     ├── layers.js       ← Ebenen: anlegen, ordnen, ausblenden, sperren, Deckkraft, Panel
+    ├── preview.js      ← Vorschau-Panel: der ganze Sprite, Pixelgröße einstellbar
     ├── guides.js       ← Hilfslinien: freie Linien, Figuren-Proportionen, Verschieben-Modus
     ├── gif.js          ← GIF89a-Encoder (LZW, Endlosschleife, Dauer je Frame)
     ├── sprites.js      ← anlegen, umbenennen, duplizieren, löschen
@@ -607,6 +623,33 @@ state.js
 `place.js` hängt an nichts: es kennt weder DOM noch andere Module. Das ist
 Absicht — dadurch lässt sich die Andock-Logik ohne Browser prüfen. `layout.js`
 benutzt es und ist die einzige Stelle, die daraus DOM macht.
+
+---
+
+## Veröffentlichen auf itch.io
+
+itch spielt statische Web-Projekte im iframe ab: ein ZIP hochladen, `index.html`
+muss darin ganz oben liegen. Das Archiv baut
+
+```
+python tools/make_itch.py              # → dist/spritebit-itch.zip
+python tools/make_itch.py --landing    # Startseite bleibt der Einstieg
+```
+
+Standardmäßig wird getauscht: **`index.html` ist der Editor**, die bisherige
+Startseite heißt `start.html`. Auf itch landet man damit sofort im Werkzeug —
+die Projektseite drumherum übernimmt die Aufgabe der Landingpage. Die Verweise
+der Seiten aufeinander, `start_url` im Manifest und die Offline-Liste in `sw.js`
+werden mitgezogen; die Dateien im Projekt bleiben unberührt. Nicht mit ins
+Archiv kommen Tests, Werkzeuge, Typdateien und alles, was nur für Suchmaschinen
+da ist.
+
+Im itch-iframe gelten drei Einschränkungen, die auf der eigenen Domain nicht
+bestehen: die PWA-Installation entfällt, der Service Worker kann in der Sandbox
+scheitern (dann eben ohne Offline-Modus, `js/pwa.js` fängt das ab), und der
+`localStorage` liegt in einem fremden Rahmen — Browser trennen Speicher nach
+Seite, Safari kann ihn blockieren. Ein Hinweis auf die eigene Adresse auf der
+Projektseite ist deshalb sinnvoll.
 
 ---
 
