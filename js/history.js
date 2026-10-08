@@ -140,6 +140,16 @@ export function recordOpOn(id, fn) {
   if (after && !snapsEqual(before, after)) push({ id, before, after });
 }
 
+// Ein Undo-Schritt, der mehr umfasst als einen Sprite — z. B. die Palette
+// umsortieren: Palette, Materialien und die Pixel aller Sprites mit dieser
+// Palette ändern sich zusammen und müssen zusammen zurück. Die beiden
+// Funktionen machen den Schritt rückgängig bzw. noch einmal; geben sie
+// false zurück, wird der Eintrag übersprungen.
+export function recordCustom({ undo: undoFn, redo: redoFn }) {
+  pendingSnapshot = null;
+  push({ custom: { undo: undoFn, redo: redoFn } });
+}
+
 function apply(id, st) {
   const sp = sprites[id];
   sp.frames = copyFrames(st.frames);
@@ -152,6 +162,8 @@ function apply(id, st) {
 }
 
 function restore(entry, which) {
+  // Eigener Schritt (recordCustom): er weiß selbst, was zu tun ist.
+  if (entry.custom) return entry.custom[which === 'before' ? 'undo' : 'redo']() !== false;
   // Der Sprite kann inzwischen gelöscht worden sein — Eintrag dann verwerfen.
   if (!sprites[entry.id]) return false;
   apply(entry.id, entry[which]);

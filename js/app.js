@@ -51,6 +51,7 @@ import { initFrames, togglePlay, nextFrame, prevFrame, firstFrame, lastFrame, is
 import { initLayers } from './layers.js';
 import { celKeyDown } from './frames.js';
 import { initTlMenu } from './tlmenu.js';
+import { initQuickPaletteDrag } from './qpdrag.js';
 import { normalizeTags } from './tags.js';
 import { initPreview, renderPreview } from './preview.js';
 import { initGuides, guidePointerDown, toggleEdit as toggleGuideEdit, toggleShow as toggleGuides } from './guides.js';
@@ -1439,6 +1440,7 @@ function init() {
   initFrames();
   initLayers();   // nach initFrames: hängt sich an dessen Zeichen-Callback
   initTlMenu();
+  initQuickPaletteDrag();
   initPreview();  // ebenso — zeichnet bei jedem Strich mit
   initGuides();
   renderCallbacks.onGuideInfo = info;

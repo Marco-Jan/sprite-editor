@@ -19,7 +19,11 @@ import {
 import { t, tn, colorLabel } from './i18n.js';
 import { renderAll } from './render.js';
 import { saveState } from './storage.js';
-import { recordOp } from './history.js';
+import { recordOp, recordCustom } from './history.js';
+import { commitFloat } from './selection.js';
+import {
+  permFromOrder, invertPerm, isIdentity, permutePalette, permuteMaterials, remapGrid, shadeOrder,
+} from './palorder.js';
 import { showConfirmToast, showInfoToast } from './toast.js';
 
 // Name der Palette, die gerade bearbeitet wird — null = neue anlegen.
@@ -352,3 +356,65 @@ export function createPaletteFromImport(entries, baseName) {
 }
 
 export { isCustomPalette };
+
+// ────────────────────────────────────────────────────────────────────
+// Umsortieren — aus der Farbzeile (Ziehen, „Nach Farbstufen")
+// ────────────────────────────────────────────────────────────────────
+// Die Farben bekommen neue Nummern, und alle Pixel werden mit umgeschrieben:
+// das Bild sieht danach genau gleich aus (js/palorder.js). Betroffen sind
+// alle Sprites mit dieser Palette, samt Materialien. Eine eingebaute Palette
+// bleibt, wie sie ist — der Sprite bekommt eine umsortierte Kopie.
+// Ein Undo-Schritt für alles zusammen (history.js recordCustom).
+export function reorderPalette(order) {
+  const sp = getSprite();
+  if (!sp) return false;
+  const perm = permFromOrder(order);
+  if (isIdentity(perm)) return false;
+  commitFloat();
+  const inv = invertPerm(perm);
+  const id = state.curSprite;
+  const oldName = sp.palette;
+  let name = oldName, forked = false;
+  if (!isCustomPalette(oldName)) {
+    name = uniquePaletteName(oldName + '_kopie');
+    customPalettes[name] = permutePalette({ ...getPal() }, perm);
+    if (paletteMaterials[oldName]) paletteMaterials[name] = permuteMaterials(paletteMaterials[oldName], perm);
+    forked = true;
+  }
+  const targets = forked ? [id] : Object.keys(sprites).filter(k => sprites[k].palette === name);
+  const remapAll = p => {
+    for (const k of targets) if (sprites[k]) for (const g of allGrids(sprites[k])) remapGrid(g, p);
+    if (typeof state.curColor === 'number' && state.curColor < p.length) state.curColor = p[state.curColor];
+  };
+  // In beide Richtungen dasselbe, nur mit perm bzw. inv. Wurde die Palette
+  // inzwischen gelöscht oder umbenannt, geht es nicht mehr — dann überspringt
+  // die History den Schritt, statt Pixel falsch umzuschreiben.
+  const run = (p, paletteName) => {
+    if (forked) {
+      if (!sprites[id]) return false;
+      sprites[id].palette = paletteName;
+    } else {
+      if (!customPalettes[name]) return false;
+      customPalettes[name] = permutePalette(customPalettes[name], p);
+      if (paletteMaterials[name]) paletteMaterials[name] = permuteMaterials(paletteMaterials[name], p);
+    }
+    remapAll(p);
+    return true;
+  };
+  run(perm, name);
+  recordCustom({ undo: () => run(inv, oldName), redo: () => run(perm, name) });
+  state.palPreview = null;
+  renderAll();
+  saveState();
+  if (forked) showInfoToast(t('qp.forked', { name }));
+  return true;
+}
+
+// Gleiche Farbtöne nebeneinander, jeweils von dunkel nach hell.
+export function sortPaletteByShades() {
+  const sp = getSprite();
+  if (!sp) return;
+  const pal = getPal();
+  if (reorderPalette(shadeOrder(pal, paletteSize(pal)))) showInfoToast(t('qp.sorted'));
+  else showInfoToast(t('qp.alreadySorted'));
+}
