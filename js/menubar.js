@@ -10,6 +10,7 @@
 //   id="…"          app.js hängt die Aktion daran (wie früher an die Knöpfe)
 //   data-click="#x" klickt einen vorhandenen Knopf (Undo, Vollbild, …)
 //   data-open="p"   öffnet das Panel p (Dock-Knopf)
+//   data-mirror="#x" Häkchen spiegelt den Zustand des Knopfs #x (.is-active)
 // Die Sprachen hängen an i18n.js (.lang-switch [data-lang]).
 
 /** @type {(sel: string) => any} */
@@ -22,9 +23,12 @@ const dropOf = m => m.querySelector('.mb-drop');
 const itemsOf = m => [...dropOf(m).querySelectorAll('.mb-item')].filter(i => !i.hidden && !i.disabled);
 const menus = () => [...document.querySelectorAll('#menubar .mb-menu')];
 
-function syncDisabled(m) {
-  // Ausgegraut, was der zugehörige Knopf gerade nicht kann (Rückgängig
-  // ohne Verlauf).
+function syncChecks(m) {
+  // Häkchen aus dem Zustand der gespiegelten Knöpfe; ausgegraut, was der
+  // gespiegelte Knopf gerade nicht kann (Rückgängig ohne Verlauf).
+  dropOf(m).querySelectorAll('[data-mirror]').forEach(i => {
+    i.setAttribute('aria-checked', String(!!q(i.dataset.mirror)?.classList.contains('is-active')));
+  });
   dropOf(m).querySelectorAll('[data-click]').forEach(i => {
     const src = q(i.dataset.click);
     i.disabled = !!src?.disabled;
@@ -34,7 +38,7 @@ function syncDisabled(m) {
 function open(m, focus = false) {
   if (openMenu && openMenu !== m) close();
   openMenu = m;
-  syncDisabled(m);
+  syncChecks(m);
   dropOf(m).hidden = false;
   titleOf(m).setAttribute('aria-expanded', 'true');
   titleOf(m).classList.add('is-open');
