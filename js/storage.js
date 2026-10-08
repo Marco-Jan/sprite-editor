@@ -3,7 +3,7 @@
 // ════════════════════════════════════════════════════════════════════
 // Alles liegt unter EINEM Key. `version` im Payload erlaubt Migrationen,
 // ohne alte Saves zu zerschießen.
-import { state, sprites, customPalettes, paletteMaterials, selectFirstSprite, paletteExists, makeSprite, flatGrid } from './state.js';
+import { state, sprites, customPalettes, paletteMaterials, selectFirstSprite, paletteExists, makeSprite, flatGrid, framesForSave } from './state.js';
 import { DEFAULT_PALETTE, completePalette } from './data.js';
 import { saveBlob } from './filesystem.js';
 import { showInfoToast } from './toast.js';
@@ -76,7 +76,8 @@ function serializeSprites() {
       layer: sp.layer,
       layers: sp.layers,
       guides: sp.guides,
-      frames: sp.frames.map(f => (f.dur ? { cels: f.cels, dur: f.dur } : { cels: f.cels })),
+      // Verknüpfte Zellen als { link: k } (state.js framesForSave).
+      frames: framesForSave(sp),
       grid: flatGrid(sp, 0),
     };
   }
@@ -89,16 +90,19 @@ const isGrid = g => Array.isArray(g) && g.length > 0 && Array.isArray(g[0]) && g
 // Frames aus einem gespeicherten Sprite lesen. Alte Stände kennen nur
 // `grid` (ein Bild) oder Frames mit `grid` (eine Ebene). Alle Bilder bekommen
 // die Maße des ersten, fehlende Ebenen werden leer ergänzt (makeSprite).
+// Ein { link: k } (verknüpfte Zelle) bleibt stehen; makeSprite löst es auf.
+const isLink = c => !!c && typeof c === 'object' && !Array.isArray(c) && Number.isInteger(c.link);
 function readFrames(sp) {
-  const celsOf = f => (Array.isArray(f?.cels) ? f.cels.filter(isGrid) : isGrid(f?.grid) ? [f.grid] : []);
+  const celsOf = f => (Array.isArray(f?.cels) ? f.cels.filter(c => isGrid(c) || isLink(c)) : isGrid(f?.grid) ? [f.grid] : []);
   const raw = Array.isArray(sp.frames) && sp.frames.some(f => celsOf(f).length)
     ? sp.frames.filter(f => celsOf(f).length).map(f => ({ cels: celsOf(f), dur: f.dur }))
     : isGrid(sp.grid) ? [{ cels: [sp.grid] }] : null;
   if (!raw) return null;
-  const first = raw[0].cels[0];
+  const first = raw.flatMap(f => f.cels).find(isGrid);
+  if (!first) return null;
   const H = first.length, W = first[0].length;
   const fit = g => Array.from({ length: H }, (_, y) => Array.from({ length: W }, (_, x) => g[y]?.[x] ?? 0));
-  return raw.map(f => ({ cels: f.cels.map(fit), dur: Number(f.dur) || 0 }));
+  return raw.map(f => ({ cels: f.cels.map(c => (isLink(c) ? c : fit(c))), dur: Number(f.dur) || 0 }));
 }
 
 function buildPayload() {
