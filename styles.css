@@ -920,6 +920,31 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
    statt abschneiden. */
 #toolbar { flex-wrap: wrap; row-gap: var(--sp-2); }
 
+/* Die Einstellungen des Werkzeugs (Groesse, Staerke, Toleranz, Gefuellt,
+   Auswahl) stehen am Rechner immer in der zweiten Zeile. Vorher haengten sie
+   hinten an der ersten und rutschten je nach Fensterbreite und gewaehltem
+   Werkzeug hin und her — die Knoepfe sassen nie zweimal an derselben Stelle.
+   Der Umbruch ist ein leeres Element, das eine ganze Zeile breit ist; der
+   Trennstrich davor waere dann das letzte in Zeile eins und faellt weg.
+   Am Handy (bis 1100 px) stecken diese Felder in einer Schublade — dort
+   darf nichts umbrechen. */
+.tool-break { display: none; }
+/* Steht gerade keine Einstellung an (Hand, Stift ohne Groesse), bliebe sonst
+   eine leere zweite Zeile uebrig — darum nur umbrechen, wenn danach wirklich
+   etwas sichtbar ist. */
+@media (min-width: 1100.02px) {
+  #toolbar:has(> #brush-size-group:not([hidden]), > #strength-group:not([hidden]),
+               > #tolerance-group:not([hidden]), > #shape-group:not([hidden]),
+               > #select-group:not([hidden])) > .tool-break {
+    display: block; flex-basis: 100%; height: 0;
+  }
+  #toolbar:has(> #brush-size-group:not([hidden]), > #strength-group:not([hidden]),
+               > #tolerance-group:not([hidden]), > #shape-group:not([hidden]),
+               > #select-group:not([hidden])) > .tool-sep--opts {
+    display: none;
+  }
+}
+
 #template-overlay {
   position: absolute;
   top: 50%; left: 50%;
