@@ -728,6 +728,7 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 /* Timeline (js/frames.js) — Transport, Vorschaubilder, Bearbeiten, Tempo */
 #timeline {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--sp-2) var(--sp-3);
   flex-shrink: 0;
@@ -737,18 +738,94 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   background: var(--surface-1);
 }
 #timeline .btn { padding: 5px 8px; }
-/* Die Reihe nimmt den Platz, den Knöpfe und Felder übrig lassen — die
-   Bildchen wachsen darin mit (--tl-cell aus js/frames.js fitThumbs). */
+/* Das Raster (js/frames.js): links je Ebene eine Beschriftung, oben je
+   Frame ein Bildchen, darunter je Ebene und Frame eine Zelle. Es steht in
+   einer eigenen Zeile unter den Knöpfen und nimmt die ganze Breite.
+   Spaltenbreite und Anzahl setzt js/frames.js (--tl-cell, --tl-n, --tl-l).
+   Ab sechs Ebenen scrollt es auch nach unten — die Kopfzeile und die
+   Ebenen-Spalte kleben dabei am Rand. */
 .tl-frames {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-1);
-  flex: 1 1 auto;
+  --tl-lw: 148px;
+  --tl-row: 22px;
+  order: 99;
+  flex: 1 1 100%;
+  display: grid;
+  grid-template-columns: var(--tl-lw) repeat(var(--tl-n, 1), var(--tl-cell, 44px));
+  grid-template-rows: var(--tl-cell, 44px) repeat(var(--tl-l, 1), var(--tl-row));
+  gap: 2px;
   min-width: 0;
-  padding: 2px;
-  overflow-x: auto;
+  max-height: calc(var(--tl-cell, 44px) + 6 * (var(--tl-row) + 2px) + 6px);
+  padding-bottom: 2px;
+  overflow: auto;
+  overscroll-behavior: contain;
   scrollbar-width: thin;
 }
+.tl-corner {
+  position: sticky;
+  left: 0; top: 0;
+  z-index: 3;
+  display: flex;
+  align-items: flex-end;
+  padding: 0 6px 4px;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  background: var(--surface-1);
+}
+.tl-layer {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 0 6px 0 2px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  box-shadow: 2px 0 0 var(--surface-1);
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.tl-layer:hover { color: var(--text); }
+.tl-layer.is-active { background: var(--accent-bg); color: var(--accent); }
+.tl-layer.is-hidden .tl-lname { opacity: 0.45; }
+.tl-lname { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tl-eye, .tl-lock { flex: none; width: 20px; height: 20px; padding: 0; }
+.tl-eye svg, .tl-lock svg { width: 13px; height: 13px; }
+.tl-lock { opacity: 0.45; }
+.tl-lock.is-on { opacity: 1; color: var(--accent); }
+/* Zelle: ein Punkt — gefüllt, wenn die Ebene in diesem Frame etwas enthält. */
+.tl-cel {
+  appearance: none;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  cursor: pointer;
+  touch-action: pan-x pan-y;
+}
+.tl-cel::after {
+  content: '';
+  width: 7px; height: 7px;
+  border: 1.5px solid var(--text-dim);
+  border-radius: 50%;
+  opacity: 0.6;
+}
+.tl-cel.is-filled::after { background: var(--text-dim); opacity: 1; }
+.tl-cel.is-hidden::after { opacity: 0.3; }
+.tl-cel:hover { background: var(--surface-3); }
+.tl-cel.is-row, .tl-cel.is-col { background: var(--surface-3); }
+.tl-cel.is-marked { background: var(--accent-bg); }
+.tl-cel.is-active { box-shadow: inset 0 0 0 1px var(--accent); }
+.tl-cel.is-active::after { border-color: var(--accent); }
+.tl-cel.is-active.is-filled::after { background: var(--accent); }
 .tl-frame {
   appearance: none;
   position: relative;
@@ -762,8 +839,10 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   border-radius: var(--r-md);
   background: var(--surface-2);
   cursor: pointer;
-  touch-action: pan-x;
+  touch-action: pan-x pan-y;
 }
+/* Die Bildchen kleben beim Scrollen nach unten oben fest. */
+.tl-frame { position: sticky; top: 0; z-index: 2; }
 .tl-frame canvas {
   display: block;
   image-rendering: pixelated;
@@ -801,14 +880,12 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 .tl-num input { width: 4.5rem; }
 /* Sprungfeld: hier stehen nur Frame-Nummern, drei Stellen reichen. Das
    "/ n" klebt direkt am Feld statt hinter der breiten Wertspalte. */
-.tl-go-field { gap: var(--sp-1); }
+.tl-go-field { gap: var(--sp-1); margin-left: auto; }
 .tl-go-field input { width: 3.5rem; }
 /* "/ 21" bleibt zusammen: wird die Zeile eng (ab zwei Stellen plus
    Scrollbalken in der Frame-Reihe), rutschte die Zahl sonst unter den
    Schrägstrich. */
 #tl-total { min-width: 0; text-align: left; white-space: nowrap; }
-#timeline.is-vertical .tl-frames { flex-direction: column; overflow-x: hidden; overflow-y: auto; max-height: 50vh; }
-#timeline.is-vertical .tl-frame { touch-action: pan-y; }
 #timeline.is-vertical .tl-num { flex-direction: row; }
 
 /* Hilfslinien: im Verschieben-Modus kein Pinsel-Umriss */
@@ -1731,8 +1808,12 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
   align-items: center;
   /* Ohne feste Breite zieht sich die umbrechende Reihe so breit wie ihr
      laengster Inhalt — die Spalte waere dann breiter als die Zeichenflaeche. */
-  width: 13rem;
+  width: 16rem;
 }
+/* Im Raster bleibt fuer die Ebenen nur Auge und Name. */
+#timeline.is-vertical .tl-frames { --tl-lw: 84px; }
+#timeline.is-vertical .tl-lock { display: none; }
+#timeline.is-vertical .tl-go-field { margin-left: 0; }
 #timeline.is-vertical > * { flex: none; }
 #timeline.is-vertical > .bar-handle,
 #timeline.is-vertical > .tl-frames { flex: 1 1 100%; }
@@ -1984,17 +2065,19 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
   #timeline > .tl-frames { flex: 1 1 auto; min-width: 96px; scrollbar-width: none; }
   #timeline > .tl-frames::-webkit-scrollbar { display: none; }
 
-  /* Timeline in zwei Zeilen: oben die Abspiel-Knoepfe und die Frames, unten
-     der Rest. Dadurch bekommt die Frame-Reihe die ganze Breite, statt sich
-     mit sechs Feldern eine scrollende Zeile zu teilen.
-     Die Umbruchstelle macht die Breite der Frame-Reihe: sie ist so breit
-     angesetzt, dass hinter ihr nichts mehr in die erste Zeile passt. */
+  /* Timeline: oben die Knoepfe und Felder (umbrechend), darunter das
+     Raster ueber die ganze Breite. */
   #timeline {
     flex-wrap: wrap;
     gap: var(--sp-1);
     overflow-x: hidden;
   }
-  #timeline > .tl-frames { flex: 1 1 50%; }
+  /* Das Raster steht in seiner eigenen Zeile unter den Knoepfen; die
+     Ebenen-Spalte ist schmal (Auge und Name), die Zeilen fingerhoch. */
+  #timeline > .tl-frames { flex: 1 1 100%; --tl-lw: 92px; --tl-row: 30px; max-height: calc(var(--tl-cell, 44px) + 4 * 32px + 6px); }
+  #timeline .tl-lock { display: none; }
+  #timeline .tl-eye { width: 28px; height: 28px; }
+  .tl-go-field { margin-left: 0; }
   /* Die zweite Zeile soll eine bleiben: enge Felder und kleinere Knoepfe
      (siehe unten) schaffen den Platz dafuer — und damit auch fuer "ms" und
      ein kurzes "F" vor der Frame-Nummer. Ohne die beiden Hinweise stuenden

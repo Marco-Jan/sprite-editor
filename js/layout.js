@@ -789,8 +789,10 @@ function syncBarFade(el) {
   el.classList.toggle('is-more-r', MOBILE.matches && rest > 4 && !rightCovered);
 }
 
-// Die Icon-Spalten unten können genauso überlaufen wie die Leisten.
-const fadeEls = () => [...BARS.map(id => $(id)), ...document.querySelectorAll('.rail-dock, .tl-frames')];
+// Die Icon-Spalten unten können genauso überlaufen wie die Leisten. Das
+// Raster der Timeline nicht: links klebt dort die Ebenen-Spalte, ein
+// Verlauf am Rand läge über den Namen.
+const fadeEls = () => [...BARS.map(id => $(id)), ...document.querySelectorAll('.rail-dock')];
 
 function initBarFades() {
   for (const el of fadeEls()) {

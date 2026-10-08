@@ -21,6 +21,7 @@ import { showInfoToast } from './toast.js';
 import { iconSvg } from './icons.js';
 import { t } from './i18n.js';
 import { isMobileLayout } from './layout.js';
+import { setActiveLayer, toggleVisible, toggleLocked } from './layers.js';
 
 /** @type {(id: string) => any} */
 const $ = id => document.getElementById(id);
@@ -30,8 +31,8 @@ const $ = id => document.getElementById(id);
 // sitzt abzüglich Rand und Polsterung darin.
 const CELL_MIN = 30;
 const CELL_MIN_TOUCH = 34;   // Handy: so groß wie die Styles es ohnehin erzwingen
-const CELL_MAX = 56;    // waagerecht: mehr würde die Zeichenfläche beschneiden
-const CELL_MAX_V = 80;  // senkrecht angeordnet ist Höhe kein Engpass
+const CELL_MAX = 48;    // mehr würde die Zeichenfläche beschneiden — unter
+                        // der Kopfzeile stehen ja noch die Ebenen
 const CELL_PAD = 6;   // 1 px Rand + 2 px Polsterung je Seite
 const VISIBLE_MAX = 20;         // so viele Frames passen höchstens nebeneinander
 const VISIBLE_MAX_TOUCH = 6;    // Handy: lieber sechs kleine als zwei grosse
@@ -263,8 +264,23 @@ export function toggleOnion() {
 }
 
 // ────────────────────────────────────────────────────────────────────
-// Timeline
+// Timeline — ein Raster wie in Aseprite
 // ────────────────────────────────────────────────────────────────────
+// Spalten sind Frames, Zeilen Ebenen (oberste oben, wie im Ebenen-Panel).
+//
+//            │ [1] [2] [3] …   ← Vorschaubild je Frame: alle sichtbaren
+//   ─────────┼──────────────      Ebenen übereinander; anklicken wählt den
+//   👁 🔒 Held │  ●   ●   ○         Frame, ziehen verschiebt ihn
+//   👁 🔒 Grund│  ●   ●   ●
+//
+// Links je Ebene Auge, Schloss und Name. In den Zellen ein Punkt: gefüllt,
+// wenn die Ebene in diesem Frame etwas enthält, hohl, wenn sie dort leer
+// ist. Ein Klick auf eine Zelle wählt Frame UND Ebene auf einmal.
+//
+// Das Raster ist ein CSS-Grid in einem Scroll-Behälter (#tl-frames). Die
+// Kopfzeile und die Ebenen-Spalte kleben am Rand (position: sticky), so
+// bleiben beim Scrollen beide sichtbar.
+
 // Vorschaubild per ImageData — bei 256×256 und vielen Frames deutlich
 // schneller als ein fillRect pro Pixel.
 const rgbCache = new Map();
@@ -276,6 +292,24 @@ function rgbOf(hex) {
     rgbCache.set(hex, v);
   }
   return v;
+}
+
+// Die Knöpfe der Kopfzeile bleiben über alle Aufrufe erhalten: das Zeichnen
+// der Bildchen ist das Teure, die Zellen darunter sind billig und werden
+// jedes Mal neu gebaut.
+/** @type {HTMLButtonElement[]} */
+let thumbs = [];
+/** @type {HTMLElement|null} */
+let corner = null;
+/** @type {HTMLElement[][]} */
+let celEls = [];      // celEls[ebene][frame]
+/** @type {HTMLElement[]} */
+let rowEls = [];      // rowEls[ebene] — Auge, Schloss, Name
+
+/** Enthält das Bild überhaupt einen Pixel? */
+export function celHasPixels(grid) {
+  for (const row of grid) for (const v of row) if (v !== 0) return true;
+  return false;
 }
 
 // Anzeigegröße des Bildchens: größte Kante auf `cell` minus Polsterung,
@@ -308,34 +342,30 @@ function drawThumb(cv, grid, pal) {
   ctx.putImageData(img, 0, 0);
 }
 
-// Platz aufteilen: waagerecht teilen sich die Frames die Breite der Reihe,
-// senkrecht gibt die Spaltenbreite das Maß. Mehr als CELL_MAX wird es nie —
-// sonst frisst die Leiste die Zeichenfläche.
+// Platz aufteilen: die Frames teilen sich, was neben der Ebenen-Spalte
+// übrig bleibt. Mehr als CELL_MAX wird es nie — sonst frisst die Leiste
+// die Zeichenfläche.
 //
 // Nach unten ist bei VISIBLE_MAX Schluss: die Bildchen schrumpfen nur so weit,
 // bis zwanzig nebeneinander stehen. Ab dem einundzwanzigsten Frame bleibt die
-// Größe, wie sie ist, und die Reihe scrollt — sonst würde eine lange Animation
-// die Vorschau zu Briefmarken zusammenquetschen.
+// Größe, wie sie ist, und das Raster scrollt — sonst würde eine lange
+// Animation die Vorschau zu Briefmarken zusammenquetschen.
 function fitThumbs() {
   const box = $('tl-frames');
   const sp = getSprite();
-  if (!box || !sp) return;
-  const cs = getComputedStyle(box);
-  // Innenmaß: die Polsterung der Reihe gehört nicht den Bildchen, sonst
-  // passt genau eines weniger hinein, als die Rechnung verspricht.
-  const w = box.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
-  if (w <= 0) return;   // noch nicht sichtbar — beim nächsten Mal
+  if (!box || !sp || !corner) return;
+  const w = box.clientWidth - corner.offsetWidth - 4;
+  if (w <= 0 || !corner.offsetWidth) return;   // noch nicht sichtbar — beim nächsten Mal
   const mobile = isMobileLayout();
   const k = Math.min(sp.frames.length, mobile ? VISIBLE_MAX_TOUCH : VISIBLE_MAX);
-  const gap = 4;
-  const vertical = cs.flexDirection === 'column';
-  const room = vertical ? w : Math.floor((w - gap * (k - 1)) / k);
+  const gap = 2;
+  const room = Math.floor((w - gap * k) / k);
   const min = mobile ? CELL_MIN_TOUCH : CELL_MIN;
-  const next = Math.max(min, Math.min(vertical ? CELL_MAX_V : CELL_MAX, room));
+  const next = Math.max(min, Math.min(CELL_MAX, room));
   if (next === cell) return;
   cell = next;
   box.style.setProperty('--tl-cell', cell + 'px');
-  [...box.children].forEach(b => sizeThumb(b.firstChild));
+  thumbs.forEach(b => sizeThumb(b.firstChild));
 }
 
 function makeThumb() {
@@ -351,24 +381,97 @@ function makeThumb() {
   return b;
 }
 
+function makeCorner() {
+  const c = document.createElement('div');
+  c.className = 'tl-corner';
+  return c;
+}
+
+// Eine Ebene: Auge, Schloss, Name. Ein Klick auf die Zeile wählt die
+// Ebene, ohne den Frame zu wechseln.
+function makeLayerRow(sp, li) {
+  const L = sp.layers[li];
+  const row = document.createElement('div');
+  row.className = 'tl-layer';
+  row.dataset.l = String(li);
+  row.classList.toggle('is-hidden', !L.visible);
+  row.title = L.name;
+  row.innerHTML = '<button type="button" class="icon-btn tl-eye"></button>'
+    + '<button type="button" class="icon-btn tl-lock"></button>'
+    + '<span class="tl-lname"></span>';
+  const eye = /** @type {HTMLElement} */ (row.children[0]);
+  const lock = /** @type {HTMLElement} */ (row.children[1]);
+  eye.innerHTML = iconSvg(L.visible ? 'eye' : 'eyeOff');
+  eye.title = t(L.visible ? 'ly.hide' : 'ly.show');
+  eye.setAttribute('aria-pressed', String(L.visible));
+  lock.innerHTML = iconSvg(L.locked ? 'lock' : 'unlock');
+  lock.title = t(L.locked ? 'ly.unlock' : 'ly.lock');
+  lock.setAttribute('aria-pressed', String(L.locked));
+  lock.classList.toggle('is-on', L.locked);
+  row.children[2].textContent = L.name;
+  eye.addEventListener('click', e => { e.stopPropagation(); toggleVisible(li); });
+  lock.addEventListener('click', e => { e.stopPropagation(); toggleLocked(li); });
+  row.addEventListener('click', () => setActiveLayer(li));
+  return row;
+}
+
+function makeCel(fi, li) {
+  const c = document.createElement('button');
+  c.type = 'button';
+  c.className = 'tl-cel';
+  c.dataset.i = String(fi);
+  c.dataset.l = String(li);
+  c.addEventListener('click', e => clickCel(fi, li, e));
+  return c;
+}
+
+function setCelFill(c, grid) {
+  c.classList.toggle('is-filled', celHasPixels(grid));
+}
+
 export function renderTimeline() {
   const box = $('tl-frames');
   if (!box) return;
   const sp = getSprite();
-  if (!sp) { box.innerHTML = ''; return; }
+  if (!sp) { box.innerHTML = ''; thumbs = []; celEls = []; rowEls = []; return; }
   // Die Auswahl gehört zu einem Sprite, nicht zur Timeline.
   if (selSprite !== state.curSprite) { resetSel(); selSprite = state.curSprite; }
   const pal = getPaletteByName(sp.palette);
-  const n = sp.frames.length;
-  while (box.children.length > n) box.lastChild.remove();
-  while (box.children.length < n) box.append(makeThumb());
+  const n = sp.frames.length, L = sp.layers.length;
+  if (!corner) corner = makeCorner();
+  corner.textContent = t('tl.layers');
+  while (thumbs.length > n) thumbs.pop();
+  while (thumbs.length < n) thumbs.push(makeThumb());
+
+  // Zeilen von oben nach unten: oberste Ebene zuerst.
+  rowEls = [];
+  celEls = sp.layers.map(() => []);
+  /** @type {HTMLElement[]} */
+  const body = [];
+  for (let li = L - 1; li >= 0; li--) {
+    const row = makeLayerRow(sp, li);
+    rowEls[li] = row;
+    body.push(row);
+    for (let fi = 0; fi < n; fi++) {
+      const c = makeCel(fi, li);
+      setCelFill(c, sp.frames[fi].cels[li]);
+      c.classList.toggle('is-hidden', !sp.layers[li].visible);
+      c.title = t('tl.celTitle', { i: fi + 1, name: sp.layers[li].name });
+      celEls[li][fi] = c;
+      body.push(c);
+    }
+  }
+  // Vorhandene Knöpfe werden dabei nur umgehängt, nicht neu gebaut.
+  box.replaceChildren(corner, ...thumbs, ...body);
+  box.style.setProperty('--tl-n', String(n));
+  box.style.setProperty('--tl-l', String(L));
   fitThumbs();
 
   sp.frames.forEach((f, i) => {
-    const b = box.children[i];
-    b.dataset.i = i;
+    const b = thumbs[i];
+    b.dataset.i = String(i);
     drawThumb(b.firstChild, flatGrid(sp, i), pal);
-    b.lastChild.textContent = i + 1;
+    b.lastChild.textContent = String(i + 1);
     b.classList.toggle('has-dur', !!f.dur);
     b.title = t('tl.frameTitle', { i: i + 1, ms: frameDuration(sp, i) });
   });
@@ -395,11 +498,15 @@ export function renderTimeline() {
   syncPlayButton();
 }
 
-// Nur das Bild des aktuellen Frames — läuft bei jedem Zeichnen mit.
+// Nur das, was der aktuelle Strich verändert: das Bild des Frames und der
+// Punkt der aktiven Ebene darin — läuft bei jedem Zeichnen mit.
 export function refreshCurrentThumb() {
   const sp = getSprite();
-  const b = sp && $('tl-frames')?.children[sp.frame];
+  if (!sp) return;
+  const b = thumbs[sp.frame];
   if (b) drawThumb(b.firstChild, flatGrid(sp), getPaletteByName(sp.palette));
+  const c = celEls[sp.layer]?.[sp.frame];
+  if (c) setCelFill(c, sp.grid);
 }
 
 function markActive() {
@@ -407,23 +514,29 @@ function markActive() {
   const sp = getSprite();
   if (!box || !sp) return;
   const marked = sel.size > 1 ? sel : null;
-  [...box.children].forEach((b, i) => {
+  const isMarked = i => !!marked && marked.has(i);
+  thumbs.forEach((b, i) => {
     const on = i === sp.frame;
     b.classList.toggle('is-active', on);
-    b.classList.toggle('is-marked', !!marked && marked.has(i));
-    b.setAttribute('aria-selected', String(on || (!!marked && marked.has(i))));
-    // Sichtbar halten, ohne die Seite zu scrollen.
-    if (on) {
-      const vertical = box.scrollHeight > box.clientHeight + 1 && box.scrollWidth <= box.clientWidth + 1;
-      if (vertical) {
-        if (b.offsetTop < box.scrollTop) box.scrollTop = b.offsetTop;
-        else if (b.offsetTop + b.offsetHeight > box.scrollTop + box.clientHeight) box.scrollTop = b.offsetTop + b.offsetHeight - box.clientHeight;
-      } else {
-        if (b.offsetLeft < box.scrollLeft) box.scrollLeft = b.offsetLeft;
-        else if (b.offsetLeft + b.offsetWidth > box.scrollLeft + box.clientWidth) box.scrollLeft = b.offsetLeft + b.offsetWidth - box.clientWidth;
-      }
-    }
+    b.classList.toggle('is-marked', isMarked(i));
+    b.setAttribute('aria-selected', String(on || isMarked(i)));
   });
+  celEls.forEach((cels, li) => cels.forEach((c, fi) => {
+    c.classList.toggle('is-col', fi === sp.frame);
+    c.classList.toggle('is-row', li === sp.layer);
+    c.classList.toggle('is-marked', isMarked(fi));
+    c.classList.toggle('is-active', fi === sp.frame && li === sp.layer);
+  }));
+  rowEls.forEach((r, li) => r?.classList.toggle('is-active', li === sp.layer));
+
+  // Den aktiven Frame sichtbar halten, ohne die Seite zu scrollen. Links
+  // klebt die Ebenen-Spalte darüber — die zählt nicht als sichtbar.
+  const b = thumbs[sp.frame];
+  if (b) {
+    const lw = corner?.offsetWidth || 0;
+    if (b.offsetLeft - lw < box.scrollLeft) box.scrollLeft = b.offsetLeft - lw;
+    else if (b.offsetLeft + b.offsetWidth > box.scrollLeft + box.clientWidth) box.scrollLeft = b.offsetLeft + b.offsetWidth - box.clientWidth;
+  }
   updateFrameLabel();
 }
 
@@ -434,20 +547,71 @@ function updateFrameLabel() {
   if (sp && go && document.activeElement !== go) go.value = sp.frame + 1;
 }
 
+// Ein Frame wurde angeklickt — in der Kopfzeile oder in einer Zelle.
+// Strg/Shift (am Handy der Auswahl-Schalter) markieren mehrere Frames,
+// ein einfacher Klick wechselt nur.
+function clickFrame(i, e) {
+  const sp = getSprite();
+  if (!sp) return;
+  if (multiMode) {
+    // Auswahl-Modus: jeder Tipp nimmt einen Frame dazu oder wieder weg.
+    // Der erste Tipp erbt den aktiven Frame, damit er nicht verloren geht.
+    if (sel.size < 2) sel = new Set([sp.frame]);
+    if (sel.has(i) && sel.size > 1) sel.delete(i);
+    else { sel.add(i); anchor = i; goFrame(i); }
+    renderTimeline();
+    return;
+  }
+  if (e.shiftKey) {
+    // Spanne vom Anker bis hierher. Ohne Anker gilt der aktive Frame.
+    const a = anchor != null && anchor < sp.frames.length ? anchor : sp.frame;
+    sel = new Set();
+    for (let k = Math.min(a, i); k <= Math.max(a, i); k++) sel.add(k);
+    anchor = a;
+    goFrame(i);
+  } else if (e.ctrlKey || e.metaKey) {
+    // Einzeln dazu oder weg. Der erste Strg-Klick erbt den aktiven Frame,
+    // damit nicht die bisherige Auswahl verloren geht.
+    if (sel.size < 2) sel = new Set([sp.frame]);
+    if (sel.has(i) && sel.size > 1) sel.delete(i);
+    else { sel.add(i); anchor = i; goFrame(i); }
+  } else {
+    resetSel();
+    anchor = i;
+    goFrame(i);
+  }
+  renderTimeline();
+}
+
+// Zelle: erst die Ebene, dann der Frame wie oben. Ist nur die Ebene neu,
+// wechselt goFrame() nichts — dann muss hier neu gezeichnet werden.
+function clickCel(fi, li, e) {
+  const sp = getSprite();
+  if (!sp) return;
+  if (li !== sp.layer) {
+    stop();
+    leaveFrame();
+    sp.layer = li;
+    clickFrame(fi, e);
+    renderAll();
+    saveState();
+    return;
+  }
+  clickFrame(fi, e);
+}
+
 // Ziehen sortiert um, ein Tipp wählt den Frame. Erst ab ein paar Pixeln
-// Bewegung wird gezogen — die Leiste selbst scrollt auf dem Handy waagerecht,
-// darum zählt dort nur eine Bewegung entlang der Leiste.
+// Bewegung wird gezogen — das Raster selbst scrollt auf dem Handy, darum
+// zählt dort nur eine Bewegung entlang der Kopfzeile.
 function initThumbDrag(b) {
   b.addEventListener('pointerdown', e => {
     if (e.button !== 0) return;
-    const box = $('tl-frames');
-    const vertical = getComputedStyle(box).flexDirection === 'column';
     const from = Number(b.dataset.i);
-    const sx = e.clientX, sy = e.clientY;
+    const sx = e.clientX;
     let dragging = false, target = from;
 
     const move = ev => {
-      const d = vertical ? ev.clientY - sy : ev.clientX - sx;
+      const d = ev.clientX - sx;
       if (!dragging) {
         if (Math.abs(d) < 8) return;
         dragging = true;
@@ -457,15 +621,13 @@ function initThumbDrag(b) {
         try { b.setPointerCapture(ev.pointerId); } catch {}
       }
       ev.preventDefault();
-      b.style.transform = vertical ? `translateY(${d}px)` : `translateX(${d}px)`;
+      b.style.transform = `translateX(${d}px)`;
       // Ziel: hinter dem letzten Frame, dessen Mitte der Zeiger passiert hat.
-      const p = vertical ? ev.clientY : ev.clientX;
       target = 0;
-      [...box.children].forEach((c, i) => {
+      thumbs.forEach((c, i) => {
         if (c === b) return;
         const r = c.getBoundingClientRect();
-        const mid = vertical ? r.top + r.height / 2 : r.left + r.width / 2;
-        if (p > mid) target = i < from ? i + 1 : i;
+        if (ev.clientX > r.left + r.width / 2) target = i < from ? i + 1 : i;
       });
     };
     const up = () => {
@@ -486,37 +648,7 @@ function initThumbDrag(b) {
   });
   b.addEventListener('click', e => {
     if (b.dataset.dragged) return;
-    const i = Number(b.dataset.i);
-    const sp = getSprite();
-    if (!sp) return;
-    if (multiMode) {
-      // Auswahl-Modus: jeder Tipp nimmt einen Frame dazu oder wieder weg.
-      // Der erste Tipp erbt den aktiven Frame, damit er nicht verloren geht.
-      if (sel.size < 2) sel = new Set([sp.frame]);
-      if (sel.has(i) && sel.size > 1) sel.delete(i);
-      else { sel.add(i); anchor = i; goFrame(i); }
-      renderTimeline();
-      return;
-    }
-    if (e.shiftKey) {
-      // Spanne vom Anker bis hierher. Ohne Anker gilt der aktive Frame.
-      const a = anchor != null && anchor < sp.frames.length ? anchor : sp.frame;
-      sel = new Set();
-      for (let k = Math.min(a, i); k <= Math.max(a, i); k++) sel.add(k);
-      anchor = a;
-      goFrame(i);
-    } else if (e.ctrlKey || e.metaKey) {
-      // Einzeln dazu oder weg. Der erste Strg-Klick erbt den aktiven Frame,
-      // damit nicht die bisherige Auswahl verloren geht.
-      if (sel.size < 2) sel = new Set([sp.frame]);
-      if (sel.has(i) && sel.size > 1) sel.delete(i);
-      else { sel.add(i); anchor = i; goFrame(i); }
-    } else {
-      resetSel();
-      anchor = i;
-      goFrame(i);
-    }
-    renderTimeline();
+    clickFrame(Number(b.dataset.i), e);
   });
 }
 

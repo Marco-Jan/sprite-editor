@@ -743,6 +743,8 @@ const MSG = {
     'tl.multiOff':  'Mehrfachauswahl beenden',
     'tl.delOne':    'Frame löschen',
     'tl.delMany':   '{n} markierte Frames löschen',
+    'tl.layers':    'Ebenen',
+    'tl.celTitle':  'Frame {i} · {name} — antippen wählt Frame und Ebene',
 
     // Hilfslinien (js/guides.js)
     'gd.chin':     'Kinn',
@@ -1160,6 +1162,8 @@ const MSG = {
     'tl.multiOff':  'Leave multi-select',
     'tl.delOne':    'Delete frame',
     'tl.delMany':   'Delete {n} selected frames',
+    'tl.layers':    'Layers',
+    'tl.celTitle':  'Frame {i} · {name} — tap to select frame and layer',
 
     'gd.chin':     'chin',
     'gd.chest':    'chest',
