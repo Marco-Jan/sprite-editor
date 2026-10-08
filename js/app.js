@@ -52,6 +52,7 @@ import { initLayers } from './layers.js';
 import { celKeyDown } from './frames.js';
 import { initTlMenu } from './tlmenu.js';
 import { initQuickPaletteDrag } from './qpdrag.js';
+import { initMenubar } from './menubar.js';
 import { normalizeTags } from './tags.js';
 import { initPreview, renderPreview } from './preview.js';
 import { initGuides, guidePointerDown, toggleEdit as toggleGuideEdit, toggleShow as toggleGuides } from './guides.js';
@@ -609,7 +610,11 @@ function initKeyboardEvents() {
       const k = e.key.toLowerCase();
       if (k === 'z' && !e.shiftKey) { e.preventDefault(); stopRotating(false); commitFloat(); undo(); return; }
       if (k === 'y' || (k === 'z' && e.shiftKey)) { e.preventDefault(); stopRotating(false); commitFloat(); redo(); return; }
+      // Datei-Menü: sichern und öffnen — statt „Seite speichern" des Browsers.
+      if (k === 's' && !e.shiftKey) { e.preventDefault(); commitFloat(); saveToFile(); return; }
+      if (k === 'o' && !e.shiftKey) { e.preventDefault(); $('load-file-btn').click(); return; }
     }
+    if (e.key === 'F1') { e.preventDefault(); $('help-btn').click(); return; }
 
     if (e.key === 'Enter' && isRotating() && !isTypingTarget(e.target)) {
       stopRotating(true);
@@ -1428,6 +1433,7 @@ async function init() {
   initDock();
   initLayout();
   initTopbar();
+  initMenubar();
   initToolbar();
   initPalettePanel();
   initFreeColors();

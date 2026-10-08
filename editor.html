@@ -70,25 +70,66 @@
         <span class="brand-name">sprite<span class="brand-bit">bit</span></span>
       </a>
     </div>
+    <!-- Menüleiste (js/menubar.js). Einträge mit id lösen dieselben Aktionen aus
+         wie früher die Knöpfe (js/app.js); data-click klickt einen vorhandenen
+         Knopf, data-open öffnet ein Panel. -->
+    <nav class="menubar" id="menubar" role="menubar" data-i18n-attr="aria-label:mb.label" aria-label="Menü">
+      <div class="mb-menu">
+        <button type="button" class="mb-title" role="menuitem" aria-haspopup="menu" aria-expanded="false" data-i18n="mb.file">Datei</button>
+        <div class="mb-drop" role="menu" hidden>
+          <button type="button" class="mb-item" role="menuitem" data-click="#new-sprite-btn"><span data-i18n="mb.new">Neuer Sprite …</span></button>
+          <button type="button" class="mb-item" role="menuitem" id="load-file-btn"><span data-i18n="mb.open">Öffnen …</span><kbd data-i18n="mb.kOpen">Strg+O</kbd></button>
+          <button type="button" class="mb-item" role="menuitem" id="save-file-btn"><span data-i18n="mb.save">Projekt sichern</span><kbd data-i18n="mb.kSave">Strg+S</kbd></button>
+          <button type="button" class="mb-item" role="menuitem" id="save-dir-btn"><span data-i18n="mb.dir">Speicherort wählen …</span></button>
+          <div class="mb-sep" role="separator"></div>
+          <button type="button" class="mb-item" role="menuitem" data-open="output"><span data-i18n="mb.export">Exportieren …</span></button>
+          <!-- Nur sichtbar, wenn der Browser die Installation anbietet (js/pwa.js). -->
+          <button type="button" class="mb-item" role="menuitem" data-install hidden><span data-i18n="mb.install">App installieren</span></button>
+          <div class="mb-sep" role="separator"></div>
+          <button type="button" class="mb-item" role="menuitem" id="clear-storage-btn"><span data-i18n="mb.reset">Alles zurücksetzen …</span></button>
+        </div>
+      </div>
+      <div class="mb-menu">
+        <button type="button" class="mb-title" role="menuitem" aria-haspopup="menu" aria-expanded="false" data-i18n="mb.edit">Bearbeiten</button>
+        <div class="mb-drop" role="menu" hidden>
+          <button type="button" class="mb-item" role="menuitem" data-click="#undo-btn"><span data-i18n="mb.undo">Rückgängig</span><kbd data-i18n="mb.kUndo">Strg+Z</kbd></button>
+          <button type="button" class="mb-item" role="menuitem" data-click="#redo-btn"><span data-i18n="mb.redo">Wiederholen</span><kbd data-i18n="mb.kRedo">Strg+Y</kbd></button>
+          <div class="mb-sep" role="separator"></div>
+          <button type="button" class="mb-item" role="menuitem" data-click="#sel-all-btn"><span data-i18n="mb.selAll">Alles auswählen</span><kbd data-i18n="mb.kSelAll">Strg+A</kbd></button>
+          <button type="button" class="mb-item" role="menuitem" data-click="#sel-none-btn"><span data-i18n="mb.selNone">Auswahl aufheben</span><kbd>Esc</kbd></button>
+        </div>
+      </div>
+      <div class="mb-menu">
+        <button type="button" class="mb-title" role="menuitem" aria-haspopup="menu" aria-expanded="false" data-i18n="mb.view">Ansicht</button>
+        <div class="mb-drop" role="menu" hidden>
+          <button type="button" class="mb-item" role="menuitem" data-click="#fullscreen-btn"><span data-i18n="mb.fullscreen">Vollbild</span></button>
+          <div class="mb-sep" role="separator"></div>
+          <div class="mb-label" data-i18n="mb.bg">Hintergrund</div>
+          <button type="button" class="mb-item" role="menuitemradio" aria-checked="true" data-click="#bg-dark-btn" data-mirror="#bg-dark-btn"><span data-i18n="mb.bgDark">Dunkel</span></button>
+          <button type="button" class="mb-item" role="menuitemradio" aria-checked="false" data-click="#bg-bw-btn" data-mirror="#bg-bw-btn"><span data-i18n="mb.bgLight">Hell</span></button>
+          <div class="mb-sep" role="separator"></div>
+          <div class="mb-label" data-i18n="mb.lang">Sprache</div>
+          <div class="lang-switch mb-group" role="group" aria-label="Sprache / Language">
+            <button type="button" class="mb-item lang-btn" role="menuitemradio" data-lang="de" lang="de"><span>Deutsch</span></button>
+            <button type="button" class="mb-item lang-btn" role="menuitemradio" data-lang="at" lang="de-AT"><span>Österreichisch</span></button>
+            <button type="button" class="mb-item lang-btn" role="menuitemradio" data-lang="en" lang="en"><span>English</span></button>
+          </div>
+        </div>
+      </div>
+      <div class="mb-menu">
+        <button type="button" class="mb-title" role="menuitem" aria-haspopup="menu" aria-expanded="false" data-i18n="mb.help">Hilfe</button>
+        <div class="mb-drop" role="menu" hidden>
+          <button type="button" class="mb-item" role="menuitem" id="help-btn"><span data-i18n="mb.helpOpen">Hilfe und Tastenkürzel</span><kbd>F1</kbd></button>
+          <div class="mb-sep" role="separator"></div>
+          <a class="mb-item" role="menuitem" href="index.html"><span data-i18n="mb.home">Startseite</span></a>
+          <a class="mb-item" role="menuitem" href="impressum.html"><span data-i18n="mb.imprint">Impressum</span></a>
+          <a class="mb-item" role="menuitem" href="datenschutz.html"><span data-i18n="mb.privacy">Datenschutz</span></a>
+        </div>
+      </div>
+    </nav>
+    <input type="file" id="load-file-input" accept=".json,application/json" hidden>
     <span id="doc-title" class="doc-title"></span>
     <span id="save-indicator" class="save-indicator" data-i18n="tb.saved">gespeichert</span>
-
-    <button class="btn menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="topbar-actions" data-i18n-attr="title:tb.menu;aria-label:tb.menu" title="Menü" aria-label="Menü"><span class="ico" data-icon="menu"></span></button>
-    <div class="topbar-actions" id="topbar-actions">
-      <button class="btn" id="help-btn" data-i18n-attr="title:tb.helpTitle" title="Hilfe &amp; Erklärungen"><span class="ico" data-icon="help"></span><span class="btn-label" data-i18n="tb.help">Hilfe</span></button>
-      <button class="btn" id="save-dir-btn" data-i18n-attr="title:tb.dirTitle" title="Speicherort für Dateien wählen — wird gemerkt"><span class="ico" data-icon="folder"></span><span class="btn-label" data-i18n="tb.dir">Speicherort</span></button>
-      <button class="btn" id="save-file-btn" data-i18n-attr="title:tb.saveTitle" title="Projekt als JSON-Datei sichern"><span class="ico" data-icon="save"></span><span class="btn-label" data-i18n="tb.save">Projekt sichern</span></button>
-      <button class="btn" id="load-file-btn" data-i18n-attr="title:tb.openTitle" title="Projekt aus JSON-Datei laden"><span class="ico" data-icon="open"></span><span class="btn-label" data-i18n="tb.open">Öffnen</span></button>
-      <input type="file" id="load-file-input" accept=".json,application/json" hidden>
-      <!-- Nur sichtbar, wenn der Browser die Installation anbietet (js/pwa.js). -->
-      <button class="btn" data-install hidden data-i18n-attr="title:tb.installTitle" title="spritebit als App installieren — startet dann wie ein eigenes Programm, auch offline"><span class="ico" data-icon="install"></span><span class="btn-label" data-i18n="tb.install">App installieren</span></button>
-      <button class="btn btn--danger" id="clear-storage-btn" data-i18n-attr="title:tb.resetTitle" title="Alles zurücksetzen"><span class="ico" data-icon="reset"></span><span class="btn-label" data-i18n="tb.reset">Zurücksetzen</span></button>
-    </div>
-    <div class="lang-switch" role="group" aria-label="Sprache / Language">
-      <button type="button" class="lang-btn" data-lang="de" lang="de" title="Deutsch" aria-label="Deutsch">DE</button>
-      <button type="button" class="lang-btn" data-lang="at" lang="de-AT" title="Österreichisch" aria-label="Österreichisch">AT</button>
-      <button type="button" class="lang-btn" data-lang="en" lang="en" title="English" aria-label="English">EN</button>
-    </div>
   </header>
 
   <!-- ══ Arbeitsfläche ══ -->
@@ -1023,6 +1064,9 @@
       <div class="sc-row"><b>Zwei Finger</b><span>Zoomen und verschieben (Touch)</span></div>
       <div class="sc-row"><b>Strg + Z</b><span>Rückgängig</span></div>
       <div class="sc-row"><b>Strg + Y</b><span>Wiederholen</span></div>
+      <div class="sc-row"><b>Strg + S</b><span>Projekt sichern</span></div>
+      <div class="sc-row"><b>Strg + O</b><span>Projekt öffnen</span></div>
+      <div class="sc-row"><b>F1</b><span>Hilfe</span></div>
       <div class="sc-row"><b>Esc</b><span>Auswahl aufheben, Dialog oder Vollbild schließen</span></div>
     </div>
 

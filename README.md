@@ -71,7 +71,7 @@ Zum Testen: DevTools → Application → Service Workers zeigt den Worker. Unter
 ## Aufbau der Oberfläche
 
 ```
-┌── Kopfzeile: Projekt sichern/öffnen, Speicherort, Hilfe ──────────┐
+┌── Menüleiste: Datei · Bearbeiten · Ansicht · Hilfe ───────────────┐
 ├───────────┬───────────────────────────────────┬──────────────────┤
 │ Sprites   │  Werkzeugleiste                   │ Vorschau, Ebenen │
 │ Code &    │  Farb-Schnellwahl (0–9)           │ Farben, Schablone │
@@ -498,6 +498,8 @@ die FPS-Zahl des Sprites.
 | `G` | Hilfslinien ein / aus |
 | Zwei Finger (Touch) | Zoomen und verschieben |
 | `Strg+Z` / `Strg+Y` | Rückgängig / Wiederholen |
+| `Strg+S` / `Strg+O` | Projekt sichern / öffnen |
+| `F1` | Hilfe |
 | `Esc` | Auswahl aufheben, Dialog oder Vollbild schließen |
 
 ---
@@ -607,7 +609,8 @@ sprite-editor/
     ├── filesystem.js   ← Speicherort merken (File System Access API)
     ├── toast.js        ← Confirm-/Info-Toast statt window.confirm
     ├── pwa.js          ← meldet den Service Worker an (Startseite + Editor)
-    ├── dock.js         ← Seitenleisten als Icon-Spalte, unter 1280 px Kopfzeile als Menü
+    ├── dock.js         ← Seitenleisten als Icon-Spalte
+    ├── menubar.js      ← Menüleiste oben (Datei, Bearbeiten, Ansicht, Hilfe)
     ├── icons.js        ← alle Linien-Icons (SVG) + applyIcons() für [data-icon]
     ├── place.js        ← wo ein Panel/eine Leiste sitzt, als EIN Wert (ohne DOM, getestet)
     ├── layout.js       ← zeichnet Plätze ins DOM: anpinnen, lösen, verschieben, Größe

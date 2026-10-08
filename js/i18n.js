@@ -154,7 +154,8 @@ export function syncSwitch() {
   document.querySelectorAll('.lang-switch [data-lang]').forEach(btn => {
     const on = btn.dataset.lang === _lang;
     btn.classList.toggle('is-active', on);
-    btn.setAttribute('aria-pressed', String(on));
+    // In der Menüleiste ist die Sprache ein Auswahl-Eintrag mit Häkchen.
+    btn.setAttribute(btn.getAttribute('role') === 'menuitemradio' ? 'aria-checked' : 'aria-pressed', String(on));
   });
 }
 
@@ -207,6 +208,36 @@ const STATIC = {
     'tb.reset':       'Reset',
     'tb.resetTitle':  'Reset everything',
     'tb.langLabel':   'Language',
+    'mb.label': 'Menu',
+    'mb.file': 'File',
+    'mb.new': 'New sprite …',
+    'mb.open': 'Open …',
+    'mb.save': 'Save project',
+    'mb.dir': 'Choose save folder …',
+    'mb.export': 'Export …',
+    'mb.install': 'Install app',
+    'mb.reset': 'Reset everything …',
+    'mb.edit': 'Edit',
+    'mb.undo': 'Undo',
+    'mb.redo': 'Redo',
+    'mb.selAll': 'Select all',
+    'mb.selNone': 'Deselect',
+    'mb.view': 'View',
+    'mb.fullscreen': 'Fullscreen',
+    'mb.bg': 'Background',
+    'mb.bgDark': 'Dark',
+    'mb.bgLight': 'Light',
+    'mb.lang': 'Language',
+    'mb.help': 'Help',
+    'mb.helpOpen': 'Help and shortcuts',
+    'mb.home': 'Start page',
+    'mb.imprint': 'Imprint',
+    'mb.privacy': 'Privacy',
+    'mb.kOpen': 'Ctrl+O',
+    'mb.kSave': 'Ctrl+S',
+    'mb.kUndo': 'Ctrl+Z',
+    'mb.kRedo': 'Ctrl+Y',
+    'mb.kSelAll': 'Ctrl+A',
 
     // ── Sprite-Panel ──
     'sp.title':       'Sprites',
@@ -658,6 +689,9 @@ const STATIC = {
       + '<div class="sc-row"><b>Two fingers</b><span>Zoom and pan (touch)</span></div>'
       + '<div class="sc-row"><b>Ctrl + Z</b><span>Undo</span></div>'
       + '<div class="sc-row"><b>Ctrl + Y</b><span>Redo</span></div>'
+      + '<div class="sc-row"><b>Ctrl + S</b><span>Save project</span></div>'
+      + '<div class="sc-row"><b>Ctrl + O</b><span>Open project</span></div>'
+      + '<div class="sc-row"><b>F1</b><span>Help</span></div>'
       + '<div class="sc-row"><b>Esc</b><span>Deselect, close a dialog or leave full screen</span></div>',
   },
 };
