@@ -51,6 +51,7 @@ function peek(side) {
   clearTimeout(hideTimer);
   document.body.classList.toggle('fs-peek-left', side === 'left');
   document.body.classList.toggle('fs-peek-right', side === 'right');
+  placeExitButton();
 }
 const peeking = () => document.body.classList.contains('fs-peek-left') ? 'left'
   : document.body.classList.contains('fs-peek-right') ? 'right' : null;
@@ -69,15 +70,25 @@ function scheduleHide() {
 
 // ── Beenden-Knopf ───────────────────────────────────────────────────
 // Er sitzt in der oberen rechten Ecke der Zeichenfläche — über den Leisten
-// würde er Werkzeuge verdecken, solange sich die Maus bewegt.
+// würde er Werkzeuge verdecken, solange sich die Maus bewegt. Ist die
+// rechte Seitenleiste hereingeglitten, weicht er links neben sie aus.
+function placeExitButton() {
+  const b = $('fs-exit');
+  const area = $('editor-canvas-area')?.getBoundingClientRect();
+  if (!b || !area) return;
+  let right = area.right;
+  // Mit der Endlage der Leiste rechnen, nicht mit der jetzigen — sie gleitet
+  // gerade erst herein (rechts bündig, also Fensterbreite minus Breite).
+  const rail = $('rail-right');
+  if (peeking() === 'right' && rail?.offsetWidth) right = Math.min(right, innerWidth - rail.offsetWidth);
+  b.style.top = Math.round(area.top + 10) + 'px';
+  b.style.right = Math.round(innerWidth - right + 10) + 'px';
+}
+
 function showExitButton() {
   const b = $('fs-exit');
   if (!b || !isFullscreen()) return;
-  const area = $('editor-canvas-area')?.getBoundingClientRect();
-  if (area) {
-    b.style.top = Math.round(area.top + 10) + 'px';
-    b.style.right = Math.round(innerWidth - area.right + 10) + 'px';
-  }
+  placeExitButton();
   b.classList.add('is-visible');
   clearTimeout(btnTimer);
   btnTimer = setTimeout(() => b.classList.remove('is-visible'), BTN_IDLE_MS);

@@ -1599,7 +1599,7 @@ body.editor-fullscreen .fs-exit {
   z-index: 80;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s, right 0.18s ease;
   background: var(--surface-1);
   box-shadow: var(--shadow-md);
 }
