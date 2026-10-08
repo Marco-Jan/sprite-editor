@@ -264,6 +264,12 @@ const STATIC = {
     'ly.del': 'Delete layer',
     'ly.opacity': 'Opacity',
     'ly.note': 'Double-click the name to rename, drag to reorder. Export and preview show all visible layers on top of each other.',
+    'tl.cels': 'Cels',
+    'tl.ccopy': 'Copy cels (Ctrl+C after a click in the timeline)',
+    'tl.cpaste': 'Paste cels at the active cel (Ctrl+V)',
+    'tl.cclear': 'Clear cels (Del)',
+    'tl.clink': 'Link — the frames share one image per layer',
+    'tl.cunlink': 'Unlink — every cel gets its own image',
     // Timeline (frames.js) und GIF-Export
     'tl.first': 'First frame (Home)',
     'tl.prev': 'Previous frame (,)',
@@ -747,7 +753,10 @@ const MSG = {
     'tl.lyAdd':     'Neue Ebene über der aktiven',
     'tl.lyDup':     'Ebene duplizieren',
     'tl.lyDel':     'Ebene löschen',
-    'tl.celTitle':  'Frame {i} · {name} — antippen wählt Frame und Ebene',
+    'tl.celsCopied':  '{n} Zelle(n) kopiert — Strg+V fügt an der aktiven Zelle ein.',
+    'tl.pasteNone':   'Hier passt nichts hin — die Zellen haben eine andere Größe.',
+    'tl.linkNeedsTwo':'Zum Verknüpfen mehrere Frames wählen — Shift-Klick oder über die Zellen ziehen.',
+    'tl.celTitle':  'Frame {i} · {name} — antippen wählt, Shift oder Ziehen spannt einen Bereich, Ziehen im Bereich verschiebt (Strg: kopiert)',
 
     // Hilfslinien (js/guides.js)
     'gd.chin':     'Kinn',
@@ -1169,7 +1178,10 @@ const MSG = {
     'tl.lyAdd':     'New layer above the active one',
     'tl.lyDup':     'Duplicate layer',
     'tl.lyDel':     'Delete layer',
-    'tl.celTitle':  'Frame {i} · {name} — tap to select frame and layer',
+    'tl.celsCopied':  '{n} cel(s) copied — Ctrl+V pastes at the active cel.',
+    'tl.pasteNone':   'Nothing fits here — the cels have a different size.',
+    'tl.linkNeedsTwo':'To link, select several frames — Shift-click or drag across the cels.',
+    'tl.celTitle':  'Frame {i} · {name} — tap to select, Shift or drag spans a range, dragging inside the range moves it (Ctrl: copies)',
 
     'gd.chin':     'chin',
     'gd.chest':    'chest',

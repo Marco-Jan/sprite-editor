@@ -833,6 +833,19 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 .tl-cel.is-row, .tl-cel.is-col { background: var(--surface-3); }
 .tl-cel.is-marked { background: var(--accent-bg); }
 .tl-cel.is-active { box-shadow: inset 0 0 0 1px var(--accent); }
+/* Bereich (Shift / Ziehen) und wohin er beim Ziehen fiele. */
+.tl-cel.is-range { background: var(--accent-bg); box-shadow: inset 0 0 0 1px var(--accent-line); }
+.tl-cel.is-drop { box-shadow: inset 0 0 0 2px var(--accent); }
+.tl-cel.is-drop.is-drop-bad { box-shadow: inset 0 0 0 2px var(--danger); }
+.tl-frames.is-copying .tl-cel.is-drop::before { content: '+'; position: absolute; top: 0; right: 3px; font-size: 10px; line-height: 1; color: var(--accent); }
+/* Verknüpfte Zellen: ein Strich zum Nachbarn, der dasselbe Bild zeigt (●━●).
+   Er reicht über die 2 px Lücke zwischen den Zellen hinweg. */
+.tl-cel { position: relative; }
+.tl-cel.is-linked::after { border-style: solid; }
+.tl-cel.link-l { background-image: linear-gradient(var(--text-dim), var(--text-dim)); background-repeat: no-repeat; background-size: calc(50% + 2px) 2px; background-position: -2px 50%; }
+.tl-cel.link-r { background-image: linear-gradient(var(--text-dim), var(--text-dim)); background-repeat: no-repeat; background-size: 50% 2px; background-position: 100% 50%; }
+.tl-cel.link-l.link-r { background-size: calc(100% + 2px) 2px; background-position: -2px 50%; }
+.tl-cel.is-active.link-l, .tl-cel.is-active.link-r { background-image: linear-gradient(var(--accent), var(--accent)); }
 .tl-cel.is-active::after { border-color: var(--accent); }
 .tl-cel.is-active.is-filled::after { background: var(--accent); }
 .tl-frame {

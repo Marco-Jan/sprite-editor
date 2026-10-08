@@ -45,6 +45,7 @@ const PRECACHE = [
   'impressum.html',
   'index.html',
   'js/app.js',
+  'js/cels.js',
   'js/codegen.js',
   'js/data.js',
   'js/dock.js',

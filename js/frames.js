@@ -11,7 +11,7 @@
 //
 // Abspielen läuft in der Zeichenfläche. Gezeichnet wird dabei nicht: ein
 // Tipp auf die Fläche hält an (app.js), jede Frame-Aktion ebenso.
-import { state, getSprite, getPaletteByName, clearSelection, frameDuration, MAX_FPS, flatGrid, blankLike } from './state.js';
+import { state, getSprite, getPaletteByName, clearSelection, frameDuration, MAX_FPS, flatGrid, blankLike, isLinked } from './state.js';
 import { dc, cellToColor } from './data.js';
 import { renderAll, renderEditor, renderCallbacks } from './render.js';
 import { recordOp } from './history.js';
@@ -21,6 +21,10 @@ import { showInfoToast } from './toast.js';
 import { iconSvg } from './icons.js';
 import { t } from './i18n.js';
 import { isMobileLayout } from './layout.js';
+import {
+  rangeOf, rangeSize, inRange, clampRange, canShift, shiftCels, clearCels, copyCels, pasteCels,
+  linkCels, unlinkCels,
+} from './cels.js';
 import {
   setActiveLayer, toggleVisible, toggleLocked, addLayer, duplicateLayer, deleteLayer,
   moveLayer, renameLayer,
@@ -535,7 +539,7 @@ function makeCel(fi, li) {
   c.className = 'tl-cel';
   c.dataset.i = String(fi);
   c.dataset.l = String(li);
-  c.addEventListener('click', e => clickCel(fi, li, e));
+  initCelPointer(c, fi, li);
   return c;
 }
 
@@ -559,6 +563,9 @@ export function renderTimeline() {
   while (thumbs.length > n) thumbs.pop();
   while (thumbs.length < n) thumbs.push(makeThumb());
 
+  // Der Bereich gehört zu einem Sprite und muss ins Raster passen.
+  range = rangeSprite === state.curSprite ? clampRange(sp, range) : null;
+
   // Zeilen von oben nach unten: oberste Ebene zuerst.
   rowEls = [];
   celEls = sp.layers.map(() => []);
@@ -573,6 +580,11 @@ export function renderTimeline() {
       setCelFill(c, sp.frames[fi].cels[li]);
       c.classList.toggle('is-hidden', !sp.layers[li].visible);
       c.title = t('tl.celTitle', { i: fi + 1, name: sp.layers[li].name });
+      // Verknüpft mit dem Nachbarn: ein Strich zwischen den Punkten.
+      const g = sp.frames[fi].cels[li];
+      c.classList.toggle('link-l', fi > 0 && sp.frames[fi - 1].cels[li] === g);
+      c.classList.toggle('link-r', fi < n - 1 && sp.frames[fi + 1].cels[li] === g);
+      c.classList.toggle('is-linked', isLinked(sp, fi, li));
       celEls[li][fi] = c;
       body.push(c);
     }
@@ -642,7 +654,9 @@ function markActive() {
     c.classList.toggle('is-row', li === sp.layer);
     c.classList.toggle('is-marked', isMarked(fi));
     c.classList.toggle('is-active', fi === sp.frame && li === sp.layer);
+    c.classList.toggle('is-range', !!range && rangeSize(range) > 1 && inRange(range, fi, li));
   }));
+  syncCelButtons();
   rowEls.forEach((r, li) => r?.classList.toggle('is-active', li === sp.layer));
 
   // Den aktiven Frame sichtbar halten, ohne die Seite zu scrollen. Links
@@ -699,21 +713,218 @@ function clickFrame(i, e) {
   renderTimeline();
 }
 
-// Zelle: erst die Ebene, dann der Frame wie oben. Ist nur die Ebene neu,
-// wechselt goFrame() nichts — dann muss hier neu gezeichnet werden.
+// ────────────────────────────────────────────────────────────────────
+// Zellen: wählen, Bereich aufziehen, ziehen, kopieren (js/cels.js)
+// ────────────────────────────────────────────────────────────────────
+// Ein Klick wählt Frame UND Ebene. Shift-Klick (am Handy: Auswahl-Schalter)
+// spannt einen Bereich vom letzten Klick bis hierher; Ziehen über andere
+// Zellen tut dasselbe. Ziehen IM Bereich verschiebt ihn, mit Strg oder Alt
+// wird kopiert. Ohne Bereich gilt die aktive Zelle als Bereich.
+let range = null;          // CelRange | null
+let rangeSprite = null;    // zu welchem Sprite er gehört
+let celAnchor = null;      // { f, l } — Ausgangspunkt für Shift
+let celClip = null;        // Zwischenablage für Zellen
+let celFocus = false;      // zuletzt in der Timeline geklickt → Tasten gehören den Zellen
+
+/** Der Bereich, auf den Zellen-Aktionen wirken. */
+function curRange() {
+  const sp = getSprite();
+  if (!sp) return null;
+  return clampRange(sp, range) || { f0: sp.frame, f1: sp.frame, l0: sp.layer, l1: sp.layer };
+}
+
+function setRange(r) { range = r; rangeSprite = state.curSprite; }
+
+// Frame und Ebene setzen — eine Änderung nur, wenn sich etwas ändert.
+function goCel(fi, li) {
+  const sp = getSprite();
+  if (!sp) return;
+  stop();
+  if (fi === sp.frame && li === sp.layer) { renderTimeline(); return; }
+  leaveFrame();
+  sp.frame = fi;
+  sp.layer = li;
+  renderAll();
+  saveState();
+}
+
 function clickCel(fi, li, e) {
   const sp = getSprite();
   if (!sp) return;
-  if (li !== sp.layer) {
-    stop();
-    leaveFrame();
-    sp.layer = li;
-    clickFrame(fi, e);
-    renderAll();
-    saveState();
+  if (e.shiftKey || multiMode) {
+    const a = celAnchor && celAnchor.f < sp.frames.length && celAnchor.l < sp.layers.length
+      ? celAnchor : { f: sp.frame, l: sp.layer };
+    celAnchor = a;
+    setRange(rangeOf(a.f, a.l, fi, li));
+    goCel(fi, li);
     return;
   }
-  clickFrame(fi, e);
+  setRange(null);
+  celAnchor = { f: fi, l: li };
+  resetSel();
+  goCel(fi, li);
+}
+
+// Welche Zelle liegt unter dem Zeiger?
+function celAt(x, y) {
+  const el = /** @type {HTMLElement|null} */ (document.elementFromPoint(x, y)?.closest('.tl-cel'));
+  return el ? { f: Number(el.dataset.i), l: Number(el.dataset.l) } : null;
+}
+
+// Vorschau beim Ziehen: wo der Bereich landen würde.
+function markDrop(r, df, dl) {
+  const sp = getSprite();
+  const ok = !!sp && canShift(sp, r, df, dl);
+  celEls.forEach((cels, li) => cels.forEach((c, fi) => {
+    c.classList.toggle('is-drop', !!(df || dl) && inRange(r, fi - df, li - dl));
+    c.classList.toggle('is-drop-bad', !ok);
+  }));
+}
+
+const gridBox = () => $('tl-frames');
+
+function initCelPointer(c, fi, li) {
+  c.addEventListener('pointerdown', e => {
+    if (e.button !== 0) return;
+    celFocus = true;
+    const r = curRange();
+    if (!r) return;
+    const grab = inRange(r, fi, li);
+    const sx = e.clientX, sy = e.clientY;
+    let mode = null, hit = { f: fi, l: li }, copy = false;
+    const move = ev => {
+      if (!mode) {
+        if (Math.hypot(ev.clientX - sx, ev.clientY - sy) < 6) return;
+        mode = grab ? 'move' : 'select';
+        stop();
+        try { c.setPointerCapture(ev.pointerId); } catch {}
+      }
+      ev.preventDefault();
+      hit = celAt(ev.clientX, ev.clientY) || hit;
+      copy = ev.ctrlKey || ev.metaKey || ev.altKey;
+      if (mode === 'select') {
+        setRange(rangeOf(fi, li, hit.f, hit.l));
+        markActive();
+      } else {
+        markDrop(r, hit.f - fi, hit.l - li);
+        gridBox().classList.toggle('is-copying', copy);
+      }
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
+      if (!mode) return;
+      // Der folgende click darf nicht nochmal wählen.
+      c.dataset.dragged = '1';
+      setTimeout(() => { delete c.dataset.dragged; }, 0);
+      gridBox().classList.remove('is-copying');
+      if (mode === 'select') { celAnchor = { f: fi, l: li }; goCel(fi, li); return; }
+      moveRange(r, hit.f - fi, hit.l - li, copy);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
+  });
+  c.addEventListener('click', e => {
+    if (c.dataset.dragged) return;
+    clickCel(fi, li, e);
+  });
+}
+
+// Ein Undo-Schritt für eine Zellen-Aktion. `after` darf danach Frame,
+// Ebene und Bereich neu setzen.
+function celEdit(fn, after) {
+  const sp = getSprite();
+  if (!sp) return;
+  stop();
+  leaveFrame();
+  let res;
+  recordOp(() => { res = fn(sp); });
+  after?.(sp, res);
+  renderAll();
+  saveState();
+  return res;
+}
+
+function moveRange(r, df, dl, copy) {
+  const sp = getSprite();
+  if (!sp || (!df && !dl) || !canShift(sp, r, df, dl)) { renderTimeline(); return; }
+  celEdit(s => shiftCels(s, r, df, dl, copy), s => {
+    setRange(rangeSize(r) > 1 ? { f0: r.f0 + df, f1: r.f1 + df, l0: r.l0 + dl, l1: r.l1 + dl } : null);
+    if (inRange(r, s.frame, s.layer)) { s.frame += df; s.layer += dl; }
+    celAnchor = { f: s.frame, l: s.layer };
+  });
+}
+
+export function copyCelRange() {
+  const sp = getSprite();
+  const r = curRange();
+  if (!sp || !r) return;
+  celClip = copyCels(sp, r);
+  showInfoToast(t('tl.celsCopied', { n: rangeSize(r) }));
+  syncCelButtons();
+}
+
+export function cutCelRange() {
+  const r = curRange();
+  if (!r) return;
+  copyCelRange();
+  celEdit(s => clearCels(s, r));
+}
+
+export function clearCelRange() {
+  const r = curRange();
+  if (r) celEdit(s => clearCels(s, r));
+}
+
+// Einfügen an der aktiven Zelle: erster Frame und oberste Ebene der Kopie
+// landen dort.
+export function pasteCelRange() {
+  const sp = getSprite();
+  if (!sp || !celClip) return;
+  const used = celEdit(s => pasteCels(s, celClip, s.frame, s.layer), (s, u) => {
+    if (u) setRange(rangeSize(u) > 1 ? u : null);
+  });
+  if (!used) showInfoToast(t('tl.pasteNone'));
+}
+
+export function linkCelRange() {
+  const r = curRange();
+  if (!r || r.f1 === r.f0) { showInfoToast(t('tl.linkNeedsTwo')); return; }
+  celEdit(s => linkCels(s, r));
+}
+
+export function unlinkCelRange() {
+  const r = curRange();
+  if (r) celEdit(s => unlinkCels(s, r));
+}
+
+// Tasten für die Zellen — nur, wenn zuletzt in der Timeline geklickt wurde.
+// Sonst gehören Strg+C/V/X und Entf der Auswahl auf der Zeichenfläche.
+export function celKeyDown(e) {
+  if (!celFocus || !getSprite()) return false;
+  const k = e.key.toLowerCase();
+  const mod = (e.ctrlKey || e.metaKey) && !e.altKey;
+  if (mod && k === 'c') { e.preventDefault(); copyCelRange(); return true; }
+  if (mod && k === 'x') { e.preventDefault(); cutCelRange(); return true; }
+  if (mod && k === 'v') { e.preventDefault(); pasteCelRange(); return true; }
+  if (!mod && (e.key === 'Delete' || e.key === 'Backspace')) { e.preventDefault(); clearCelRange(); return true; }
+  return false;
+}
+
+function syncCelButtons() {
+  const sp = getSprite();
+  const r = curRange();
+  const paste = $('tl-cpaste'), link = $('tl-clink'), unlink = $('tl-cunlink');
+  if (!sp || !r || !paste) return;
+  paste.disabled = !celClip;
+  link.disabled = r.f1 === r.f0;
+  let anyLinked = false;
+  for (let l = r.l0; l <= r.l1 && !anyLinked; l++) {
+    for (let f = r.f0; f <= r.f1; f++) if (isLinked(sp, f, l)) { anyLinked = true; break; }
+  }
+  unlink.disabled = !anyLinked;
 }
 
 // Ziehen sortiert um, ein Tipp wählt den Frame. Erst ab ein paar Pixeln
@@ -782,6 +993,15 @@ export function initFrames() {
   $('tl-fps').addEventListener('change', e => setFps(e.target.value));
   $('tl-dur').addEventListener('change', e => setDuration(e.target.value));
   $('tl-go').addEventListener('change', e => goFrameNumber(e.target.value));
+  $('tl-ccopy').addEventListener('click', copyCelRange);
+  $('tl-cpaste').addEventListener('click', pasteCelRange);
+  $('tl-cclear').addEventListener('click', clearCelRange);
+  $('tl-clink').addEventListener('click', linkCelRange);
+  $('tl-cunlink').addEventListener('click', unlinkCelRange);
+  // Wer woanders hinklickt, meint mit Strg+C wieder die Zeichenfläche.
+  document.addEventListener('pointerdown', e => {
+    if (!/** @type {HTMLElement} */ (e.target).closest?.('#timeline')) celFocus = false;
+  }, true);
   for (const id of ['tl-fps', 'tl-dur', 'tl-go']) {
     $(id).addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
   }

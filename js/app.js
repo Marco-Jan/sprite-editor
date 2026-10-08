@@ -49,6 +49,7 @@ import { openReduceModal, initReduceModal } from './reduce.js';
 import { zoomAt, fitZoomToArea, isPanMode, setPanTool, initPan, initPinch } from './view.js';
 import { initFrames, togglePlay, nextFrame, prevFrame, firstFrame, lastFrame, isPlaying, stop as stopPlayback } from './frames.js';
 import { initLayers } from './layers.js';
+import { celKeyDown } from './frames.js';
 import { initPreview, renderPreview } from './preview.js';
 import { initGuides, guidePointerDown, toggleEdit as toggleGuideEdit, toggleShow as toggleGuides } from './guides.js';
 import { parseTsSprite } from './tsimport.js';
@@ -614,6 +615,11 @@ function initKeyboardEvents() {
     }
 
     if (isTypingTarget(e.target) || anyModalOpen()) return;
+
+    // ── Timeline: Zellen kopieren, einfügen, leeren ──
+    // Nur nach einem Klick in die Timeline, sonst gehören die Tasten der
+    // Auswahl auf der Zeichenfläche (js/frames.js).
+    if (celKeyDown(e)) return;
 
     // ── Auswahl: Zwischenablage ──
     if ((e.ctrlKey || e.metaKey) && !e.altKey) {

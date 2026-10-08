@@ -351,6 +351,14 @@
           <button class="btn" id="tl-del" data-i18n-attr="title:tl.del" title="Frame löschen"><span class="ico" data-icon="trash"></span></button>
         </div>
         <button class="btn" id="tl-onion" aria-pressed="false" data-i18n-attr="title:tl.onion" title="Onion Skin — vorigen und nächsten Frame durchscheinen lassen"><span class="ico" data-icon="onion"></span></button>
+        <!-- Zellen: wirken auf den Bereich im Raster oder die aktive Zelle (js/frames.js, js/cels.js) -->
+        <div class="btn-group tl-celops" role="group" data-i18n-attr="aria-label:tl.cels" aria-label="Zellen">
+          <button class="btn" id="tl-ccopy" data-i18n-attr="title:tl.ccopy" title="Zellen kopieren (Strg+C, nach einem Klick in die Timeline)"><span class="ico" data-icon="copy"></span></button>
+          <button class="btn" id="tl-cpaste" data-i18n-attr="title:tl.cpaste" title="Zellen an der aktiven Zelle einfügen (Strg+V)"><span class="ico" data-icon="paste"></span></button>
+          <button class="btn" id="tl-cclear" data-i18n-attr="title:tl.cclear" title="Zellen leeren (Entf)"><span class="ico" data-icon="eraser"></span></button>
+          <button class="btn" id="tl-clink" data-i18n-attr="title:tl.clink" title="Verknüpfen — die Frames teilen sich je Ebene ein Bild"><span class="ico" data-icon="link"></span></button>
+          <button class="btn" id="tl-cunlink" data-i18n-attr="title:tl.cunlink" title="Verknüpfung lösen — jede Zelle bekommt ihr eigenes Bild"><span class="ico" data-icon="unlink"></span></button>
+        </div>
         <label class="field field--inline tl-num tl-go-field" id="tl-go-field" data-i18n-attr="title:tl.goTitle" title="Zu einem Frame springen — Nummer eintippen">
           <span class="field-label" data-i18n="tl.go">Frame</span>
           <input type="number" id="tl-go" class="input input--sm" min="1" step="1">
