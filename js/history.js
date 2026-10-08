@@ -30,12 +30,43 @@ export const historyCallbacks = {
 // Palette umfärben) ein normaler Undo-Schritt. Gespeicherte Grids werden
 // nie verändert — unveränderte Frames teilen sich darum ihre Kopie.
 // Verknüpfte Zellen (dasselbe Bild in mehreren Frames) bleiben dabei
-// verknüpft: copyFrames kopiert ein geteiltes Bild nur einmal.
+// verknüpft: ein geteiltes Bild wird nur einmal gesichert.
+//
+// Auch ÜBER Einträge hinweg wird geteilt: ein Bild, das so schon im letzten
+// Eintrag steht, wird nicht noch einmal kopiert. Ohne das hielte jeder
+// Undo-Schritt eine vollständige Kopie des Sprites — bei 1024×1024 mit
+// mehreren Frames schnell Gigabytes. Ob geteilt werden darf, entscheidet
+// immer der Vergleich der Pixel; `lastFrames` ist nur ein Vorschlag.
+let lastFrames = null;   // { id, frames } — zuletzt gesicherter Stand
+
+/**
+ * Frames sichern und dabei Bilder aus `prev` wiederverwenden, wo die Pixel
+ * gleich sind. Ein Bild aus `prev` steht dabei nur für EIN heutiges Bild —
+ * sonst würden zwei getrennte Zellen mit gleichem Inhalt beim Undo zu einer
+ * verknüpften.
+ */
+function shareFrames(frames, prev) {
+  const memo = new Map(), taken = new Set();
+  const keep = (g, b) => {
+    if (memo.has(g)) return memo.get(g);
+    const c = b && !taken.has(b) && gridsEqual(b, g) ? b : dc(g);
+    taken.add(c);
+    memo.set(g, c);
+    return c;
+  };
+  return frames.map((f, i) => ({
+    cels: f.cels.map((g, j) => keep(g, prev?.[i]?.cels[j])),
+    dur: f.dur || 0,
+  }));
+}
+
 function snap(id) {
   const sp = sprites[id];
   if (!sp) return null;
+  const frames = shareFrames(sp.frames, lastFrames?.id === id ? lastFrames.frames : null);
+  lastFrames = { id, frames };
   return {
-    frames: copyFrames(sp.frames),
+    frames,
     layers: sp.layers.map(l => ({ ...l })),
     layer: sp.layer,
     frame: sp.frame,
@@ -50,22 +81,10 @@ function snap(id) {
 function snapAfter(id, before) {
   const sp = sprites[id];
   if (!sp) return null;
-  // Ein Bild aus dem Vorher-Stand darf nur für EIN heutiges Bild stehen —
-  // sonst würden zwei getrennte Zellen mit gleichem Inhalt beim Undo zu
-  // einer verknüpften.
-  const memo = new Map(), taken = new Set();
-  const keep = (g, b) => {
-    if (memo.has(g)) return memo.get(g);
-    const c = b && !taken.has(b) && gridsEqual(b, g) ? b : dc(g);
-    taken.add(c);
-    memo.set(g, c);
-    return c;
-  };
+  const frames = shareFrames(sp.frames, before.frames);
+  lastFrames = { id, frames };
   return {
-    frames: sp.frames.map((f, i) => ({
-      cels: f.cels.map((g, j) => keep(g, before.frames[i]?.cels[j])),
-      dur: f.dur || 0,
-    })),
+    frames,
     layers: sp.layers.map(l => ({ ...l })),
     layer: sp.layer,
     frame: sp.frame,
@@ -167,6 +186,7 @@ function restore(entry, which) {
   // Der Sprite kann inzwischen gelöscht worden sein — Eintrag dann verwerfen.
   if (!sprites[entry.id]) return false;
   apply(entry.id, entry[which]);
+  lastFrames = { id: entry.id, frames: entry[which].frames };
   // Ansicht auf den betroffenen Sprite wechseln, sonst sieht man die Wirkung nicht.
   if (state.curSprite !== entry.id) state.curSprite = entry.id;
   return true;
@@ -225,5 +245,6 @@ export function clearHistory() {
   undoStack.length = 0;
   redoStack.length = 0;
   pendingSnapshot = null;
+  lastFrames = null;
   historyCallbacks.onChange();
 }
