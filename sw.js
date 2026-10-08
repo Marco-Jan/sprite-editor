@@ -70,7 +70,6 @@ const PRECACHE = [
   'js/preview.js',
   'js/pwa.js',
   'js/reduce.js',
-  'js/reflayer.js',
   'js/render.js',
   'js/selection.js',
   'js/spritefx.js',

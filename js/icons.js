@@ -61,9 +61,6 @@ export const ICONS = {
   // gemalt wird. Das Panel zum Verwalten der Paletten traegt dafuer die drei
   // Kreise (icon `palette`).
   colors:  `<path d="M12 22a10 10 0 1 1 10-10c0 2.8-2.2 4-4 4h-2a2 2 0 0 0-1.5 3.3A1.7 1.7 0 0 1 12 22z"/><g ${DOT}><circle cx="7.5" cy="11" r="1.4"/><circle cx="10" cy="6.5" r="1.4"/><circle cx="15" cy="6.5" r="1.4"/></g>`,
-  // Sprite-Ebene: ein Kettenglied — die Ebene zeigt auf einen anderen Sprite.
-  link:    '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
-  rotate:  '<path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/>',
   eye:     '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
   close:   '<path d="M18 6L6 18M6 6l12 12"/>',
   play:    '<path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.5-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5z"/>',

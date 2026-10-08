@@ -794,11 +794,6 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 .tl-layer:hover { color: var(--text); }
 .tl-layer.is-active { background: var(--accent-bg); color: var(--accent); }
 .tl-layer.is-hidden .tl-lname { opacity: 0.45; }
-/* Sprite-Ebene: Kettenglied vor dem Name (js/reflayer.js). */
-.tl-link, .ly-link { flex: none; display: inline-grid; place-items: center; color: var(--accent); }
-.tl-link svg { width: 12px; height: 12px; }
-.ly-link svg { width: 12px; height: 12px; margin-right: 4px; vertical-align: -1px; }
-.tl-layer.is-missing .tl-lname { color: var(--danger, #e5534b); }
 .tl-lname { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tl-eye, .tl-lock { flex: none; width: 20px; height: 20px; padding: 0; }
 .tl-eye svg, .tl-lock svg { width: 13px; height: 13px; }
@@ -892,26 +887,6 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
    Schrägstrich. */
 #tl-total { min-width: 0; text-align: left; white-space: nowrap; }
 #timeline.is-vertical .tl-num { flex-direction: row; }
-
-/* Sprite-Ebene im Ebenen-Panel (js/reflayer.js) */
-.ref-props {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-  margin-top: var(--sp-2);
-  padding: var(--sp-2);
-  border: 1px solid var(--accent-line);
-  border-radius: var(--r-md);
-  background: var(--accent-bg);
-}
-.ref-props[hidden] { display: none; }
-.ref-head { display: flex; align-items: center; gap: var(--sp-2); color: var(--accent); }
-.ref-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); font-weight: 600; }
-.ref-row { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-2) var(--sp-3); }
-.ref-row input[type="number"] { width: 4rem; }
-#ref-rot.is-active, #ref-fx.is-active, #ref-fy.is-active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent-line); }
-#ly-addref { margin-top: var(--sp-2); width: 100%; }
-.tl-addref { max-width: 12rem; }
 
 /* Hilfslinien: im Verschieben-Modus kein Pinsel-Umriss */
 #editor-canvas-wrap.is-guide-edit #brush-cursor { display: none; }

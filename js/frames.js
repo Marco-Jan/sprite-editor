@@ -11,7 +11,7 @@
 //
 // Abspielen läuft in der Zeichenfläche. Gezeichnet wird dabei nicht: ein
 // Tipp auf die Fläche hält an (app.js), jede Frame-Aktion ebenso.
-import { state, sprites, getSprite, getPaletteByName, clearSelection, frameDuration, MAX_FPS, flatGrid, blankLike, layerGrid, refPlaceLists, defaultPlace, isRefLayer } from './state.js';
+import { state, getSprite, getPaletteByName, clearSelection, frameDuration, MAX_FPS, flatGrid, blankLike } from './state.js';
 import { dc, cellToColor } from './data.js';
 import { renderAll, renderEditor, renderCallbacks } from './render.js';
 import { recordOp } from './history.js';
@@ -22,7 +22,6 @@ import { iconSvg } from './icons.js';
 import { t } from './i18n.js';
 import { isMobileLayout } from './layout.js';
 import { setActiveLayer, toggleVisible, toggleLocked } from './layers.js';
-import { openRefSprite } from './reflayer.js';
 
 /** @type {(id: string) => any} */
 const $ = id => document.getElementById(id);
@@ -144,19 +143,11 @@ function edit(fn) {
   saveState();
 }
 
-// Hinter Frame i eine Kopie der Positionen aller Sprite-Ebenen einfügen.
-function copyPlaces(sp, i) {
-  for (const at of refPlaceLists(sp)) at.splice(i + 1, 0, { ...(at[i] || defaultPlace()) });
-}
-
 export function addFrame() {
   resetSel();
   edit(sp => {
     const cels = sp.frames[sp.frame].cels.map(blankLike);
     sp.frames.splice(sp.frame + 1, 0, { cels, dur: 0 });
-    // Teile (Sprite-Ebenen) bleiben, wo sie waren — der neue Frame ist leer,
-    // aber eine Figur aus Teilen soll man von dort aus weiterbewegen.
-    copyPlaces(sp, sp.frame);
     sp.frame++;
   });
 }
@@ -166,7 +157,6 @@ export function duplicateFrame() {
   edit(sp => {
     const f = sp.frames[sp.frame];
     sp.frames.splice(sp.frame + 1, 0, { cels: f.cels.map(dc), dur: f.dur });
-    copyPlaces(sp, sp.frame);
     sp.frame++;
   });
 }
@@ -181,10 +171,7 @@ export function deleteFrame() {
   if (sp.frames.length - ids.length < 1) { showInfoToast(t('tl.lastFrame')); return; }
   resetSel();
   edit(s => {
-    for (const i of [...ids].reverse()) {
-      s.frames.splice(i, 1);
-      for (const at of refPlaceLists(s)) at.splice(i, 1);
-    }
+    for (const i of [...ids].reverse()) s.frames.splice(i, 1);
     s.frame = Math.min(ids[0], s.frames.length - 1);
   });
 }
@@ -196,7 +183,6 @@ export function moveFrame(from, to) {
   edit(s => {
     const [f] = s.frames.splice(from, 1);
     s.frames.splice(to, 0, f);
-    for (const at of refPlaceLists(s)) { const [p] = at.splice(from, 1); at.splice(to, 0, p); }
     s.frame = to;
   });
 }
@@ -402,21 +388,16 @@ function makeCorner() {
 }
 
 // Eine Ebene: Auge, Schloss, Name. Ein Klick auf die Zeile wählt die
-// Ebene, ohne den Frame zu wechseln. Eine Sprite-Ebene trägt ein
-// Kettenglied; der Doppelklick öffnet dort den gezeigten Sprite.
+// Ebene, ohne den Frame zu wechseln.
 function makeLayerRow(sp, li) {
   const L = sp.layers[li];
-  const ref = isRefLayer(L);
   const row = document.createElement('div');
   row.className = 'tl-layer';
   row.dataset.l = String(li);
   row.classList.toggle('is-hidden', !L.visible);
-  row.classList.toggle('is-ref', ref);
-  row.classList.toggle('is-missing', ref && !sprites[L.ref]);
-  row.title = ref ? t('ref.rowTitle', { name: L.name }) : L.name;
+  row.title = L.name;
   row.innerHTML = '<button type="button" class="icon-btn tl-eye"></button>'
     + '<button type="button" class="icon-btn tl-lock"></button>'
-    + (ref ? '<span class="tl-link">' + iconSvg('link') + '</span>' : '')
     + '<span class="tl-lname"></span>';
   const eye = /** @type {HTMLElement} */ (row.children[0]);
   const lock = /** @type {HTMLElement} */ (row.children[1]);
@@ -427,11 +408,10 @@ function makeLayerRow(sp, li) {
   lock.title = t(L.locked ? 'ly.unlock' : 'ly.lock');
   lock.setAttribute('aria-pressed', String(L.locked));
   lock.classList.toggle('is-on', L.locked);
-  row.querySelector('.tl-lname').textContent = ref && !sprites[L.ref] ? L.name + ' ' + t('ref.missing') : L.name;
+  row.children[2].textContent = L.name;
   eye.addEventListener('click', e => { e.stopPropagation(); toggleVisible(li); });
   lock.addEventListener('click', e => { e.stopPropagation(); toggleLocked(li); });
   row.addEventListener('click', () => setActiveLayer(li));
-  if (ref) row.addEventListener('dblclick', () => openRefSprite(L));
   return row;
 }
 
@@ -474,7 +454,7 @@ export function renderTimeline() {
     body.push(row);
     for (let fi = 0; fi < n; fi++) {
       const c = makeCel(fi, li);
-      setCelFill(c, layerGrid(sp, li, fi));
+      setCelFill(c, sp.frames[fi].cels[li]);
       c.classList.toggle('is-hidden', !sp.layers[li].visible);
       c.title = t('tl.celTitle', { i: fi + 1, name: sp.layers[li].name });
       celEls[li][fi] = c;
@@ -526,7 +506,7 @@ export function refreshCurrentThumb() {
   const b = thumbs[sp.frame];
   if (b) drawThumb(b.firstChild, flatGrid(sp), getPaletteByName(sp.palette));
   const c = celEls[sp.layer]?.[sp.frame];
-  if (c) setCelFill(c, layerGrid(sp, sp.layer));
+  if (c) setCelFill(c, sp.grid);
 }
 
 function markActive() {

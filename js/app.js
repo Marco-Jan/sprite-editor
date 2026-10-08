@@ -49,7 +49,6 @@ import { openReduceModal, initReduceModal } from './reduce.js';
 import { zoomAt, fitZoomToArea, isPanMode, setPanTool, initPan, initPinch } from './view.js';
 import { initFrames, togglePlay, nextFrame, prevFrame, firstFrame, lastFrame, isPlaying, stop as stopPlayback } from './frames.js';
 import { initLayers } from './layers.js';
-import { initRefLayers, activeRefLayer, startRefDrag, nudgeRef } from './reflayer.js';
 import { initPreview, renderPreview } from './preview.js';
 import { initGuides, guidePointerDown, toggleEdit as toggleGuideEdit, toggleShow as toggleGuides } from './guides.js';
 import { parseTsSprite } from './tsimport.js';
@@ -346,17 +345,14 @@ function info(msg) {
 }
 
 // In eine gesperrte oder ausgeblendete Ebene wird nicht gemalt — man sähe
-// es nicht bzw. will es dort gerade nicht. In eine Sprite-Ebene auch nicht:
-// sie zeigt einen anderen Sprite und hat keine eigenen Pixel; verschieben
-// darf man sie aber (moveRef). Gibt true zurück, wenn blockiert.
+// es nicht bzw. will es dort gerade nicht. Gibt true zurück, wenn blockiert.
 // toast = true: für Knöpfe in Panels, dort sieht man die Statuszeile kaum.
-function layerBlocked(toast = false, moveRef = false) {
+function layerBlocked(toast = false) {
   const sp = getSprite();
   const L = sp?.layers[sp.layer];
   if (!L) return false;
   const msg = L.locked ? t('ly.lockedInfo', { name: L.name })
-    : !L.visible ? t('ly.hiddenInfo', { name: L.name })
-    : activeRefLayer() && !moveRef ? t('ly.refInfo', { name: L.name }) : null;
+    : !L.visible ? t('ly.hiddenInfo', { name: L.name }) : null;
   if (!msg) return false;
   if (toast) showInfoToast(msg); else info(msg);
   return true;
@@ -422,12 +418,6 @@ function initCanvasEvents() {
           ? t('info.pickFree', { hex: v })
           : t('info.pickIndex', { i: v, label: colorLabelShort(v) }));
       }
-      return;
-    }
-
-    // ── Sprite-Ebene: jedes Werkzeug verschiebt das Teil ──
-    if (activeRefLayer()) {
-      if (!layerBlocked(false, true)) startRefDrag(e, cellFromEventClamped);
       return;
     }
 
@@ -667,16 +657,6 @@ function initKeyboardEvents() {
         e.preventDefault();
         if (layerBlocked()) return;
         info(t('sel.erased', { n: deleteSelection() }));
-        return;
-      }
-    }
-
-    // ── Sprite-Ebene: Pfeiltasten schieben das Teil ──
-    if (activeRefLayer()) {
-      const step = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
-      if (step) {
-        e.preventDefault();
-        if (!layerBlocked(false, true)) nudgeRef(step[0], step[1]);
         return;
       }
     }
@@ -1448,7 +1428,6 @@ function init() {
   initExport();
   initFrames();
   initLayers();   // nach initFrames: hängt sich an dessen Zeichen-Callback
-  initRefLayers(); // nach initLayers: hängt sich an dessen Render-Callback
   initPreview();  // ebenso — zeichnet bei jedem Strich mit
   initGuides();
   renderCallbacks.onGuideInfo = info;
