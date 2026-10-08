@@ -61,6 +61,16 @@ export const ICONS = {
   // gemalt wird. Das Panel zum Verwalten der Paletten traegt dafuer die drei
   // Kreise (icon `palette`).
   colors:  `<path d="M12 22a10 10 0 1 1 10-10c0 2.8-2.2 4-4 4h-2a2 2 0 0 0-1.5 3.3A1.7 1.7 0 0 1 12 22z"/><g ${DOT}><circle cx="7.5" cy="11" r="1.4"/><circle cx="10" cy="6.5" r="1.4"/><circle cx="15" cy="6.5" r="1.4"/></g>`,
+  // Verknüpfte Zellen: Kettenglied — und dasselbe auseinandergezogen.
+  link:    '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+  unlink:  '<path d="M15 9.5l2.2-2.2a3.5 3.5 0 0 0-5-5L10 4.5"/><path d="M9 14.5l-2.2 2.2a3.5 3.5 0 0 0 5 5L14 19.5"/><path d="M3 3l3 3M18 18l3 3M3 9h3M15 21v-3"/>',
+  // Durchgehende Ebene (Aseprite): zwei verbundene Punkte — oder getrennt.
+  contOn:  '<circle cx="6" cy="12" r="3.2"/><circle cx="18" cy="12" r="3.2"/><path d="M9.2 12h5.6"/>',
+  contOff: '<circle cx="6" cy="12" r="3.2"/><circle cx="18" cy="12" r="3.2"/>',
+  // Frame-Tag: ein Anhänger-Etikett.
+  tag:     '<path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9z"/><circle cx="7.5" cy="7.5" r="1.5"/>',
+  // Nach Farbstufen sortieren: drei Balken von dunkel (kurz) nach hell (lang).
+  shades:  '<rect x="3" y="13" width="4.5" height="8" rx="1"/><rect x="9.75" y="8" width="4.5" height="13" rx="1"/><rect x="16.5" y="3" width="4.5" height="18" rx="1"/>',
   eye:     '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
   close:   '<path d="M18 6L6 18M6 6l12 12"/>',
   play:    '<path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.5-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5z"/>',

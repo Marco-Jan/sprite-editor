@@ -49,6 +49,10 @@ import { openReduceModal, initReduceModal } from './reduce.js';
 import { zoomAt, fitZoomToArea, isPanMode, setPanTool, initPan, initPinch } from './view.js';
 import { initFrames, togglePlay, nextFrame, prevFrame, firstFrame, lastFrame, isPlaying, stop as stopPlayback } from './frames.js';
 import { initLayers } from './layers.js';
+import { celKeyDown } from './frames.js';
+import { initTlMenu } from './tlmenu.js';
+import { initQuickPaletteDrag } from './qpdrag.js';
+import { normalizeTags } from './tags.js';
 import { initPreview, renderPreview } from './preview.js';
 import { initGuides, guidePointerDown, toggleEdit as toggleGuideEdit, toggleShow as toggleGuides } from './guides.js';
 import { parseTsSprite } from './tsimport.js';
@@ -614,6 +618,11 @@ function initKeyboardEvents() {
     }
 
     if (isTypingTarget(e.target) || anyModalOpen()) return;
+
+    // ── Timeline: Zellen kopieren, einfügen, leeren ──
+    // Nur nach einem Klick in die Timeline, sonst gehören die Tasten der
+    // Auswahl auf der Zeichenfläche (js/frames.js).
+    if (celKeyDown(e)) return;
 
     // ── Auswahl: Zwischenablage ──
     if ((e.ctrlKey || e.metaKey) && !e.altKey) {
@@ -1337,6 +1346,8 @@ function initImport() {
         sp.frame = 0;
         if (fps) sp.fps = Math.max(1, Math.min(60, fps));
         if (palName) sp.palette = palName;
+        // Tags passen nur noch, soweit es ihre Frames noch gibt.
+        sp.tags = normalizeTags(sp.tags, sp.frames.length);
       });
     }
 
@@ -1428,6 +1439,8 @@ function init() {
   initExport();
   initFrames();
   initLayers();   // nach initFrames: hängt sich an dessen Zeichen-Callback
+  initTlMenu();
+  initQuickPaletteDrag();
   initPreview();  // ebenso — zeichnet bei jedem Strich mit
   initGuides();
   renderCallbacks.onGuideInfo = info;

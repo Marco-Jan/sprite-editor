@@ -2,10 +2,10 @@
 // SPRITES — anlegen, umbenennen, duplizieren, löschen
 // ════════════════════════════════════════════════════════════════════
 import {
-  state, sprites, createSprite, selectFirstSprite, flatGrid,
+  state, sprites, createSprite, selectFirstSprite, flatGrid, copyFrames,
   getSprite, makeSpriteId, listSprites, clearSelection,
 } from './state.js';
-import { DEFAULT_PALETTE, dc } from './data.js';
+import { DEFAULT_PALETTE } from './data.js';
 import { renderAll } from './render.js';
 import { createPalettePicker } from './palpicker.js';
 import { saveState } from './storage.js';
@@ -44,11 +44,12 @@ export function duplicateSprite(id) {
   const newId = createSprite({
     name: src.name + t('list.copySuffix'),
     palette: src.palette,
-    frames: src.frames.map(f => ({ cels: f.cels.map(dc), dur: f.dur })),
+    frames: copyFrames(src.frames),   // verknüpfte Zellen bleiben verknüpft
     fps: src.fps,
     layers: src.layers.map(l => ({ ...l })),
     layer: src.layer,
     guides: JSON.parse(JSON.stringify(src.guides)),
+    tags: src.tags,
   });
   commitFloat();
   clearSelection();

@@ -6,13 +6,18 @@
 // lokale Re-Assignments — sonst sehen andere Module die Änderung nicht.
 import { BUILTIN_PALETTES, DEFAULT_PALETTE, paletteSize, cellToColor } from './data.js';
 import { t } from './i18n.js';
+import { normalizeTags } from './tags.js';
+import { defaultTlOpts } from './onion.js';
 
 // ────────────────────────────────────────────────────────────────────
 // Sprites — eine flache Sammlung. Jeder Sprite bringt seine Ebenen, Frames
 // und seine eigene Palette mit; es gibt keine eingebauten Motive mehr.
 //   sprites[id] = { name: 'Held', palette: 'golden', fps: 8, frame: 0, layer: 0,
 //                   layers: [{ name, visible, locked, opacity }, …],   // unten → oben
-//                   frames: [{ cels: [grid je Ebene], dur: 0 }, …] }
+//                   frames: [{ cels: [grid je Ebene], dur: 0 }, …],
+//                   tags: [{ name, from, to, color, dir }, …] }   // js/tags.js
+// Verknüpfte Zellen: zwei Frames dürfen sich auf einer Ebene DASSELBE Bild
+// teilen — dasselbe Array-Objekt, nicht nur gleiche Pixel (siehe unten).
 // `dur` ist die Dauer des Frames in ms, 0 = nach den fps des Sprites.
 // `sp.grid` ist ein (nicht aufgezähltes) Kürzel auf das Bild der AKTIVEN
 // Ebene im AKTUELLEN Frame — Werkzeuge, Auswahl und Effekte arbeiten damit
@@ -63,6 +68,9 @@ export const state = {
   // Animation: Nachbar-Frames durchscheinen lassen; Abspielen läuft gerade.
   onion:         false,
   playing:       false,
+  // Einstellungen der Timeline und des Onion Skins — für alle Sprites
+  // (js/onion.js, Menü in js/tlmenu.js).
+  tlOpts:        defaultTlOpts(),
 
   // Hilfslinien (js/guides.js): anzeigen; Verschieben-Modus (nicht gespeichert).
   showGuides:    true,
@@ -140,10 +148,12 @@ export const MAX_FPS = 60;
 
 // `sp.grid` als Kürzel auf das aktive Bild einrichten. Nicht aufgezählt,
 // damit es weder im Speicherstand noch in Kopien doppelt auftaucht.
+// Zuweisen ersetzt den INHALT, nicht das Objekt: ist die Zelle mit anderen
+// Frames verknüpft, bekommen die das neue Bild mit — wie beim Malen.
 export function attachGrid(sp) {
   Object.defineProperty(sp, 'grid', {
     get() { return this.frames[this.frame].cels[this.layer]; },
-    set(g) { this.frames[this.frame].cels[this.layer] = g; },
+    set(g) { this.frames[this.frame].cels[this.layer].splice(0, Infinity, ...g.map(row => [...row])); },
     enumerable: false,
     configurable: true,
   });
@@ -151,8 +161,10 @@ export function attachGrid(sp) {
 }
 
 // ── Ebenen ──────────────────────────────────────────────────────────
+// continuous: „durchgehende" Ebene wie in Aseprite — ein neuer Frame
+// bekommt hier keine leere Zelle, sondern teilt sich das Bild des vorigen.
 export function defaultLayer(n = 1) {
-  return { name: t('ly.name', { n }), visible: true, locked: false, opacity: 1 };
+  return { name: t('ly.name', { n }), visible: true, locked: false, opacity: 1, continuous: false };
 }
 
 export function normalizeLayer(l, n) {
@@ -162,6 +174,7 @@ export function normalizeLayer(l, n) {
     visible: l?.visible !== false,
     locked: !!l?.locked,
     opacity: Number.isFinite(op) ? Math.max(0, Math.min(1, op)) : 1,
+    continuous: !!l?.continuous,
   };
 }
 
@@ -185,8 +198,8 @@ export function normalizeGuides(g, W, H) {
 
 // Sprite-Datensatz aus Rohdaten bauen (Anlegen, Laden, Import).
 // Frames als { cels: [grid, …], dur } oder — eine Ebene — als { grid, dur }.
-export function makeSprite({ name, palette, frames, fps = DEFAULT_FPS, frame = 0, layers = null, layer = 0, guides = null }) {
-  const fr = frames.map(f => ({ cels: f.cels ? [...f.cels] : [f.grid], dur: Math.max(0, Math.round(f.dur) || 0) }));
+export function makeSprite({ name, palette, frames, fps = DEFAULT_FPS, frame = 0, layers = null, layer = 0, guides = null, tags = null }) {
+  const fr = resolveLinks(frames.map(f => ({ cels: f.cels ? [...f.cels] : [f.grid], dur: Math.max(0, Math.round(f.dur) || 0) })));
   const n = Math.max(...fr.map(f => f.cels.length));
   for (const f of fr) while (f.cels.length < n) f.cels.push(blankLike(f.cels[0]));
   const ly = Array.from({ length: n }, (_, i) => normalizeLayer(layers?.[i], i + 1));
@@ -199,19 +212,107 @@ export function makeSprite({ name, palette, frames, fps = DEFAULT_FPS, frame = 0
     layers: ly,
     frames: fr,
     guides: normalizeGuides(guides, fr[0].cels[0][0].length, fr[0].cels[0].length),
+    tags: normalizeTags(tags, fr.length),
   });
 }
 
 // Alle Bilder eines Sprites (jeder Frame, jede Ebene) — für alles, was den
 // ganzen Sprite betrifft: Palette umfärben, Bildfarben, Begrenzung.
+// Verknüpfte Zellen kommen nur EINMAL vor: wer in place umfärbt, färbte ein
+// geteiltes Bild sonst zweimal um.
 export function allGrids(sp) {
-  return sp.frames.flatMap(f => f.cels);
+  return [...new Set(sp.frames.flatMap(f => f.cels))];
 }
 
 // Jedes Bild (jeder Frame, jede Ebene) durch fn(grid) ersetzen — Größe
-// ändern, drehen, spiegeln …
+// ändern, drehen, spiegeln … Ein geteiltes Bild wird einmal umgerechnet und
+// bleibt geteilt.
 export function mapFrames(sp, fn) {
-  sp.frames.forEach(f => { f.cels = f.cels.map(g => fn(g)); });
+  const done = new Map();
+  sp.frames.forEach(f => {
+    f.cels = f.cels.map(g => {
+      if (!done.has(g)) done.set(g, fn(g));
+      return done.get(g);
+    });
+  });
+}
+
+// ── Verknüpfte Zellen ───────────────────────────────────────────────
+// Wie in Aseprite: mehrere Frames zeigen auf einer Ebene dasselbe Bild.
+// Malt man in einem, ändert es sich in allen — gut für einen Hintergrund,
+// der stillsteht. Im Speicher ist das schlicht dasselbe Array-Objekt; im
+// Speicherstand steht statt des zweiten Bildes { link: k } — „wie in
+// Frame k". Alles, was Bilder kopiert, muss die Teilung mitkopieren
+// (copyFrames), sonst zerfällt die Verknüpfung beim ersten Undo.
+
+// Erster Frame vor `f`, der auf Ebene `l` dasselbe Bild zeigt — oder -1.
+export function linkedTo(sp, f, l) {
+  const g = sp.frames[f].cels[l];
+  for (let k = 0; k < f; k++) if (sp.frames[k].cels[l] === g) return k;
+  return -1;
+}
+
+// Teilt die Zelle ihr Bild mit irgendeinem anderen Frame?
+export function isLinked(sp, f, l) {
+  const g = sp.frames[f].cels[l];
+  return sp.frames.some((fr, k) => k !== f && fr.cels[l] === g);
+}
+
+// Frames kopieren — mit derselben Teilung wie im Original.
+export function copyFrames(frames) {
+  const memo = new Map();
+  const cp = g => { if (!memo.has(g)) memo.set(g, g.map(row => [...row])); return memo.get(g); };
+  return frames.map(f => ({ cels: f.cels.map(cp), dur: f.dur || 0 }));
+}
+
+// Welche Zelle teilt sich mit welcher — als Text, zum Vergleichen.
+export function linkSignature(frames) {
+  return frames.map((f, i) => f.cels.map((g, l) => {
+    for (let k = 0; k < i; k++) if (frames[k].cels[l] === g) return k;
+    return -1;
+  }).join(',')).join(';');
+}
+
+const isLinkMark = c => !!c && typeof c === 'object' && !Array.isArray(c) && Number.isInteger(c.link);
+
+// Zellen für einen neuen Frame hinter Frame `i`. Durchgehende Ebenen
+// teilen sich das Bild von Frame i; die übrigen sind leer — oder, beim
+// Duplizieren, eine eigene Kopie.
+export function newFrameCels(sp, i, duplicate = false) {
+  return sp.frames[i].cels.map((g, l) => (sp.layers[l]?.continuous ? g
+    : duplicate ? g.map(row => [...row]) : blankLike(g)));
+}
+
+// Für den Speicherstand: geteilte Bilder als { link: k }.
+export function framesForSave(sp) {
+  return sp.frames.map((f, i) => {
+    const cels = f.cels.map((g, l) => {
+      const k = linkedTo(sp, i, l);
+      return k >= 0 ? { link: k } : g;
+    });
+    return f.dur ? { cels, dur: f.dur } : { cels };
+  });
+}
+
+// Beim Laden: { link: k } wieder auf das Bild aus Frame k zeigen lassen.
+// Ein Verweis, der nirgends hinführt (fremde Datei, kaputter Stand), wird
+// ein leeres Bild statt eines Absturzes.
+export function resolveLinks(frames) {
+  const first = frames.flatMap(f => f.cels).find(c => Array.isArray(c));
+  const out = [];
+  // Der Reihe nach: Frame k ist schon aufgelöst, wenn Frame i darauf zeigt —
+  // so führt auch eine Kette (3 → 2 → 0) am Ende auf dasselbe Bild.
+  frames.forEach((f, i) => {
+    out.push({
+      ...f,
+      cels: f.cels.map((c, l) => {
+        if (!isLinkMark(c)) return c;
+        const target = c.link >= 0 && c.link < i ? out[c.link].cels[l] : null;
+        return Array.isArray(target) ? target : blankLike(first || [[0]]);
+      }),
+    });
+  });
+  return out;
 }
 
 // Zwei Farben mischen: `top` mit Deckkraft a über `below`.
@@ -255,7 +356,7 @@ export function frameDuration(sp, i) {
 
 // Sprite anlegen und zurückgeben. Setzt ihn NICHT automatisch aktiv.
 // `frames` ([{ grid | cels, dur }]) geht vor `grid` (ein einzelnes Bild).
-export function createSprite({ name, size = 24, palette = DEFAULT_PALETTE, grid = null, frames = null, fps = DEFAULT_FPS, layers = null, layer = 0, guides = null }) {
+export function createSprite({ name, size = 24, palette = DEFAULT_PALETTE, grid = null, frames = null, fps = DEFAULT_FPS, layers = null, layer = 0, guides = null, tags = null }) {
   const id = makeSpriteId(name);
   sprites[id] = makeSprite({
     name: (name || id).trim() || id,
@@ -265,6 +366,7 @@ export function createSprite({ name, size = 24, palette = DEFAULT_PALETTE, grid 
     layers,
     layer,
     guides,
+    tags,
   });
   return id;
 }

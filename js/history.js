@@ -8,7 +8,8 @@
 // Persistenz: bewusst nur in-memory (wie bei jedem Design-Tool).
 // Mit im Eintrag steckt die Palette des Sprites — so ist auch "Sprite
 // umfärben" (andere Palette zuweisen) ein normaler Undo-Schritt.
-import { state, sprites } from './state.js';
+import { state, sprites, copyFrames, linkSignature } from './state.js';
+import { copyTags } from './tags.js';
 import { dc } from './data.js';
 
 const MAX_HISTORY = 50;
@@ -28,16 +29,19 @@ export const historyCallbacks = {
 // (anlegen, löschen, verschieben) und Änderungen über alle Frames (Größe,
 // Palette umfärben) ein normaler Undo-Schritt. Gespeicherte Grids werden
 // nie verändert — unveränderte Frames teilen sich darum ihre Kopie.
+// Verknüpfte Zellen (dasselbe Bild in mehreren Frames) bleiben dabei
+// verknüpft: copyFrames kopiert ein geteiltes Bild nur einmal.
 function snap(id) {
   const sp = sprites[id];
   if (!sp) return null;
   return {
-    frames: sp.frames.map(f => ({ cels: f.cels.map(dc), dur: f.dur || 0 })),
+    frames: copyFrames(sp.frames),
     layers: sp.layers.map(l => ({ ...l })),
     layer: sp.layer,
     frame: sp.frame,
     fps: sp.fps,
     palette: sp.palette,
+    tags: copyTags(sp.tags),
   };
 }
 
@@ -46,12 +50,20 @@ function snap(id) {
 function snapAfter(id, before) {
   const sp = sprites[id];
   if (!sp) return null;
+  // Ein Bild aus dem Vorher-Stand darf nur für EIN heutiges Bild stehen —
+  // sonst würden zwei getrennte Zellen mit gleichem Inhalt beim Undo zu
+  // einer verknüpften.
+  const memo = new Map(), taken = new Set();
+  const keep = (g, b) => {
+    if (memo.has(g)) return memo.get(g);
+    const c = b && !taken.has(b) && gridsEqual(b, g) ? b : dc(g);
+    taken.add(c);
+    memo.set(g, c);
+    return c;
+  };
   return {
     frames: sp.frames.map((f, i) => ({
-      cels: f.cels.map((g, j) => {
-        const b = before.frames[i]?.cels[j];
-        return b && gridsEqual(b, g) ? b : dc(g);
-      }),
+      cels: f.cels.map((g, j) => keep(g, before.frames[i]?.cels[j])),
       dur: f.dur || 0,
     })),
     layers: sp.layers.map(l => ({ ...l })),
@@ -59,6 +71,7 @@ function snapAfter(id, before) {
     frame: sp.frame,
     fps: sp.fps,
     palette: sp.palette,
+    tags: copyTags(sp.tags),
   };
 }
 
@@ -76,6 +89,8 @@ function gridsEqual(a, b) {
 function snapsEqual(a, b) {
   if (a.palette !== b.palette || a.fps !== b.fps || a.frames.length !== b.frames.length) return false;
   if (JSON.stringify(a.layers) !== JSON.stringify(b.layers)) return false;
+  if (linkSignature(a.frames) !== linkSignature(b.frames)) return false;
+  if (JSON.stringify(a.tags) !== JSON.stringify(b.tags)) return false;
   return a.frames.every((f, i) => f.dur === b.frames[i].dur
     && f.cels.length === b.frames[i].cels.length
     && f.cels.every((g, j) => gridsEqual(g, b.frames[i].cels[j])));
@@ -125,17 +140,30 @@ export function recordOpOn(id, fn) {
   if (after && !snapsEqual(before, after)) push({ id, before, after });
 }
 
+// Ein Undo-Schritt, der mehr umfasst als einen Sprite — z. B. die Palette
+// umsortieren: Palette, Materialien und die Pixel aller Sprites mit dieser
+// Palette ändern sich zusammen und müssen zusammen zurück. Die beiden
+// Funktionen machen den Schritt rückgängig bzw. noch einmal; geben sie
+// false zurück, wird der Eintrag übersprungen.
+export function recordCustom({ undo: undoFn, redo: redoFn }) {
+  pendingSnapshot = null;
+  push({ custom: { undo: undoFn, redo: redoFn } });
+}
+
 function apply(id, st) {
   const sp = sprites[id];
-  sp.frames = st.frames.map(f => ({ cels: f.cels.map(dc), dur: f.dur }));
+  sp.frames = copyFrames(st.frames);
   sp.layers = st.layers.map(l => ({ ...l }));
   sp.layer = Math.min(st.layer, sp.layers.length - 1);
   sp.frame = Math.min(st.frame, sp.frames.length - 1);
   sp.fps = st.fps;
+  sp.tags = copyTags(st.tags);
   if (st.palette) sp.palette = st.palette;
 }
 
 function restore(entry, which) {
+  // Eigener Schritt (recordCustom): er weiß selbst, was zu tun ist.
+  if (entry.custom) return entry.custom[which === 'before' ? 'undo' : 'redo']() !== false;
   // Der Sprite kann inzwischen gelöscht worden sein — Eintrag dann verwerfen.
   if (!sprites[entry.id]) return false;
   apply(entry.id, entry[which]);

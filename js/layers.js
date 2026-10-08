@@ -80,7 +80,13 @@ export function duplicateLayer() {
     const at = sp.layer + 1;
     const src = sp.layers[sp.layer];
     sp.layers.splice(at, 0, { ...src, name: t('ly.copyName', { name: src.name }) });
-    sp.frames.forEach(f => f.cels.splice(at, 0, dc(f.cels[sp.layer])));
+    // Verknüpfte Zellen der Vorlage sind in der Kopie wieder verknüpft.
+    const memo = new Map();
+    sp.frames.forEach(f => {
+      const g = f.cels[sp.layer];
+      if (!memo.has(g)) memo.set(g, dc(g));
+      f.cels.splice(at, 0, memo.get(g));
+    });
     sp.layer = at;
   });
 }
@@ -107,8 +113,18 @@ export function mergeDown() {
     const top = s.layer, below = top - 1;
     const a = s.layers[top].opacity;
     const pal = getPaletteByName(s.palette);
+    // Verknüpfte Zellen: dasselbe Paar (oben, unten) ergibt dasselbe neue,
+    // wieder geteilte Bild. Ein geteiltes Bild unten, über dem in jedem
+    // Frame etwas anderes liegt, wird dagegen je Frame eigenständig.
+    const done = new Map();
     for (const f of s.frames) {
-      const src = f.cels[top], dst = f.cels[below];
+      const src = f.cels[top];
+      const pair = done.get(src) || new Map();
+      done.set(src, pair);
+      if (pair.has(f.cels[below])) { f.cels[below] = pair.get(f.cels[below]); f.cels.splice(top, 1); continue; }
+      const dst = dc(f.cels[below]);
+      pair.set(f.cels[below], dst);
+      f.cels[below] = dst;
       for (let y = 0; y < dst.length; y++) for (let x = 0; x < dst[y].length; x++) {
         const v = src[y][x];
         if (v === 0) continue;
@@ -139,6 +155,8 @@ export function moveLayer(from, to) {
 
 export function toggleVisible(i) { meta(sp => { sp.layers[i].visible = !sp.layers[i].visible; }); }
 export function toggleLocked(i) { meta(sp => { sp.layers[i].locked = !sp.layers[i].locked; }); }
+// Durchgehend: neue Frames verknüpfen hier mit dem vorigen (state.js newFrameCels).
+export function toggleContinuous(i) { meta(sp => { sp.layers[i].continuous = !sp.layers[i].continuous; }); }
 
 export function renameLayer(i, name) {
   const n = String(name || '').trim();

@@ -789,8 +789,10 @@ function syncBarFade(el) {
   el.classList.toggle('is-more-r', MOBILE.matches && rest > 4 && !rightCovered);
 }
 
-// Die Icon-Spalten unten können genauso überlaufen wie die Leisten.
-const fadeEls = () => [...BARS.map(id => $(id)), ...document.querySelectorAll('.rail-dock, .tl-frames')];
+// Die Icon-Spalten unten können genauso überlaufen wie die Leisten. Das
+// Raster der Timeline nicht: links klebt dort die Ebenen-Spalte, ein
+// Verlauf am Rand läge über den Namen.
+const fadeEls = () => [...BARS.map(id => $(id)), ...document.querySelectorAll('.rail-dock')];
 
 function initBarFades() {
   for (const el of fadeEls()) {
@@ -916,6 +918,13 @@ function applyAll() {
 // Ob gerade das Handy-Layout gilt — damit app.js denselben Umbruchpunkt
 // benutzt und nicht eine zweite Zahl pflegen muss.
 export const isMobileLayout = () => MOBILE.matches;
+
+// Für das Timeline-Menü (js/tlmenu.js): wo steht die Timeline, und dorthin.
+export function timelineZone() {
+  const p = placeOf('timeline');
+  return p.kind === 'zone' ? p.zone : null;
+}
+export function setTimelineZone(z) { setPlace('timeline', zone(z)); }
 
 export function initLayout() {
   ws = $('workspace');
