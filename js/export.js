@@ -4,6 +4,7 @@
 // PDF nutzt jsPDF aus vendor/, geladen in editor.html (window.jspdf).
 // PNG und PDF zeigen den aktuellen Frame, GIF und Spritesheet alle Frames.
 import { getPal, getSprite, listSprites, getPaletteByName, frameDuration, flatGrid, emptyGrid } from './state.js';
+import { paintGrid } from './raster.js';
 import { encodeGif } from './gif.js';
 import { cellToColor, renderCallbacks } from './render.js';
 import { selectedFrameIndices } from './frames.js';
@@ -29,17 +30,8 @@ function renderSpriteToCanvas(scale, i) {
   c.width  = W * scale;
   c.height = H * scale;
   const ctx = c.getContext('2d');
-  ctx.imageSmoothingEnabled = false; // harte Pixel-Kanten beim Hochskalieren
-
-  for (let y = 0; y < H; y++) {
-    for (let x = 0; x < W; x++) {
-      const fill = cellToColor(grid[y][x], pal);
-      if (fill) {
-        ctx.fillStyle = fill;
-        ctx.fillRect(x * scale, y * scale, scale, scale);
-      }
-    }
-  }
+  // Ein Bild in Sprite-Größe, hart hochskaliert (js/raster.js).
+  paintGrid(ctx, grid, pal, 0, 0, scale, { key: 'export' });
   return c;
 }
 

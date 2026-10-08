@@ -15,7 +15,6 @@
 import { t, onLangChange } from './i18n.js';
 import { iconSvg } from './icons.js';
 
-const COMPACT = window.matchMedia('(max-width: 1279.98px)');
 
 let openPanel = null;
 const docks = [];
@@ -60,16 +59,6 @@ function show(panel) {
   });
 }
 
-// ── Menü der Kopfzeile ──────────────────────────────────────────────
-function setMenu(open) {
-  const bar = document.getElementById('topbar');
-  const btn = document.getElementById('menu-btn');
-  if (!bar || !btn) return;
-  bar.classList.toggle('menu-open', open);
-  btn.setAttribute('aria-expanded', String(open));
-}
-const menuOpen = () => document.getElementById('topbar')?.classList.contains('menu-open');
-
 function relabel() {
   docks.forEach(({ btn, panel }) => {
     const name = panel.dataset.dockLabel ? t(panel.dataset.dockLabel)
@@ -80,18 +69,6 @@ function relabel() {
   document.querySelectorAll('.dock-close').forEach(b => {
     b.title = t('help.close');
     b.setAttribute('aria-label', t('help.close'));
-  });
-}
-
-function initMenu() {
-  const btn = document.getElementById('menu-btn');
-  const actions = document.querySelector('.topbar-actions');
-  if (!btn || !actions) return;
-  btn.addEventListener('click', e => { e.stopPropagation(); setMenu(!menuOpen()); });
-  // Ein Eintrag gewählt → Menü zu. Die Aktion selbst läuft normal weiter.
-  actions.addEventListener('click', e => { if (/** @type {HTMLElement} */ (e.target).closest('button')) setMenu(false); });
-  document.addEventListener('pointerdown', e => {
-    if (menuOpen() && !/** @type {HTMLElement} */ (e.target).closest('.topbar-actions, #menu-btn')) setMenu(false);
   });
 }
 
@@ -143,7 +120,6 @@ export function initDock() {
     });
   });
 
-  initMenu();
   relabel();
   onLangChange(relabel);
 
@@ -156,14 +132,10 @@ export function initDock() {
     show(null);
   });
 
-  // Breiter gezogen → Kopfzeile wieder ohne Menü, offenes Menü vergessen.
-  COMPACT.addEventListener('change', () => { if (!COMPACT.matches) setMenu(false); });
-
   // Esc schließt zuerst Menü bzw. Schublade — außer ein Dialog ist offen,
   // der gehört dann dem normalen Esc-Handler in app.js.
   window.addEventListener('keydown', e => {
     if (e.key !== 'Escape' || document.querySelector('.modal-overlay.open')) return;
-    if (menuOpen()) { e.stopPropagation(); setMenu(false); return; }
     if (openPanel) { e.stopPropagation(); show(null); }
   }, true);
 }

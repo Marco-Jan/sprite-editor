@@ -3,7 +3,7 @@
 // ════════════════════════════════════════════════════════════════════
 import {
   state, sprites, createSprite, selectFirstSprite, flatGrid, copyFrames,
-  getSprite, makeSpriteId, listSprites, clearSelection,
+  getSprite, makeSpriteId, listSprites, clearSelection, MAX_SIDE,
 } from './state.js';
 import { DEFAULT_PALETTE } from './data.js';
 import { renderAll } from './render.js';
@@ -165,11 +165,11 @@ export function initNewSpriteModal() {
   });
 }
 
-// Zahl aus einem Eingabefeld auf 1…256 begrenzen; 0 bedeutet "unbrauchbar".
+// Zahl aus einem Eingabefeld auf 1…MAX_SIDE begrenzen; 0 bedeutet "unbrauchbar".
 function clampSize(v) {
   const n = Math.floor(Number(v));
   if (!Number.isFinite(n) || n < 1) return 0;
-  return Math.min(n, 256);
+  return Math.min(n, MAX_SIDE);
 }
 
 // Namensvorschlag: "Sprite N" mit der nächsten freien Nummer.
@@ -278,7 +278,7 @@ export function initSizeModal() {
     const sp = sprites[id];
     if (!sp) { close(); return; }
     const w = Number(wInp.value), h = Number(hInp.value);
-    if (!(w >= 1 && w <= 256 && h >= 1 && h <= 256)) {
+    if (!(w >= 1 && w <= MAX_SIDE && h >= 1 && h <= MAX_SIDE)) {
       showInfoToast(t('mod.sizeInvalid'));
       return;
     }

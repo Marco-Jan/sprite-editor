@@ -128,29 +128,6 @@ code { font-family: var(--mono); font-size: 0.95em; color: var(--accent); }
 .btn.is-ok { background: var(--primary-bg); color: var(--primary); border-color: var(--primary-line); }
 .btn.is-set { border-color: var(--primary-line); color: var(--primary); }
 
-/* Sprachumschalter (DE / EN) — bewusst schmaler als ein .btn, damit er
-   in der vollen Knopfleiste nicht wie eine Aktion aussieht. */
-.lang-switch {
-  display: inline-flex;
-  border: 1px solid var(--line);
-  border-radius: var(--r-md);
-  overflow: hidden;
-}
-.lang-btn {
-  appearance: none;
-  padding: 6px 8px;
-  border: 0;
-  background: var(--surface-2);
-  color: var(--text-dim, var(--text-muted));
-  font: 700 var(--fs-xs, var(--fs-sm))/1 var(--font);
-  letter-spacing: 0.04em;
-  cursor: pointer;
-  transition: background 0.12s, color 0.12s;
-}
-.lang-btn + .lang-btn { border-inline-start: 1px solid var(--line); }
-.lang-btn:hover { background: var(--surface-3); color: var(--text); }
-.lang-btn.is-active { background: var(--surface-4); color: var(--text); }
-
 .btn-group { display: inline-flex; gap: 2px; }
 .btn-group .btn { border-radius: 0; }
 .btn-group .btn:first-child { border-radius: var(--r-md) 0 0 var(--r-md); }
@@ -408,7 +385,88 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   transition: opacity 0.25s;
 }
 .save-indicator.on { opacity: 1; }
-.topbar-actions { display: flex; gap: var(--sp-2); margin-left: auto; }
+
+/* ── Menüleiste (js/menubar.js) ──────────────────────────────────────
+   Wie in jedem Programm: Titel nebeneinander, darunter ein Aufklapp-Menü
+   mit Einträgen und Tastenkürzeln rechts. Bewusst ohne Akzentfarben —
+   die Kopfzeile soll ruhig sein, die Farbe gehört der Zeichnung. */
+.menubar { display: flex; align-items: center; gap: 2px; margin-left: var(--sp-2); }
+.mb-menu { position: relative; }
+.mb-title {
+  appearance: none;
+  padding: 5px 10px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--fs-md);
+  cursor: pointer;
+}
+.mb-title:hover, .mb-title.is-open { background: var(--surface-3); color: var(--text); }
+.mb-title:focus-visible { outline: 2px solid var(--line-strong); outline-offset: 1px; }
+.mb-drop {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  min-width: 15rem;
+  padding: 4px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-md);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-lg);
+}
+.mb-drop[hidden] { display: none; }
+.mb-item {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  width: 100%;
+  padding: 6px 10px 6px 26px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-md);
+  text-align: left;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  position: relative;
+}
+.mb-item[hidden] { display: none; }
+.mb-item > span { flex: 1 1 auto; }
+.mb-item kbd {
+  font: inherit;
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+}
+.mb-item:hover:not(:disabled), .mb-item:focus-visible { background: var(--surface-3); outline: none; }
+.mb-item:disabled { color: var(--text-dim); cursor: default; }
+/* Häkchen für Auswahl-Einträge (Hintergrund, Sprache). */
+.mb-item[aria-checked="true"]::before {
+  content: '✓';
+  position: absolute;
+  left: 9px;
+  color: var(--text);
+}
+.mb-sep { height: 1px; margin: 4px 6px; background: var(--line); }
+.mb-label {
+  padding: 4px 10px 2px 26px;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.mb-group { display: flex; flex-direction: column; }
+.doc-title { margin-left: var(--sp-2); }
+.save-indicator { color: var(--text-dim); }
 
 #workspace {
   display: grid;
@@ -1006,8 +1064,10 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 #gd-show.is-active, #gd-edit.is-active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent-line); }
 
 /* Vorschau-Panel (js/preview.js) — der ganze Sprite, ohne Gitter.
-   Das Schachbrett zeigt, was transparent ist; der Rahmen gibt dem Bild
-   einen Rand, auch wenn der Sprite fast leer ist. */
+   Das Schachbrett liegt auf dem BILD, nicht auf der Box: es zeigt genau die
+   Fläche des Sprites und was darin transparent ist — egal, wie groß man das
+   Panel zieht. Ein Feld je Sprite-Pixel (--chk setzt js/preview.js), der
+   feine Rahmen zeigt den Rand auch bei fast leerem Sprite. */
 .preview-box {
   display: grid;
   place-items: center;
@@ -1017,13 +1077,14 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   padding: var(--sp-3);
   border: 1px solid var(--line);
   border-radius: var(--r-md);
-  background:
-    repeating-conic-gradient(var(--surface-3) 0% 25%, transparent 0% 50%) 0 0 / 12px 12px,
-    var(--surface-1);
+  background: var(--surface-1);
 }
 #preview-canvas {
   display: block;
   image-rendering: pixelated;
+  background:
+    repeating-conic-gradient(var(--surface-3) 0% 25%, var(--surface-2) 0% 50%) 0 0 / var(--chk, 12px) var(--chk, 12px);
+  outline: 1px solid var(--line-strong);
 }
 
 /* Ebenen-Panel (js/layers.js) — oberste Ebene oben */
@@ -1085,7 +1146,23 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   cursor: crosshair;
   line-height: 0;
 }
-#editor-canvas { display: block; position: relative; z-index: 1; touch-action: none; }
+#editor-canvas { display: block; position: relative; z-index: 1; touch-action: none; image-rendering: pixelated; }
+/* Gitterlinien über dem Canvas: eine Linie links und oben je Zelle, die
+   letzte rechts und unten als Rand. --cell setzt js/render.js. */
+#editor-gridlines {
+  position: absolute;
+  left: 0; top: 0;
+  z-index: 1;
+  pointer-events: none;
+  --line: rgba(255, 255, 255, 0.07);
+  background-image:
+    linear-gradient(to right, var(--line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--line) 1px, transparent 1px);
+  background-size: var(--cell, 16px) var(--cell, 16px);
+  box-shadow: inset -1px -1px 0 var(--line);
+}
+#editor-gridlines.is-light { --line: rgba(0, 0, 0, 0.09); }
+#editor-gridlines[hidden] { display: none; }
 #editor-canvas-wrap.is-eyedrop,
 #editor-canvas-wrap[data-tool="eraser"],
 #editor-canvas-wrap[data-tool="wand"] { cursor: cell; }
@@ -1508,6 +1585,61 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
    und schwebende Fenster bleiben, damit man weiterarbeiten kann. */
 body.editor-fullscreen #topbar { display: none; }
 
+/* ── Vollbild (js/fullscreen.js) ─────────────────────────────────────
+   Weg sind Menüleiste, Kopfzeile über der Fläche und die Seitenleisten;
+   Werkzeugleiste, Farbzeile und Timeline bleiben. Die Seitenleisten liegen
+   dann über der Fläche und gleiten herein, wenn die Maus an den Rand kommt
+   (body.fs-peek-left / -right). */
+body.editor-fullscreen #stage-head { display: none; }
+.fs-exit, .fs-grip { display: none; }
+body.editor-fullscreen .fs-exit {
+  display: inline-flex;
+  position: fixed;
+  top: 10px; right: 10px;
+  z-index: 80;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s, right 0.18s ease;
+  background: var(--surface-1);
+  box-shadow: var(--shadow-md);
+}
+body.editor-fullscreen .fs-exit.is-visible { opacity: 1; pointer-events: auto; }
+@media (min-width: 1100.02px) {
+  /* overflow: die versteckte rechte Leiste liegt rechts neben dem Fenster —
+     ohne Abschneiden gäbe es einen waagerechten Scrollbalken. */
+  body.editor-fullscreen #workspace { grid-template-columns: minmax(0, 1fr); overflow: hidden; }
+  body.editor-fullscreen .rail {
+    position: absolute;
+    top: 0; bottom: 0;
+    z-index: 45;
+    box-shadow: var(--shadow-lg);
+    transition: transform 0.18s ease;
+  }
+  body.editor-fullscreen #rail-left { left: 0; transform: translateX(calc(-100% - 12px)); }
+  body.editor-fullscreen #rail-right { right: 0; transform: translateX(calc(100% + 12px)); }
+  body.editor-fullscreen.fs-peek-left #rail-left,
+  body.editor-fullscreen.fs-peek-right #rail-right { transform: none; }
+  /* Griffe nur ohne Maus: ein schmaler Streifen mitten am Rand. */
+  @media (pointer: coarse) {
+    body.editor-fullscreen .fs-grip {
+      display: block;
+      position: fixed;
+      top: 50%;
+      z-index: 46;
+      width: 14px;
+      height: 64px;
+      margin-top: -32px;
+      padding: 0;
+      border: 1px solid var(--line-strong);
+      background: var(--surface-2);
+      opacity: 0.8;
+    }
+    .fs-grip--left { left: 0; border-left: 0; border-radius: 0 var(--r-md) var(--r-md) 0; }
+    .fs-grip--right { right: 0; border-right: 0; border-radius: var(--r-md) 0 0 var(--r-md); }
+    body.fs-peek-left .fs-grip--left, body.fs-peek-right .fs-grip--right { display: none; }
+  }
+}
+
 /* ── 10 · Responsive ────────────────────────────────────────────── */
 @media (max-width: 1280px) {
   :root { --rail-w: 232px; }
@@ -1534,77 +1666,6 @@ body.editor-fullscreen #topbar { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
-}
-
-/* ── Sprachumschalter ────────────────────────────────────────────
-   Pixel-Optik: harte Kanten, kein Rundungsradius, ein versetzter
-   Schatten statt Verlauf. Die Flaggen sind winzige Rastergrafiken
-   (tools/make_flags.py) und werden ganzzahlig auf 2x hochskaliert,
-   damit jedes Quellpixel auf genau vier Bildschirmpixel faellt.
-   Als CSS-Verlauf gezeichnet waeren die Diagonalen des Union Jack
-   weichgezeichnet — in einer Pixel-Oberflaeche faellt das auf. */
-.lang-switch {
-  display: flex;
-  gap: 2px;
-  padding: 2px;
-  background: var(--surface-1);
-  border: 2px solid var(--line);
-}
-
-.lang-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  border: 2px solid transparent;
-  border-radius: 0;
-  background: transparent;
-  color: var(--text-dim);
-  font: 700 var(--fs-sm)/1 var(--mono);
-  letter-spacing: 0.1em;
-  cursor: pointer;
-  transition: color 0.12s, background 0.12s;
-}
-
-/* Die Flagge selbst. 30x18 = 2x der 15x9-Vorlage. */
-.lang-btn::before {
-  content: "";
-  width: 30px;
-  height: 18px;
-  background-repeat: no-repeat;
-  background-size: 30px 18px;
-  image-rendering: pixelated;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55);
-  /* Inaktiv zurueckgenommen, damit die aktive Sprache heraussticht — aber
-     nicht so weit, dass der Union Jack zu einem grauen Fleck wird. */
-  filter: saturate(0.6) brightness(0.82);
-  transition: filter 0.12s;
-}
-.lang-btn[data-lang="de"]::before { background-image: url("assets/flag-de.png"); }
-.lang-btn[data-lang="at"]::before { background-image: url("assets/flag-at.png"); }
-.lang-btn[data-lang="en"]::before { background-image: url("assets/flag-en.png"); }
-
-.lang-btn:hover { color: var(--text-muted); background: var(--surface-2); }
-.lang-btn:hover::before { filter: saturate(0.7) brightness(0.9); }
-
-.lang-btn.is-active {
-  background: var(--surface-3);
-  border-color: var(--line-strong);
-  color: var(--text);
-  /* Versetzter harter Schatten — sieht aus wie eine gedrueckte Taste. */
-  box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.35);
-}
-.lang-btn.is-active::before { filter: none; }
-
-.lang-btn:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-/* Auf schmalen Fenstern reicht die Flagge — das Kuerzel steht ohnehin
-   im title-Attribut und in aria-label. */
-@media (max-width: 1100px) {
-  .lang-btn { padding: 4px 6px; font-size: 0; gap: 0; letter-spacing: 0; }
 }
 
 /* ── 11 · Dock: Seitenleisten als Icon-Spalte ───────────────────────
@@ -1680,44 +1741,7 @@ body.editor-fullscreen #topbar { display: none; }
 .btn:has(.ico) { gap: 6px; }
 .btn:has(.ico):not(:has(.btn-label)) { padding-inline: 8px; }
 
-.menu-btn { display: none; }
-
 @media (max-width: 1279.98px) {
-  #topbar { position: relative; z-index: 60; }
-  .menu-btn { display: inline-flex; margin-left: auto; }
-  #menu-btn[aria-expanded="true"] { background: var(--accent-bg); color: var(--accent); border-color: var(--accent-line); }
-
-  /* Die Knöpfe der Kopfzeile liegen jetzt im Menü hinter ☰. */
-  .topbar-actions {
-    display: none;
-    position: absolute;
-    top: calc(100% + 4px);
-    right: var(--sp-4);
-    flex-direction: column;
-    align-items: stretch;
-    gap: 2px;
-    min-width: 220px;
-    margin-left: 0;
-    padding: var(--sp-2);
-    background: var(--surface-1);
-    border: 1px solid var(--line-strong);
-    border-radius: var(--r-lg);
-    box-shadow: var(--shadow-lg);
-  }
-  #topbar.menu-open .topbar-actions { display: flex; }
-  .topbar-actions .btn {
-    justify-content: flex-start;
-    gap: var(--sp-2);
-    padding: 9px 10px;
-    border-color: transparent;
-    background: transparent;
-    font-size: var(--fs-md);
-  }
-  .topbar-actions .btn:hover { background: var(--surface-3); color: var(--text); }
-  .topbar-actions .btn--danger { color: var(--danger); }
-  .topbar-actions .btn--danger:hover { background: var(--danger-bg); color: var(--danger); }
-  .topbar-actions .btn[hidden] { display: none; }
-
   /* Werkzeugleiste: Auswahl-Aktionen und Vollbild nur als Icon, der Name
      steht im Tooltip. Sonst schiebt sich die Reihe rechts hinaus. */
   #select-group .btn-label,
@@ -2080,6 +2104,14 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
   :root { --mbar-h: 48px; }
 
   #topbar { gap: var(--sp-2); padding: var(--sp-1) var(--sp-3); }
+  /* Am Handy: nur das Logo, die vier Menütitel passen dann daneben.
+     Die Menüs werden fingerfreundlich hoch und bleiben im Bild. */
+  .brand-name, .doc-title, .save-indicator { display: none; }
+  .menubar { margin-left: 0; gap: 0; }
+  .mb-title { padding: 8px 9px; }
+  .mb-item { padding-top: 11px; padding-bottom: 11px; }
+  .mb-menu:last-child .mb-drop, .mb-menu:nth-last-child(2) .mb-drop { left: auto; right: 0; }
+  .mb-drop { max-width: calc(100vw - 16px); }
 
   /* Unten stehen beide Dock-Spalten nebeneinander in einer Zeile. Die linke
      nimmt nur, was ihre Icons brauchen, die rechte den Rest — und scrollt in

@@ -18,7 +18,7 @@
 // verschiedene Größen, oder sie spränge beim Zuschneiden und Zentrieren.
 // Einzige Ausnahme ist die freie Drehung — sie dreht den Frame, den man
 // sieht, weil man den Winkel am Bild abschätzt.
-import { selection, sprites, state, getSprite, clearSelection, mapFrames, allGrids } from './state.js';
+import { selection, sprites, state, getSprite, clearSelection, mapFrames, allGrids, MAX_SIDE } from './state.js';
 import { renderAll, renderEditor } from './render.js';
 import { saveState } from './storage.js';
 import { recordOp, recordOpOn, beginStroke, commitStroke } from './history.js';
@@ -339,8 +339,8 @@ export function resizeSpriteCanvas(id, newW, newH, anchor = 'center') {
   if (!sp) return null;
   commitFloat();
   const W = sp.grid[0].length, H = sp.grid.length;
-  newW = Math.max(1, Math.min(256, Math.round(newW) || W));
-  newH = Math.max(1, Math.min(256, Math.round(newH) || H));
+  newW = Math.max(1, Math.min(MAX_SIDE, Math.round(newW) || W));
+  newH = Math.max(1, Math.min(MAX_SIDE, Math.round(newH) || H));
   if (newW === W && newH === H) return { ok: false, reason: 'unchanged' };
 
   const dx = anchor === 'center' ? Math.round((newW - W) / 2) : 0;
@@ -377,7 +377,7 @@ export function scaleSprite(factor) {
   const W = sp.grid[0].length, H = sp.grid.length;
   const newW = Math.round(W * factor), newH = Math.round(H * factor);
   if (newW < 1 || newH < 1) return { ok: false, reason: 'tooSmall' };
-  if (newW > 256 || newH > 256) return { ok: false, reason: 'tooBig' };
+  if (newW > MAX_SIDE || newH > MAX_SIDE) return { ok: false, reason: 'tooBig' };
 
   recordOp(() => {
     mapFrames(sp, g => Array.from({ length: newH }, (_, y) =>

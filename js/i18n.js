@@ -154,7 +154,8 @@ export function syncSwitch() {
   document.querySelectorAll('.lang-switch [data-lang]').forEach(btn => {
     const on = btn.dataset.lang === _lang;
     btn.classList.toggle('is-active', on);
-    btn.setAttribute('aria-pressed', String(on));
+    // In der Menüleiste ist die Sprache ein Auswahl-Eintrag mit Häkchen.
+    btn.setAttribute(btn.getAttribute('role') === 'menuitemradio' ? 'aria-checked' : 'aria-pressed', String(on));
   });
 }
 
@@ -207,6 +208,40 @@ const STATIC = {
     'tb.reset':       'Reset',
     'tb.resetTitle':  'Reset everything',
     'tb.langLabel':   'Language',
+    'mb.label': 'Menu',
+    'fs.exit': 'Exit fullscreen',
+    'fs.exitTitle': 'Exit fullscreen (Esc)',
+    'fs.gripLeft': 'Show left bar',
+    'fs.gripRight': 'Show right bar',
+    'mb.file': 'File',
+    'mb.new': 'New sprite …',
+    'mb.open': 'Open …',
+    'mb.save': 'Save project',
+    'mb.dir': 'Choose save folder …',
+    'mb.export': 'Export …',
+    'mb.install': 'Install app',
+    'mb.reset': 'Reset everything …',
+    'mb.edit': 'Edit',
+    'mb.undo': 'Undo',
+    'mb.redo': 'Redo',
+    'mb.selAll': 'Select all',
+    'mb.selNone': 'Deselect',
+    'mb.view': 'View',
+    'mb.fullscreen': 'Fullscreen',
+    'mb.bg': 'Background',
+    'mb.bgDark': 'Dark',
+    'mb.bgLight': 'Light',
+    'mb.lang': 'Language',
+    'mb.help': 'Help',
+    'mb.helpOpen': 'Help and shortcuts',
+    'mb.home': 'Start page',
+    'mb.imprint': 'Imprint',
+    'mb.privacy': 'Privacy',
+    'mb.kOpen': 'Ctrl+O',
+    'mb.kSave': 'Ctrl+S',
+    'mb.kUndo': 'Ctrl+Z',
+    'mb.kRedo': 'Ctrl+Y',
+    'mb.kSelAll': 'Ctrl+A',
 
     // ── Sprite-Panel ──
     'sp.title':       'Sprites',
@@ -658,6 +693,9 @@ const STATIC = {
       + '<div class="sc-row"><b>Two fingers</b><span>Zoom and pan (touch)</span></div>'
       + '<div class="sc-row"><b>Ctrl + Z</b><span>Undo</span></div>'
       + '<div class="sc-row"><b>Ctrl + Y</b><span>Redo</span></div>'
+      + '<div class="sc-row"><b>Ctrl + S</b><span>Save project</span></div>'
+      + '<div class="sc-row"><b>Ctrl + O</b><span>Open project</span></div>'
+      + '<div class="sc-row"><b>F1</b><span>Help</span></div>'
       + '<div class="sc-row"><b>Esc</b><span>Deselect, close a dialog or leave full screen</span></div>',
   },
 };
@@ -786,6 +824,7 @@ const MSG = {
     'tl.lyAdd':     'Neue Ebene über der aktiven',
     'tl.lyDup':     'Ebene duplizieren',
     'tl.lyDel':     'Ebene löschen',
+    'out.tooBigLive': '// Der Sprite ist groß ({n} Pixel über alle Frames) — der Code wird erst beim Kopieren oder Speichern erzeugt.',
     'tg.defaultName': 'Tag {n}',
     'tg.barTitle':  '{name} · Frames {a}–{b} · {dir} — klicken zum Bearbeiten',
     'qp.sorted':        'Nach Farbstufen sortiert — das Bild ist gleich geblieben. Strg+Z macht es rückgängig.',
@@ -884,7 +923,7 @@ const MSG = {
     'sprite.confirmDelete': 'Sprite „{name}“ wirklich löschen?',
     'sprite.created':       '„{name}“ angelegt.',
     'sprite.needName':      'Bitte einen Namen eingeben.',
-    'sprite.needSize':      'Breite und Höhe müssen zwischen 1 und 256 liegen.',
+    'sprite.needSize':      'Breite und Höhe müssen zwischen 1 und 1024 liegen.',
     'sprite.emptyGrid':     '— Leeres Grid —',
     'sprite.option':        '{name} ({w}×{h})',
     'sprite.confirmClear':  'Alle Pixel dieses Sprites löschen?',
@@ -961,7 +1000,7 @@ const MSG = {
     'tf.centered':    'Inhalt mittig gesetzt.',
     'tf.centerFail':  'Nicht verschoben — {reason}.',
     'mod.sizeCurrent':  '„{name}“ ist derzeit {w}×{h} Pixel.',
-    'mod.sizeInvalid':  'Breite und Höhe müssen zwischen 1 und 256 liegen.',
+    'mod.sizeInvalid':  'Breite und Höhe müssen zwischen 1 und 1024 liegen.',
 
     'tf.resized':     'Größe jetzt {w}×{h}{lost}.',
     'tf.resizeLost':  ' — {n} Pixel abgeschnitten',
@@ -978,7 +1017,7 @@ const MSG = {
     'reason.centered':  'schon mittig',
     'reason.unchanged': 'unverändert',
     'reason.tooSmall':  'zu klein',
-    'reason.tooBig':    'über 256 Pixel',
+    'reason.tooBig':    'über 1024 Pixel',
 
     // Aufräumen
     'cln.bgRemoved':   'Hintergrund entfernt — {n} Pixel.',
@@ -1013,7 +1052,7 @@ const MSG = {
     'file.saved':        '„{name}“ gespeichert.',
     'file.savedInOk':    '✅ „{name}“ gespeichert in „{dir}“.',
     'file.savedOk':      '✅ „{name}“ gespeichert.',
-    'file.saveFailed':   'Speichern fehlgeschlagen — localStorage voll? (Limit ~5 MB)',
+    'file.saveFailed':   'Speichern fehlgeschlagen — ist der Speicher des Browsers voll? „Projekt sichern“ schreibt eine Datei.',
     'file.badProject':   'Ungültige Datei — das ist kein Sprite-Projekt.',
     'file.readFailed':   'Datei konnte nicht gelesen werden.',
     'file.clipboardOff': 'Zwischenablage nicht verfügbar — Text ist markiert, mit Strg+C kopieren.',
@@ -1228,6 +1267,7 @@ const MSG = {
     'tl.lyAdd':     'New layer above the active one',
     'tl.lyDup':     'Duplicate layer',
     'tl.lyDel':     'Delete layer',
+    'out.tooBigLive': '// The sprite is large ({n} pixels across all frames) — the code is built only when you copy or save it.',
     'tg.defaultName': 'Tag {n}',
     'tg.barTitle':  '{name} · frames {a}–{b} · {dir} — click to edit',
     'qp.sorted':        'Sorted by shades — the image stayed the same. Ctrl+Z undoes it.',
@@ -1321,7 +1361,7 @@ const MSG = {
     'sprite.confirmDelete': 'Really delete the sprite “{name}”?',
     'sprite.created':       '“{name}” created.',
     'sprite.needName':      'Please enter a name.',
-    'sprite.needSize':      'Width and height must be between 1 and 256.',
+    'sprite.needSize':      'Width and height must be between 1 and 1024.',
     'sprite.emptyGrid':     '— Empty grid —',
     'sprite.option':        '{name} ({w}×{h})',
     'sprite.confirmClear':  'Erase every pixel of this sprite?',
@@ -1394,7 +1434,7 @@ const MSG = {
     'tf.centered':    'Content moved to the middle.',
     'tf.centerFail':  'Not moved — {reason}.',
     'mod.sizeCurrent':  '“{name}” is currently {w}×{h} pixels.',
-    'mod.sizeInvalid':  'Width and height must be between 1 and 256.',
+    'mod.sizeInvalid':  'Width and height must be between 1 and 1024.',
 
     'tf.resized':     'Size is now {w}×{h}{lost}.',
     'tf.resizeLost':  ' — {n} pixels cut off',
@@ -1411,7 +1451,7 @@ const MSG = {
     'reason.centered':  'already centered',
     'reason.unchanged': 'unchanged',
     'reason.tooSmall':  'too small',
-    'reason.tooBig':    'over 256 pixels',
+    'reason.tooBig':    'over 1024 pixels',
 
     'cln.bgRemoved':   'Background removed — {n} pixels.',
     'cln.bgNone':      'Nothing removed — raise the tolerance?',
@@ -1443,7 +1483,7 @@ const MSG = {
     'file.saved':        '“{name}” saved.',
     'file.savedInOk':    '✅ “{name}” saved in “{dir}”.',
     'file.savedOk':      '✅ “{name}” saved.',
-    'file.saveFailed':   'Saving failed — is localStorage full? (limit ~5 MB)',
+    'file.saveFailed':   'Saving failed — is the browser storage full? “Save project” writes a file.',
     'file.badProject':   'Invalid file — that is not a sprite project.',
     'file.readFailed':   'The file could not be read.',
     'file.clipboardOff': 'Clipboard not available — the text is selected, copy it with Ctrl+C.',

@@ -15,7 +15,7 @@ import { initLayout, isMobileLayout, refreshToolOpts } from './layout.js';
 import { applyIcons, iconSvg } from './icons.js';
 import { showConfirmToast, showInfoToast } from './toast.js';
 import {
-  renderAll, renderEditor, renderSpriteList, syncColorActive, updateOutput, renderMaterials,
+  renderAll, renderEditor, renderSpriteList, syncColorActive, updateOutput, currentCode, renderMaterials,
   renderFreeColorsList, countCurrentColor,
   cellFromEvent, cellFromEventClamped, cellToColor, paintCell, paintBrush, paintSpray, floodFill,
   renderCallbacks, shapeCells, commitShape,
@@ -52,6 +52,8 @@ import { initLayers } from './layers.js';
 import { celKeyDown } from './frames.js';
 import { initTlMenu } from './tlmenu.js';
 import { initQuickPaletteDrag } from './qpdrag.js';
+import { initMenubar } from './menubar.js';
+import { initFullscreen, enterFullscreen, exitFullscreen } from './fullscreen.js';
 import { normalizeTags } from './tags.js';
 import { initPreview, renderPreview } from './preview.js';
 import { initGuides, guidePointerDown, toggleEdit as toggleGuideEdit, toggleShow as toggleGuides } from './guides.js';
@@ -609,7 +611,11 @@ function initKeyboardEvents() {
       const k = e.key.toLowerCase();
       if (k === 'z' && !e.shiftKey) { e.preventDefault(); stopRotating(false); commitFloat(); undo(); return; }
       if (k === 'y' || (k === 'z' && e.shiftKey)) { e.preventDefault(); stopRotating(false); commitFloat(); redo(); return; }
+      // Datei-Menü: sichern und öffnen — statt „Seite speichern" des Browsers.
+      if (k === 's' && !e.shiftKey) { e.preventDefault(); commitFloat(); saveToFile(); return; }
+      if (k === 'o' && !e.shiftKey) { e.preventDefault(); $('load-file-btn').click(); return; }
     }
+    if (e.key === 'F1') { e.preventDefault(); $('help-btn').click(); return; }
 
     if (e.key === 'Enter' && isRotating() && !isTypingTarget(e.target)) {
       stopRotating(true);
@@ -735,15 +741,6 @@ function syncFullscreenBtn() {
   btn.title       = t(on ? 'full.exitTitle' : 'full.enterTitle');
 }
 
-function enterFullscreen() {
-  document.body.classList.add('editor-fullscreen');
-  syncFullscreenBtn();
-}
-
-function exitFullscreen() {
-  document.body.classList.remove('editor-fullscreen');
-  syncFullscreenBtn();
-}
 
 // ────────────────────────────────────────────────────────────────────
 // Werkzeugleiste
@@ -1158,8 +1155,11 @@ function initOutputPanel() {
     const btn = $('copy-btn');
     const ta = $('output-textarea');
     if (ta.dataset.error) { showInfoToast(ta.dataset.error); return; }
+    // Großer Sprite: der Code steht nicht im Feld, er wird jetzt gebaut.
+    const code = ta.dataset.lazy ? currentCode() : { code: ta.value, error: null };
+    if (code.error) { showInfoToast(code.error); return; }
     try {
-      await navigator.clipboard.writeText(ta.value);
+      await navigator.clipboard.writeText(code.code);
     } catch {
       // Clipboard-API kann blockiert sein (kein HTTPS o.ä.) — Auswahl als Fallback.
       ta.select();
@@ -1175,9 +1175,11 @@ function initOutputPanel() {
   $('save-code-btn').addEventListener('click', async () => {
     if (!getSprite()) return;
     if ($('output-textarea').dataset.error) { showInfoToast($('output-textarea').dataset.error); return; }
+    const code = currentCode();
+    if (code.error) { showInfoToast(code.error); return; }
     const fmt = getFormat(state.outputFormat);
     const filename = codeFilename(state.outputFormat);
-    const blob = new Blob([$('output-textarea').value], { type: `${fmt.mime};charset=utf-8` });
+    const blob = new Blob([code.code], { type: `${fmt.mime};charset=utf-8` });
     const result = await saveBlob(blob, filename);
     showInfoToast(result.fallback
       ? t('file.downloaded', { name: filename })
@@ -1404,13 +1406,14 @@ function relabelUi() {
   info(''); // die alte Statuszeile stünde sonst in der alten Sprache da
 }
 
-function init() {
+async function init() {
   // Zuerst übersetzen: der Body ist so lange versteckt (siehe editor.html).
   applyStatic();
   initLangSwitch();
   onLangChange(relabelUi);
 
-  const loaded = loadState();
+  // IndexedDB lädt asynchron — erst danach gibt es Sprites zum Zeichnen.
+  const loaded = await loadState();
 
   // Leeres Projekt (erster Start oder Migration hat nichts gerettet) →
   // ein Sprite anlegen, damit der Editor nie ins Leere zeigt.
@@ -1422,6 +1425,8 @@ function init() {
   initDock();
   initLayout();
   initTopbar();
+  initMenubar();
+  initFullscreen({ onToggle: syncFullscreenBtn });
   initToolbar();
   initPalettePanel();
   initFreeColors();

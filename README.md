@@ -31,8 +31,8 @@ eine eigene App.
   Deploy bekommt man also beim nächsten Neuladen die neue Version.
 - **Offline**, oder wenn der Server länger als 4 Sekunden nicht antwortet, kommt die Datei
   aus dem Cache.
-- Projekte liegen wie immer im `localStorage` bzw. in der Projektdatei. Mit dem Cache haben
-  sie nichts zu tun.
+- Projekte liegen in IndexedDB bzw. in der Projektdatei. Mit dem Cache haben sie nichts
+  zu tun.
 
 ### Update-Band
 
@@ -71,7 +71,7 @@ Zum Testen: DevTools → Application → Service Workers zeigt den Worker. Unter
 ## Aufbau der Oberfläche
 
 ```
-┌── Kopfzeile: Projekt sichern/öffnen, Speicherort, Hilfe ──────────┐
+┌── Menüleiste: Datei · Bearbeiten · Ansicht · Hilfe ───────────────┐
 ├───────────┬───────────────────────────────────┬──────────────────┤
 │ Sprites   │  Werkzeugleiste                   │ Vorschau, Ebenen │
 │ Code &    │  Farb-Schnellwahl (0–9)           │ Farben, Schablone │
@@ -105,8 +105,15 @@ der Zeichenfläche (Standard), ohne Pin liegt sie im Dock. Diese Wahl gilt nur f
 Auch die Dock-Icons unten lassen sich dort ziehen: Reihenfolge ändern und zwischen linker
 und rechter Gruppe wechseln — ebenfalls nur fürs Handy, das Desktop-Layout bleibt. Andocken lassen sie sich oben, unten oder links/rechts neben der
 Zeichenfläche (dort senkrecht), in beliebiger Reihenfolge. Die Anordnung merkt sich
-der Browser (localStorage `spritebit_layout`), sie gehört nicht zum Projekt. Im Vollbild
-verschwindet nur die Kopfzeile.
+der Browser (localStorage `spritebit_layout`), sie gehört nicht zum Projekt.
+
+**Vollbild** (`js/fullscreen.js`) schaltet auch den Browser ins Vollbild (Fullscreen API;
+iPhone/iPad-Safari erlaubt das Webseiten nicht, dort werden nur die Leisten ausgeblendet).
+Menüleiste, Kopfzeile über der Fläche und die Seitenleisten verschwinden; Werkzeugleiste,
+Farbzeile und Timeline bleiben. Die Seitenleisten gleiten herein, sobald die Maus an den
+linken bzw. rechten Rand kommt (ohne Maus: schmaler Griff am Rand), und bleiben, solange ein
+Panel daraus offen ist. Beenden: Esc, der Knopf oben rechts in der Zeichenfläche oder
+Ansicht → Vollbild.
 
 ---
 
@@ -498,15 +505,33 @@ die FPS-Zahl des Sprites.
 | `G` | Hilfslinien ein / aus |
 | Zwei Finger (Touch) | Zoomen und verschieben |
 | `Strg+Z` / `Strg+Y` | Rückgängig / Wiederholen |
+| `Strg+S` / `Strg+O` | Projekt sichern / öffnen |
+| `F1` | Hilfe |
 | `Esc` | Auswahl aufheben, Dialog oder Vollbild schließen |
 
 ---
 
 ## Speichern
 
-Alles liegt unter dem localStorage-Key `wb_sprite_tester_v1` (der Key blieb; das
-Schema ist versioniert). Auto-Save 250 ms nach jeder Änderung, Force-Save beim
-Tab-Schließen.
+Der Stand liegt in **IndexedDB** (Datenbank `spritebit`, `js/idb.js`):
+
+- `sprites` — je Sprite ein Eintrag, die Pixel kompakt als Bytes (`js/pack.js`):
+  `Uint8Array` für Palettenfarben, `Uint16Array`, sobald freie Farben vorkommen.
+  Verknüpfte Zellen stehen nur einmal drin.
+- `kv` — Projekt (Paletten, Materialien, Oberfläche, Reihenfolge der Sprites),
+  Sicherung, Rettung und ein wartender Import.
+
+Gespeichert wird 250 ms nach jeder Änderung und sofort beim Wegwechseln vom Tab —
+im Hintergrund, und nur Sprites, deren Prüfsumme sich geändert hat, alles in einer
+Transaktion. Beim Schließen kann IndexedDB nicht garantiert fertig schreiben; ist
+dann noch etwas offen, kommt der Stand zusätzlich als Notfall-Kopie in den
+`localStorage` (`spritebit_emergency`). Beim nächsten Start gewinnt der neuere.
+
+Beim ersten Start nach der Umstellung wird der alte Stand aus dem localStorage-Key
+`wb_sprite_tester_v1` übernommen; der Key bleibt als weitere Sicherung liegen.
+Ohne IndexedDB (manche privaten Fenster) speichert der Editor wie früher dort als
+ein JSON-Text. Projektdatei, Sicherung und Notfall-Kopie haben immer dasselbe
+JSON-Format; geladen wird alles über dieselbe Prüfung (`applyPayload`).
 
 Für echte Backups **Projekt sichern** benutzen — das schreibt Sprites, Paletten und
 UI-Zustand in eine JSON-Datei. Mit **Speicherort** lässt sich einmalig ein Zielordner
@@ -564,7 +589,10 @@ sprite-editor/
 └── js/
     ├── data.js         ← Farb-Labels, eingebaute Paletten, cellToColor, Konstanten
     ├── state.js        ← Sprites, Paletten, UI-State + Lookups
-    ├── storage.js      ← localStorage + Projekt-Datei
+    ├── storage.js      ← Speicherstand (IndexedDB, Rückfall localStorage) + Projekt-Datei
+    ├── idb.js          ← kleine Hülle um IndexedDB
+    ├── pack.js         ← Sprite kompakt als Bytes und zurück
+    ├── raster.js       ← Bilder als Ganzes zeichnen, Auflösung der Zeichenfläche
     ├── migrate.js      ← v1 (dog/cat) → v2 (generisch)
     ├── render.js       ← alle Render-Funktionen + Mal-Operationen
     ├── codegen.js      ← Code-Formate (TS/JS/JSON/SVG/CSS/C/Python/Text), alle Frames
@@ -588,7 +616,8 @@ sprite-editor/
     ├── filesystem.js   ← Speicherort merken (File System Access API)
     ├── toast.js        ← Confirm-/Info-Toast statt window.confirm
     ├── pwa.js          ← meldet den Service Worker an (Startseite + Editor)
-    ├── dock.js         ← Seitenleisten als Icon-Spalte, unter 1280 px Kopfzeile als Menü
+    ├── dock.js         ← Seitenleisten als Icon-Spalte
+    ├── menubar.js      ← Menüleiste oben (Datei, Bearbeiten, Ansicht, Hilfe)
     ├── icons.js        ← alle Linien-Icons (SVG) + applyIcons() für [data-icon]
     ├── place.js        ← wo ein Panel/eine Leiste sitzt, als EIN Wert (ohne DOM, getestet)
     ├── layout.js       ← zeichnet Plätze ins DOM: anpinnen, lösen, verschieben, Größe
@@ -647,7 +676,7 @@ da ist.
 Im itch-iframe gelten drei Einschränkungen, die auf der eigenen Domain nicht
 bestehen: die PWA-Installation entfällt, der Service Worker kann in der Sandbox
 scheitern (dann eben ohne Offline-Modus, `js/pwa.js` fängt das ab), und der
-`localStorage` liegt in einem fremden Rahmen — Browser trennen Speicher nach
+Speicher (IndexedDB) liegt in einem fremden Rahmen — Browser trennen Speicher nach
 Seite, Safari kann ihn blockieren. Ein Hinweis auf die eigene Adresse auf der
 Projektseite ist deshalb sinnvoll.
 
@@ -742,8 +771,20 @@ der Offline-Test lassen `.d.ts` bewusst aus.
   aber, solange etwas schwebt.
 - Die Zwischenablage der Auswahl liegt im Speicher, nicht in der System-Zwischenablage —
   `Strg`+`C` im Editor kopiert also keine Pixel in andere Programme.
+- Sprites sind höchstens **1024 × 1024** Pixel groß. Jedes Pixel ist im Arbeitsspeicher
+  eine JS-Zahl; ein 1024er-Sprite mit 8 Frames und 2 Ebenen braucht rund ein halbes
+  Gigabyte. Am Rechner läuft das flüssig, am Handy kann es bei vielen Frames eng werden.
+  Für größere Bilder müsste das Datenmodell auf Byte-Felder umgestellt werden.
+- Große Sprites (ab 256 × 256): die Zeichenfläche wird mit gedeckelter Auflösung gezeichnet
+  und per CSS gezoomt (`js/raster.js`, sonst lehnen Browser die Fläche ab — iOS ab ~16 Mio.
+  Pixel); nicht aktive Ebenen kommen aus einem Zwischenspeicher; die Bildchen in Timeline,
+  Ebenen-Panel und Vorschau folgen erst nach einer kurzen Malpause; der Code im
+  Ausgabe-Feld wird erst beim Kopieren oder Speichern gebaut (ab 300 000 Pixeln über
+  alle Frames).
 - Inkognito-Modus verliert alles beim Tab-Schließen.
-- localStorage-Limit ~5 MB; bei Überschreitung erscheint ein Hinweis-Toast.
+- Speicherplatz: IndexedDB fasst je nach Browser hunderte MB. Ohne IndexedDB
+  (Rückfall localStorage) gilt ein Limit von ~5 MB; bei Überschreitung erscheint ein
+  Hinweis-Toast.
 - Die Schablonen-Pipette ignoriert Stellen mit Alpha = 0.
 
 ---
