@@ -9,7 +9,7 @@
 // Die Liste im Panel zeigt die oberste Ebene oben. Alle Änderungen laufen
 // durch recordOp() und sind Undo-Schritte; nur das Wählen der aktiven Ebene
 // ist keine Änderung.
-import { getSprite, getPaletteByName, clearSelection, defaultLayer, blankLike } from './state.js';
+import { getSprite, getPaletteByName, clearSelection, defaultLayer, blankLike, copyLayer, layerGrid, isRefLayer } from './state.js';
 import { dc, cellToColor } from './data.js';
 import { renderAll, renderEditor, renderCallbacks } from './render.js';
 import { recordOp, beginStroke, commitStroke } from './history.js';
@@ -79,7 +79,7 @@ export function duplicateLayer() {
   edit(sp => {
     const at = sp.layer + 1;
     const src = sp.layers[sp.layer];
-    sp.layers.splice(at, 0, { ...src, name: t('ly.copyName', { name: src.name }) });
+    sp.layers.splice(at, 0, { ...copyLayer(src), name: t('ly.copyName', { name: src.name }) });
     sp.frames.forEach(f => f.cels.splice(at, 0, dc(f.cels[sp.layer])));
     sp.layer = at;
   });
@@ -103,12 +103,15 @@ export function mergeDown() {
   const sp = getSprite();
   if (!sp) return;
   if (sp.layer === 0) { showInfoToast(t('ly.nothingBelow')); return; }
+  // In eine Sprite-Ebene wird nichts eingerechnet — sie hat keine eigenen
+  // Pixel. Liegt eine darüber, kommt das Teil als Pixel herunter.
+  if (isRefLayer(sp.layers[sp.layer - 1])) { showInfoToast(t('ly.mergeIntoRef')); return; }
   edit(s => {
     const top = s.layer, below = top - 1;
     const a = s.layers[top].opacity;
     const pal = getPaletteByName(s.palette);
-    for (const f of s.frames) {
-      const src = f.cels[top], dst = f.cels[below];
+    s.frames.forEach((f, fi) => {
+      const src = layerGrid(s, top, fi), dst = f.cels[below];
       for (let y = 0; y < dst.length; y++) for (let x = 0; x < dst[y].length; x++) {
         const v = src[y][x];
         if (v === 0) continue;
@@ -119,8 +122,8 @@ export function mergeDown() {
         const mix = i => Math.round(ch(bc, i) * (1 - a) + ch(tc, i) * a).toString(16).padStart(2, '0');
         dst[y][x] = '#' + mix(0) + mix(1) + mix(2);
       }
-      f.cels.splice(top, 1);
-    }
+    });
+    s.frames.forEach(f => f.cels.splice(top, 1));
     s.layers.splice(top, 1);
     s.layer = below;
   });
@@ -233,9 +236,12 @@ export function renderLayers() {
     lock.setAttribute('aria-pressed', String(L.locked));
     lock.classList.toggle('is-on', L.locked);
     row.querySelector('.ly-name').textContent = L.name;
+    // Sprite-Ebene: Kettenglied vor dem Namen (js/reflayer.js).
+    row.classList.toggle('is-ref', isRefLayer(L));
+    if (isRefLayer(L)) row.querySelector('.ly-name').insertAdjacentHTML('afterbegin', '<span class="ly-link">' + iconSvg('link') + '</span>');
     row.querySelector('.ly-op').textContent = L.opacity < 1 ? Math.round(L.opacity * 100) + '%' : '';
     row.title = t('ly.rowTitle', { name: L.name });
-    drawThumb(row.querySelector('canvas'), sp.frames[sp.frame].cels[i], pal);
+    drawThumb(row.querySelector('canvas'), layerGrid(sp, i), pal);
     list.append(row);
   }
 
@@ -251,7 +257,7 @@ export function renderLayers() {
 function refreshActiveThumb() {
   const sp = getSprite();
   const row = sp && $('layer-list')?.querySelector(`.ly-row[data-i="${sp.layer}"] canvas`);
-  if (row) drawThumb(row, sp.grid, getPaletteByName(sp.palette));
+  if (row) drawThumb(row, layerGrid(sp, sp.layer), getPaletteByName(sp.palette));
 }
 
 // Ziehen sortiert um, ein Klick wählt die Ebene. Die Liste steht auf dem

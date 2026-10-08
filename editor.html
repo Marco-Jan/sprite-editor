@@ -351,6 +351,8 @@
           <button class="btn" id="tl-del" data-i18n-attr="title:tl.del" title="Frame löschen"><span class="ico" data-icon="trash"></span></button>
         </div>
         <button class="btn" id="tl-onion" aria-pressed="false" data-i18n-attr="title:tl.onion" title="Onion Skin — vorigen und nächsten Frame durchscheinen lassen"><span class="ico" data-icon="onion"></span></button>
+        <!-- Sprite als Ebene einsetzen (js/reflayer.js) -->
+        <select id="tl-addref" class="input input--sm tl-addref" data-i18n-attr="title:ref.addTitle;aria-label:ref.addTitle" title="Einen anderen Sprite als Ebene einsetzen — z. B. einen Arm, den man für sich gezeichnet hat" aria-label="Einen anderen Sprite als Ebene einsetzen — z. B. einen Arm, den man für sich gezeichnet hat"></select>
         <label class="field field--inline tl-num tl-go-field" id="tl-go-field" data-i18n-attr="title:tl.goTitle" title="Zu einem Frame springen — Nummer eintippen">
           <span class="field-label" data-i18n="tl.go">Frame</span>
           <input type="number" id="tl-go" class="input input--sm" min="1" step="1">
@@ -395,6 +397,32 @@
             <input type="range" id="ly-opacity" min="0" max="100" step="5" value="100">
             <span id="ly-opacity-val" class="field-value">100%</span>
           </label>
+          <select id="ly-addref" class="input input--sm" data-i18n-attr="title:ref.addTitle;aria-label:ref.addTitle" title="Einen anderen Sprite als Ebene einsetzen — z. B. einen Arm, den man für sich gezeichnet hat" aria-label="Einen anderen Sprite als Ebene einsetzen — z. B. einen Arm, den man für sich gezeichnet hat"></select>
+          <!-- Nur bei einer Sprite-Ebene: wie das Teil im aktuellen Frame liegt -->
+          <div id="ref-props" class="ref-props" hidden>
+            <div class="ref-head">
+              <span class="ico" data-icon="link"></span>
+              <span id="ref-name" class="ref-name"></span>
+              <button class="btn" id="ref-open" data-i18n="ref.open" data-i18n-attr="title:ref.openTitle" title="Zum Sprite wechseln, um daran weiterzumalen">Öffnen</button>
+            </div>
+            <div class="ref-row">
+              <label class="field field--inline"><span class="field-label">X</span><input type="number" id="ref-x" class="input input--sm" step="1"></label>
+              <label class="field field--inline"><span class="field-label">Y</span><input type="number" id="ref-y" class="input input--sm" step="1"></label>
+            </div>
+            <div class="ref-row">
+              <label class="field field--inline" data-i18n-attr="title:ref.frameTitle" title="Welcher Frame des Teils hier zu sehen ist">
+                <span class="field-label" data-i18n="ref.frame">Frame</span>
+                <input type="number" id="ref-f" class="input input--sm" min="1" step="1">
+                <span id="ref-fn" class="field-value">/ 1</span>
+              </label>
+              <div class="btn-group">
+                <button class="btn" id="ref-rot" title="Um 90° drehen"><span class="ico" data-icon="rotate"></span></button>
+                <button class="btn" id="ref-fx" data-i18n-attr="title:ref.fx" title="Waagerecht spiegeln"><span class="ico" data-icon="mirrorX"></span></button>
+                <button class="btn" id="ref-fy" data-i18n-attr="title:ref.fy" title="Senkrecht spiegeln"><span class="ico" data-icon="mirrorY"></span></button>
+              </div>
+            </div>
+            <p class="field-note" data-i18n="ref.note">Ziehen auf der Zeichenfläche oder Pfeiltasten verschieben das Teil — im aktuellen Frame oder in allen markierten.</p>
+          </div>
           <p class="field-note" data-i18n="ly.note">Doppelklick auf den Namen benennt um, ziehen ordnet. Export und Vorschau zeigen alle sichtbaren Ebenen übereinander.</p>
         </div>
       </section>
