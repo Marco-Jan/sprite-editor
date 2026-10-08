@@ -145,6 +145,9 @@ export function emptyGrid(size) {
 // ── Frames ──────────────────────────────────────────────────────────
 export const DEFAULT_FPS = 8;
 export const MAX_FPS = 60;
+// Größte Kantenlänge eines Sprites. Darüber werden Arbeitsspeicher (jedes
+// Pixel ist eine JS-Zahl), Undo und Code-Export zu schwer — siehe README.
+export const MAX_SIDE = 1024;
 
 // `sp.grid` als Kürzel auf das aktive Bild einrichten. Nicht aufgezählt,
 // damit es weder im Speicherstand noch in Kopien doppelt auftaucht.
@@ -347,6 +350,28 @@ export function flatGrid(sp, f = sp.frame) {
     }
   });
   return out;
+}
+
+// Bild auf höchstens maxSide Pixel verkleinern (nächster Nachbar) — für
+// Vorschaubilder. Kleinere Bilder kommen unverändert zurück.
+export function sampleGrid(g, maxSide) {
+  const H = g.length, W = g[0].length;
+  const k = Math.max(W, H) / maxSide;
+  if (k <= 1) return g;
+  const w = Math.max(1, Math.round(W / k)), h = Math.max(1, Math.round(H / k));
+  return Array.from({ length: h }, (_, y) => {
+    const row = g[Math.min(H - 1, Math.floor((y + 0.5) * k))];
+    return Array.from({ length: w }, (_, x) => row[Math.min(W - 1, Math.floor((x + 0.5) * k))]);
+  });
+}
+
+// Was man in Frame f sieht — aber gleich in Vorschaugröße. Bei 1024×1024
+// rechnet flatGrid sonst eine Million Pixel für ein 48-px-Bildchen.
+export function thumbGrid(sp, f = sp.frame, maxSide = 96) {
+  const g0 = sp.frames[f].cels[0];
+  if (Math.max(g0.length, g0[0].length) <= maxSide) return flatGrid(sp, f);
+  const cels = sp.frames[f].cels.map(g => sampleGrid(g, maxSide));
+  return flatGrid({ frames: [{ cels }], layers: sp.layers, palette: sp.palette }, 0);
 }
 
 // Dauer eines Frames in ms (eigene Dauer oder nach den fps des Sprites).

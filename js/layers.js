@@ -9,7 +9,7 @@
 // Die Liste im Panel zeigt die oberste Ebene oben. Alle Änderungen laufen
 // durch recordOp() und sind Undo-Schritte; nur das Wählen der aktiven Ebene
 // ist keine Änderung.
-import { getSprite, getPaletteByName, clearSelection, defaultLayer, blankLike } from './state.js';
+import { getSprite, getPaletteByName, clearSelection, defaultLayer, blankLike, sampleGrid } from './state.js';
 import { dc, cellToColor } from './data.js';
 import { renderAll, renderEditor, renderCallbacks } from './render.js';
 import { recordOp, beginStroke, commitStroke } from './history.js';
@@ -18,6 +18,7 @@ import { saveState } from './storage.js';
 import { stop as stopPlayback } from './frames.js';
 import { showInfoToast } from './toast.js';
 import { iconSvg } from './icons.js';
+import { gridToCanvas } from './raster.js';
 import { t } from './i18n.js';
 
 /** @type {(id: string) => any} */
@@ -169,20 +170,15 @@ export function renameLayer(i, name) {
 // Panel
 // ────────────────────────────────────────────────────────────────────
 function drawThumb(cv, grid, pal) {
-  const H = grid.length, W = grid[0].length;
+  // Große Bilder erst verkleinern — für 28 px braucht es keine Million Pixel.
+  const g = sampleGrid(grid, THUMB * 2);
+  const H = g.length, W = g[0].length;
   if (cv.width !== W || cv.height !== H) {
-    cv.width = W;
-    cv.height = H;
     const k = THUMB / Math.max(W, H);
     cv.style.width = Math.max(1, Math.round(W * k)) + 'px';
     cv.style.height = Math.max(1, Math.round(H * k)) + 'px';
   }
-  const ctx = cv.getContext('2d');
-  ctx.clearRect(0, 0, W, H);
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    const fill = cellToColor(grid[y][x], pal);
-    if (fill) { ctx.fillStyle = fill; ctx.fillRect(x, y, 1, 1); }
-  }
+  gridToCanvas(cv, g, pal);   // ein Bild statt eines fillRect je Pixel
 }
 
 function makeRow() {

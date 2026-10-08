@@ -334,6 +334,8 @@
         <div id="editor-canvas-area">
           <div id="editor-canvas-wrap">
             <canvas id="editor-canvas"></canvas>
+            <!-- Gitterlinien als CSS-Ebene (js/render.js) — bleiben bei jeder Auflösung 1 px -->
+            <div id="editor-gridlines" aria-hidden="true" hidden></div>
             <img id="template-overlay" alt="" hidden>
             <div id="brush-cursor" hidden></div>
           </div>
@@ -606,9 +608,9 @@
           <div class="field">
             <span class="field-label" data-i18n="img.size">Größe</span>
             <div class="field-controls">
-              <input type="number" id="resize-w" class="input input--num" min="1" max="256" data-i18n-attr="title:img.width" title="Breite in Pixeln">
+              <input type="number" id="resize-w" class="input input--num" min="1" max="1024" data-i18n-attr="title:img.width" title="Breite in Pixeln">
               <span class="field-unit">×</span>
-              <input type="number" id="resize-h" class="input input--num" min="1" max="256" data-i18n-attr="title:img.height" title="Höhe in Pixeln">
+              <input type="number" id="resize-h" class="input input--num" min="1" max="1024" data-i18n-attr="title:img.height" title="Höhe in Pixeln">
               <span class="field-unit">px</span>
             </div>
             <div class="field-controls">
@@ -702,9 +704,9 @@
     <div class="form-row" id="new-size-custom" hidden>
       <span class="form-label" data-i18n="mod.sizeCustomLabel">Breite × Höhe</span>
       <div class="field-controls">
-        <input type="number" id="new-w" class="input input--num" min="1" max="256" value="24" data-i18n-attr="title:img.width" title="Breite in Pixeln">
+        <input type="number" id="new-w" class="input input--num" min="1" max="1024" value="24" data-i18n-attr="title:img.width" title="Breite in Pixeln">
         <span class="field-unit">×</span>
-        <input type="number" id="new-h" class="input input--num" min="1" max="256" value="24" data-i18n-attr="title:img.height" title="Höhe in Pixeln">
+        <input type="number" id="new-h" class="input input--num" min="1" max="1024" value="24" data-i18n-attr="title:img.height" title="Höhe in Pixeln">
         <span class="field-unit">px</span>
       </div>
     </div>
@@ -743,11 +745,11 @@
     <p class="field-note" id="size-modal-current"></p>
     <label class="form-row">
       <span class="form-label" data-i18n="mod.sizeWidth">Breite</span>
-      <input type="number" id="size-w" class="input input--num" min="1" max="256">
+      <input type="number" id="size-w" class="input input--num" min="1" max="1024">
     </label>
     <label class="form-row">
       <span class="form-label" data-i18n="mod.sizeHeight">Höhe</span>
-      <input type="number" id="size-h" class="input input--num" min="1" max="256">
+      <input type="number" id="size-h" class="input input--num" min="1" max="1024">
     </label>
     <label class="form-row">
       <span class="form-label" data-i18n="mod.sizeAnchor">Anker</span>

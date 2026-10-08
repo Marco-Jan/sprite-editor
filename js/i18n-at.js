@@ -287,7 +287,7 @@ export const MSG_AT = {
   'sprite.confirmDelete': 'Sprite „{name}“ wirklich weghaun?',
   'sprite.created':       '„{name}“ is angelegt.',
   'sprite.needName':      'Bitte an Nom eingebn.',
-  'sprite.needSize':      'Breitn und Hechn miassn zwischn 1 und 256 liegn.',
+  'sprite.needSize':      'Breitn und Hechn miassn zwischn 1 und 1024 liegn.',
   'sprite.emptyGrid':     '— Laares Grid —',
   'sprite.confirmClear':  'Olle Pixel von dem Sprite weghaun?',
   'sprite.clearOk':       'Ausleern',

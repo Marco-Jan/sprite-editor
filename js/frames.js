@@ -11,7 +11,7 @@
 //
 // Abspielen läuft in der Zeichenfläche. Gezeichnet wird dabei nicht: ein
 // Tipp auf die Fläche hält an (app.js), jede Frame-Aktion ebenso.
-import { state, getSprite, getPaletteByName, clearSelection, frameDuration, MAX_FPS, flatGrid, isLinked, newFrameCels } from './state.js';
+import { state, getSprite, getPaletteByName, clearSelection, frameDuration, MAX_FPS, thumbGrid, isLinked, newFrameCels } from './state.js';
 import { cellToColor } from './data.js';
 import { renderAll, renderEditor, renderCallbacks } from './render.js';
 import { recordOp } from './history.js';
@@ -650,7 +650,7 @@ export function renderTimeline() {
   sp.frames.forEach((f, i) => {
     const b = thumbs[i];
     b.dataset.i = String(i);
-    if (thumbsOn) drawThumb(b.firstChild, flatGrid(sp, i), pal);
+    if (thumbsOn) drawThumb(b.firstChild, thumbGrid(sp, i), pal);
     b.lastChild.textContent = String(frameLabel(i, state.tlOpts));
     b.classList.toggle('has-dur', !!f.dur);
     b.title = t('tl.frameTitle', { i: frameLabel(i, state.tlOpts), ms: frameDuration(sp, i) });
@@ -685,7 +685,7 @@ export function refreshCurrentThumb() {
   const sp = getSprite();
   if (!sp) return;
   const b = thumbs[sp.frame];
-  if (b && state.tlOpts.thumbs) drawThumb(b.firstChild, flatGrid(sp), getPaletteByName(sp.palette));
+  if (b && state.tlOpts.thumbs) drawThumb(b.firstChild, thumbGrid(sp), getPaletteByName(sp.palette));
   const c = celEls[sp.layer]?.[sp.frame];
   if (c) setCelFill(c, sp.grid);
 }

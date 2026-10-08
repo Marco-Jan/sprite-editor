@@ -1085,7 +1085,23 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   cursor: crosshair;
   line-height: 0;
 }
-#editor-canvas { display: block; position: relative; z-index: 1; touch-action: none; }
+#editor-canvas { display: block; position: relative; z-index: 1; touch-action: none; image-rendering: pixelated; }
+/* Gitterlinien über dem Canvas: eine Linie links und oben je Zelle, die
+   letzte rechts und unten als Rand. --cell setzt js/render.js. */
+#editor-gridlines {
+  position: absolute;
+  left: 0; top: 0;
+  z-index: 1;
+  pointer-events: none;
+  --line: rgba(255, 255, 255, 0.07);
+  background-image:
+    linear-gradient(to right, var(--line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--line) 1px, transparent 1px);
+  background-size: var(--cell, 16px) var(--cell, 16px);
+  box-shadow: inset -1px -1px 0 var(--line);
+}
+#editor-gridlines.is-light { --line: rgba(0, 0, 0, 0.09); }
+#editor-gridlines[hidden] { display: none; }
 #editor-canvas-wrap.is-eyedrop,
 #editor-canvas-wrap[data-tool="eraser"],
 #editor-canvas-wrap[data-tool="wand"] { cursor: cell; }

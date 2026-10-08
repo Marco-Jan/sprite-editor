@@ -7,10 +7,11 @@
 import {
   state, sprites, customPalettes, paletteMaterials, selection,
   getGrid, getSprite, getPal, getPaletteName, getMaxIdx, getPreviewName,
-  getAllPaletteOptions, isCustomPalette, listSprites, getPaletteByName, allGrids, flatGrid,
+  getAllPaletteOptions, isCustomPalette, listSprites, getPaletteByName, allGrids, flatGrid, thumbGrid,
 } from './state.js';
 import { PALETTE_GROUP_SPLIT, MAX_COLORS, cellToColor, paletteSize } from './data.js';
 import { onionFrames } from './onion.js';
+import { renderScale, paintGrid, paintCanvas, gridToCanvas, paintMask, paintChecker, thumbCanvas, rgbOf, BIG_PIXELS } from './raster.js';
 import { t, tn, colorLabel, colorLabelShort } from './i18n.js';
 import { buildCode, tsIdentifier, getFormat } from './codegen.js';
 import { MATERIALS, DEFAULT_MATERIAL, GameJsonError } from './gamejson.js';
@@ -48,18 +49,6 @@ export const renderCallbacks = {
   onRenderGuides:    () => {},
   onEditorRendered:  () => {},
 };
-
-// SVG-String für eine Sprite-Vorschau (Thumbnails in der Sprite-Liste).
-export function svgSprite(grid, palette, scale) {
-  const H = grid.length, W = grid[0].length;
-  let r = '';
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    const fill = cellToColor(grid[y][x], palette);
-    if (fill) r += `<rect x="${x}" y="${y}" width="1" height="1" fill="${fill}"/>`;
-  }
-  return `<svg viewBox="0 0 ${W} ${H}" width="${W * scale}" height="${H * scale}" `
-       + `style="image-rendering:pixelated;display:block" xmlns="http://www.w3.org/2000/svg">${r}</svg>`;
-}
 
 // HTML-Escaping für Nutzer-Eingaben (Sprite-/Palettennamen landen im innerHTML).
 function esc(s) {
@@ -104,7 +93,7 @@ export function renderSpriteList() {
 
     const thumb = document.createElement('div');
     thumb.className = 'sprite-thumb';
-    thumb.innerHTML = svgSprite(flatGrid(sp), getPaletteFor(sp), 40 / Math.max(sp.grid.length, sp.grid[0].length));
+    thumb.append(thumbCanvas(thumbGrid(sp, sp.frame, 80), getPaletteFor(sp), 40));
 
     const meta = document.createElement('div');
     meta.className = 'sprite-meta';
@@ -149,95 +138,122 @@ function getPaletteFor(sp) {
 // ────────────────────────────────────────────────────────────────────
 // EDITOR-CANVAS
 // ────────────────────────────────────────────────────────────────────
+// Zwischenspeicher für Ebenen bei großen Sprites: Bild-Objekt → fertiges
+// Canvas. Gemalt wird immer nur in die aktive Ebene (über sp.grid); die
+// anderen ändern sich nur durch Aktionen, die danach renderAll() rufen —
+// das leert den Speicher. Die aktive Ebene wird nie zwischengespeichert.
+const layerCache = new Map();
+const LAYER_CACHE_MAX = 24;
+function cachedLayer(g, pal) {
+  let cv = layerCache.get(g);
+  if (!cv) {
+    if (layerCache.size >= LAYER_CACHE_MAX) layerCache.clear();
+    cv = gridToCanvas(document.createElement('canvas'), g, pal);
+    layerCache.set(g, cv);
+  }
+  return cv;
+}
+
+// Was nach jedem Zeichnen der Fläche mitläuft (Bildchen in Timeline,
+// Ebenen-Panel, Vorschau). Bei großen Sprites erst nach einer kurzen Pause —
+// sonst rechnet jede Bewegung eines Strichs drei weitere Millionen Pixel.
+let lateTimer = null;
+function afterEditorRendered(big) {
+  clearTimeout(lateTimer);
+  if (!big) { renderCallbacks.onEditorRendered(); return; }
+  lateTimer = setTimeout(() => renderCallbacks.onEditorRendered(), 150);
+}
+
 export function renderEditor() {
   const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById('editor-canvas'));
   if (!canvas) return;
   const grid = getGrid();
   const H = grid.length, W = grid[0].length;
   const cs = state.cellSize;
-
-  canvas.width  = W * cs;
-  canvas.height = H * cs;
+  // Gezeichnet wird mit r Canvas-Pixeln je Sprite-Pixel, angezeigt mit cs
+  // (CSS). Bei kleinen Sprites ist r = cs; bei großen deckelt raster.js die
+  // Auflösung, sonst lehnt der Browser die Fläche ab. Alles, was unten mit
+  // Koordinaten zeichnet, rechnet darum mit r.
+  const r = renderScale(W, H, cs);
+  // Nur bei neuer Größe neu anlegen — das Zuweisen allein kostet schon.
+  if (canvas.width !== W * r || canvas.height !== H * r) {
+    canvas.width = W * r;
+    canvas.height = H * r;
+  }
+  canvas.style.width = W * cs + 'px';
+  canvas.style.height = H * cs + 'px';
   const ctx = canvas.getContext('2d');
+  ctx.globalAlpha = 1;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   const pal = getPal();
 
   // Schachbrett-Hintergrund (zeigt Transparenz an)
   const [bg1, bg2] = state.editorBg === 'bw' ? ['#ffffff', '#d8d8d8'] : ['#20202c', '#2a2a38'];
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    ctx.fillStyle = (x + y) % 2 === 0 ? bg1 : bg2;
-    ctx.fillRect(x * cs, y * cs, cs, cs);
-  }
+  paintChecker(ctx, W, H, r, bg1, bg2);
 
   // Onion Skin: Nachbar-Frames unter dem aktuellen — oder darüber (s. u.)
-  if (!state.tlOpts.onion.front) drawOnion(ctx, W, H, cs);
+  if (!state.tlOpts.onion.front) drawOnion(ctx, W, H, r);
 
   // Pixel — alle sichtbaren Ebenen von unten nach oben, je mit ihrer Deckkraft
   const sp = getSprite();
+  const big = W * H > BIG_PIXELS;
   if (sp) {
     sp.layers.forEach((L, li) => {
       if (!L.visible || L.opacity <= 0) return;
       const g = sp.frames[sp.frame].cels[li];
-      ctx.globalAlpha = L.opacity;
-      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-        const fill = cellToColor(g[y][x], pal);
-        if (fill) { ctx.fillStyle = fill; ctx.fillRect(x * cs, y * cs, cs, cs); }
-      }
+      if (big && li !== sp.layer) paintCanvas(ctx, cachedLayer(g, pal), r, L.opacity);
+      else paintGrid(ctx, g, pal, 0, 0, r, { alpha: L.opacity, key: 'layer' });
     });
-    ctx.globalAlpha = 1;
   }
 
-  if (state.tlOpts.onion.front) drawOnion(ctx, W, H, cs);
+  if (state.tlOpts.onion.front) drawOnion(ctx, W, H, r);
 
   // Formen-Vorschau (Linie, Rechteck, Ellipse) waehrend des Ziehens
   if (state.shape.cells.length) {
     const fill = cellToColor(state.shape.color, pal);
-    if (fill) {
-      ctx.fillStyle = fill;
-      for (const [sx, sy] of state.shape.cells) {
-        if (sx >= 0 && sy >= 0 && sx < W && sy < H) ctx.fillRect(sx * cs, sy * cs, cs, cs);
-      }
+    // Transparent als Vorschau: helle Schraffur statt "unsichtbar".
+    const col = fill ? [...rgbOf(fill), 255] : [242, 139, 130, 90];
+    const cells = state.shape.cells;
+    if (cells.length > 2000) {
+      // Große Formen (gefülltes Rechteck über 1024 px) als ein Bild.
+      const on = new Set(cells.map(([x, y]) => y * W + x));
+      paintMask(ctx, W, H, r, (x, y) => on.has(y * W + x), col);
     } else {
-      // Transparent als Vorschau: helle Schraffur statt "unsichtbar".
-      ctx.fillStyle = 'rgba(242,139,130,0.35)';
-      for (const [sx, sy] of state.shape.cells) {
-        if (sx >= 0 && sy >= 0 && sx < W && sy < H) ctx.fillRect(sx * cs, sy * cs, cs, cs);
+      ctx.fillStyle = `rgba(${col[0]},${col[1]},${col[2]},${col[3] / 255})`;
+      for (const [sx, sy] of cells) {
+        if (sx >= 0 && sy >= 0 && sx < W && sy < H) ctx.fillRect(sx * r, sy * r, r, r);
       }
     }
   }
 
   // Schwebender Auswahl-Block — liegt über dem Grid, weil er beim Ziehen
-  // gerade nicht im Grid steht (dort ist die Quelle schon leer).
+  // gerade nicht im Grid steht (dort ist die Quelle schon leer). Was über
+  // den Rand ragt, schneidet der Canvas ab (es wird beim Absetzen verworfen).
   if (selection.float && selection.rect) {
-    const fl = selection.float;
-    for (let y = 0; y < fl.length; y++) {
-      for (let x = 0; x < fl[y].length; x++) {
-        const gx = selection.rect.x + x, gy = selection.rect.y + y;
-        if (gx < 0 || gy < 0 || gx >= W || gy >= H) continue; // außerhalb → wird verworfen
-        const fill = cellToColor(fl[y][x], pal);
-        if (fill) { ctx.fillStyle = fill; ctx.fillRect(gx * cs, gy * cs, cs, cs); }
-      }
-    }
+    paintGrid(ctx, selection.float, pal, selection.rect.x, selection.rect.y, r, { key: 'float' });
   }
 
-  if (state.showColor) drawColorSpotlight(ctx, grid, pal, W, H, cs);
+  if (state.showColor) drawColorSpotlight(ctx, grid, pal, W, H, r);
 
-  // Grid-Linien — bei sehr kleinen Zellen weglassen, sonst wird alles Raster.
-  if (cs >= 6) {
-    ctx.strokeStyle = state.editorBg === 'bw' ? 'rgba(0,0,0,0.09)' : 'rgba(255,255,255,0.07)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    for (let x = 0; x <= W; x++) { ctx.moveTo(x * cs + 0.5, 0); ctx.lineTo(x * cs + 0.5, H * cs); }
-    for (let y = 0; y <= H; y++) { ctx.moveTo(0, y * cs + 0.5); ctx.lineTo(W * cs, y * cs + 0.5); }
-    ctx.stroke();
+  // Grid-Linien liegen als CSS-Ebene über dem Canvas (#editor-gridlines):
+  // so bleiben sie 1 px dünn, auch wenn der Canvas gröber gezeichnet ist.
+  // Bei sehr kleinen Zellen weg, sonst wird alles Raster.
+  const lines = document.getElementById('editor-gridlines');
+  if (lines) {
+    lines.hidden = cs < 6;
+    lines.style.width = W * cs + 'px';
+    lines.style.height = H * cs + 'px';
+    lines.style.setProperty('--cell', cs + 'px');
+    lines.classList.toggle('is-light', state.editorBg === 'bw');
   }
 
-  if (selection.rect) drawSelectionFrame(ctx, selection.rect, selection.mask, cs);
-  if (selection.path) drawLassoPath(ctx, selection.path, cs);
-  if (state.mirror !== 'off') drawMirrorGuides(ctx, W, H, cs);
-  renderCallbacks.onDrawOverlay(ctx, W, H, cs);
+  if (selection.rect) drawSelectionFrame(ctx, selection.rect, selection.mask, r);
+  if (selection.path) drawLassoPath(ctx, selection.path, r);
+  if (state.mirror !== 'off') drawMirrorGuides(ctx, W, H, r);
+  renderCallbacks.onDrawOverlay(ctx, W, H, r);
 
   updateStageTitle();
-  renderCallbacks.onEditorRendered();
+  afterEditorRendered(big);
 }
 
 // Onion Skin: Nachbar-Frames scheinen durch — davor rot, danach blau
@@ -253,15 +269,9 @@ function drawOnion(ctx, W, H, cs) {
   for (const { frame, side, alpha } of onionFrames(sp, sp.frame, state.tlOpts).reverse()) {
     const g = o.layerOnly ? sp.frames[frame].cels[sp.layer] : flatGrid(sp, frame);
     if (!g) continue;
-    ctx.globalAlpha = alpha;
-    const tint = side === 'before' ? 'rgb(255, 96, 96)' : 'rgb(96, 156, 255)';
-    for (let y = 0; y < H && y < g.length; y++) for (let x = 0; x < W && x < g[y].length; x++) {
-      if (g[y][x] === 0) continue;
-      ctx.fillStyle = o.mode === 'color' ? (cellToColor(g[y][x], pal) || tint) : tint;
-      ctx.fillRect(x * cs, y * cs, cs, cs);
-    }
+    const tint = o.mode === 'color' ? null : side === 'before' ? [255, 96, 96] : [96, 156, 255];
+    paintGrid(ctx, g, pal, 0, 0, cs, { alpha, tint, key: 'onion' });
   }
-  ctx.globalAlpha = 1;
 }
 
 // "Farbe zeigen": alles, was NICHT die aktuelle Farbe hat, wird abgedunkelt.
@@ -287,11 +297,11 @@ export function countCurrentColor() {
 
 function drawColorSpotlight(ctx, grid, pal, W, H, cs) {
   const want = currentColorHex();
-  ctx.fillStyle = state.editorBg === 'bw' ? 'rgba(255,255,255,0.82)' : 'rgba(8,8,12,0.8)';
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+  const col = state.editorBg === 'bw' ? [255, 255, 255, 209] : [8, 8, 12, 204];
+  paintMask(ctx, W, H, cs, (x, y) => {
     const hex = cellToColor(grid[y][x], pal);
-    if ((hex ? hex.toLowerCase() : null) !== want) ctx.fillRect(x * cs, y * cs, cs, cs);
-  }
+    return (hex ? hex.toLowerCase() : null) !== want;
+  }, col);
 }
 
 // Auswahlrahmen — laeuft an den Kanten der Maske entlang, nicht stumpf um die
@@ -970,15 +980,33 @@ export function updateOutput() {
   const ta = /** @type {HTMLTextAreaElement} */ (document.getElementById('output-textarea'));
   if (!ta) return;
   delete ta.dataset.error;
-  if (!getSprite()) { ta.value = ''; return; }
+  delete ta.dataset.lazy;
+  const sp = getSprite();
+  if (!sp) { ta.value = ''; return; }
+  // Große Sprites: der Code wäre Megabytes Text, bei jedem Neuzeichnen neu
+  // gebaut. Dann erst beim Kopieren oder Speichern (currentCode).
+  const cells = sp.grid.length * sp.grid[0].length * sp.frames.length;
+  if (cells > LIVE_CODE_MAX) {
+    ta.dataset.lazy = '1';
+    ta.value = t('out.tooBigLive', { n: cells.toLocaleString() });
+    return;
+  }
+  const r = currentCode();
+  if (r.error) ta.dataset.error = r.error;
+  ta.value = r.error || r.code;
+}
+
+// Bis zu so vielen Pixeln (alle Frames) steht der Code live im Feld.
+const LIVE_CODE_MAX = 300_000;
+
+/** Code des aktuellen Sprites im gewählten Format — oder die Fehlermeldung. */
+export function currentCode() {
   const includePalette = /** @type {HTMLInputElement} */ (document.getElementById('export-include-palette'))?.checked;
   try {
-    ta.value = buildCode(state.outputFormat, includePalette);
+    return { code: buildCode(state.outputFormat, includePalette), error: null };
   } catch (e) {
     if (!(e instanceof GameJsonError)) throw e;
-    const msg = t('game.exportFailed', { reason: t(`game.err.${e.code}`, e.params) });
-    ta.dataset.error = msg;
-    ta.value = msg;
+    return { code: '', error: t('game.exportFailed', { reason: t(`game.err.${e.code}`, e.params) }) };
   }
 }
 
@@ -1038,6 +1066,7 @@ export function renderMaterials() {
 // Full Re-Render
 // ────────────────────────────────────────────────────────────────────
 export function renderAll() {
+  layerCache.clear();   // Struktur, Palette oder andere Ebenen können sich geändert haben
   renderSpriteList();
   renderEditor();
   renderPalette();

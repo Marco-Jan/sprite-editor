@@ -75,6 +75,7 @@ const PRECACHE = [
   'js/preview.js',
   'js/pwa.js',
   'js/qpdrag.js',
+  'js/raster.js',
   'js/reduce.js',
   'js/render.js',
   'js/selection.js',

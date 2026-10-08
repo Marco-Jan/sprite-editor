@@ -15,7 +15,7 @@ import { initLayout, isMobileLayout, refreshToolOpts } from './layout.js';
 import { applyIcons, iconSvg } from './icons.js';
 import { showConfirmToast, showInfoToast } from './toast.js';
 import {
-  renderAll, renderEditor, renderSpriteList, syncColorActive, updateOutput, renderMaterials,
+  renderAll, renderEditor, renderSpriteList, syncColorActive, updateOutput, currentCode, renderMaterials,
   renderFreeColorsList, countCurrentColor,
   cellFromEvent, cellFromEventClamped, cellToColor, paintCell, paintBrush, paintSpray, floodFill,
   renderCallbacks, shapeCells, commitShape,
@@ -1158,8 +1158,11 @@ function initOutputPanel() {
     const btn = $('copy-btn');
     const ta = $('output-textarea');
     if (ta.dataset.error) { showInfoToast(ta.dataset.error); return; }
+    // Großer Sprite: der Code steht nicht im Feld, er wird jetzt gebaut.
+    const code = ta.dataset.lazy ? currentCode() : { code: ta.value, error: null };
+    if (code.error) { showInfoToast(code.error); return; }
     try {
-      await navigator.clipboard.writeText(ta.value);
+      await navigator.clipboard.writeText(code.code);
     } catch {
       // Clipboard-API kann blockiert sein (kein HTTPS o.ä.) — Auswahl als Fallback.
       ta.select();
@@ -1175,9 +1178,11 @@ function initOutputPanel() {
   $('save-code-btn').addEventListener('click', async () => {
     if (!getSprite()) return;
     if ($('output-textarea').dataset.error) { showInfoToast($('output-textarea').dataset.error); return; }
+    const code = currentCode();
+    if (code.error) { showInfoToast(code.error); return; }
     const fmt = getFormat(state.outputFormat);
     const filename = codeFilename(state.outputFormat);
-    const blob = new Blob([$('output-textarea').value], { type: `${fmt.mime};charset=utf-8` });
+    const blob = new Blob([code.code], { type: `${fmt.mime};charset=utf-8` });
     const result = await saveBlob(blob, filename);
     showInfoToast(result.fallback
       ? t('file.downloaded', { name: filename })

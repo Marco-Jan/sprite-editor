@@ -583,6 +583,7 @@ sprite-editor/
     ├── storage.js      ← Speicherstand (IndexedDB, Rückfall localStorage) + Projekt-Datei
     ├── idb.js          ← kleine Hülle um IndexedDB
     ├── pack.js         ← Sprite kompakt als Bytes und zurück
+    ├── raster.js       ← Bilder als Ganzes zeichnen, Auflösung der Zeichenfläche
     ├── migrate.js      ← v1 (dog/cat) → v2 (generisch)
     ├── render.js       ← alle Render-Funktionen + Mal-Operationen
     ├── codegen.js      ← Code-Formate (TS/JS/JSON/SVG/CSS/C/Python/Text), alle Frames
@@ -760,6 +761,16 @@ der Offline-Test lassen `.d.ts` bewusst aus.
   aber, solange etwas schwebt.
 - Die Zwischenablage der Auswahl liegt im Speicher, nicht in der System-Zwischenablage —
   `Strg`+`C` im Editor kopiert also keine Pixel in andere Programme.
+- Sprites sind höchstens **1024 × 1024** Pixel groß. Jedes Pixel ist im Arbeitsspeicher
+  eine JS-Zahl; ein 1024er-Sprite mit 8 Frames und 2 Ebenen braucht rund ein halbes
+  Gigabyte. Am Rechner läuft das flüssig, am Handy kann es bei vielen Frames eng werden.
+  Für größere Bilder müsste das Datenmodell auf Byte-Felder umgestellt werden.
+- Große Sprites (ab 256 × 256): die Zeichenfläche wird mit gedeckelter Auflösung gezeichnet
+  und per CSS gezoomt (`js/raster.js`, sonst lehnen Browser die Fläche ab — iOS ab ~16 Mio.
+  Pixel); nicht aktive Ebenen kommen aus einem Zwischenspeicher; die Bildchen in Timeline,
+  Ebenen-Panel und Vorschau folgen erst nach einer kurzen Malpause; der Code im
+  Ausgabe-Feld wird erst beim Kopieren oder Speichern gebaut (ab 300 000 Pixeln über
+  alle Frames).
 - Inkognito-Modus verliert alles beim Tab-Schließen.
 - Speicherplatz: IndexedDB fasst je nach Browser hunderte MB. Ohne IndexedDB
   (Rückfall localStorage) gilt ein Limit von ~5 MB; bei Überschreitung erscheint ein
