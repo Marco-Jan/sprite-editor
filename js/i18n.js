@@ -744,6 +744,9 @@ const MSG = {
     'tl.delOne':    'Frame löschen',
     'tl.delMany':   '{n} markierte Frames löschen',
     'tl.layers':    'Ebenen',
+    'tl.lyAdd':     'Neue Ebene über der aktiven',
+    'tl.lyDup':     'Ebene duplizieren',
+    'tl.lyDel':     'Ebene löschen',
     'tl.celTitle':  'Frame {i} · {name} — antippen wählt Frame und Ebene',
 
     // Hilfslinien (js/guides.js)
@@ -1163,6 +1166,9 @@ const MSG = {
     'tl.delOne':    'Delete frame',
     'tl.delMany':   'Delete {n} selected frames',
     'tl.layers':    'Layers',
+    'tl.lyAdd':     'New layer above the active one',
+    'tl.lyDup':     'Duplicate layer',
+    'tl.lyDel':     'Delete layer',
     'tl.celTitle':  'Frame {i} · {name} — tap to select frame and layer',
 
     'gd.chin':     'chin',

@@ -21,7 +21,10 @@ import { showInfoToast } from './toast.js';
 import { iconSvg } from './icons.js';
 import { t } from './i18n.js';
 import { isMobileLayout } from './layout.js';
-import { setActiveLayer, toggleVisible, toggleLocked } from './layers.js';
+import {
+  setActiveLayer, toggleVisible, toggleLocked, addLayer, duplicateLayer, deleteLayer,
+  moveLayer, renameLayer,
+} from './layers.js';
 
 /** @type {(id: string) => any} */
 const $ = id => document.getElementById(id);
@@ -381,21 +384,50 @@ function makeThumb() {
   return b;
 }
 
+// Ecke links oben: Überschrift und die Knöpfe für Ebenen — dieselben
+// Aktionen wie im Ebenen-Panel, nur dort, wo man die Ebenen gerade sieht.
 function makeCorner() {
   const c = document.createElement('div');
   c.className = 'tl-corner';
+  c.innerHTML = '<span class="tl-corner-label"></span><span class="tl-corner-btns">'
+    + '<button type="button" class="icon-btn" data-act="add"></button>'
+    + '<button type="button" class="icon-btn" data-act="dup"></button>'
+    + '<button type="button" class="icon-btn" data-act="del"></button></span>';
+  const acts = { add: [addLayer, 'plus', 'ly.add'], dup: [duplicateLayer, 'copy', 'ly.dup'], del: [deleteLayer, 'trash', 'ly.del'] };
+  c.querySelectorAll('button').forEach(b => {
+    const [fn, icon] = acts[/** @type {HTMLElement} */ (b).dataset.act];
+    b.innerHTML = iconSvg(icon);
+    b.addEventListener('click', () => fn());
+  });
   return c;
 }
 
+// Texte der Ecke — bei jedem Zeichnen, damit ein Sprachwechsel greift.
+function syncCorner(sp) {
+  corner.querySelector('.tl-corner-label').textContent = t('tl.layers');
+  corner.querySelectorAll('button').forEach(b => {
+    const act = /** @type {HTMLElement} */ (b).dataset.act;
+    b.title = t({ add: 'tl.lyAdd', dup: 'tl.lyDup', del: 'tl.lyDel' }[act]);
+    b.setAttribute('aria-label', b.title);
+    if (act === 'del') /** @type {HTMLButtonElement} */ (b).disabled = sp.layers.length < 2;
+  });
+}
+
+// Doppelklick von Hand: der erste Klick wählt die Ebene und baut das Raster
+// neu — der zweite träfe dann ein anderes Element, und der Browser meldete
+// keinen dblclick.
+let lastRowClick = { li: -1, t: 0 };
+
 // Eine Ebene: Auge, Schloss, Name. Ein Klick auf die Zeile wählt die
-// Ebene, ohne den Frame zu wechseln.
+// Ebene, ohne den Frame zu wechseln; ein Doppelklick benennt um, Ziehen
+// nach oben oder unten ordnet sie um.
 function makeLayerRow(sp, li) {
   const L = sp.layers[li];
   const row = document.createElement('div');
   row.className = 'tl-layer';
   row.dataset.l = String(li);
   row.classList.toggle('is-hidden', !L.visible);
-  row.title = L.name;
+  row.title = t('ly.rowTitle', { name: L.name });
   row.innerHTML = '<button type="button" class="icon-btn tl-eye"></button>'
     + '<button type="button" class="icon-btn tl-lock"></button>'
     + '<span class="tl-lname"></span>';
@@ -411,8 +443,90 @@ function makeLayerRow(sp, li) {
   row.children[2].textContent = L.name;
   eye.addEventListener('click', e => { e.stopPropagation(); toggleVisible(li); });
   lock.addEventListener('click', e => { e.stopPropagation(); toggleLocked(li); });
-  row.addEventListener('click', () => setActiveLayer(li));
+  row.addEventListener('click', e => {
+    if (row.dataset.dragged || /** @type {HTMLElement} */ (e.target).closest('button, input')) return;
+    const now = performance.now();
+    if (lastRowClick.li === li && now - lastRowClick.t < 400) {
+      lastRowClick = { li: -1, t: 0 };
+      startLayerRename(li);
+      return;
+    }
+    lastRowClick = { li, t: now };
+    setActiveLayer(li);
+  });
+  initLayerDrag(row, li);
   return row;
+}
+
+// Umbenennen an Ort und Stelle. Solange das Feld offen ist, baut
+// renderTimeline() das Raster nicht neu — sonst wäre es mitten im Tippen weg.
+function startLayerRename(li) {
+  const row = rowEls[li];
+  const span = row?.querySelector('.tl-lname');
+  const sp = getSprite();
+  if (!span || !sp) return;
+  const inp = document.createElement('input');
+  inp.className = 'input input--sm tl-rename';
+  inp.value = sp.layers[li].name;
+  span.replaceWith(inp);
+  inp.focus();
+  inp.select();
+  let done = false;
+  const finish = ok => {
+    if (done) return;
+    done = true;
+    inp.remove();
+    if (ok) renameLayer(li, inp.value); else renderTimeline();
+  };
+  inp.addEventListener('keydown', e => {
+    e.stopPropagation();
+    if (e.key === 'Enter') finish(true);
+    if (e.key === 'Escape') finish(false);
+  });
+  inp.addEventListener('blur', () => finish(true));
+}
+
+// Ebene nach oben oder unten ziehen. Die Zeilen stehen auf dem Kopf (oben =
+// oberste Ebene), darum wird die Zielposition umgerechnet — wie im Panel.
+function initLayerDrag(row, from) {
+  row.addEventListener('pointerdown', e => {
+    if (e.button !== 0 || /** @type {HTMLElement} */ (e.target).closest('button, input')) return;
+    const sy = e.clientY;
+    let dragging = false, slot = null;
+    const move = ev => {
+      const d = ev.clientY - sy;
+      if (!dragging) {
+        if (Math.abs(d) < 6) return;
+        dragging = true;
+        row.classList.add('is-dragging');
+        try { row.setPointerCapture(ev.pointerId); } catch {}
+      }
+      ev.preventDefault();
+      row.style.transform = `translateY(${d}px)`;
+      // Anzeige-Position (0 = oben) → Ebenen-Index (0 = unten).
+      const others = rowEls.filter(r => r && r !== row).sort((a, b) => Number(b.dataset.l) - Number(a.dataset.l));
+      let pos = 0;
+      others.forEach((r, k) => {
+        const rc = r.getBoundingClientRect();
+        if (ev.clientY > rc.top + rc.height / 2) pos = k + 1;
+      });
+      slot = others.length - pos;
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
+      if (!dragging) return;
+      row.classList.remove('is-dragging');
+      row.style.transform = '';
+      row.dataset.dragged = '1';
+      setTimeout(() => { delete row.dataset.dragged; }, 0);
+      if (slot != null && slot !== from) moveLayer(from, slot);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
+  });
 }
 
 function makeCel(fi, li) {
@@ -438,8 +552,10 @@ export function renderTimeline() {
   if (selSprite !== state.curSprite) { resetSel(); selSprite = state.curSprite; }
   const pal = getPaletteByName(sp.palette);
   const n = sp.frames.length, L = sp.layers.length;
+  // Eine offene Umbenennung nicht mitten im Tippen wegwerfen.
+  if (box.querySelector('.tl-rename')) return;
   if (!corner) corner = makeCorner();
-  corner.textContent = t('tl.layers');
+  syncCorner(sp);
   while (thumbs.length > n) thumbs.pop();
   while (thumbs.length < n) thumbs.push(makeThumb());
 

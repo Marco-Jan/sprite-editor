@@ -765,8 +765,10 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   left: 0; top: 0;
   z-index: 3;
   display: flex;
-  align-items: flex-end;
-  padding: 0 6px 4px;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 2px;
+  padding: 0 4px 2px 6px;
   font-size: var(--fs-xs);
   font-weight: 600;
   line-height: 1;
@@ -775,6 +777,11 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   color: var(--text-dim);
   background: var(--surface-1);
 }
+.tl-corner-btns { display: flex; gap: 2px; }
+.tl-corner-btns .icon-btn { width: 22px; height: 22px; padding: 0; }
+.tl-corner-btns svg { width: 13px; height: 13px; }
+.tl-layer.is-dragging { z-index: 4; opacity: 0.9; box-shadow: var(--shadow-md); cursor: grabbing; }
+.tl-rename { flex: 1 1 auto; min-width: 0; height: 18px; padding: 0 4px; font-size: var(--fs-xs); }
 .tl-layer {
   position: sticky;
   left: 0;
@@ -790,6 +797,8 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   font-size: var(--fs-xs);
   color: var(--text-dim);
   cursor: pointer;
+  /* Senkrecht ziehen ordnet die Ebene um — gescrollt wird über die Zellen. */
+  touch-action: pan-x;
 }
 .tl-layer:hover { color: var(--text); }
 .tl-layer.is-active { background: var(--accent-bg); color: var(--accent); }
