@@ -39,7 +39,7 @@ const PIN_MIN = 200, PIN_MAX = 560;
 const BARS = ['toolbar', 'color-bar', 'timeline'];
 const BAR_DOCK = {
   'toolbar': ['tools', 'lay.toolbar'],
-  'color-bar': ['swatches', 'lay.colorbar'],
+  'color-bar': ['colors', 'lay.colorbar'],
   'timeline': ['frames', 'lay.timeline'],
 };
 // Wo eine Leiste ohne gespeicherte Anordnung andockt.

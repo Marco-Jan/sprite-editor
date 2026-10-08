@@ -57,7 +57,9 @@ export const ICONS = {
   grip:    `<g ${DOT}><circle cx="9" cy="5" r="1.6"/><circle cx="15" cy="5" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="19" r="1.6"/><circle cx="15" cy="19" r="1.6"/></g>`,
   spot:    '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3"/>',
   tools:   '<path d="M4 20l1-4 9-9 3 3-9 9z"/><circle cx="17.5" cy="17.5" r="3.5"/><rect x="3" y="3" width="6" height="6" rx="1"/>',
-  swatches:`<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5" ${DOT}/>`,
+  // Farbzeile: drei sich ueberlappende Kreise — das Zeichen fuers Mischen von
+  // Farben. Vier Kaestchen (vorher) sahen aus wie ein Raster, nicht wie Farbe.
+  colors:  '<circle cx="9" cy="9.5" r="4.8"/><circle cx="15" cy="9.5" r="4.8"/><circle cx="12" cy="14.8" r="4.8"/>',
   eye:     '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
   close:   '<path d="M18 6L6 18M6 6l12 12"/>',
   play:    '<path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.5-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5z"/>',
