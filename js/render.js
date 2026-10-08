@@ -7,7 +7,7 @@
 import {
   state, sprites, customPalettes, paletteMaterials, selection,
   getGrid, getSprite, getPal, getPaletteName, getMaxIdx, getPreviewName,
-  getAllPaletteOptions, isCustomPalette, listSprites, getPaletteByName, allGrids, flatGrid, layerGrid,
+  getAllPaletteOptions, isCustomPalette, listSprites, getPaletteByName, allGrids, flatGrid,
 } from './state.js';
 import { PALETTE_GROUP_SPLIT, MAX_COLORS, cellToColor, paletteSize } from './data.js';
 import { t, tn, colorLabel, colorLabelShort } from './i18n.js';
@@ -175,7 +175,7 @@ export function renderEditor() {
   if (sp) {
     sp.layers.forEach((L, li) => {
       if (!L.visible || L.opacity <= 0) return;
-      const g = layerGrid(sp, li);
+      const g = sp.frames[sp.frame].cels[li];
       ctx.globalAlpha = L.opacity;
       for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
         const fill = cellToColor(g[y][x], pal);

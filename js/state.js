@@ -12,7 +12,6 @@ import { t } from './i18n.js';
 // und seine eigene Palette mit; es gibt keine eingebauten Motive mehr.
 //   sprites[id] = { name: 'Held', palette: 'golden', fps: 8, frame: 0, layer: 0,
 //                   layers: [{ name, visible, locked, opacity }, …],   // unten → oben
-//                   (Sprite-Ebene zusätzlich: ref, at — siehe unten)
 //                   frames: [{ cels: [grid je Ebene], dur: 0 }, …] }
 // `dur` ist die Dauer des Frames in ms, 0 = nach den fps des Sprites.
 // `sp.grid` ist ein (nicht aufgezähltes) Kürzel auf das Bild der AKTIVEN
@@ -158,120 +157,12 @@ export function defaultLayer(n = 1) {
 
 export function normalizeLayer(l, n) {
   const op = Number(l?.opacity);
-  const out = {
+  return {
     name: typeof l?.name === 'string' && l.name.trim() ? l.name.trim() : t('ly.name', { n }),
     visible: l?.visible !== false,
     locked: !!l?.locked,
     opacity: Number.isFinite(op) ? Math.max(0, Math.min(1, op)) : 1,
   };
-  if (typeof l?.ref === 'string' && l.ref) {
-    out.ref = l.ref;
-    out.at = (Array.isArray(l.at) ? l.at : []).map(normalizePlace);
-  }
-  return out;
-}
-
-// ── Sprite-Ebenen ───────────────────────────────────────────────────
-// Eine Ebene kann statt eigener Pixel einen ANDEREN Sprite zeigen — einen
-// Arm, einen Kopf, den man für sich gezeichnet hat. So setzt man eine Figur
-// aus Teilen zusammen und animiert sie, indem man die Teile je Frame
-// verschiebt. Es ist ein Verweis, keine Kopie: malt man am Arm weiter,
-// ändert er sich in jeder Figur mit.
-//
-//   layer.ref    id des gezeigten Sprites
-//   layer.at[f]  wie er in Frame f liegt: { x, y, f, rot, fx, fy }
-//                  x, y    linke obere Ecke (darf auch außerhalb liegen)
-//                  f       welcher Frame des Teils — so blinzelt ein Auge
-//                  rot     Vierteldrehungen im Uhrzeigersinn (0–3)
-//                  fx, fy  waagerecht / senkrecht gespiegelt
-//
-// Die Ebene behält trotzdem in jedem Frame ein (leeres) eigenes Bild. Alles,
-// was über alle Bilder läuft — Größe ändern, Undo, Speichern —, muss so von
-// Sprite-Ebenen nichts wissen. Gemalt wird in sie nicht (app.js
-// layerBlocked); was sie zeigt, liefert layerGrid().
-export const defaultPlace = () => ({ x: 0, y: 0, f: 0, rot: 0, fx: false, fy: false });
-
-export function normalizePlace(p) {
-  const int = v => (Number.isFinite(Number(v)) ? Math.round(Number(v)) : 0);
-  return {
-    x: int(p?.x),
-    y: int(p?.y),
-    f: Math.max(0, int(p?.f)),
-    rot: ((int(p?.rot) % 4) + 4) % 4,
-    fx: !!p?.fx,
-    fy: !!p?.fy,
-  };
-}
-
-export const isRefLayer = L => typeof L?.ref === 'string';
-
-// Ebene kopieren — die Positionen einer Sprite-Ebene dürfen sich Original
-// und Kopie nicht teilen (Undo, Ebene duplizieren, Sprite duplizieren).
-export function copyLayer(L) {
-  return isRefLayer(L) ? { ...L, at: L.at.map(p => ({ ...p })) } : { ...L };
-}
-
-// Die Positions-Listen aller Sprite-Ebenen — Frame-Aktionen (anlegen,
-// löschen, verschieben) müssen sie genauso umordnen wie die Frames.
-export function refPlaceLists(sp) {
-  return sp.layers.filter(isRefLayer).map(L => L.at);
-}
-
-// Bild drehen und spiegeln: erst spiegeln, dann `rot` Vierteldrehungen im
-// Uhrzeigersinn. Liefert immer ein neues Grid.
-export function transformGrid(g, rot = 0, fx = false, fy = false) {
-  let out = g.map(row => (fx ? [...row].reverse() : [...row]));
-  if (fy) out.reverse();
-  for (let k = 0; k < (((rot % 4) + 4) % 4); k++) {
-    const H = out.length, W = out[0].length;
-    out = Array.from({ length: W }, (_, y) => Array.from({ length: H }, (_, x) => out[H - 1 - x][y]));
-  }
-  return out;
-}
-
-// Gerade aufgelöste Verweise: zeigt A auf B und B wieder auf A, bricht die
-// Kette hier ab, statt endlos zu laufen.
-const resolving = new Set();
-
-// Was Ebene `li` in Frame `f` zeigt. Normale Ebene: ihr Bild. Sprite-Ebene:
-// das Teil, an seine Stelle gesetzt, in der Größe des Sprites. Hat das Teil
-// eine andere Palette, kommen seine Farben als freie Farben herüber — ein
-// Index meinte dort eine andere Farbe.
-export function layerGrid(sp, li, f = sp.frame) {
-  const L = sp.layers[li];
-  const own = sp.frames[f].cels[li];
-  if (!isRefLayer(L)) return own;
-  const H = own.length, W = own[0].length;
-  const out = Array.from({ length: H }, () => Array(W).fill(0));
-  const src = sprites[L.ref];
-  if (!src || resolving.has(L.ref)) return out;
-  const p = L.at[f] || defaultPlace();
-  let g;
-  resolving.add(L.ref);
-  try { g = flatGrid(src, Math.min(p.f, src.frames.length - 1)); } finally { resolving.delete(L.ref); }
-  g = transformGrid(g, p.rot, p.fx, p.fy);
-  const same = src.palette === sp.palette;
-  const spal = same ? null : getPaletteByName(src.palette);
-  for (let y = 0; y < g.length; y++) {
-    const ty = p.y + y;
-    if (ty < 0 || ty >= H) continue;
-    for (let x = 0; x < g[y].length; x++) {
-      const tx = p.x + x, v = g[y][x];
-      if (v === 0 || tx < 0 || tx >= W) continue;
-      out[ty][tx] = same ? v : (cellToColor(v, spal) || '#000000').toLowerCase();
-    }
-  }
-  return out;
-}
-
-// Zeigt Sprite `id` — direkt oder über weitere Sprite-Ebenen — auf `target`?
-// Dann darf `target` nicht als Ebene in `id` landen: es zeigte sich selbst.
-export function refersTo(id, target, seen = new Set()) {
-  if (id === target) return true;
-  if (seen.has(id)) return false;
-  seen.add(id);
-  const sp = sprites[id];
-  return !!sp && sp.layers.some(L => isRefLayer(L) && refersTo(L.ref, target, seen));
 }
 
 // Leeres Bild in der Größe eines vorhandenen.
@@ -299,11 +190,6 @@ export function makeSprite({ name, palette, frames, fps = DEFAULT_FPS, frame = 0
   const n = Math.max(...fr.map(f => f.cels.length));
   for (const f of fr) while (f.cels.length < n) f.cels.push(blankLike(f.cels[0]));
   const ly = Array.from({ length: n }, (_, i) => normalizeLayer(layers?.[i], i + 1));
-  // Je Frame eine Position — fehlende übernehmen die letzte bekannte.
-  for (const L of ly) if (isRefLayer(L)) {
-    L.at.length = Math.min(L.at.length, fr.length);
-    while (L.at.length < fr.length) L.at.push({ ...(L.at[L.at.length - 1] || defaultPlace()) });
-  }
   return attachGrid({
     name,
     palette,
@@ -344,13 +230,13 @@ function mixHex(below, top, a) {
 export function flatGrid(sp, f = sp.frame) {
   const cels = sp.frames[f].cels;
   const L0 = sp.layers[0];
-  if (cels.length === 1 && L0.visible && L0.opacity >= 1 && !isRefLayer(L0)) return cels[0];
+  if (cels.length === 1 && L0.visible && L0.opacity >= 1) return cels[0];
   const H = cels[0].length, W = cels[0][0].length;
   const pal = getPaletteByName(sp.palette);
   const out = Array.from({ length: H }, () => Array(W).fill(0));
   sp.layers.forEach((L, li) => {
     if (!L.visible || L.opacity <= 0) return;
-    const g = layerGrid(sp, li, f);
+    const g = cels[li];
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
       const v = g[y][x];
       if (v === 0) continue;

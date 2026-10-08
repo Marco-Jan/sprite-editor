@@ -2,7 +2,7 @@
 // SPRITES — anlegen, umbenennen, duplizieren, löschen
 // ════════════════════════════════════════════════════════════════════
 import {
-  state, sprites, createSprite, selectFirstSprite, flatGrid, copyLayer,
+  state, sprites, createSprite, selectFirstSprite, flatGrid,
   getSprite, makeSpriteId, listSprites, clearSelection,
 } from './state.js';
 import { DEFAULT_PALETTE, dc } from './data.js';
@@ -46,7 +46,7 @@ export function duplicateSprite(id) {
     palette: src.palette,
     frames: src.frames.map(f => ({ cels: f.cels.map(dc), dur: f.dur })),
     fps: src.fps,
-    layers: src.layers.map(copyLayer),
+    layers: src.layers.map(l => ({ ...l })),
     layer: src.layer,
     guides: JSON.parse(JSON.stringify(src.guides)),
   });
