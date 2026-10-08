@@ -6,13 +6,15 @@
 // lokale Re-Assignments — sonst sehen andere Module die Änderung nicht.
 import { BUILTIN_PALETTES, DEFAULT_PALETTE, paletteSize, cellToColor } from './data.js';
 import { t } from './i18n.js';
+import { normalizeTags } from './tags.js';
 
 // ────────────────────────────────────────────────────────────────────
 // Sprites — eine flache Sammlung. Jeder Sprite bringt seine Ebenen, Frames
 // und seine eigene Palette mit; es gibt keine eingebauten Motive mehr.
 //   sprites[id] = { name: 'Held', palette: 'golden', fps: 8, frame: 0, layer: 0,
 //                   layers: [{ name, visible, locked, opacity }, …],   // unten → oben
-//                   frames: [{ cels: [grid je Ebene], dur: 0 }, …] }
+//                   frames: [{ cels: [grid je Ebene], dur: 0 }, …],
+//                   tags: [{ name, from, to, color, dir }, …] }   // js/tags.js
 // Verknüpfte Zellen: zwei Frames dürfen sich auf einer Ebene DASSELBE Bild
 // teilen — dasselbe Array-Objekt, nicht nur gleiche Pixel (siehe unten).
 // `dur` ist die Dauer des Frames in ms, 0 = nach den fps des Sprites.
@@ -192,7 +194,7 @@ export function normalizeGuides(g, W, H) {
 
 // Sprite-Datensatz aus Rohdaten bauen (Anlegen, Laden, Import).
 // Frames als { cels: [grid, …], dur } oder — eine Ebene — als { grid, dur }.
-export function makeSprite({ name, palette, frames, fps = DEFAULT_FPS, frame = 0, layers = null, layer = 0, guides = null }) {
+export function makeSprite({ name, palette, frames, fps = DEFAULT_FPS, frame = 0, layers = null, layer = 0, guides = null, tags = null }) {
   const fr = resolveLinks(frames.map(f => ({ cels: f.cels ? [...f.cels] : [f.grid], dur: Math.max(0, Math.round(f.dur) || 0) })));
   const n = Math.max(...fr.map(f => f.cels.length));
   for (const f of fr) while (f.cels.length < n) f.cels.push(blankLike(f.cels[0]));
@@ -206,6 +208,7 @@ export function makeSprite({ name, palette, frames, fps = DEFAULT_FPS, frame = 0
     layers: ly,
     frames: fr,
     guides: normalizeGuides(guides, fr[0].cels[0][0].length, fr[0].cels[0].length),
+    tags: normalizeTags(tags, fr.length),
   });
 }
 
@@ -349,7 +352,7 @@ export function frameDuration(sp, i) {
 
 // Sprite anlegen und zurückgeben. Setzt ihn NICHT automatisch aktiv.
 // `frames` ([{ grid | cels, dur }]) geht vor `grid` (ein einzelnes Bild).
-export function createSprite({ name, size = 24, palette = DEFAULT_PALETTE, grid = null, frames = null, fps = DEFAULT_FPS, layers = null, layer = 0, guides = null }) {
+export function createSprite({ name, size = 24, palette = DEFAULT_PALETTE, grid = null, frames = null, fps = DEFAULT_FPS, layers = null, layer = 0, guides = null, tags = null }) {
   const id = makeSpriteId(name);
   sprites[id] = makeSprite({
     name: (name || id).trim() || id,
@@ -359,6 +362,7 @@ export function createSprite({ name, size = 24, palette = DEFAULT_PALETTE, grid 
     layers,
     layer,
     guides,
+    tags,
   });
   return id;
 }

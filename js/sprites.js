@@ -49,6 +49,7 @@ export function duplicateSprite(id) {
     layers: src.layers.map(l => ({ ...l })),
     layer: src.layer,
     guides: JSON.parse(JSON.stringify(src.guides)),
+    tags: src.tags,
   });
   commitFloat();
   clearSelection();

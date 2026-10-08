@@ -7,6 +7,7 @@ import { getPal, getSprite, listSprites, getPaletteByName, frameDuration, flatGr
 import { encodeGif } from './gif.js';
 import { cellToColor, renderCallbacks } from './render.js';
 import { selectedFrameIndices } from './frames.js';
+import { tagFrames } from './tags.js';
 import { showInfoToast } from './toast.js';
 import { saveBlob, getSaveDirectory } from './filesystem.js';
 import { zipBlob } from './zip.js';
@@ -261,9 +262,10 @@ function buildGif(scale, only) {
   const pal = getPal();
   const H = sp.grid.length, W = sp.grid[0].length;
   const index = new Map();
-  // Markierte Frames: nur die kommen ins GIF — so schneidet man einen
-  // Abschnitt einer langen Animation heraus, ohne etwas zu löschen.
-  const use = only && only.length > 1 ? only : sp.frames.map((_, i) => i);
+  // Markierte Frames bzw. die eines Tags: nur die kommen ins GIF — so
+  // schneidet man einen Abschnitt heraus, ohne etwas zu löschen. Die
+  // Reihenfolge zählt (ein Tag rückwärts oder Ping-Pong).
+  const use = only && only.length ? only : sp.frames.map((_, i) => i);
   const shown = use.map(i => flatGrid(sp, i));
   for (const g of shown) for (const row of g) for (const c of row) {
     const hex = cellToColor(c, pal);
@@ -342,6 +344,11 @@ function buildSheet(scale) {
     cell: { w: cellW * scale, h: cellH * scale },
     columns: cols,
     frames,
+    // Tags je Sprite — wie Aseprites frameTags, die Engines kennen das.
+    tags: all.filter(s => s.tags?.length).map(s => ({
+      sprite: s.name, id: s.id,
+      tags: s.tags.map(g => ({ name: g.name, from: g.from, to: g.to, direction: g.dir })),
+    })),
   };
   return { canvas: c, atlas, count: all.length };
 }
@@ -353,6 +360,9 @@ export function initExport() {
   // markierten Frames beziehen — ein Titel-Tooltip sieht auf dem Handy keiner.
   const note = document.getElementById('export-frames-note');
   const syncFrameNote = (n) => {
+    // Der Haken „je Tag" ergibt nur Sinn, wenn es Tags gibt.
+    const tagsField = document.getElementById('export-gif-tags-field');
+    if (tagsField) tagsField.hidden = !getSprite()?.tags.length;
     if (!note) return;
     const many = n > 1;
     note.hidden = !many;
@@ -363,7 +373,23 @@ export function initExport() {
 
   document.getElementById('export-gif-btn').addEventListener('click', async () => {
     const scale = Number(scaleSel.value) || 8;
-    const r = buildGif(scale, framesToExport());
+    const sp = getSprite();
+    // Je Tag eine Datei — in der Richtung des Tags.
+    if (sp?.tags.length && /** @type {HTMLInputElement} */ (document.getElementById('export-gif-tags')).checked) {
+      const dir = await getSaveDirectory({ promptIfMissing: true });
+      const files = [];
+      for (const g of sp.tags) {
+        const r = buildGif(scale, tagFrames(g));
+        if (!r.ok) { showInfoToast(r.reason); return; }
+        const tagName = g.name.replace(/[^a-zA-Z0-9_-]/g, '_') || 'tag';
+        files.push({ name: `${exportBase()}_${tagName}.gif`, blob: r.blob });
+      }
+      const result = await saveMany(files, `${exportBase()}_tags.zip`, dir);
+      reportSavedMany(result, files.length, files[0].name, files[files.length - 1].name);
+      return;
+    }
+    const ids = framesToExport();
+    const r = buildGif(scale, ids.length > 1 ? ids : null);
     if (!r.ok) { showInfoToast(r.reason); return; }
     const filename = exportFilename('gif');
     const result = await saveBlob(r.blob, filename);

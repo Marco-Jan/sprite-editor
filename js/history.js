@@ -9,6 +9,7 @@
 // Mit im Eintrag steckt die Palette des Sprites — so ist auch "Sprite
 // umfärben" (andere Palette zuweisen) ein normaler Undo-Schritt.
 import { state, sprites, copyFrames, linkSignature } from './state.js';
+import { copyTags } from './tags.js';
 import { dc } from './data.js';
 
 const MAX_HISTORY = 50;
@@ -40,6 +41,7 @@ function snap(id) {
     frame: sp.frame,
     fps: sp.fps,
     palette: sp.palette,
+    tags: copyTags(sp.tags),
   };
 }
 
@@ -69,6 +71,7 @@ function snapAfter(id, before) {
     frame: sp.frame,
     fps: sp.fps,
     palette: sp.palette,
+    tags: copyTags(sp.tags),
   };
 }
 
@@ -87,6 +90,7 @@ function snapsEqual(a, b) {
   if (a.palette !== b.palette || a.fps !== b.fps || a.frames.length !== b.frames.length) return false;
   if (JSON.stringify(a.layers) !== JSON.stringify(b.layers)) return false;
   if (linkSignature(a.frames) !== linkSignature(b.frames)) return false;
+  if (JSON.stringify(a.tags) !== JSON.stringify(b.tags)) return false;
   return a.frames.every((f, i) => f.dur === b.frames[i].dur
     && f.cels.length === b.frames[i].cels.length
     && f.cels.every((g, j) => gridsEqual(g, b.frames[i].cels[j])));
@@ -143,6 +147,7 @@ function apply(id, st) {
   sp.layer = Math.min(st.layer, sp.layers.length - 1);
   sp.frame = Math.min(st.frame, sp.frames.length - 1);
   sp.fps = st.fps;
+  sp.tags = copyTags(st.tags);
   if (st.palette) sp.palette = st.palette;
 }
 

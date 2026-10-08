@@ -754,7 +754,7 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   grid-template-rows: var(--tl-cell, 44px) repeat(var(--tl-l, 1), var(--tl-row));
   gap: 2px;
   min-width: 0;
-  max-height: calc(var(--tl-cell, 44px) + 6 * (var(--tl-row) + 2px) + 6px);
+  max-height: calc(var(--tl-tagh, 0px) + var(--tl-cell, 44px) + 6 * (var(--tl-row) + 2px) + 6px);
   padding-bottom: 2px;
   overflow: auto;
   overscroll-behavior: contain;
@@ -863,8 +863,52 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   cursor: pointer;
   touch-action: pan-x pan-y;
 }
-/* Die Bildchen kleben beim Scrollen nach unten oben fest. */
-.tl-frame { position: sticky; top: 0; z-index: 2; }
+/* Die Bildchen kleben beim Scrollen nach unten oben fest — unter den Tags. */
+.tl-frame { position: sticky; top: var(--tl-tagh, 0px); z-index: 2; }
+/* Frame-Tags (js/frames.js, js/tags.js): ein Balken je Tag über seinen Frames. */
+.tl-tag {
+  position: sticky;
+  z-index: 2;
+  min-width: 0;
+  height: 16px;
+  padding: 0 6px;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: color-mix(in srgb, var(--tag) 30%, var(--surface-1));
+  box-shadow: inset 3px 0 0 var(--tag);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  line-height: 16px;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+  cursor: pointer;
+}
+.tl-tag:hover { background: color-mix(in srgb, var(--tag) 45%, var(--surface-1)); }
+.tag-editor {
+  position: fixed;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  width: 15rem;
+  padding: var(--sp-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-md);
+}
+.tag-editor[hidden] { display: none; }
+.tg-row { display: flex; align-items: center; gap: var(--sp-2); }
+.tg-row .field-label { width: 4.5rem; flex: none; }
+.tg-row input[type="number"] { width: 3.5rem; }
+.tg-row select { flex: 1 1 auto; }
+.tg-colors { display: flex; flex-wrap: wrap; gap: 4px; }
+.tg-swatch { width: 22px; height: 22px; padding: 0; border: 2px solid transparent; border-radius: 50%; cursor: pointer; }
+.tg-swatch.is-active { border-color: var(--text); }
+.tg-actions { justify-content: flex-end; flex-wrap: wrap; }
 .tl-frame canvas {
   display: block;
   image-rendering: pixelated;

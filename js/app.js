@@ -50,6 +50,7 @@ import { zoomAt, fitZoomToArea, isPanMode, setPanTool, initPan, initPinch } from
 import { initFrames, togglePlay, nextFrame, prevFrame, firstFrame, lastFrame, isPlaying, stop as stopPlayback } from './frames.js';
 import { initLayers } from './layers.js';
 import { celKeyDown } from './frames.js';
+import { normalizeTags } from './tags.js';
 import { initPreview, renderPreview } from './preview.js';
 import { initGuides, guidePointerDown, toggleEdit as toggleGuideEdit, toggleShow as toggleGuides } from './guides.js';
 import { parseTsSprite } from './tsimport.js';
@@ -1343,6 +1344,8 @@ function initImport() {
         sp.frame = 0;
         if (fps) sp.fps = Math.max(1, Math.min(60, fps));
         if (palName) sp.palette = palName;
+        // Tags passen nur noch, soweit es ihre Frames noch gibt.
+        sp.tags = normalizeTags(sp.tags, sp.frames.length);
       });
     }
 

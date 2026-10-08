@@ -158,6 +158,12 @@
           <!-- Sagt, worauf sich PNG/PDF/GIF gerade beziehen (js/export.js) -->
           <p class="field-note" id="export-frames-note" hidden></p>
 
+          <!-- Nur sichtbar, wenn der Sprite Tags hat (js/export.js) -->
+          <label class="check" id="export-gif-tags-field" data-i18n-attr="title:exp.gifTagsTitle" title="Statt einer GIF für alles: eine je Tag, in seiner Richtung — z. B. held_laufen.gif, held_springen.gif" hidden>
+            <input type="checkbox" id="export-gif-tags">
+            <span data-i18n="exp.gifTags">GIF: eine Datei je Tag</span>
+          </label>
+
           <label class="check" data-i18n-attr="title:out.legendTitle" title="Bettet eine Farb-Legende ins Bild ein, damit die Farbwerte nicht verloren gehen">
             <input type="checkbox" id="export-embed-palette" checked>
             <span data-i18n="out.legend">Farb-Legende ins Bild</span>
@@ -351,6 +357,7 @@
           <button class="btn" id="tl-del" data-i18n-attr="title:tl.del" title="Frame löschen"><span class="ico" data-icon="trash"></span></button>
         </div>
         <button class="btn" id="tl-onion" aria-pressed="false" data-i18n-attr="title:tl.onion" title="Onion Skin — vorigen und nächsten Frame durchscheinen lassen"><span class="ico" data-icon="onion"></span></button>
+        <button class="btn" id="tl-tag" data-i18n-attr="title:tl.tag" title="Tag anlegen — benennt die markierten Frames, z. B. „Laufen“"><span class="ico" data-icon="tag"></span></button>
         <!-- Zellen: wirken auf den Bereich im Raster oder die aktive Zelle (js/frames.js, js/cels.js) -->
         <div class="btn-group tl-celops" role="group" data-i18n-attr="aria-label:tl.cels" aria-label="Zellen">
           <button class="btn" id="tl-ccopy" data-i18n-attr="title:tl.ccopy" title="Zellen kopieren (Strg+C, nach einem Klick in die Timeline)"><span class="ico" data-icon="copy"></span></button>

@@ -25,6 +25,7 @@ import {
   rangeOf, rangeSize, inRange, clampRange, canShift, shiftCels, clearCels, copyCels, pasteCels,
   linkCels, unlinkCels,
 } from './cels.js';
+import { TAG_COLORS, TAG_DIRS, tagsInsert, tagsDelete, tagAt, tagLanes, nextPlayFrame } from './tags.js';
 import {
   setActiveLayer, toggleVisible, toggleLocked, toggleContinuous, addLayer, duplicateLayer, deleteLayer,
   moveLayer, renameLayer,
@@ -156,6 +157,7 @@ export function addFrame() {
     // Leer — außer auf durchgehenden Ebenen, dort verknüpft (state.js).
     const cels = newFrameCels(sp, sp.frame);
     sp.frames.splice(sp.frame + 1, 0, { cels, dur: 0 });
+    tagsInsert(sp.tags, sp.frame + 1);
     sp.frame++;
   });
 }
@@ -165,6 +167,7 @@ export function duplicateFrame() {
   edit(sp => {
     const f = sp.frames[sp.frame];
     sp.frames.splice(sp.frame + 1, 0, { cels: newFrameCels(sp, sp.frame, true), dur: f.dur });
+    tagsInsert(sp.tags, sp.frame + 1);
     sp.frame++;
   });
 }
@@ -180,6 +183,7 @@ export function deleteFrame() {
   resetSel();
   edit(s => {
     for (const i of [...ids].reverse()) s.frames.splice(i, 1);
+    tagsDelete(s.tags, ids);
     s.frame = Math.min(ids[0], s.frames.length - 1);
   });
 }
@@ -216,6 +220,10 @@ export function setDuration(v) {
 // ────────────────────────────────────────────────────────────────────
 let timer = null;
 let playingId = null;
+// Steht man beim Start in einem Tag, läuft nur dieser — in seiner Richtung.
+// Eine Kopie: wer den Tag währenddessen ändert, stört die Runde nicht.
+let playTag = null;
+let playStep = 0;
 
 export function isPlaying() { return state.playing; }
 
@@ -225,6 +233,9 @@ export function play() {
   leaveFrame();
   state.playing = true;
   playingId = state.curSprite;
+  const g = tagAt(sp.tags, sp.frame);
+  playTag = g && g.to > g.from ? { ...g } : null;
+  playStep = 0;
   syncPlayButton();
   renderEditor();       // ohne Onion Skin
   schedule();
@@ -236,7 +247,10 @@ function schedule() {
   timer = setTimeout(() => {
     if (!state.playing) return;
     if (state.curSprite !== playingId || !getSprite()) { stop(); return; }
-    showFrame(getSprite().frame + 1, true);
+    const cur = getSprite();
+    const next = nextPlayFrame(playTag, cur.frames.length, cur.frame, playStep);
+    playStep = next.step;
+    showFrame(next.frame, true);
     schedule();
   }, frameDuration(sp, sp.frame));
 }
@@ -574,6 +588,22 @@ export function renderTimeline() {
   // Der Bereich gehört zu einem Sprite und muss ins Raster passen.
   range = rangeSprite === state.curSprite ? clampRange(sp, range) : null;
 
+  // Tags über den Vorschaubildern, überlappende auf eigenen Spuren.
+  const lanes = tagLanes(sp.tags);
+  const nl = sp.tags.length ? Math.max(...lanes) + 1 : 0;
+  const tagEls = sp.tags.map((g, k) => {
+    const b = makeTagBar(sp, g, k);
+    b.style.gridRow = String(lanes[k] + 1);
+    b.style.gridColumn = `${g.from + 2} / ${g.to + 3}`;
+    b.style.top = lanes[k] * (TAG_ROW + 2) + 'px';
+    return b;
+  });
+  // Jedes Element bekommt seinen Platz im Raster ausdrücklich — mit den
+  // Tag-Spuren obendrauf ginge die automatische Anordnung durcheinander.
+  corner.style.gridRow = `1 / ${nl + 2}`;
+  corner.style.gridColumn = '1';
+  thumbs.forEach((b, i) => { b.style.gridRow = String(nl + 1); b.style.gridColumn = String(i + 2); });
+
   // Zeilen von oben nach unten: oberste Ebene zuerst.
   rowEls = [];
   celEls = sp.layers.map(() => []);
@@ -581,10 +611,15 @@ export function renderTimeline() {
   const body = [];
   for (let li = L - 1; li >= 0; li--) {
     const row = makeLayerRow(sp, li);
+    const gr = String(nl + 2 + (L - 1 - li));
+    row.style.gridRow = gr;
+    row.style.gridColumn = '1';
     rowEls[li] = row;
     body.push(row);
     for (let fi = 0; fi < n; fi++) {
       const c = makeCel(fi, li);
+      c.style.gridRow = gr;
+      c.style.gridColumn = String(fi + 2);
       setCelFill(c, sp.frames[fi].cels[li]);
       c.classList.toggle('is-hidden', !sp.layers[li].visible);
       c.title = t('tl.celTitle', { i: fi + 1, name: sp.layers[li].name });
@@ -598,9 +633,12 @@ export function renderTimeline() {
     }
   }
   // Vorhandene Knöpfe werden dabei nur umgehängt, nicht neu gebaut.
-  box.replaceChildren(corner, ...thumbs, ...body);
+  box.replaceChildren(corner, ...tagEls, ...thumbs, ...body);
   box.style.setProperty('--tl-n', String(n));
   box.style.setProperty('--tl-l', String(L));
+  box.style.setProperty('--tl-tagh', nl * (TAG_ROW + 2) + 'px');
+  box.style.gridTemplateRows = (nl ? `repeat(${nl}, ${TAG_ROW}px) ` : '') + `var(--tl-cell, 44px) repeat(${L}, var(--tl-row))`;
+  if (tagEdIndex >= 0) syncTagEditor();
   fitThumbs();
 
   sp.frames.forEach((f, i) => {
@@ -987,6 +1025,187 @@ function initThumbDrag(b) {
   });
 }
 
+// ────────────────────────────────────────────────────────────────────
+// Tags in der Timeline (js/tags.js)
+// ────────────────────────────────────────────────────────────────────
+// Über den Vorschaubildern liegt je Tag ein farbiger Balken mit Namen und
+// Richtung. Ein Klick darauf öffnet den kleinen Bearbeiter: Name, Frames,
+// Richtung, Farbe, Abspielen, Löschen. „Tag" in der Knopfleiste legt einen
+// neuen an — über die markierten Frames, den Zellen-Bereich oder den
+// aktiven Frame.
+const TAG_ROW = 16;   // Höhe einer Tag-Spur in px (styles.css: .tl-tag)
+const DIR_MARK = { forward: '→', reverse: '←', pingpong: '↔' };
+
+function makeTagBar(sp, g, k) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'tl-tag';
+  b.style.setProperty('--tag', g.color);
+  b.textContent = (g.dir !== 'forward' ? DIR_MARK[g.dir] + ' ' : '') + g.name;
+  b.title = t('tg.barTitle', { name: g.name, a: g.from + 1, b: g.to + 1, dir: t('tg.dir.' + g.dir) });
+  b.addEventListener('click', () => openTagEditor(k, b));
+  return b;
+}
+
+// Welche Frames bekommt ein neuer Tag? Markierte Frames, sonst der
+// Zellen-Bereich, sonst der aktive Frame.
+function framesForNewTag(sp) {
+  const ids = selectedFrames();
+  if (ids.length > 1) return [ids[0], ids[ids.length - 1]];
+  const r = clampRange(sp, range);
+  if (r && r.f1 > r.f0) return [r.f0, r.f1];
+  return [sp.frame, sp.frame];
+}
+
+export function addTag() {
+  const sp = getSprite();
+  if (!sp) return;
+  const [from, to] = framesForNewTag(sp);
+  const k = sp.tags.length;
+  edit(s => {
+    s.tags.push({
+      name: t('tg.defaultName', { n: k + 1 }), from, to,
+      color: TAG_COLORS[k % TAG_COLORS.length], dir: 'forward',
+    });
+  });
+  openTagEditor(k, $('tl-tag'));
+}
+
+// ── Bearbeiter ──────────────────────────────────────────────────────
+let tagEd = null;        // das Element, einmal gebaut
+let tagEdIndex = -1;     // welcher Tag gerade offen ist
+
+function changeTag(fn) {
+  const sp = getSprite();
+  const g = sp?.tags[tagEdIndex];
+  if (!g) return;
+  stop();
+  recordOp(() => fn(g, sp));
+  renderAll();
+  saveState();
+  syncTagEditor();
+}
+
+function buildTagEditor() {
+  const el = document.createElement('div');
+  el.className = 'tag-editor';
+  el.setAttribute('role', 'dialog');
+  el.hidden = true;
+  el.innerHTML = ''
+    + '<input class="input input--sm tg-name" type="text" maxlength="40">'
+    + '<div class="tg-row"><span class="field-label tg-l-frames"></span>'
+    + '<input class="input input--sm tg-from" type="number" min="1" step="1"> – '
+    + '<input class="input input--sm tg-to" type="number" min="1" step="1"></div>'
+    + '<div class="tg-row"><span class="field-label tg-l-dir"></span><select class="input input--sm tg-dir"></select></div>'
+    + '<div class="tg-colors"></div>'
+    + '<div class="tg-row tg-actions">'
+    + '<button type="button" class="btn tg-play"></button>'
+    + '<button type="button" class="btn btn--danger-soft tg-del"></button>'
+    + '<button type="button" class="btn tg-done"></button></div>';
+  const q = sel => /** @type {any} */ (el.querySelector(sel));
+  q('.tg-name').addEventListener('change', e => {
+    const v = e.target.value.trim();
+    if (v) changeTag(g => { g.name = v; }); else syncTagEditor();
+  });
+  const range2 = () => {
+    const n = getSprite()?.frames.length || 1;
+    const a = Math.max(1, Math.min(n, Math.round(Number(q('.tg-from').value)) || 1)) - 1;
+    const b = Math.max(1, Math.min(n, Math.round(Number(q('.tg-to').value)) || 1)) - 1;
+    changeTag(g => { g.from = Math.min(a, b); g.to = Math.max(a, b); });
+  };
+  q('.tg-from').addEventListener('change', range2);
+  q('.tg-to').addEventListener('change', range2);
+  q('.tg-dir').addEventListener('change', e => changeTag(g => { g.dir = e.target.value; }));
+  TAG_COLORS.forEach(c => {
+    const s = document.createElement('button');
+    s.type = 'button';
+    s.className = 'tg-swatch';
+    s.style.background = c;
+    s.dataset.color = c;
+    s.addEventListener('click', () => changeTag(g => { g.color = c; }));
+    q('.tg-colors').append(s);
+  });
+  q('.tg-play').addEventListener('click', () => {
+    const g = getSprite()?.tags[tagEdIndex];
+    if (!g) return;
+    closeTagEditor();
+    resetSel();
+    goFrame(g.from);
+    play();
+  });
+  q('.tg-del').addEventListener('click', () => {
+    const k = tagEdIndex;
+    closeTagEditor();
+    edit(s => { s.tags.splice(k, 1); });
+  });
+  q('.tg-done').addEventListener('click', closeTagEditor);
+  el.addEventListener('keydown', e => {
+    e.stopPropagation();   // Tippen im Namen soll keine Werkzeuge wechseln
+    if (e.key === 'Escape') closeTagEditor();
+    const tg = /** @type {HTMLElement} */ (e.target);
+    if (e.key === 'Enter' && tg.tagName === 'INPUT') tg.blur();
+  });
+  document.addEventListener('pointerdown', e => {
+    if (el.hidden) return;
+    const tg = /** @type {HTMLElement} */ (e.target);
+    if (!el.contains(tg) && !tg.closest?.('.tl-tag, #tl-tag')) closeTagEditor();
+  }, true);
+  document.body.append(el);
+  return el;
+}
+
+function syncTagEditor() {
+  const sp = getSprite();
+  const g = sp?.tags[tagEdIndex];
+  if (!tagEd || !g) { closeTagEditor(); return; }
+  const q = sel => /** @type {any} */ (tagEd.querySelector(sel));
+  const set = (sel, v) => { const i = q(sel); if (document.activeElement !== i) i.value = v; };
+  set('.tg-name', g.name);
+  set('.tg-from', g.from + 1);
+  set('.tg-to', g.to + 1);
+  q('.tg-from').max = q('.tg-to').max = sp.frames.length;
+  const dir = q('.tg-dir');
+  if (!dir.options.length) {
+    for (const d of TAG_DIRS) { const o = document.createElement('option'); o.value = d; dir.append(o); }
+  }
+  [...dir.options].forEach(o => { o.textContent = t('tg.dir.' + o.value); });
+  dir.value = g.dir;
+  tagEd.querySelectorAll('.tg-swatch').forEach(s => {
+    const on = /** @type {HTMLElement} */ (s).dataset.color === g.color;
+    s.classList.toggle('is-active', on);
+    s.setAttribute('aria-pressed', String(on));
+  });
+  q('.tg-name').setAttribute('aria-label', t('tg.name'));
+  q('.tg-l-frames').textContent = t('tg.frames');
+  q('.tg-l-dir').textContent = t('tg.dir');
+  q('.tg-play').textContent = t('tg.play');
+  q('.tg-del').textContent = t('tg.del');
+  q('.tg-done').textContent = t('tg.done');
+  tagEd.setAttribute('aria-label', g.name);
+}
+
+function openTagEditor(k, anchor) {
+  if (!tagEd) tagEd = buildTagEditor();
+  tagEdIndex = k;
+  tagEd.hidden = false;
+  syncTagEditor();
+  // Unter oder über dem Anker, im Fenster gehalten.
+  const r = anchor?.getBoundingClientRect() || { left: 20, top: 20, bottom: 40 };
+  const w = tagEd.offsetWidth, h = tagEd.offsetHeight;
+  const left = Math.max(8, Math.min(innerWidth - w - 8, r.left));
+  const below = r.bottom + 6 + h < innerHeight;
+  tagEd.style.left = left + 'px';
+  tagEd.style.top = (below ? r.bottom + 6 : Math.max(8, r.top - h - 6)) + 'px';
+  const name = tagEd.querySelector('.tg-name');
+  name.focus();
+  name.select();
+}
+
+function closeTagEditor() {
+  if (tagEd) tagEd.hidden = true;
+  tagEdIndex = -1;
+}
+
 export function initFrames() {
   $('tl-first').addEventListener('click', firstFrame);
   $('tl-prev').addEventListener('click', prevFrame);
@@ -1001,6 +1220,7 @@ export function initFrames() {
   $('tl-fps').addEventListener('change', e => setFps(e.target.value));
   $('tl-dur').addEventListener('change', e => setDuration(e.target.value));
   $('tl-go').addEventListener('change', e => goFrameNumber(e.target.value));
+  $('tl-tag').addEventListener('click', addTag);
   $('tl-ccopy').addEventListener('click', copyCelRange);
   $('tl-cpaste').addEventListener('click', pasteCelRange);
   $('tl-cclear').addEventListener('click', clearCelRange);

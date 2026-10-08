@@ -76,6 +76,7 @@ function serializeSprites() {
       layer: sp.layer,
       layers: sp.layers,
       guides: sp.guides,
+      tags: sp.tags,
       // Verknüpfte Zellen als { link: k } (state.js framesForSave).
       frames: framesForSave(sp),
       grid: flatGrid(sp, 0),
@@ -261,6 +262,7 @@ function applyPayload(payload) {
           layers: Array.isArray(sp.layers) ? sp.layers : null,
           layer: sp.layer,
           guides: sp.guides,
+          tags: sp.tags,
         });
       }
     }
