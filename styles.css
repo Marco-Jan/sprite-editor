@@ -1585,6 +1585,61 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
    und schwebende Fenster bleiben, damit man weiterarbeiten kann. */
 body.editor-fullscreen #topbar { display: none; }
 
+/* ── Vollbild (js/fullscreen.js) ─────────────────────────────────────
+   Weg sind Menüleiste, Kopfzeile über der Fläche und die Seitenleisten;
+   Werkzeugleiste, Farbzeile und Timeline bleiben. Die Seitenleisten liegen
+   dann über der Fläche und gleiten herein, wenn die Maus an den Rand kommt
+   (body.fs-peek-left / -right). */
+body.editor-fullscreen #stage-head { display: none; }
+.fs-exit, .fs-grip { display: none; }
+body.editor-fullscreen .fs-exit {
+  display: inline-flex;
+  position: fixed;
+  top: 10px; right: 10px;
+  z-index: 80;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  background: var(--surface-1);
+  box-shadow: var(--shadow-md);
+}
+body.editor-fullscreen .fs-exit.is-visible { opacity: 1; pointer-events: auto; }
+@media (min-width: 1100.02px) {
+  /* overflow: die versteckte rechte Leiste liegt rechts neben dem Fenster —
+     ohne Abschneiden gäbe es einen waagerechten Scrollbalken. */
+  body.editor-fullscreen #workspace { grid-template-columns: minmax(0, 1fr); overflow: hidden; }
+  body.editor-fullscreen .rail {
+    position: absolute;
+    top: 0; bottom: 0;
+    z-index: 45;
+    box-shadow: var(--shadow-lg);
+    transition: transform 0.18s ease;
+  }
+  body.editor-fullscreen #rail-left { left: 0; transform: translateX(calc(-100% - 12px)); }
+  body.editor-fullscreen #rail-right { right: 0; transform: translateX(calc(100% + 12px)); }
+  body.editor-fullscreen.fs-peek-left #rail-left,
+  body.editor-fullscreen.fs-peek-right #rail-right { transform: none; }
+  /* Griffe nur ohne Maus: ein schmaler Streifen mitten am Rand. */
+  @media (pointer: coarse) {
+    body.editor-fullscreen .fs-grip {
+      display: block;
+      position: fixed;
+      top: 50%;
+      z-index: 46;
+      width: 14px;
+      height: 64px;
+      margin-top: -32px;
+      padding: 0;
+      border: 1px solid var(--line-strong);
+      background: var(--surface-2);
+      opacity: 0.8;
+    }
+    .fs-grip--left { left: 0; border-left: 0; border-radius: 0 var(--r-md) var(--r-md) 0; }
+    .fs-grip--right { right: 0; border-right: 0; border-radius: var(--r-md) 0 0 var(--r-md); }
+    body.fs-peek-left .fs-grip--left, body.fs-peek-right .fs-grip--right { display: none; }
+  }
+}
+
 /* ── 10 · Responsive ────────────────────────────────────────────── */
 @media (max-width: 1280px) {
   :root { --rail-w: 232px; }

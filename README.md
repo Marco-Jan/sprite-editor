@@ -105,8 +105,15 @@ der Zeichenfläche (Standard), ohne Pin liegt sie im Dock. Diese Wahl gilt nur f
 Auch die Dock-Icons unten lassen sich dort ziehen: Reihenfolge ändern und zwischen linker
 und rechter Gruppe wechseln — ebenfalls nur fürs Handy, das Desktop-Layout bleibt. Andocken lassen sie sich oben, unten oder links/rechts neben der
 Zeichenfläche (dort senkrecht), in beliebiger Reihenfolge. Die Anordnung merkt sich
-der Browser (localStorage `spritebit_layout`), sie gehört nicht zum Projekt. Im Vollbild
-verschwindet nur die Kopfzeile.
+der Browser (localStorage `spritebit_layout`), sie gehört nicht zum Projekt.
+
+**Vollbild** (`js/fullscreen.js`) schaltet auch den Browser ins Vollbild (Fullscreen API;
+iPhone/iPad-Safari erlaubt das Webseiten nicht, dort werden nur die Leisten ausgeblendet).
+Menüleiste, Kopfzeile über der Fläche und die Seitenleisten verschwinden; Werkzeugleiste,
+Farbzeile und Timeline bleiben. Die Seitenleisten gleiten herein, sobald die Maus an den
+linken bzw. rechten Rand kommt (ohne Maus: schmaler Griff am Rand), und bleiben, solange ein
+Panel daraus offen ist. Beenden: Esc, der Knopf oben rechts in der Zeichenfläche oder
+Ansicht → Vollbild.
 
 ---
 

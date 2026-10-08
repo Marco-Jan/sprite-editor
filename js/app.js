@@ -53,6 +53,7 @@ import { celKeyDown } from './frames.js';
 import { initTlMenu } from './tlmenu.js';
 import { initQuickPaletteDrag } from './qpdrag.js';
 import { initMenubar } from './menubar.js';
+import { initFullscreen, enterFullscreen, exitFullscreen } from './fullscreen.js';
 import { normalizeTags } from './tags.js';
 import { initPreview, renderPreview } from './preview.js';
 import { initGuides, guidePointerDown, toggleEdit as toggleGuideEdit, toggleShow as toggleGuides } from './guides.js';
@@ -740,15 +741,6 @@ function syncFullscreenBtn() {
   btn.title       = t(on ? 'full.exitTitle' : 'full.enterTitle');
 }
 
-function enterFullscreen() {
-  document.body.classList.add('editor-fullscreen');
-  syncFullscreenBtn();
-}
-
-function exitFullscreen() {
-  document.body.classList.remove('editor-fullscreen');
-  syncFullscreenBtn();
-}
 
 // ────────────────────────────────────────────────────────────────────
 // Werkzeugleiste
@@ -1434,6 +1426,7 @@ async function init() {
   initLayout();
   initTopbar();
   initMenubar();
+  initFullscreen({ onToggle: syncFullscreenBtn });
   initToolbar();
   initPalettePanel();
   initFreeColors();
