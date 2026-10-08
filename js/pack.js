@@ -26,19 +26,25 @@ export function packSprite(sp) {
   const imageOf = new Map();   // Bild-Objekt → Nummer
   const images = [];
   const free = [], freeIdx = new Map();
+  // Direkt in ein 16-Bit-Feld schreiben; kommen keine freien Farben vor,
+  // reicht am Ende ein Byte je Pixel.
   const pack = g => {
     let wide = false;
-    const vals = new Array(W * H);
-    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-      let v = g[y]?.[x] ?? 0;
-      if (typeof v === 'string') {
-        if (!freeIdx.has(v)) { freeIdx.set(v, free.length); free.push(v); }
-        v = FREE_BASE + freeIdx.get(v);
-        wide = true;
-      } else if (!(v >= 0 && v < FREE_BASE)) v = 0;
-      vals[y * W + x] = v;
+    const out = new Uint16Array(W * H);
+    for (let y = 0; y < H; y++) {
+      const row = g[y] || [];
+      const o = y * W;
+      for (let x = 0; x < W; x++) {
+        let v = row[x] ?? 0;
+        if (typeof v === 'string') {
+          if (!freeIdx.has(v)) { freeIdx.set(v, free.length); free.push(v); }
+          v = FREE_BASE + freeIdx.get(v);
+          wide = true;
+        } else if (!(v >= 0 && v < FREE_BASE)) v = 0;
+        out[o + x] = v;
+      }
     }
-    return wide ? Uint16Array.from(vals) : Uint8Array.from(vals);
+    return wide ? out : Uint8Array.from(out);
   };
   const frames = sp.frames.map(f => ({
     dur: f.dur || 0,
@@ -86,12 +92,16 @@ export function unpackSprite(rec) {
 /** Prüfsumme über einen gepackten Sprite — hat er sich seit dem letzten Speichern geändert? */
 export function packSum(rec) {
   let h = 0x811c9dc5;
-  const mix = n => { h ^= n & 0xff; h = Math.imul(h, 0x01000193) >>> 0; };
   const meta = JSON.stringify({ ...rec, images: undefined });
-  for (let i = 0; i < meta.length; i++) { const c = meta.charCodeAt(i); mix(c); mix(c >> 8); }
+  for (let i = 0; i < meta.length; i++) h = Math.imul(h ^ meta.charCodeAt(i), 0x01000193);
   for (const img of rec.images) {
-    mix(img.length); mix(img.BYTES_PER_ELEMENT);
-    for (let i = 0; i < img.length; i++) { mix(img[i]); if (img[i] > 255) mix(img[i] >> 8); }
+    h = Math.imul(h ^ img.length ^ (img.BYTES_PER_ELEMENT << 24), 0x01000193);
+    // Vier Bytes auf einmal — bei einer Million Pixeln je Bild zählt das.
+    const words = img.byteLength >> 2;
+    const u32 = new Uint32Array(img.buffer, img.byteOffset, words);
+    for (let i = 0; i < words; i++) h = Math.imul(h ^ u32[i], 0x01000193);
+    const u8 = new Uint8Array(img.buffer, img.byteOffset + words * 4, img.byteLength - words * 4);
+    for (let i = 0; i < u8.length; i++) h = Math.imul(h ^ u8[i], 0x01000193);
   }
-  return h.toString(36) + ':' + rec.images.length;
+  return (h >>> 0).toString(36) + ':' + rec.images.length;
 }
