@@ -31,8 +31,8 @@ eine eigene App.
   Deploy bekommt man also beim nächsten Neuladen die neue Version.
 - **Offline**, oder wenn der Server länger als 4 Sekunden nicht antwortet, kommt die Datei
   aus dem Cache.
-- Projekte liegen wie immer im `localStorage` bzw. in der Projektdatei. Mit dem Cache haben
-  sie nichts zu tun.
+- Projekte liegen in IndexedDB bzw. in der Projektdatei. Mit dem Cache haben sie nichts
+  zu tun.
 
 ### Update-Band
 
@@ -504,9 +504,25 @@ die FPS-Zahl des Sprites.
 
 ## Speichern
 
-Alles liegt unter dem localStorage-Key `wb_sprite_tester_v1` (der Key blieb; das
-Schema ist versioniert). Auto-Save 250 ms nach jeder Änderung, Force-Save beim
-Tab-Schließen.
+Der Stand liegt in **IndexedDB** (Datenbank `spritebit`, `js/idb.js`):
+
+- `sprites` — je Sprite ein Eintrag, die Pixel kompakt als Bytes (`js/pack.js`):
+  `Uint8Array` für Palettenfarben, `Uint16Array`, sobald freie Farben vorkommen.
+  Verknüpfte Zellen stehen nur einmal drin.
+- `kv` — Projekt (Paletten, Materialien, Oberfläche, Reihenfolge der Sprites),
+  Sicherung, Rettung und ein wartender Import.
+
+Gespeichert wird 250 ms nach jeder Änderung und sofort beim Wegwechseln vom Tab —
+im Hintergrund, und nur Sprites, deren Prüfsumme sich geändert hat, alles in einer
+Transaktion. Beim Schließen kann IndexedDB nicht garantiert fertig schreiben; ist
+dann noch etwas offen, kommt der Stand zusätzlich als Notfall-Kopie in den
+`localStorage` (`spritebit_emergency`). Beim nächsten Start gewinnt der neuere.
+
+Beim ersten Start nach der Umstellung wird der alte Stand aus dem localStorage-Key
+`wb_sprite_tester_v1` übernommen; der Key bleibt als weitere Sicherung liegen.
+Ohne IndexedDB (manche privaten Fenster) speichert der Editor wie früher dort als
+ein JSON-Text. Projektdatei, Sicherung und Notfall-Kopie haben immer dasselbe
+JSON-Format; geladen wird alles über dieselbe Prüfung (`applyPayload`).
 
 Für echte Backups **Projekt sichern** benutzen — das schreibt Sprites, Paletten und
 UI-Zustand in eine JSON-Datei. Mit **Speicherort** lässt sich einmalig ein Zielordner
@@ -564,7 +580,9 @@ sprite-editor/
 └── js/
     ├── data.js         ← Farb-Labels, eingebaute Paletten, cellToColor, Konstanten
     ├── state.js        ← Sprites, Paletten, UI-State + Lookups
-    ├── storage.js      ← localStorage + Projekt-Datei
+    ├── storage.js      ← Speicherstand (IndexedDB, Rückfall localStorage) + Projekt-Datei
+    ├── idb.js          ← kleine Hülle um IndexedDB
+    ├── pack.js         ← Sprite kompakt als Bytes und zurück
     ├── migrate.js      ← v1 (dog/cat) → v2 (generisch)
     ├── render.js       ← alle Render-Funktionen + Mal-Operationen
     ├── codegen.js      ← Code-Formate (TS/JS/JSON/SVG/CSS/C/Python/Text), alle Frames
@@ -647,7 +665,7 @@ da ist.
 Im itch-iframe gelten drei Einschränkungen, die auf der eigenen Domain nicht
 bestehen: die PWA-Installation entfällt, der Service Worker kann in der Sandbox
 scheitern (dann eben ohne Offline-Modus, `js/pwa.js` fängt das ab), und der
-`localStorage` liegt in einem fremden Rahmen — Browser trennen Speicher nach
+Speicher (IndexedDB) liegt in einem fremden Rahmen — Browser trennen Speicher nach
 Seite, Safari kann ihn blockieren. Ein Hinweis auf die eigene Adresse auf der
 Projektseite ist deshalb sinnvoll.
 
@@ -743,7 +761,9 @@ der Offline-Test lassen `.d.ts` bewusst aus.
 - Die Zwischenablage der Auswahl liegt im Speicher, nicht in der System-Zwischenablage —
   `Strg`+`C` im Editor kopiert also keine Pixel in andere Programme.
 - Inkognito-Modus verliert alles beim Tab-Schließen.
-- localStorage-Limit ~5 MB; bei Überschreitung erscheint ein Hinweis-Toast.
+- Speicherplatz: IndexedDB fasst je nach Browser hunderte MB. Ohne IndexedDB
+  (Rückfall localStorage) gilt ein Limit von ~5 MB; bei Überschreitung erscheint ein
+  Hinweis-Toast.
 - Die Schablonen-Pipette ignoriert Stellen mit Alpha = 0.
 
 ---

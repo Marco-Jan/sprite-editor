@@ -1,14 +1,25 @@
 // ════════════════════════════════════════════════════════════════════
-// STORAGE — Persistierung via localStorage (+ Projekt-Datei als JSON)
+// STORAGE — Speicherstand im Browser (+ Projekt-Datei als JSON)
 // ════════════════════════════════════════════════════════════════════
-// Alles liegt unter EINEM Key. `version` im Payload erlaubt Migrationen,
-// ohne alte Saves zu zerschießen.
+// Gespeichert wird in IndexedDB (js/idb.js): je Sprite ein Eintrag, die
+// Pixel kompakt als Bytes (js/pack.js), und nur, was sich seit dem letzten
+// Mal geändert hat. Das Speichern läuft im Hintergrund.
+//
+// Ohne IndexedDB (manche privaten Fenster) geht es wie früher: alles als
+// ein JSON-Text unter EINEM Schlüssel in localStorage.
+//
+// Was zwischen beiden Welten wandert — Projektdatei, Sicherung, Rettung,
+// Notfall-Kopie, der alte localStorage-Stand —, ist immer derselbe JSON-
+// Payload (buildPayload). `version` darin erlaubt Migrationen, ohne alte
+// Saves zu zerschießen; geladen wird alles über applyPayload.
 import { state, sprites, customPalettes, paletteMaterials, selectFirstSprite, paletteExists, makeSprite, flatGrid, framesForSave } from './state.js';
 import { normalizeTlOpts } from './onion.js';
 import { DEFAULT_PALETTE, completePalette } from './data.js';
 import { saveBlob } from './filesystem.js';
 import { showInfoToast } from './toast.js';
 import { migrateV1 } from './migrate.js';
+import { openDb, readAll, writeBatch } from './idb.js';
+import { packSprite, unpackSprite, packSum } from './pack.js';
 import { t } from './i18n.js';
 import { MATERIALS } from './gamejson.js';
 
@@ -25,6 +36,23 @@ const SCHEMA_VERSION = 2;
 const RESCUE_KEY = STORAGE_KEY + '_rescue';
 const BACKUP_KEY = STORAGE_KEY + '_backup';
 const BACKUP_EVERY = 12 * 60 * 60 * 1000;
+
+// Notfall-Kopie (nur bei IndexedDB): wird der Tab geschlossen, während noch
+// etwas ungespeichert ist, kann IndexedDB nicht mehr sicher fertig schreiben.
+// Dann kommt der Stand zusätzlich synchron hierher; beim nächsten Start
+// gewinnt der neuere von beiden.
+const EMERGENCY_KEY = 'spritebit_emergency';
+
+/** 'idb' oder 'ls' (localStorage) — steht nach loadState() fest. */
+let backend = 'ls';
+// Sicherung und Rettung bei IndexedDB: beim Start gelesen, danach hier
+// gehalten — die Hilfe fragt synchron danach (backupInfo).
+const slotCache = {};
+// Was zuletzt gespeichert wurde: Prüfsumme je Sprite (js/pack.js).
+const savedSums = new Map();
+// Änderungszähler: ungespeichert ist, solange savedSeq hinter changeSeq liegt.
+let changeSeq = 0, savedSeq = 0;
+let writing = null, writeAgain = false;
 
 let _saveTimer = null;
 let _flashTimer = null;
@@ -107,10 +135,16 @@ function readFrames(sp) {
   return raw.map(f => ({ cels: f.cels.map(c => (isLink(c) ? c : fit(c))), dur: Number(f.dur) || 0 }));
 }
 
-function buildPayload() {
+// Alles außer den Sprites — für IndexedDB, wo die Sprites einzeln liegen.
+function buildProject() {
+  const { sprites: _, ...rest } = buildPayload(false);
+  return { ...rest, order: Object.keys(sprites), savedAt: Date.now() };
+}
+
+function buildPayload(withSprites = true) {
   return {
     version: SCHEMA_VERSION,
-    sprites: serializeSprites(),
+    sprites: withSprites ? serializeSprites() : {},
     customPalettes,
     paletteMaterials,
     ui: {
@@ -135,14 +169,17 @@ function buildPayload() {
 // in den localStorage schreiben.
 export function saveState() {
   if (_saveDisabled) return;
+  changeSeq++;
   clearTimeout(_saveTimer);
   _saveTimer = setTimeout(writeNow, 250);
 }
 
 function writeNow() {
   if (_saveDisabled) return;
+  if (backend === 'idb') { writeIdb(); return; }
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(buildPayload()));
+    savedSeq = changeSeq;
     flashSaved();
   } catch (e) {
     console.warn('spritebit: Speichern fehlgeschlagen', e);
@@ -150,11 +187,55 @@ function writeNow() {
   }
 }
 
+// IndexedDB: nur Sprites schreiben, deren Prüfsumme sich geändert hat, dazu
+// das Projekt — alles in einer Transaktion. Läuft schon ein Schreiben, wird
+// danach noch einmal geschrieben, statt zwei Transaktionen zu mischen.
+async function writeIdb() {
+  if (_saveDisabled) return;
+  if (writing) { writeAgain = true; return; }
+  const seq = changeSeq;
+  const put = {}, sums = new Map();
+  for (const [id, sp] of Object.entries(sprites)) {
+    const rec = packSprite(sp);
+    const sum = packSum(rec);
+    sums.set(id, sum);
+    if (savedSums.get(id) !== sum) put[id] = rec;
+  }
+  const del = [...savedSums.keys()].filter(id => !sprites[id]);
+  writing = writeBatch({ kv: { project: buildProject() }, put, del });
+  try {
+    await writing;
+    savedSums.clear();
+    for (const [id, sum] of sums) savedSums.set(id, sum);
+    savedSeq = seq;
+    try { localStorage.removeItem(EMERGENCY_KEY); } catch {}
+    flashSaved();
+  } catch (e) {
+    console.warn('spritebit: Speichern fehlgeschlagen', e);
+    showInfoToast(t('file.saveFailed'));
+  } finally {
+    writing = null;
+    if (writeAgain) { writeAgain = false; writeIdb(); }
+  }
+}
+
 // Forcierter Save beim Tab-Schließen (der Debouncer könnte noch pending sein).
+// localStorage schreibt synchron und ist garantiert fertig; IndexedDB nicht.
+// Darum bei IndexedDB: ist etwas ungespeichert, zusätzlich die Notfall-Kopie.
 export function forceSaveBeforeUnload() {
   if (_saveDisabled) return;
   clearTimeout(_saveTimer);
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(buildPayload())); } catch {}
+  if (backend !== 'idb') {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(buildPayload())); } catch {}
+    return;
+  }
+  if (changeSeq === savedSeq && !writing) return;
+  try {
+    localStorage.setItem(EMERGENCY_KEY, JSON.stringify({ at: Date.now(), raw: JSON.stringify(buildPayload()) }));
+  } catch (e) {
+    console.warn('spritebit: Notfall-Kopie passt nicht in den Speicher', e);
+  }
+  writeIdb();
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -163,7 +244,88 @@ export function forceSaveBeforeUnload() {
 // Kein Rendern hier — app.js ruft danach einmal renderAll().
 // Rückgabe: { loaded, migrated, note } — `note` erklärt dem Nutzer, was die
 // Migration mit alten Hund/Katze-Daten gemacht hat.
-export function loadState() {
+export async function loadState() {
+  try {
+    await openDb();
+    backend = 'idb';
+    return await loadIdb();
+  } catch (e) {
+    console.warn('spritebit: IndexedDB nicht verfügbar, speichere in localStorage', e);
+    backend = 'ls';
+    return loadLegacy();
+  }
+}
+
+// Welcher Stand gilt beim Start mit IndexedDB? Der Reihe nach:
+//   1. ein wartender Import (Projekt öffnen, Sicherung zurückholen)
+//   2. die Notfall-Kopie, wenn sie neuer ist als das Gespeicherte
+//   3. das Gespeicherte
+//   4. noch nichts gespeichert: der alte localStorage-Stand (einmaliger
+//      Umzug; der alte Schlüssel bleibt als weitere Sicherung liegen)
+async function loadIdb() {
+  const { kv, sprites: stored } = await readAll();
+  for (const k of [BACKUP_KEY, RESCUE_KEY]) if (kv.get(k)?.raw) slotCache[k] = kv.get(k);
+  const project = kv.get('project');
+  let emergency = null;
+  try { emergency = JSON.parse(localStorage.getItem(EMERGENCY_KEY) || 'null'); } catch {}
+
+  let raw = null, why = '';
+  if (typeof kv.get('import') === 'string') { raw = kv.get('import'); why = 'import'; }
+  else if (emergency?.raw && (!project || emergency.at > (project.savedAt || 0))) { raw = emergency.raw; why = 'emergency'; }
+  else if (!project && !kv.get('migrated')) {
+    try { raw = localStorage.getItem(STORAGE_KEY); } catch {}
+    why = 'migrate';
+  }
+
+  if (raw) {
+    let payload;
+    try { payload = JSON.parse(raw); } catch {
+      rescue(raw);
+      return { loaded: false, rescued: true };
+    }
+    const r = applyPayload(payload);
+    if (!r.loaded) { rescue(raw); r.rescued = true; return r; }
+    keepBackup(raw);
+    // Gleich vollständig nach IndexedDB — danach ist der Import erledigt.
+    savedSums.clear();
+    await writeBatch({
+      kv: { project: buildProject(), migrated: true },
+      kvDel: ['import'],
+      put: Object.fromEntries(Object.entries(sprites).map(([id, sp]) => [id, packSprite(sp)])),
+      clearSprites: true,
+    });
+    for (const [id, sp] of Object.entries(sprites)) savedSums.set(id, packSum(packSprite(sp)));
+    try { localStorage.removeItem(EMERGENCY_KEY); } catch {}
+    if (why === 'migrate') console.info('spritebit: Speicherstand aus localStorage nach IndexedDB übernommen');
+    return r;
+  }
+
+  try { localStorage.removeItem(EMERGENCY_KEY); } catch {}
+  if (!project) return { loaded: false };
+
+  // Gespeichertes auspacken und durch dieselbe Prüfung schicken wie eine Datei.
+  const order = (Array.isArray(project.order) ? project.order : []).filter(id => stored.has(id));
+  for (const id of stored.keys()) if (!order.includes(id)) order.push(id);
+  const payload = {
+    ...project,
+    sprites: Object.fromEntries(order.map(id => [id, unpackSprite(stored.get(id))])),
+  };
+  const r = applyPayload(payload);
+  if (!r.loaded) {
+    const text = JSON.stringify(payload);
+    rescue(text);
+    r.rescued = true;
+    return r;
+  }
+  // Was geladen ist, gilt als gespeichert — sonst schriebe das erste
+  // Speichern jeden Sprite neu. Einträge ohne Sprite räumt es dann weg.
+  for (const id of stored.keys()) savedSums.set(id, '');
+  for (const [id, sp] of Object.entries(sprites)) savedSums.set(id, packSum(packSprite(sp)));
+  keepBackup(() => JSON.stringify(buildPayload()));
+  return r;
+}
+
+function loadLegacy() {
   let raw;
   try { raw = localStorage.getItem(STORAGE_KEY); } catch { return { loaded: false }; }
   if (!raw) return { loaded: false };
@@ -183,12 +345,19 @@ export function loadState() {
 
 // ── Sicherheitsnetz ─────────────────────────────────────────────────
 function readSlot(key) {
+  if (backend === 'idb') return slotCache[key] || null;
   try {
     const v = JSON.parse(localStorage.getItem(key) || 'null');
     return v && typeof v.raw === 'string' ? v : null;
   } catch { return null; }
 }
 function writeSlot(key, raw) {
+  if (backend === 'idb') {
+    slotCache[key] = { at: new Date().toISOString(), raw };
+    writeBatch({ kv: { [key]: slotCache[key] } })
+      .catch(e => console.warn('spritebit: Sicherung nicht geschrieben', e));
+    return true;
+  }
   try { localStorage.setItem(key, JSON.stringify({ at: new Date().toISOString(), raw })); return true; }
   catch (e) { console.warn('spritebit: Sicherung passt nicht mehr in den Speicher', e); return false; }
 }
@@ -199,11 +368,14 @@ function rescue(raw) {
   if (!readSlot(RESCUE_KEY)) writeSlot(RESCUE_KEY, raw);
 }
 
+// raw: der Text — oder eine Funktion, die ihn erst baut, wenn er gebraucht
+// wird (bei IndexedDB liegt kein fertiger Text vor).
 function keepBackup(raw) {
   const old = readSlot(BACKUP_KEY);
   if (old && Date.now() - Date.parse(old.at) < BACKUP_EVERY) return;
-  if (old && old.raw === raw) return;
-  writeSlot(BACKUP_KEY, raw);
+  const text = typeof raw === 'function' ? raw() : raw;
+  if (old && old.raw === text) return;
+  writeSlot(BACKUP_KEY, text);
 }
 
 // Für die Hilfe: was gibt es an Sicherungen? → { backup: Date|null, rescue: Date|null }
@@ -223,10 +395,18 @@ export async function downloadBackup(which) {
 
 // Sicherung zurückholen: ersetzt den aktuellen Stand, dann Neustart.
 // Der aktuelle Stand wird vorher selbst zur Rettung — nichts geht verloren.
-export function restoreBackup(which) {
+export async function restoreBackup(which) {
   const slot = readSlot(which === 'rescue' ? RESCUE_KEY : BACKUP_KEY);
   if (!slot) return;
   disableSaving();
+  if (backend === 'idb') {
+    const cur = JSON.stringify(buildPayload());
+    const kv = { import: slot.raw };
+    if (cur !== slot.raw) kv[RESCUE_KEY] = { at: new Date().toISOString(), raw: cur };
+    try { await writeBatch({ kv }); } catch (e) { console.warn('spritebit: Wiederherstellen fehlgeschlagen', e); }
+    location.reload();
+    return;
+  }
   try {
     const cur = localStorage.getItem(STORAGE_KEY);
     if (cur && cur !== slot.raw) localStorage.setItem(RESCUE_KEY, JSON.stringify({ at: new Date().toISOString(), raw: cur }));
@@ -314,10 +494,29 @@ function applyPayload(payload) {
 }
 
 // Alles wegwerfen und Seite neu laden (= Werkseinstellungen).
-export function clearStorage() {
+export async function clearStorage() {
   disableSaving(); // sonst schreibt beforeunload alles sofort wieder zurück
+  if (backend === 'idb') {
+    // Sicherung und Rettung bleiben; `migrated` verhindert, dass der alte
+    // localStorage-Stand beim Neustart wieder hereingeholt wird.
+    try { await writeBatch({ kvDel: ['project', 'import'], kv: { migrated: true }, clearSprites: true }); }
+    catch (e) { console.warn('spritebit: Zurücksetzen fehlgeschlagen', e); }
+    try { localStorage.removeItem(EMERGENCY_KEY); } catch {}
+  }
   try { localStorage.removeItem(STORAGE_KEY); } catch {}
   location.reload();
+}
+
+// Wechselt man weg (anderer Tab, Handy-App in den Hintergrund), sofort
+// speichern statt auf den Debouncer zu warten — danach wird eine Seite oft
+// ohne weitere Vorwarnung beendet.
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'hidden' || backend !== 'idb' || _saveDisabled) return;
+    if (changeSeq === savedSeq) return;
+    clearTimeout(_saveTimer);
+    writeIdb();
+  });
 }
 
 // Kurzes "gespeichert"-Aufblitzen in der Kopfzeile.
@@ -358,6 +557,13 @@ export function loadFromFile(file, onError) {
         throw new Error('kein Sprite-Projekt');
       }
       disableSaving(); // sonst überschreibt beforeunload die frisch geladene Datei
+      // IndexedDB: als wartender Import ablegen, der Start übernimmt ihn
+      // (loadIdb). Große Projekte passten nicht in localStorage.
+      if (backend === 'idb') {
+        writeBatch({ kv: { import: text } }).then(() => location.reload(),
+          () => { if (onError) onError(t('file.readFailed')); });
+        return;
+      }
       localStorage.setItem(STORAGE_KEY, text);
       location.reload();
     } catch {

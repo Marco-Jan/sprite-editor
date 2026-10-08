@@ -1404,13 +1404,14 @@ function relabelUi() {
   info(''); // die alte Statuszeile stünde sonst in der alten Sprache da
 }
 
-function init() {
+async function init() {
   // Zuerst übersetzen: der Body ist so lange versteckt (siehe editor.html).
   applyStatic();
   initLangSwitch();
   onLangChange(relabelUi);
 
-  const loaded = loadState();
+  // IndexedDB lädt asynchron — erst danach gibt es Sprites zum Zeichnen.
+  const loaded = await loadState();
 
   // Leeres Projekt (erster Start oder Migration hat nichts gerettet) →
   // ein Sprite anlegen, damit der Editor nie ins Leere zeigt.
