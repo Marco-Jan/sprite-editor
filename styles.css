@@ -995,6 +995,12 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 .tl-menu #tl-dur { width: 5rem; }
 #tm-reset { align-self: flex-start; }
 
+/* Farbzeile umsortieren (js/qpdrag.js): angehobenes Feld, Strich am Ziel. */
+.qp-swatch.is-lifted, .qp-mini.is-lifted { opacity: 0.45; transform: scale(0.92); }
+.qp-swatch.is-drop-l, .qp-mini.is-drop-l { box-shadow: -3px 0 0 var(--accent); }
+.qp-swatch.is-drop-r, .qp-mini.is-drop-r { box-shadow: 3px 0 0 var(--accent); }
+#qp-sort { padding: 5px 8px; flex: none; }
+
 /* Hilfslinien: im Verschieben-Modus kein Pinsel-Umriss */
 #editor-canvas-wrap.is-guide-edit #brush-cursor { display: none; }
 #gd-show.is-active, #gd-edit.is-active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent-line); }
@@ -2243,6 +2249,10 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
      zweite Zeile am Stueck aufs Display. */
   #timeline .btn,
   #timeline .icon-btn { min-width: 38px; min-height: 38px; }
+  /* Ausnahme: die drei Ebenen-Knöpfe in der Ecke des Rasters — die Spalte
+     ist am Handy nur 92 px breit, 38 px je Knopf passten nicht hinein. */
+  #timeline .tl-corner-btns .icon-btn { min-width: 0; min-height: 0; width: 28px; height: 28px; }
+  #timeline .tl-corner-label { display: none; }
   /* Finger statt Strg/Shift: der Schalter fuer die Mehrfachauswahl. Dafuer
      fallen die Schritt-Knoepfe weg — den Nachbar-Frame tippt man direkt an,
      und die Leiste bleibt zweizeilig. */
