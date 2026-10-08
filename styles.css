@@ -1006,8 +1006,10 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 #gd-show.is-active, #gd-edit.is-active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent-line); }
 
 /* Vorschau-Panel (js/preview.js) — der ganze Sprite, ohne Gitter.
-   Das Schachbrett zeigt, was transparent ist; der Rahmen gibt dem Bild
-   einen Rand, auch wenn der Sprite fast leer ist. */
+   Das Schachbrett liegt auf dem BILD, nicht auf der Box: es zeigt genau die
+   Fläche des Sprites und was darin transparent ist — egal, wie groß man das
+   Panel zieht. Ein Feld je Sprite-Pixel (--chk setzt js/preview.js), der
+   feine Rahmen zeigt den Rand auch bei fast leerem Sprite. */
 .preview-box {
   display: grid;
   place-items: center;
@@ -1017,13 +1019,14 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   padding: var(--sp-3);
   border: 1px solid var(--line);
   border-radius: var(--r-md);
-  background:
-    repeating-conic-gradient(var(--surface-3) 0% 25%, transparent 0% 50%) 0 0 / 12px 12px,
-    var(--surface-1);
+  background: var(--surface-1);
 }
 #preview-canvas {
   display: block;
   image-rendering: pixelated;
+  background:
+    repeating-conic-gradient(var(--surface-3) 0% 25%, var(--surface-2) 0% 50%) 0 0 / var(--chk, 12px) var(--chk, 12px);
+  outline: 1px solid var(--line-strong);
 }
 
 /* Ebenen-Panel (js/layers.js) — oberste Ebene oben */

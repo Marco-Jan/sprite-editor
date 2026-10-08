@@ -70,6 +70,9 @@ export function renderPreview() {
   if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
   cv.style.width = W * scale + 'px';
   cv.style.height = H * scale + 'px';
+  // Schachbrett: ein Feld je Sprite-Pixel, bei winziger Darstellung gröber,
+  // sonst flimmert es nur.
+  cv.style.setProperty('--chk', Math.max(4, scale) * 2 + 'px');
 
   const ctx = cv.getContext('2d');
   const img = ctx.createImageData(W, H);
