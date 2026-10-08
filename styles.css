@@ -804,10 +804,10 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 .tl-layer.is-active { background: var(--accent-bg); color: var(--accent); }
 .tl-layer.is-hidden .tl-lname { opacity: 0.45; }
 .tl-lname { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tl-eye, .tl-lock { flex: none; width: 20px; height: 20px; padding: 0; }
-.tl-eye svg, .tl-lock svg { width: 13px; height: 13px; }
-.tl-lock { opacity: 0.45; }
-.tl-lock.is-on { opacity: 1; color: var(--accent); }
+.tl-eye, .tl-lock, .tl-cont { flex: none; width: 20px; height: 20px; padding: 0; }
+.tl-eye svg, .tl-lock svg, .tl-cont svg { width: 13px; height: 13px; }
+.tl-lock, .tl-cont { opacity: 0.45; }
+.tl-lock.is-on, .tl-cont.is-on { opacity: 1; color: var(--accent); }
 /* Zelle: ein Punkt — gefüllt, wenn die Ebene in diesem Frame etwas enthält. */
 .tl-cel {
   appearance: none;
@@ -1834,7 +1834,8 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
 }
 /* Im Raster bleibt fuer die Ebenen nur Auge und Name. */
 #timeline.is-vertical .tl-frames { --tl-lw: 84px; }
-#timeline.is-vertical .tl-lock { display: none; }
+#timeline.is-vertical .tl-lock,
+#timeline.is-vertical .tl-cont { display: none; }
 #timeline.is-vertical .tl-go-field { margin-left: 0; }
 #timeline.is-vertical > * { flex: none; }
 #timeline.is-vertical > .bar-handle,
@@ -2097,7 +2098,8 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
   /* Das Raster steht in seiner eigenen Zeile unter den Knoepfen; die
      Ebenen-Spalte ist schmal (Auge und Name), die Zeilen fingerhoch. */
   #timeline > .tl-frames { flex: 1 1 100%; --tl-lw: 92px; --tl-row: 30px; max-height: calc(var(--tl-cell, 44px) + 4 * 32px + 6px); }
-  #timeline .tl-lock { display: none; }
+  #timeline .tl-lock,
+  #timeline .tl-cont { display: none; }
   #timeline .tl-eye { width: 28px; height: 28px; }
   .tl-go-field { margin-left: 0; }
   /* Die zweite Zeile soll eine bleiben: enge Felder und kleinere Knoepfe

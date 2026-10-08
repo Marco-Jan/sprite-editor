@@ -155,8 +155,10 @@ export function attachGrid(sp) {
 }
 
 // ── Ebenen ──────────────────────────────────────────────────────────
+// continuous: „durchgehende" Ebene wie in Aseprite — ein neuer Frame
+// bekommt hier keine leere Zelle, sondern teilt sich das Bild des vorigen.
 export function defaultLayer(n = 1) {
-  return { name: t('ly.name', { n }), visible: true, locked: false, opacity: 1 };
+  return { name: t('ly.name', { n }), visible: true, locked: false, opacity: 1, continuous: false };
 }
 
 export function normalizeLayer(l, n) {
@@ -166,6 +168,7 @@ export function normalizeLayer(l, n) {
     visible: l?.visible !== false,
     locked: !!l?.locked,
     opacity: Number.isFinite(op) ? Math.max(0, Math.min(1, op)) : 1,
+    continuous: !!l?.continuous,
   };
 }
 
@@ -264,6 +267,14 @@ export function linkSignature(frames) {
 }
 
 const isLinkMark = c => !!c && typeof c === 'object' && !Array.isArray(c) && Number.isInteger(c.link);
+
+// Zellen für einen neuen Frame hinter Frame `i`. Durchgehende Ebenen
+// teilen sich das Bild von Frame i; die übrigen sind leer — oder, beim
+// Duplizieren, eine eigene Kopie.
+export function newFrameCels(sp, i, duplicate = false) {
+  return sp.frames[i].cels.map((g, l) => (sp.layers[l]?.continuous ? g
+    : duplicate ? g.map(row => [...row]) : blankLike(g)));
+}
 
 // Für den Speicherstand: geteilte Bilder als { link: k }.
 export function framesForSave(sp) {

@@ -147,3 +147,34 @@ test('Undo verklebt zwei gleiche, aber getrennte Zellen nicht', () => {
     assert.notEqual(sp.frames[1].cels[0], sp.frames[2].cels[0]);
   });
 });
+
+// ── Durchgehende Ebenen ─────────────────────────────────────────────
+import { newFrameCels, normalizeLayer } from '../js/state.js';
+
+test('neuer Frame: durchgehende Ebene verknüpft, die übrigen sind leer', () => {
+  const sp = makeSprite({
+    name: 'D', palette: 'graustufen',
+    frames: [{ cels: [[[1]], [[2]]] }],
+    layers: [{ name: 'Grund', continuous: true }, { name: 'Figur' }],
+  });
+  const cels = newFrameCels(sp, 0);
+  assert.equal(cels[0], sp.frames[0].cels[0], 'Grund: dasselbe Bild');
+  assert.deepEqual(cels[1], [[0]], 'Figur: leer');
+});
+
+test('Frame duplizieren: durchgehend verknüpft, sonst eigene Kopie', () => {
+  const sp = makeSprite({
+    name: 'D', palette: 'graustufen',
+    frames: [{ cels: [[[1]], [[2]]] }],
+    layers: [{ name: 'Grund', continuous: true }, { name: 'Figur' }],
+  });
+  const cels = newFrameCels(sp, 0, true);
+  assert.equal(cels[0], sp.frames[0].cels[0]);
+  assert.notEqual(cels[1], sp.frames[0].cels[1]);
+  assert.deepEqual(cels[1], [[2]]);
+});
+
+test('continuous übersteht das Laden, fehlt es, ist die Ebene nicht durchgehend', () => {
+  assert.equal(normalizeLayer({ continuous: 1 }, 1).continuous, true);
+  assert.equal(normalizeLayer({}, 1).continuous, false);
+});

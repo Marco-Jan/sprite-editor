@@ -11,8 +11,8 @@
 //
 // Abspielen läuft in der Zeichenfläche. Gezeichnet wird dabei nicht: ein
 // Tipp auf die Fläche hält an (app.js), jede Frame-Aktion ebenso.
-import { state, getSprite, getPaletteByName, clearSelection, frameDuration, MAX_FPS, flatGrid, blankLike, isLinked } from './state.js';
-import { dc, cellToColor } from './data.js';
+import { state, getSprite, getPaletteByName, clearSelection, frameDuration, MAX_FPS, flatGrid, isLinked, newFrameCels } from './state.js';
+import { cellToColor } from './data.js';
 import { renderAll, renderEditor, renderCallbacks } from './render.js';
 import { recordOp } from './history.js';
 import { commitFloat } from './selection.js';
@@ -26,7 +26,7 @@ import {
   linkCels, unlinkCels,
 } from './cels.js';
 import {
-  setActiveLayer, toggleVisible, toggleLocked, addLayer, duplicateLayer, deleteLayer,
+  setActiveLayer, toggleVisible, toggleLocked, toggleContinuous, addLayer, duplicateLayer, deleteLayer,
   moveLayer, renameLayer,
 } from './layers.js';
 
@@ -153,7 +153,8 @@ function edit(fn) {
 export function addFrame() {
   resetSel();
   edit(sp => {
-    const cels = sp.frames[sp.frame].cels.map(blankLike);
+    // Leer — außer auf durchgehenden Ebenen, dort verknüpft (state.js).
+    const cels = newFrameCels(sp, sp.frame);
     sp.frames.splice(sp.frame + 1, 0, { cels, dur: 0 });
     sp.frame++;
   });
@@ -163,7 +164,7 @@ export function duplicateFrame() {
   resetSel();
   edit(sp => {
     const f = sp.frames[sp.frame];
-    sp.frames.splice(sp.frame + 1, 0, { cels: f.cels.map(dc), dur: f.dur });
+    sp.frames.splice(sp.frame + 1, 0, { cels: newFrameCels(sp, sp.frame, true), dur: f.dur });
     sp.frame++;
   });
 }
@@ -434,9 +435,16 @@ function makeLayerRow(sp, li) {
   row.title = t('ly.rowTitle', { name: L.name });
   row.innerHTML = '<button type="button" class="icon-btn tl-eye"></button>'
     + '<button type="button" class="icon-btn tl-lock"></button>'
+    + '<button type="button" class="icon-btn tl-cont"></button>'
     + '<span class="tl-lname"></span>';
   const eye = /** @type {HTMLElement} */ (row.children[0]);
   const lock = /** @type {HTMLElement} */ (row.children[1]);
+  const cont = /** @type {HTMLElement} */ (row.children[2]);
+  cont.innerHTML = iconSvg(L.continuous ? 'contOn' : 'contOff');
+  cont.title = t(L.continuous ? 'tl.contOn' : 'tl.contOff');
+  cont.setAttribute('aria-pressed', String(!!L.continuous));
+  cont.classList.toggle('is-on', !!L.continuous);
+  cont.addEventListener('click', e => { e.stopPropagation(); toggleContinuous(li); });
   eye.innerHTML = iconSvg(L.visible ? 'eye' : 'eyeOff');
   eye.title = t(L.visible ? 'ly.hide' : 'ly.show');
   eye.setAttribute('aria-pressed', String(L.visible));
@@ -444,7 +452,7 @@ function makeLayerRow(sp, li) {
   lock.title = t(L.locked ? 'ly.unlock' : 'ly.lock');
   lock.setAttribute('aria-pressed', String(L.locked));
   lock.classList.toggle('is-on', L.locked);
-  row.children[2].textContent = L.name;
+  row.querySelector('.tl-lname').textContent = L.name;
   eye.addEventListener('click', e => { e.stopPropagation(); toggleVisible(li); });
   lock.addEventListener('click', e => { e.stopPropagation(); toggleLocked(li); });
   row.addEventListener('click', e => {
