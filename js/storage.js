@@ -4,6 +4,7 @@
 // Alles liegt unter EINEM Key. `version` im Payload erlaubt Migrationen,
 // ohne alte Saves zu zerschießen.
 import { state, sprites, customPalettes, paletteMaterials, selectFirstSprite, paletteExists, makeSprite, flatGrid, framesForSave } from './state.js';
+import { normalizeTlOpts } from './onion.js';
 import { DEFAULT_PALETTE, completePalette } from './data.js';
 import { saveBlob } from './filesystem.js';
 import { showInfoToast } from './toast.js';
@@ -122,6 +123,7 @@ function buildPayload() {
       mirror:    state.mirror,
       shapeFill: state.shapeFill,
       onion:      state.onion,
+      timeline:   state.tlOpts,
       showGuides: state.showGuides,
       fullscreen: document.body.classList.contains('editor-fullscreen'),
       panels: collectPanelStates(),
@@ -300,6 +302,7 @@ function applyPayload(payload) {
     if (ui.mirror) state.mirror = ui.mirror;
     if (typeof ui.shapeFill === 'boolean') state.shapeFill = ui.shapeFill;
     if (typeof ui.onion === 'boolean') state.onion = ui.onion;
+    if (ui.timeline) state.tlOpts = normalizeTlOpts(ui.timeline);
     if (typeof ui.showGuides === 'boolean') state.showGuides = ui.showGuides;
     applyPanelStates(ui.panels);
 

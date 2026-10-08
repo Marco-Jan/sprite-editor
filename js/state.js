@@ -7,6 +7,7 @@
 import { BUILTIN_PALETTES, DEFAULT_PALETTE, paletteSize, cellToColor } from './data.js';
 import { t } from './i18n.js';
 import { normalizeTags } from './tags.js';
+import { defaultTlOpts } from './onion.js';
 
 // ────────────────────────────────────────────────────────────────────
 // Sprites — eine flache Sammlung. Jeder Sprite bringt seine Ebenen, Frames
@@ -67,6 +68,9 @@ export const state = {
   // Animation: Nachbar-Frames durchscheinen lassen; Abspielen läuft gerade.
   onion:         false,
   playing:       false,
+  // Einstellungen der Timeline und des Onion Skins — für alle Sprites
+  // (js/onion.js, Menü in js/tlmenu.js).
+  tlOpts:        defaultTlOpts(),
 
   // Hilfslinien (js/guides.js): anzeigen; Verschieben-Modus (nicht gespeichert).
   showGuides:    true,

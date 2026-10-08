@@ -25,6 +25,7 @@ import {
   rangeOf, rangeSize, inRange, clampRange, canShift, shiftCels, clearCels, copyCels, pasteCels,
   linkCels, unlinkCels,
 } from './cels.js';
+import { frameLabel } from './onion.js';
 import { TAG_COLORS, TAG_DIRS, tagsInsert, tagsDelete, tagAt, tagLanes, nextPlayFrame } from './tags.js';
 import {
   setActiveLayer, toggleVisible, toggleLocked, toggleContinuous, addLayer, duplicateLayer, deleteLayer,
@@ -121,14 +122,15 @@ function showFrame(i, quiet = false) {
 
 export function goFrame(i) { stop(); showFrame(i); }
 
-// Sprung auf eine eingetippte Nummer (1-basiert, wie in der Timeline).
+// Sprung auf eine eingetippte Nummer — so gezählt wie in der Timeline
+// (ab 0 oder ab 1, Timeline-Menü).
 export function goFrameNumber(v) {
   const sp = getSprite();
   if (!sp) return;
-  const n = Math.round(Number(v));
-  if (!n || n < 1 || n > sp.frames.length) { renderTimeline(); return; }
+  const i = Math.round(Number(v)) - frameLabel(0, state.tlOpts);
+  if (v === '' || !Number.isFinite(i) || i < 0 || i >= sp.frames.length) { renderTimeline(); return; }
   resetSel();
-  goFrame(n - 1);
+  goFrame(i);
   renderTimeline();
 }
 export function nextFrame() { const sp = getSprite(); if (sp) goFrame(sp.frame + 1); }
@@ -622,7 +624,7 @@ export function renderTimeline() {
       c.style.gridColumn = String(fi + 2);
       setCelFill(c, sp.frames[fi].cels[li]);
       c.classList.toggle('is-hidden', !sp.layers[li].visible);
-      c.title = t('tl.celTitle', { i: fi + 1, name: sp.layers[li].name });
+      c.title = t('tl.celTitle', { i: frameLabel(fi, state.tlOpts), name: sp.layers[li].name });
       // Verknüpft mit dem Nachbarn: ein Strich zwischen den Punkten.
       const g = sp.frames[fi].cels[li];
       c.classList.toggle('link-l', fi > 0 && sp.frames[fi - 1].cels[li] === g);
@@ -637,17 +639,21 @@ export function renderTimeline() {
   box.style.setProperty('--tl-n', String(n));
   box.style.setProperty('--tl-l', String(L));
   box.style.setProperty('--tl-tagh', nl * (TAG_ROW + 2) + 'px');
-  box.style.gridTemplateRows = (nl ? `repeat(${nl}, ${TAG_ROW}px) ` : '') + `var(--tl-cell, 44px) repeat(${L}, var(--tl-row))`;
+  // Ohne Vorschaubilder bleibt von der Kopfzeile nur die Nummer.
+  const thumbsOn = state.tlOpts.thumbs;
+  box.classList.toggle('no-thumbs', !thumbsOn);
+  box.style.gridTemplateRows = (nl ? `repeat(${nl}, ${TAG_ROW}px) ` : '')
+    + (thumbsOn ? 'var(--tl-cell, 44px)' : '18px') + ` repeat(${L}, var(--tl-row))`;
   if (tagEdIndex >= 0) syncTagEditor();
   fitThumbs();
 
   sp.frames.forEach((f, i) => {
     const b = thumbs[i];
     b.dataset.i = String(i);
-    drawThumb(b.firstChild, flatGrid(sp, i), pal);
-    b.lastChild.textContent = String(i + 1);
+    if (thumbsOn) drawThumb(b.firstChild, flatGrid(sp, i), pal);
+    b.lastChild.textContent = String(frameLabel(i, state.tlOpts));
     b.classList.toggle('has-dur', !!f.dur);
-    b.title = t('tl.frameTitle', { i: i + 1, ms: frameDuration(sp, i) });
+    b.title = t('tl.frameTitle', { i: frameLabel(i, state.tlOpts), ms: frameDuration(sp, i) });
   });
   markActive();
 
@@ -656,9 +662,10 @@ export function renderTimeline() {
   if (document.activeElement !== dur) dur.value = sp.frames[sp.frame].dur || '';
   dur.placeholder = Math.round(1000 / sp.fps);
   if (go) {
-    go.max = n;
-    if (document.activeElement !== go) go.value = sp.frame + 1;
-    $('tl-total').textContent = '/ ' + n;
+    go.min = frameLabel(0, state.tlOpts);
+    go.max = frameLabel(n - 1, state.tlOpts);
+    if (document.activeElement !== go) go.value = frameLabel(sp.frame, state.tlOpts);
+    $('tl-total').textContent = '/ ' + frameLabel(n - 1, state.tlOpts);
   }
   for (const id of ['tl-play', 'tl-prev', 'tl-next', 'tl-del', 'tl-first', 'tl-last']) $(id).disabled = n < 2;
   // Der Löschen-Knopf sagt, wie viele Frames er mitnimmt — und der
@@ -678,7 +685,7 @@ export function refreshCurrentThumb() {
   const sp = getSprite();
   if (!sp) return;
   const b = thumbs[sp.frame];
-  if (b) drawThumb(b.firstChild, flatGrid(sp), getPaletteByName(sp.palette));
+  if (b && state.tlOpts.thumbs) drawThumb(b.firstChild, flatGrid(sp), getPaletteByName(sp.palette));
   const c = celEls[sp.layer]?.[sp.frame];
   if (c) setCelFill(c, sp.grid);
 }
@@ -720,7 +727,7 @@ function updateFrameLabel() {
   const sp = getSprite();
   const dur = $('tl-dur'), go = $('tl-go');
   if (sp && dur && document.activeElement !== dur) dur.value = sp.frames[sp.frame].dur || '';
-  if (sp && go && document.activeElement !== go) go.value = sp.frame + 1;
+  if (sp && go && document.activeElement !== go) go.value = frameLabel(sp.frame, state.tlOpts);
 }
 
 // Ein Frame wurde angeklickt — in der Kopfzeile oder in einer Zelle.
@@ -1042,7 +1049,7 @@ function makeTagBar(sp, g, k) {
   b.className = 'tl-tag';
   b.style.setProperty('--tag', g.color);
   b.textContent = (g.dir !== 'forward' ? DIR_MARK[g.dir] + ' ' : '') + g.name;
-  b.title = t('tg.barTitle', { name: g.name, a: g.from + 1, b: g.to + 1, dir: t('tg.dir.' + g.dir) });
+  b.title = t('tg.barTitle', { name: g.name, a: frameLabel(g.from, state.tlOpts), b: frameLabel(g.to, state.tlOpts), dir: t('tg.dir.' + g.dir) });
   b.addEventListener('click', () => openTagEditor(k, b));
   return b;
 }
@@ -1094,8 +1101,8 @@ function buildTagEditor() {
   el.innerHTML = ''
     + '<input class="input input--sm tg-name" type="text" maxlength="40">'
     + '<div class="tg-row"><span class="field-label tg-l-frames"></span>'
-    + '<input class="input input--sm tg-from" type="number" min="1" step="1"> – '
-    + '<input class="input input--sm tg-to" type="number" min="1" step="1"></div>'
+    + '<input class="input input--sm tg-from" type="number" step="1"> – '
+    + '<input class="input input--sm tg-to" type="number" step="1"></div>'
     + '<div class="tg-row"><span class="field-label tg-l-dir"></span><select class="input input--sm tg-dir"></select></div>'
     + '<div class="tg-colors"></div>'
     + '<div class="tg-row tg-actions">'
@@ -1108,9 +1115,10 @@ function buildTagEditor() {
     if (v) changeTag(g => { g.name = v; }); else syncTagEditor();
   });
   const range2 = () => {
-    const n = getSprite()?.frames.length || 1;
-    const a = Math.max(1, Math.min(n, Math.round(Number(q('.tg-from').value)) || 1)) - 1;
-    const b = Math.max(1, Math.min(n, Math.round(Number(q('.tg-to').value)) || 1)) - 1;
+    // Die Felder zählen wie die Timeline (ab 0 oder ab 1).
+    const n = getSprite()?.frames.length || 1, k = frameLabel(0, state.tlOpts);
+    const idx = sel => Math.max(0, Math.min(n - 1, (Math.round(Number(q(sel).value)) || 0) - k));
+    const a = idx('.tg-from'), b = idx('.tg-to');
     changeTag(g => { g.from = Math.min(a, b); g.to = Math.max(a, b); });
   };
   q('.tg-from').addEventListener('change', range2);
@@ -1161,9 +1169,10 @@ function syncTagEditor() {
   const q = sel => /** @type {any} */ (tagEd.querySelector(sel));
   const set = (sel, v) => { const i = q(sel); if (document.activeElement !== i) i.value = v; };
   set('.tg-name', g.name);
-  set('.tg-from', g.from + 1);
-  set('.tg-to', g.to + 1);
-  q('.tg-from').max = q('.tg-to').max = sp.frames.length;
+  set('.tg-from', frameLabel(g.from, state.tlOpts));
+  set('.tg-to', frameLabel(g.to, state.tlOpts));
+  q('.tg-from').min = q('.tg-to').min = frameLabel(0, state.tlOpts);
+  q('.tg-from').max = q('.tg-to').max = frameLabel(sp.frames.length - 1, state.tlOpts);
   const dir = q('.tg-dir');
   if (!dir.options.length) {
     for (const d of TAG_DIRS) { const o = document.createElement('option'); o.value = d; dir.append(o); }

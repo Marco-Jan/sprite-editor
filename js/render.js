@@ -10,6 +10,7 @@ import {
   getAllPaletteOptions, isCustomPalette, listSprites, getPaletteByName, allGrids, flatGrid,
 } from './state.js';
 import { PALETTE_GROUP_SPLIT, MAX_COLORS, cellToColor, paletteSize } from './data.js';
+import { onionFrames } from './onion.js';
 import { t, tn, colorLabel, colorLabelShort } from './i18n.js';
 import { buildCode, tsIdentifier, getFormat } from './codegen.js';
 import { MATERIALS, DEFAULT_MATERIAL, GameJsonError } from './gamejson.js';
@@ -167,8 +168,8 @@ export function renderEditor() {
     ctx.fillRect(x * cs, y * cs, cs, cs);
   }
 
-  // Onion Skin: Nachbar-Frames getönt unter dem aktuellen
-  drawOnion(ctx, W, H, cs);
+  // Onion Skin: Nachbar-Frames unter dem aktuellen — oder darüber (s. u.)
+  if (!state.tlOpts.onion.front) drawOnion(ctx, W, H, cs);
 
   // Pixel — alle sichtbaren Ebenen von unten nach oben, je mit ihrer Deckkraft
   const sp = getSprite();
@@ -184,6 +185,8 @@ export function renderEditor() {
     });
     ctx.globalAlpha = 1;
   }
+
+  if (state.tlOpts.onion.front) drawOnion(ctx, W, H, cs);
 
   // Formen-Vorschau (Linie, Rechteck, Ellipse) waehrend des Ziehens
   if (state.shape.cells.length) {
@@ -237,21 +240,28 @@ export function renderEditor() {
   renderCallbacks.onEditorRendered();
 }
 
-// Onion Skin: voriger Frame rot, nächster blau getönt — nur die Form, nicht
-// die Farben, damit man sie vom aktuellen Frame unterscheiden kann. Beim
-// Abspielen aus, sonst flackert es.
+// Onion Skin: Nachbar-Frames scheinen durch — davor rot, danach blau
+// getönt (nur die Form, damit man sie vom aktuellen Frame unterscheidet)
+// oder in ihren echten Farben. Wie viele, wie stark, ob nur die aktive
+// Ebene und ob vor oder hinter dem Bild, steht im Timeline-Menü
+// (js/onion.js). Beim Abspielen aus, sonst flackert es.
 function drawOnion(ctx, W, H, cs) {
   const sp = getSprite();
   if (!state.onion || state.playing || !sp || sp.frames.length < 2) return;
-  const tint = (g, color) => {
-    if (!g) return;
-    ctx.fillStyle = color;
+  const o = state.tlOpts.onion;
+  const pal = getPal();
+  for (const { frame, side, alpha } of onionFrames(sp, sp.frame, state.tlOpts).reverse()) {
+    const g = o.layerOnly ? sp.frames[frame].cels[sp.layer] : flatGrid(sp, frame);
+    if (!g) continue;
+    ctx.globalAlpha = alpha;
+    const tint = side === 'before' ? 'rgb(255, 96, 96)' : 'rgb(96, 156, 255)';
     for (let y = 0; y < H && y < g.length; y++) for (let x = 0; x < W && x < g[y].length; x++) {
-      if (g[y][x] !== 0) ctx.fillRect(x * cs, y * cs, cs, cs);
+      if (g[y][x] === 0) continue;
+      ctx.fillStyle = o.mode === 'color' ? (cellToColor(g[y][x], pal) || tint) : tint;
+      ctx.fillRect(x * cs, y * cs, cs, cs);
     }
-  };
-  if (sp.frame > 0) tint(flatGrid(sp, sp.frame - 1), 'rgba(255, 96, 96, 0.30)');
-  if (sp.frame < sp.frames.length - 1) tint(flatGrid(sp, sp.frame + 1), 'rgba(96, 156, 255, 0.30)');
+  }
+  ctx.globalAlpha = 1;
 }
 
 // "Farbe zeigen": alles, was NICHT die aktuelle Farbe hat, wird abgedunkelt.

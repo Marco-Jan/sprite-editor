@@ -375,11 +375,7 @@
           <span class="field-label" data-i18n="tl.fps">FPS</span>
           <input type="number" id="tl-fps" class="input input--sm" min="1" max="60" step="1" value="8">
         </label>
-        <label class="field field--inline tl-num" data-i18n-attr="title:tl.durTitle" title="Wie lange dieser Frame steht — leer = nach FPS">
-          <span class="field-label" data-i18n="tl.dur">Dauer</span>
-          <input type="number" id="tl-dur" class="input input--sm" min="10" max="10000" step="10">
-          <span class="field-value">ms</span>
-        </label>
+        <button class="btn" id="tl-settings" aria-haspopup="dialog" aria-controls="tl-menu" data-i18n-attr="title:tm.open;aria-label:tm.open" title="Timeline-Einstellungen — Position, Kopfzeile, Dauer, Onion Skin" aria-label="Timeline-Einstellungen — Position, Kopfzeile, Dauer, Onion Skin"><span class="ico" data-icon="sliders"></span></button>
       </div>
 
       </div>
@@ -1060,6 +1056,82 @@
       <button class="btn btn--danger" id="confirm-toast-ok">Löschen</button>
     </div>
   </div>
+</div>
+
+<!-- Timeline-Menü: Position, Kopfzeile, Dauer, Onion Skin (js/tlmenu.js).
+     Am breiten Fenster ein Fenster neben dem Knopf, am Handy ein Blatt von unten. -->
+<div id="tl-menu" class="tl-menu" role="dialog" aria-labelledby="tl-menu-title" hidden>
+  <div class="tl-menu-head">
+    <h2 class="panel-title" id="tl-menu-title" data-i18n="tm.title">Timeline</h2>
+    <button type="button" class="icon-btn" id="tl-menu-close" data-i18n-attr="title:tm.close;aria-label:tm.close" title="Schließen" aria-label="Schließen"><span class="ico" data-icon="close"></span></button>
+  </div>
+  <section class="tm-sec" id="tm-pos">
+    <h3 class="tm-h" data-i18n="tm.pos">Position</h3>
+    <div class="btn-group tm-seg">
+      <button type="button" class="btn" data-zone="top" data-i18n="tm.top">Oben</button>
+      <button type="button" class="btn" data-zone="bottom" data-i18n="tm.bottom">Unten</button>
+      <button type="button" class="btn" data-zone="left" data-i18n="tm.left">Links</button>
+      <button type="button" class="btn" data-zone="right" data-i18n="tm.right">Rechts</button>
+    </div>
+  </section>
+  <section class="tm-sec">
+    <h3 class="tm-h" data-i18n="tm.header">Kopfzeile</h3>
+    <div class="tm-row">
+      <span class="field-label" data-i18n="tm.first">Erster Frame</span>
+      <div class="btn-group tm-seg">
+        <button type="button" class="btn" data-first="0">0</button>
+        <button type="button" class="btn" data-first="1">1</button>
+      </div>
+    </div>
+    <label class="check"><input type="checkbox" id="tm-thumbs"><span data-i18n="tm.thumbs">Vorschaubilder</span></label>
+  </section>
+  <section class="tm-sec">
+    <h3 class="tm-h" data-i18n="tm.frame">Aktueller Frame</h3>
+    <label class="field field--inline" data-i18n-attr="title:tl.durTitle" title="Wie lange dieser Frame steht — leer = nach FPS">
+      <span class="field-label" data-i18n="tl.dur">Dauer</span>
+      <input type="number" id="tl-dur" class="input input--sm" min="10" max="10000" step="10">
+      <span class="field-value">ms</span>
+    </label>
+    <p class="field-note" data-i18n="tm.durNote">Leer lassen = Dauer nach FPS.</p>
+  </section>
+  <section class="tm-sec">
+    <h3 class="tm-h" data-i18n="tm.onion">Onion Skin</h3>
+    <div class="tm-row">
+      <span class="field-label" data-i18n="tm.mode">Darstellung</span>
+      <div class="btn-group tm-seg">
+        <button type="button" class="btn" data-mode="tint" data-i18n="tm.tint">Rot/Blau</button>
+        <button type="button" class="btn" data-mode="color" data-i18n="tm.color">Farben</button>
+      </div>
+    </div>
+    <label class="field field--inline">
+      <span class="field-label" data-i18n="tm.opacity">Deckkraft</span>
+      <input type="range" id="tm-opacity" min="10" max="90" step="5">
+      <span class="field-value" id="tm-opacity-val"></span>
+    </label>
+    <label class="field field--inline" data-i18n-attr="title:tm.stepTitle" title="Um wie viel jeder weiter entfernte Frame blasser wird">
+      <span class="field-label" data-i18n="tm.step">Abstufung</span>
+      <input type="range" id="tm-step" min="0" max="90" step="5">
+      <span class="field-value" id="tm-step-val"></span>
+    </label>
+    <div class="tm-row">
+      <span class="field-label" data-i18n="tm.before">Frames davor</span>
+      <select id="tm-before" class="input input--sm"><option>0</option><option>1</option><option>2</option><option>3</option></select>
+      <span class="field-label" data-i18n="tm.after">danach</span>
+      <select id="tm-after" class="input input--sm"><option>0</option><option>1</option><option>2</option><option>3</option></select>
+    </div>
+    <label class="check" data-i18n-attr="title:tm.loopTagTitle" title="Am Ende eines Tags scheint sein Anfang durch — für Animationen, die im Kreis laufen">
+      <input type="checkbox" id="tm-looptag"><span data-i18n="tm.loopTag">Im Tag im Kreis</span>
+    </label>
+    <label class="check"><input type="checkbox" id="tm-layeronly"><span data-i18n="tm.layerOnly">Nur die aktive Ebene</span></label>
+    <div class="tm-row">
+      <span class="field-label" data-i18n="tm.where">Lage</span>
+      <div class="btn-group tm-seg">
+        <button type="button" class="btn" data-front="0" data-i18n="tm.behind">Hinter dem Bild</button>
+        <button type="button" class="btn" data-front="1" data-i18n="tm.front">Davor</button>
+      </div>
+    </div>
+    <button type="button" class="btn" id="tm-reset" data-i18n="tm.reset">Zurücksetzen</button>
+  </section>
 </div>
 
 <script src="vendor/jspdf.umd.min.js"></script>

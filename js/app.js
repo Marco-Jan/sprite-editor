@@ -50,6 +50,7 @@ import { zoomAt, fitZoomToArea, isPanMode, setPanTool, initPan, initPinch } from
 import { initFrames, togglePlay, nextFrame, prevFrame, firstFrame, lastFrame, isPlaying, stop as stopPlayback } from './frames.js';
 import { initLayers } from './layers.js';
 import { celKeyDown } from './frames.js';
+import { initTlMenu } from './tlmenu.js';
 import { normalizeTags } from './tags.js';
 import { initPreview, renderPreview } from './preview.js';
 import { initGuides, guidePointerDown, toggleEdit as toggleGuideEdit, toggleShow as toggleGuides } from './guides.js';
@@ -1437,6 +1438,7 @@ function init() {
   initExport();
   initFrames();
   initLayers();   // nach initFrames: hängt sich an dessen Zeichen-Callback
+  initTlMenu();
   initPreview();  // ebenso — zeichnet bei jedem Strich mit
   initGuides();
   renderCallbacks.onGuideInfo = info;

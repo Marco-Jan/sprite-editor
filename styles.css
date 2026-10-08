@@ -954,6 +954,47 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 #tl-total { min-width: 0; text-align: left; white-space: nowrap; }
 #timeline.is-vertical .tl-num { flex-direction: row; }
 
+/* Ohne Vorschaubilder (Timeline-Menü): nur die Nummer in der Kopfzeile. */
+.tl-frames.no-thumbs .tl-frame { height: 18px; padding: 0; }
+.tl-frames.no-thumbs .tl-frame canvas { display: none; }
+.tl-frames.no-thumbs .tl-n { position: static; padding: 0; background: none; }
+
+/* Timeline-Menü (js/tlmenu.js): am breiten Fenster ein Fenster am Knopf. */
+#tl-settings[aria-expanded="true"] { background: var(--accent-bg); color: var(--accent); border-color: var(--accent-line); }
+.tl-menu {
+  position: fixed;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  width: 20rem;
+  max-height: calc(100vh - 16px);
+  overflow-y: auto;
+  padding: var(--sp-3) var(--sp-4) var(--sp-4);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-md);
+}
+.tl-menu[hidden] { display: none; }
+.tl-menu-head { display: flex; align-items: center; justify-content: space-between; }
+.tm-sec { display: flex; flex-direction: column; gap: var(--sp-2); }
+.tm-sec[hidden] { display: none; }
+.tm-sec + .tm-sec { padding-top: var(--sp-3); border-top: 1px solid var(--line); }
+.tm-h {
+  margin: 0;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.tm-row { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-2); }
+.tm-seg .btn.is-active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent-line); }
+.tl-menu input[type="range"] { flex: 1 1 auto; min-width: 0; }
+.tl-menu #tl-dur { width: 5rem; }
+#tm-reset { align-self: flex-start; }
+
 /* Hilfslinien: im Verschieben-Modus kein Pinsel-Umriss */
 #editor-canvas-wrap.is-guide-edit #brush-cursor { display: none; }
 #gd-show.is-active, #gd-edit.is-active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent-line); }
@@ -2144,6 +2185,15 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
   #timeline > .tl-frames { flex: 1 1 100%; --tl-lw: 92px; --tl-row: 30px; max-height: calc(var(--tl-cell, 44px) + 4 * 32px + 6px); }
   #timeline .tl-lock,
   #timeline .tl-cont { display: none; }
+  /* Timeline-Menü am Handy: ein Blatt von unten über die ganze Breite. */
+  .tl-menu {
+    left: 0 !important; right: 0; bottom: 0; top: auto !important;
+    width: auto;
+    max-height: 75vh;
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+    padding-bottom: calc(var(--sp-4) + env(safe-area-inset-bottom, 0px));
+  }
+  .tl-menu .btn { min-height: 38px; }
   #timeline .tl-eye { width: 28px; height: 28px; }
   .tl-go-field { margin-left: 0; }
   /* Die zweite Zeile soll eine bleiben: enge Felder und kleinere Knoepfe

@@ -919,6 +919,13 @@ function applyAll() {
 // benutzt und nicht eine zweite Zahl pflegen muss.
 export const isMobileLayout = () => MOBILE.matches;
 
+// Für das Timeline-Menü (js/tlmenu.js): wo steht die Timeline, und dorthin.
+export function timelineZone() {
+  const p = placeOf('timeline');
+  return p.kind === 'zone' ? p.zone : null;
+}
+export function setTimelineZone(z) { setPlace('timeline', zone(z)); }
+
 export function initLayout() {
   ws = $('workspace');
   layer = document.createElement('div');
