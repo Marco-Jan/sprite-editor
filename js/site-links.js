@@ -14,10 +14,11 @@
   'use strict';
 
   var LINKS = {
-    github:    'https://github.com/Marco-Jan/sprite-editor',
-    githubRs:  '',   // Quellcode der Desktop-App, z. B. https://github.com/Marco-Jan/spritebit-rs
-    download:  '',   // z. B. https://github.com/Marco-Jan/spritebit-rs/releases/latest/download/spritebit-windows-x64.zip
-    releases:  '',   // z. B. https://github.com/Marco-Jan/spritebit-rs/releases
+    org:       'https://github.com/spritebit',
+    github:    'https://github.com/spritebit/sprite-editor',
+    githubRs:  'https://github.com/spritebit/spritebit-rs',   // Quellcode der Desktop-App
+    download:  'https://github.com/spritebit/spritebit-rs/releases/latest/download/spritebit-windows-x64.zip',
+    releases:  'https://github.com/spritebit/spritebit-rs/releases',
     discord:   '',
     youtube:   '',
     instagram: '',

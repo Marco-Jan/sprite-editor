@@ -8,6 +8,7 @@
 Zeichnen, animieren, Paletten bauen und als Bild, GIF oder Code exportieren.
 
 [**▶ Im Browser öffnen**](https://spritebit.at/editor.html) ·
+[**⬇ Desktop-App**](https://github.com/spritebit/spritebit-rs/releases/latest) ·
 [Website](https://spritebit.at) ·
 [Handbuch](docs/handbuch.md) ·
 [Mitmachen](CONTRIBUTING.md)
@@ -106,15 +107,19 @@ Kein Konto, keine Installation. Chrome und Edge bieten in der Adressleiste
 ES-Module brauchen nur einen HTTP-Server (`file://` geht nicht):
 
 ```bash
-git clone https://github.com/Marco-Jan/sprite-editor.git
+git clone https://github.com/spritebit/sprite-editor.git
 cd sprite-editor
 python -m http.server 8000      # oder: npm run serve
 ```
 
 Dann `http://localhost:8000/` öffnen — die Startseite; der Editor liegt unter `editor.html`.
 
-**Desktop-App:** Eine native Fassung in Rust ([spritebit-rs](https://github.com/Marco-Jan)) ist in
-Arbeit und erscheint als Download unter den GitHub-Releases.
+**Desktop-App (Windows):** Die native Fassung in Rust
+([spritebit-rs](https://github.com/spritebit/spritebit-rs)) gibt es als
+[**Download**](https://github.com/spritebit/spritebit-rs/releases/latest/download/spritebit-windows-x64.zip) —
+ZIP entpacken, `spritebit.exe` starten. Windows warnt beim ersten Start vor einem unbekannten
+Herausgeber („Weitere Informationen“ → „Trotzdem ausführen“), weil die Datei nicht signiert ist.
+Alle Versionen stehen unter [Releases](https://github.com/spritebit/spritebit-rs/releases).
 
 ---
 
@@ -192,7 +197,7 @@ Wie das alles zusammenhängt, steht in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Mitmachen
 
-Fehler gefunden, Idee gehabt? Gern als [Issue](https://github.com/Marco-Jan/sprite-editor/issues).
+Fehler gefunden, Idee gehabt? Gern als [Issue](https://github.com/spritebit/sprite-editor/issues).
 Pull Requests sind willkommen — vorher bitte kurz [CONTRIBUTING.md](CONTRIBUTING.md) lesen:
 es gibt nur wenige Regeln, aber die halten das Projekt zusammen.
 

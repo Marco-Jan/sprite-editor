@@ -1,7 +1,7 @@
 # Mitmachen bei spritebit
 
 Schön, dass du hier bist! Fehler, Ideen und Fragen gern als
-[Issue](https://github.com/Marco-Jan/sprite-editor/issues); Pull Requests sind willkommen.
+[Issue](https://github.com/spritebit/sprite-editor/issues); Pull Requests sind willkommen.
 Was der Editor kann, steht im [Handbuch](docs/handbuch.md).
 
 **Inhalt:** [Die Regeln des Hauses](#die-regeln-des-hauses) · [Projekt-Struktur](#projekt-struktur) ·
