@@ -273,13 +273,14 @@ Zum Testen: DevTools → Application → Service Workers zeigt den Worker. Unter
 **Alles in einem Durchgang:** `npm run deploy` (bzw. `python tools/deploy.py`) fragt nach
 den neuen Versionen für Web und Desktop (Enter = bleibt), trägt sie ein, aktualisiert die
 Rust-Abhängigkeiten (`cargo update`, nur wenn die Tests grün bleiben), schreibt die
-Offline-Liste neu, lässt alle Tests, die Typprüfung und Clippy laufen und pusht dann
-beide Repos. Bei jedem Fehler bricht es ab, bevor etwas gepusht wird.
+Offline-Liste neu, lässt alle Tests, die Typprüfung und Clippy laufen, mergt den Web-Branch
+lokal nach `main` und pusht dann beide Repos — Vercel geht damit online, ein Pull Request
+auf GitHub ist nicht nötig. Bei jedem Fehler bricht es ab, bevor etwas gepusht wird.
 
 | Aufruf | Wirkung |
 |---|---|
 | `python tools/deploy.py --dry-run` | Probelauf — prüft alles, ändert und pusht nichts |
-| `python tools/deploy.py --live` | zusätzlich den Web-Branch nach `main` mergen → Vercel geht online |
+| `python tools/deploy.py --no-main` | Web nur den Branch pushen, nicht nach `main` mergen |
 | `python tools/deploy.py --release` | zusätzlich den Tag `v<Version>` pushen → Desktop-Release |
 | `python tools/deploy.py --only web` | nur ein Repo (`web` oder `rs`) |
 | `python tools/deploy.py --web-version 3.2.0 --rs-version 1.0.1` | Versionen ohne Nachfrage |
