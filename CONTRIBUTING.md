@@ -270,6 +270,22 @@ Zum Testen: DevTools → Application → Service Workers zeigt den Worker. Unter
 
 ## Veröffentlichen
 
+**Alles in einem Durchgang:** `npm run deploy` (bzw. `python tools/deploy.py`) fragt nach
+den neuen Versionen für Web und Desktop (Enter = bleibt), trägt sie ein, aktualisiert die
+Rust-Abhängigkeiten (`cargo update`, nur wenn die Tests grün bleiben), schreibt die
+Offline-Liste neu, lässt alle Tests, die Typprüfung und Clippy laufen und pusht dann
+beide Repos. Bei jedem Fehler bricht es ab, bevor etwas gepusht wird.
+
+| Aufruf | Wirkung |
+|---|---|
+| `python tools/deploy.py --dry-run` | Probelauf — prüft alles, ändert und pusht nichts |
+| `python tools/deploy.py --live` | zusätzlich den Web-Branch nach `main` mergen → Vercel geht online |
+| `python tools/deploy.py --release` | zusätzlich den Tag `v<Version>` pushen → Desktop-Release |
+| `python tools/deploy.py --only web` | nur ein Repo (`web` oder `rs`) |
+| `python tools/deploy.py --web-version 3.2.0 --rs-version 1.0.1` | Versionen ohne Nachfrage |
+
+Das Skript erwartet `spritebit-rs` neben diesem Ordner (sonst `--rs <ordner>`).
+
 **Web:** Die Seite ist statisch — jedes Hosting für Dateien genügt (derzeit Vercel). Nach
 neuen, umbenannten oder gelöschten Dateien `python tools/make_sw.py` laufen lassen.
 

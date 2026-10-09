@@ -923,47 +923,63 @@ kbd {
 }
 
 /* Filmstreifen in der Animations-Karte: vier Frames, der aktive leuchtet,
-   rechts läuft das Ergebnis. Zwei Bilder aus der Kulisse, abwechselnd. */
+   rechts läuft das Ergebnis. Zwei Bilder aus der Kulisse, abwechselnd.
+   Hintergrund ist das Transparenz-Karo wie in der Zeichenfläche des Editors.
+   Die Frames teilen sich den Platz (Raster mit 1fr), statt feste Breiten zu
+   verlangen — sonst ragte die Vorschau in schmalen Karten über den Rand. */
 .filmstrip {
   display: flex;
   align-items: center;
-  gap: var(--sp-3);
+  gap: var(--sp-2);
+  min-width: 0;
   padding: var(--sp-3);
   background: var(--surface-2);
   border: 1px solid var(--line);
   border-radius: var(--r-md);
 }
-.film-frames { display: flex; gap: 4px; }
-.ff {
+.film-frames {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: calc(4 * 44px + 3 * 4px);
+}
+.ff,
+.film-play {
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 30px;
-  /* Abendhimmel aus der Kulisse — die dunkle Vogel-Silhouette hebt sich ab. */
-  background: linear-gradient(180deg, var(--sky-mid), var(--sky-low) 60%, var(--sky-horizon));
+  /* Das helle Karo der Zeichenfläche (Editor: „Hell“) — auf dem dunklen
+     verschwänden die schwarzen Vogel-Silhouetten. */
+  background-color: #ffffff;
+  background-image:
+    linear-gradient(45deg, #d8d8d8 25%, transparent 25%),
+    linear-gradient(-45deg, #d8d8d8 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #d8d8d8 75%),
+    linear-gradient(-45deg, transparent 75%, #d8d8d8 75%);
+  background-size: 8px 8px;
+  background-position: 0 0, 0 4px, 4px -4px, -4px 0;
   border: 1px solid var(--line-strong);
   border-radius: var(--r-sm);
+}
+.ff {
+  height: 30px;
+  min-width: 0;
   animation: filmCur 1.6s step-end infinite;
 }
 .ff:nth-child(2) { animation-delay: -1.2s; }
 .ff:nth-child(3) { animation-delay: -0.8s; }
 .ff:nth-child(4) { animation-delay: -0.4s; }
 .ff:first-child { border-color: var(--accent); }
-.ff img { width: 34px; height: 14px; image-rendering: pixelated; }
+.ff img { width: 34px; max-width: 90%; height: auto; image-rendering: pixelated; }
 .film-play {
-  position: relative;
   flex: none;
-  width: 75px;
-  height: 45px;
-  margin-inline-start: auto;
-  background: linear-gradient(180deg, var(--sky-mid), var(--sky-low) 55%, var(--sky-horizon) 85%, var(--sky-glow));
-  border: 1px solid var(--line-strong);
-  border-radius: var(--r-sm);
+  width: 64px;
+  height: 42px;
 }
+/* Beide Bilder liegen in derselben Rasterzelle übereinander. */
 .film-play img {
-  position: absolute;
-  top: 12px;
-  left: 12px;
+  grid-area: 1 / 1;
   width: 51px;
   height: 21px;
   image-rendering: pixelated;
@@ -979,10 +995,7 @@ kbd {
 @keyframes filmA { 0% { opacity: 1; } 25% { opacity: 0; } 50% { opacity: 1; } 75% { opacity: 0; } }
 @keyframes filmB { 0% { opacity: 0; } 25% { opacity: 1; } 50% { opacity: 0; } 75% { opacity: 1; } }
 
-@media (max-width: 400px) {
-  .ff { width: 38px; }
-  .ff img { width: 30px; height: 12px; }
-}
+
 
 /* ── 11 · Station 05 · Export ───────────────────────────────────── */
 .formats {

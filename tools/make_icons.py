@@ -10,6 +10,7 @@
 # Favicon, PWA-Icons und OG-Bild garantiert dasselbe Motiv zeigen.
 #
 #   python tools/make_icons.py
+#   python tools/make_icons.py --app <ordner>   # Icons der Desktop-App (spritebit-rs)
 #
 # Reine Standardbibliothek — kein Pillow, PNGs werden direkt geschrieben.
 import os
@@ -55,7 +56,7 @@ def motif_color(x, y):
 
 # ── PNG schreiben (ohne Fremdbibliothek) ─────────────────────────────
 def write_png(path, w, h, rgba):
-    """rgba: bytearray der Länge w*h*4"""
+    """rgba: bytearray der Länge w*h*4; path None = nur die Bytes liefern"""
     raw = bytearray()
     for y in range(h):
         raw.append(0)  # Filter „None“ — Pixelgrafik komprimiert so gut genug
@@ -69,8 +70,9 @@ def write_png(path, w, h, rgba):
            + chunk(b'IHDR', struct.pack('>IIBBBBB', w, h, 8, 6, 0, 0, 0))
            + chunk(b'IDAT', zlib.compress(bytes(raw), 9))
            + chunk(b'IEND', b''))
-    with open(path, 'wb') as f:
-        f.write(png)
+    if path:
+        with open(path, 'wb') as f:
+            f.write(png)
     return png
 
 
@@ -277,5 +279,27 @@ def main():
         print(f'  {name:28} {os.path.getsize(os.path.join(OUT, name)):>8} B')
 
 
+# ── Desktop-App (spritebit-rs) ───────────────────────────────────────
+# Windows zeigt die .exe je nach Ansicht von 16 bis 256 px — die ICO trägt
+# darum alle üblichen Größen; die kleinen mit engerer Rundung wie das
+# Favicon. Dazu ein 256er-PNG fürs Fenster- und Taskleisten-Icon zur Laufzeit.
+APP_SIZES = (16, 20, 24, 32, 40, 48, 64, 128, 256)
+
+
+def main_app(out):
+    os.makedirs(out, exist_ok=True)
+    parts = [(size, write_png(None, size, size, render_icon(size, radius_frac=0.18 if size <= 48 else 0.22)))
+             for size in APP_SIZES]
+    write_ico(os.path.join(out, 'spritebit.ico'), parts)
+    with open(os.path.join(out, 'spritebit-256.png'), 'wb') as f:
+        f.write(parts[-1][1])
+    for name in ('spritebit.ico', 'spritebit-256.png'):
+        print(f'  {name:28} {os.path.getsize(os.path.join(out, name)):>8} B')
+
+
 if __name__ == '__main__':
-    main()
+    import sys
+    if len(sys.argv) == 3 and sys.argv[1] == '--app':
+        main_app(sys.argv[2])
+    else:
+        main()

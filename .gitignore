@@ -20,3 +20,6 @@ package-lock.json
 # Build-Artefakte (falls später ein Bundler dazukommt)
 dist/
 build/
+
+# Python-Cache (tools/*.py)
+__pycache__/
