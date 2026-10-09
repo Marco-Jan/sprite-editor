@@ -23,7 +23,7 @@
 // `selection.owner` hält fest, aus welchem Sprite der Inhalt stammt. Ohne das
 // würde er in dem Sprite landen, der beim Absetzen gerade offen ist — beim
 // Arbeiten mit einer Ebene also im falschen.
-import { state, sprites, selection, getGrid, getSprite, getPal, clearSelection } from './state.js';
+import { state, sprites, selection, getGrid, getSprite, getPal, clearSelection, isInSelection } from './state.js';
 import { renderEditor, renderSpriteList, updateOutput, cellFromEventClamped } from './render.js';
 import { saveState } from './storage.js';
 import { beginStroke, commitStroke, recordOp } from './history.js';
@@ -357,7 +357,10 @@ export function handleAt(e) {
   if (!r || selection.mode) return null;
   const cv = /** @type {HTMLElement} */ (document.getElementById('editor-canvas')).getBoundingClientRect();
   const cs = state.cellSize;
-  const tol = e.pointerType === 'touch' ? 14 : 7;
+  // In der Auswahl gewinnt das Verschieben — sonst ließe sich eine winzige
+  // Auswahl nicht mehr anfassen. Dort zählt ein Anfasser nur ganz nah.
+  const inside = isInSelection(Math.floor((e.clientX - cv.left) / cs), Math.floor((e.clientY - cv.top) / cs));
+  const tol = (e.pointerType === 'touch' ? 14 : 7) * (inside ? 3 / 7 : 1);
   for (const h of HANDLES) {
     const p = handlePos(r, h);
     if (Math.abs(e.clientX - (cv.left + p.x * cs)) <= tol && Math.abs(e.clientY - (cv.top + p.y * cs)) <= tol) return h;
