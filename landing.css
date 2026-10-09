@@ -656,8 +656,22 @@ kbd {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-3);
-  margin-block: var(--sp-6) var(--sp-5);
+  margin-block: var(--sp-6) var(--sp-3);
 }
+/* Unter den zwei großen Knöpfen: klein und ruhiger — installieren, Quellcode. */
+.cta-sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  margin-bottom: var(--sp-5);
+}
+.cta-gh { display: inline-flex; flex-wrap: wrap; gap: var(--sp-2); }
+/* Im Kopf stehen die zwei großen Knöpfe untereinander — gleich breit wirkt ruhiger. */
+.hero-text .cta-row { display: inline-grid; grid-template-columns: minmax(0, 1fr); }
+.hero-text .cta-row .btn { justify-content: center; }
+.cta-sub .btn { color: var(--text-muted); }
+.cta-sub .btn:hover { color: var(--text); }
 
 /* Stichworte unter dem Lead — kleine Pixel-Punkte in den Farben der Rampe. */
 /* Unter den Knoepfen: was es kostet und unter welcher Lizenz. */
@@ -1251,6 +1265,7 @@ kbd {
 
 @media (max-width: 560px) {
   .cta-row .btn { flex: 1 1 100%; }
+  .hero-text .cta-row { display: grid; }
 }
 
 /* ── 15 · Keyframes ─────────────────────────────────────────────── */
