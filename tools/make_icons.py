@@ -2,9 +2,10 @@
 # ════════════════════════════════════════════════════════════════════
 # ICON-GENERATOR — erzeugt alle Logos aus einer einzigen Beschreibung
 # ════════════════════════════════════════════════════════════════════
-# Das Motiv ist ein 16x16-Raster: eine Treppe aus vier 3x3-Blöcken (das
-# Erkennungszeichen von Pixel-Art), von Grün oben rechts nach Blau unten
-# links, auf einer dunklen Kachel mit feinem hellen Rand. 16x16 ist Absicht:
+# Das Motiv ist Bitty, das Maskottchen: ein Schleim aus 16x16 Pixeln auf
+# einer dunklen Kachel mit feinem hellen Rand. Figur und Farben kommen aus
+# js/bitty.js — dort lebt er auch im Editor und auf der Startseite, die
+# Icons können also nicht von ihm abweichen. 16x16 ist Absicht:
 # bei 16, 32, 48 und 64 px fällt jeder Rasterpixel auf ganze Bildschirm-
 # pixel, das Favicon bleibt also scharf. Alles wird hier gerendert, damit
 # Favicon, PWA-Icons und OG-Bild garantiert dasselbe Motiv zeigen.
@@ -14,10 +15,12 @@
 #
 # Reine Standardbibliothek — kein Pillow, PNGs werden direkt geschrieben.
 import os
+import re
 import struct
 import zlib
 
-OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'assets')
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+OUT = os.path.join(ROOT, 'assets')
 
 # ── Farben ───────────────────────────────────────────────────────────
 BG        = (0x20, 0x20, 0x27)   # Kachel, einen Hauch heller als --panel
@@ -34,19 +37,22 @@ GRID = 16  # Motiv-Raster
 RING_W = 0.5  # Randbreite in Rasterpixeln
 
 
-def band_cells():
-    """Die Treppe: vier 3x3-Blöcke, von oben rechts nach unten links,
-    2 Rasterpixel Abstand zum Rand — sonst knabbert die Eckenrundung sie an."""
-    cells = {}
-    for step, color in enumerate((GREEN, TEAL, SKY, BLUE)):
-        x0, y0 = 11 - 3 * step, 2 + 3 * step
-        for y in range(y0, y0 + 3):
-            for x in range(x0, x0 + 3):
-                cells[(x, y)] = color
-    return cells
+def bitty_cells():
+    """Bitty im Stand aus js/bitty.js: PALETTE und das IDLE-Raster
+    ('.' = Kachel, Ziffer = Index in die Palette, `_` = leere Zeile)."""
+    with open(os.path.join(ROOT, 'js', 'bitty.js'), encoding='utf-8') as f:
+        src = f.read()
+    pal = re.search(r'var PALETTE = \[([^\]]*)\]', src).group(1)
+    colors = [tuple(int(h[i:i + 2], 16) for i in (0, 2, 4)) for h in re.findall(r"'#([0-9a-fA-F]{6})'", pal)]
+    body = re.search(r'var IDLE = \[(.*?)\];', src, re.S).group(1)
+    rows = ['.' * GRID if tok == '_' else tok.strip("'")
+            for tok in re.findall(r"'[.0-9]+'|\b_\b", body)]
+    assert len(rows) == GRID and all(len(r) == GRID for r in rows), 'Bitty ist nicht 16x16'
+    return {(x, y): colors[int(c) - 1]
+            for y, row in enumerate(rows) for x, c in enumerate(row) if c != '.'}
 
 
-BAND = band_cells()
+BAND = bitty_cells()
 
 
 def motif_color(x, y):

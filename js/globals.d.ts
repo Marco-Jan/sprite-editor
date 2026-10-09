@@ -15,6 +15,17 @@ interface Window {
   SITE_LINKS?: Record<string, string>;
   /** Versionen an den Knöpfen der Startseite (js/site-links.js, gepflegt von tools/deploy.py). */
   SITE_VERSIONS?: Record<string, string>;
+  /** Bitty, das Maskottchen (js/bitty.js) — Startseite und Editor. */
+  Bitty?: {
+    PALETTE: string[];
+    FRAMES: Record<'idle' | 'squish' | 'blink' | 'hop', string[]>;
+    draw(canvas: HTMLCanvasElement, name: string, palette?: string[]): void;
+    mount(canvas: HTMLCanvasElement, opts?: { palette?: string[] }): {
+      hop(): void;
+      setPalette(p?: string[]): void;
+      stop(): void;
+    };
+  };
 }
 
 interface Navigator {

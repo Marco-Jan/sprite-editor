@@ -50,7 +50,7 @@
   --primary-bg:    #10261f;
   --primary-line:  #2d6b52;
 
-  /* Marken-Rampe aus assets/icon.svg */
+  /* Marken-Rampe (die Treppe aus dem früheren Logo — das Logo ist heute Bitty) */
   --ramp-1: #6ed49a;
   --ramp-2: #6ec9b3;
   --ramp-3: #6ebecc;
@@ -1760,6 +1760,38 @@ a.brand:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; b
 .try-btn:hover { background: var(--surface-3); }
 .try-btn[aria-pressed="true"] { border-color: var(--primary); color: var(--primary); }
 .try-text { display: grid; gap: var(--sp-5); justify-items: start; }
+
+/* Bitty stellt sich vor (js/bitty.js, js/landing-demo.js) */
+.bitty-hi { display: flex; align-items: center; gap: var(--sp-4); }
+.bitty-hi-fig {
+  flex: none;
+  width: 64px; height: 64px;
+  image-rendering: pixelated;
+  cursor: pointer;
+}
+.bitty-hi-say {
+  position: relative;
+  max-width: 36ch;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--surface-2);
+  font-size: var(--fs-sm);
+  line-height: 1.55;
+}
+/* Zipfel nach links zu Bitty */
+.bitty-hi-say::before {
+  content: '';
+  position: absolute;
+  left: -7px; top: 50%;
+  width: 12px; height: 12px;
+  margin-top: -6px;
+  background: inherit;
+  border: inherit;
+  border-top: 0; border-right: 0;
+  transform: rotate(45deg);
+}
+.bitty-name { color: var(--text); font-weight: 700; }
 
 /* ── 02 · Palette umkippen ── */
 .try-preview {

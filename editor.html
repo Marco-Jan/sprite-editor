@@ -120,6 +120,7 @@
         <button type="button" class="mb-title" role="menuitem" aria-haspopup="menu" aria-expanded="false" data-i18n="mb.help">Hilfe</button>
         <div class="mb-drop" role="menu" hidden>
           <button type="button" class="mb-item" role="menuitem" id="help-btn"><span data-i18n="mb.helpOpen">Hilfe und Tastenkürzel</span><kbd>F1</kbd></button>
+          <button type="button" class="mb-item" role="menuitem" id="bitty-tour-btn"><span data-i18n="mb.tour">Tour mit Bitty</span></button>
           <div class="mb-sep" role="separator"></div>
           <a class="mb-item" role="menuitem" href="https://ko-fi.com/baloou" target="_blank" rel="noopener" data-i18n-attr="title:donate.title" title="Kostenlos bleibt spritebit sowieso. Spenden fließen in ein Code-Signatur-Zertifikat, damit Windows bei der Desktop-App nicht mehr warnt."><span data-i18n="donate.menu">spritebit unterstützen (Ko-fi)</span></a>
           <div class="mb-sep" role="separator"></div>
@@ -132,6 +133,9 @@
     <input type="file" id="load-file-input" accept=".json,application/json" hidden>
     <span id="doc-title" class="doc-title"></span>
     <span id="save-indicator" class="save-indicator" data-i18n="tb.saved">gespeichert</span>
+    <!-- Bitty, der Helfer (js/helper.js): Klick = Tipp -->
+    <button type="button" class="bitty-btn" id="bitty-btn" aria-expanded="false"
+            data-i18n-attr="title:bitty.btn;aria-label:bitty.btn" title="Bitty — Tipp anzeigen" aria-label="Bitty — Tipp anzeigen"><canvas width="16" height="16"></canvas></button>
   </header>
 
   <!-- ══ Arbeitsfläche ══ -->
@@ -1396,6 +1400,7 @@
 
 <script src="vendor/jspdf.umd.min.js"></script>
 <script src="js/pwa.js"></script>
+<script src="js/bitty.js"></script>
 <script type="module" src="js/app.js"></script>
 
 </body>

@@ -64,6 +64,7 @@
 
     's1.eyebrow':   '<span class="st-num">01</span> The first pixel',
     's1.h2': 'Just start painting.',
+    's1.bitty': 'Hi, I’m <span class="bitty-name">Bitty</span>! That’s me in the grid as the example — go ahead and paint over me. I’ll help you out in the editor.',
     's1.lead': 'Pick a color, click, drag — that is exactly how the editor feels. Just with more tools, layers and a timeline for animations.',
     's1.artAlt':    "A pixel dog's face appearing cell by cell: the outline first, then fur, eyes and muzzle.",
     's1.caption':   'Pixel by pixel, just like in the editor',
@@ -321,6 +322,7 @@
 
     's1.eyebrow':   '<span class="st-num">01</span> Da erste Pixel',
     's1.h2': 'Moi afoch los.',
+    's1.bitty': 'Servus, i bin da <span class="bitty-name">Bitty</span>! Im Raster siagst mi ois Beispiel — moi mi ruhig um. Im Editor hüf i da weida.',
     's1.lead': 'Farb aussuachn, klickn, ziagn — genau so fühlt si da Editor an. Nur mit mehr Wergzeig, Ebenen und ana Timeline fia Animationen.',
     's1.caption':   'Pixel für Pixel, wia im Editor',
     's1.demoCap':   'So verlasst da fertige Sprite den Editor. <span class="fc-dim">Beispiel, auf fünf Zeiln kürzt.</span>',

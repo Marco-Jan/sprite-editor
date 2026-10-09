@@ -1721,6 +1721,79 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   #confirm-toast, #confirm-toast-box { animation: none; }
 }
 
+/* ── Bitty, der Helfer (js/helper.js, Figur aus js/bitty.js) ──────────
+   Sitzt rechts in der Kopfzeile; die Sprechblase liegt über den Panels,
+   aber unter Dialogen und Rückfragen. Bewusst ruhig gehalten: keine
+   Signalfarben, die Markierung der Tour ist ein gedämpftes Grau-Blau. */
+.bitty-btn {
+  appearance: none;
+  margin-left: auto;
+  display: grid;
+  place-items: center;
+  width: 30px; height: 30px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+  background: none;
+  cursor: pointer;
+}
+.bitty-btn:hover, .bitty-btn[aria-expanded="true"] { background: var(--surface-3); border-color: var(--line); }
+.bitty-btn canvas { width: 24px; height: 24px; image-rendering: pixelated; }
+
+.bitty-bubble {
+  position: fixed;
+  z-index: 90;
+  width: max-content;
+  max-width: min(320px, calc(100vw - 16px));
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  background: var(--surface-2);
+  color: var(--text);
+  box-shadow: var(--shadow-md);
+  animation: bittyIn 0.16s ease-out;
+}
+.bitty-bubble[hidden] { display: none; }
+/* Zipfel: zeigt nach oben aufs Ziel, bei .is-above nach unten */
+.bitty-bubble::before {
+  content: '';
+  position: absolute;
+  left: calc(var(--tail-x, 50%) - 6px);
+  top: -7px;
+  width: 12px; height: 12px;
+  background: inherit;
+  border: inherit;
+  border-right: 0; border-bottom: 0;
+  transform: rotate(45deg);
+}
+.bitty-bubble.is-above::before { top: auto; bottom: -7px; transform: rotate(225deg); }
+.bitty-bubble.no-tail::before { display: none; }
+.bitty-step {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+}
+.bitty-text {
+  margin: 0;
+  font-size: var(--fs-lg);
+  line-height: 1.5;
+}
+.bitty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+/* Was die Tour gerade zeigt */
+.bitty-spot {
+  outline: 2px solid #6b7488;
+  outline-offset: 2px;
+}
+@keyframes bittyIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .bitty-bubble { animation: none; }
+}
+
 /* ── 9 · Vollbild ───────────────────────────────────────────────── */
 /* Im Vollbild verschwindet nur die Kopfzeile — Dock, angepinnte Panels
    und schwebende Fenster bleiben, damit man weiterarbeiten kann. */

@@ -8,6 +8,7 @@ import {
   paletteExists, getPaletteByName,
 } from './state.js';
 import { parseStartHash } from './fromstart.js';
+import { initHelper, relabelHelper } from './helper.js';
 import { DEFAULT_PALETTE, MAX_COLORS } from './data.js';
 import {
   t, tn, colorLabelShort, applyStatic, initLangSwitch, onLangChange, getLang,
@@ -1721,6 +1722,7 @@ function relabelUi() {
   syncSaveDirBtn();
   syncImagePanel();
   updateToolUI();
+  relabelHelper();
   renderAll();
   info(''); // die alte Statuszeile stünde sonst in der alten Sprache da
 }
@@ -1805,6 +1807,7 @@ async function init() {
   // nicht überschrieben. Gleich zum Herunterladen anbieten.
   if (loaded.rescued) showConfirmToast(t('store.rescued'), () => downloadBackup('rescue'), t('help.backupDownload'));
   else offerStartDrawing();
+  initHelper(); // Bitty — wartet mit der Tour, bis keine Rückfrage mehr offen ist
 }
 
 // Vom Probier-Raster der Startseite gekommen (editor.html#start=…)?

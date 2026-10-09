@@ -22,29 +22,12 @@
   };
   var pal = 'eis';
 
-  // Beispiel: ein kleiner Schleim mit Kontur, Schatten, Licht und Augen.
-  var SAMPLE = [
-    '................',
-    '................',
-    '.....111111.....',
-    '...1133333311...',
-    '..133333333331..',
-    '..134433333331..',
-    '.13455433333331.',
-    '.13344333333331.',
-    '.13331331333331.',
-    '.13331331333331.',
-    '.13333333333331.',
-    '.12333333333321.',
-    '.12223333332221.',
-    '..122222222221..',
-    '...1111111111...',
-    '................',
-  ];
+  // Beispiel: Bitty, das Maskottchen (js/bitty.js) — Kontur, Schatten, Licht, Augen.
+  var SAMPLE = window.Bitty ? window.Bitty.FRAMES.idle : [];
   var cells = new Uint8Array(N * N);
   function loadSample() {
     for (var y = 0; y < N; y++) for (var x = 0; x < N; x++) {
-      var c = SAMPLE[y].charAt(x);
+      var c = SAMPLE[y] ? SAMPLE[y].charAt(x) : '.';
       cells[y * N + x] = c === '.' ? 0 : Number(c);
     }
   }
@@ -165,6 +148,7 @@
       pal = /** @type {HTMLElement} */ (e.currentTarget).dataset.pal || pal;
       syncPal();
       render();
+      if (bitty) { bitty.setPalette(PALETTES[pal]); bitty.hop(); }
     });
   }
   function syncPal() {
@@ -185,6 +169,11 @@
     cta.href = empty ? 'editor.html' : 'editor.html#start=' + pal + '.' +
       PALETTES[pal].join(',').replace(/#/g, '') + '.' + Array.prototype.join.call(cells, '');
   }
+
+  // ── Bitty neben dem Raster: trägt die gewählte Palette, hüpft bei Klick ──
+  var bittyEl = /** @type {HTMLCanvasElement|null} */ (document.getElementById('bitty-hi'));
+  var bitty = bittyEl && window.Bitty ? window.Bitty.mount(bittyEl, { palette: PALETTES[pal] }) : null;
+  if (bitty) bittyEl.addEventListener('click', function () { bitty.hop(); });
 
   syncPal();
   render();
