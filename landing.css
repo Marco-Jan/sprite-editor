@@ -699,15 +699,23 @@ kbd {
   text-shadow: 0 1px 10px rgba(12, 8, 22, 0.85);
 }
 .dl-help summary {
-  cursor: pointer;
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
   width: fit-content;
-  list-style-position: inside;
+  cursor: pointer;
+  list-style: none;
   color: var(--text-muted);
-  text-decoration: underline dotted;
-  text-underline-offset: 3px;
+  border-radius: 6px;
 }
+.dl-help summary::-webkit-details-marker { display: none; }
+/* Eigenes Dreieck als eigene Spalte — umgebrochener Text bleibt bündig. */
+.dl-help summary::before { content: '▸'; flex: none; }
+.dl-help[open] summary::before { content: '▾'; }
 .dl-help summary:hover,
 .dl-help[open] summary { color: var(--text); }
+.dl-help summary:focus { outline: none; }
+.dl-help summary:focus-visible { outline: 2px solid var(--accent-line, #6ea8fe); outline-offset: 3px; }
 .dl-help ol {
   position: absolute;
   z-index: 20;

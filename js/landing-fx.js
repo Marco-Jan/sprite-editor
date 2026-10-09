@@ -26,13 +26,19 @@
 // Anleitung zur Desktop-App (<details class="dl-help">): schwebt als Box —
 // ein Klick daneben oder Esc schließt sie wieder.
 (function () {
-  var boxes = document.querySelectorAll('details.dl-help');
+  var boxes = /** @type {NodeListOf<HTMLDetailsElement>} */ (document.querySelectorAll('details.dl-help'));
   if (!boxes.length) return;
   document.addEventListener('click', function (e) {
-    boxes.forEach(function (d) { if (d.open && !d.contains(e.target)) d.open = false; });
+    var t = /** @type {Node} */ (e.target);
+    boxes.forEach(function (d) { if (d.open && !d.contains(t)) d.open = false; });
   });
   document.addEventListener('keydown', function (e) {
     if (e.key !== 'Escape') return;
-    boxes.forEach(function (d) { if (d.open) { d.open = false; d.querySelector('summary').focus(); } });
+    boxes.forEach(function (d) {
+      if (!d.open) return;
+      d.open = false;
+      var sum = d.querySelector('summary');
+      if (sum) sum.focus();
+    });
   });
 })();
