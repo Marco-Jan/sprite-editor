@@ -23,11 +23,13 @@
 // `selection.owner` hält fest, aus welchem Sprite der Inhalt stammt. Ohne das
 // würde er in dem Sprite landen, der beim Absetzen gerade offen ist — beim
 // Arbeiten mit einer Ebene also im falschen.
-import { state, sprites, selection, getGrid, getSprite, getPal, clearSelection } from './state.js';
+import { state, sprites, selection, getGrid, getSprite, getPal, clearSelection, isInSelection } from './state.js';
 import { renderEditor, renderSpriteList, updateOutput, cellFromEventClamped } from './render.js';
 import { saveState } from './storage.js';
 import { beginStroke, commitStroke, recordOp } from './history.js';
 import { magicWandRegion } from './spritefx.js';
+import { HANDLES, handlePos, dragHandle, scaleGrid } from './scale.js';
+import { MAX_SIDE } from './state.js';
 import { t } from './i18n.js';
 
 // Zwischenablage — modul-lokal, überlebt Sprite-Wechsel, aber keinen Reload.
@@ -313,6 +315,13 @@ export function endSelectionPointer() {
     return;
   }
 
+  if (selection.mode === 'scale') {
+    selection.scale = null;
+    selection.mode = null;
+    renderEditor();
+    return;
+  }
+
   if (selection.mode === 'lasso') {
     const path = selection.path || [];
     selection.mode = null;
@@ -332,6 +341,65 @@ export function endSelectionPointer() {
     if (selection.rect && selection.rect.w === 1 && selection.rect.h === 1) clearSelection();
     renderEditor();
   }
+}
+
+// ────────────────────────────────────────────────────────────────────
+// SKALIEREN — Anfasser an der Auswahl (Rechnung in js/scale.js)
+// ────────────────────────────────────────────────────────────────────
+// Anfassen hebt den Inhalt an (wie Verschieben). Skaliert wird immer vom
+// Original der Schwebe-Sitzung: erst klein, dann wieder groß ziehen bringt
+// das Bild unverändert zurück. Dreht oder spiegelt man zwischendurch, gilt
+// ab da das gedrehte Bild als Original.
+
+/** Liegt der Zeiger auf einem Anfasser? Gibt 'nw' … 'w' zurück oder null. */
+export function handleAt(e) {
+  const r = selection.rect;
+  if (!r || selection.mode) return null;
+  const cv = /** @type {HTMLElement} */ (document.getElementById('editor-canvas')).getBoundingClientRect();
+  const cs = state.cellSize;
+  // In der Auswahl gewinnt das Verschieben — sonst ließe sich eine winzige
+  // Auswahl nicht mehr anfassen. Dort zählt ein Anfasser nur ganz nah.
+  const inside = isInSelection(Math.floor((e.clientX - cv.left) / cs), Math.floor((e.clientY - cv.top) / cs));
+  const tol = (e.pointerType === 'touch' ? 14 : 7) * (inside ? 3 / 7 : 1);
+  for (const h of HANDLES) {
+    const p = handlePos(r, h);
+    if (Math.abs(e.clientX - (cv.left + p.x * cs)) <= tol && Math.abs(e.clientY - (cv.top + p.y * cs)) <= tol) return h;
+  }
+  return null;
+}
+
+/** Anfasser greifen: Inhalt anheben und das Original merken. */
+export function startScale(e, h) {
+  if (!selection.rect || !getSprite()) return;
+  ensureFloating(false);
+  const b = selection.base;
+  if (!b || b.result !== selection.float) {
+    selection.base = {
+      cells: selection.float.map(row => row.slice()),
+      mask: selection.mask ? selection.mask.map(row => row.slice()) : null,
+      result: selection.float,
+    };
+  }
+  selection.scale = { h, start: { ...selection.rect } };
+  selection.mode = 'scale';
+  renderEditor();
+}
+
+export function updateScale(e) {
+  const s = selection.scale, b = selection.base;
+  if (selection.mode !== 'scale' || !s || !b) return;
+  const cv = /** @type {HTMLElement} */ (document.getElementById('editor-canvas')).getBoundingClientRect();
+  const cs = state.cellSize;
+  const r = dragHandle(s.start, s.h, (e.clientX - cv.left) / cs, (e.clientY - cv.top) / cs, e.shiftKey);
+  r.w = Math.min(r.w, MAX_SIDE);
+  r.h = Math.min(r.h, MAX_SIDE);
+  const cur = selection.rect;
+  if (cur && cur.x === r.x && cur.y === r.y && cur.w === r.w && cur.h === r.h) return;
+  selection.rect = r;
+  selection.float = scaleGrid(b.cells, r.w, r.h);
+  selection.mask = b.mask ? scaleGrid(b.mask, r.w, r.h) : null;
+  b.result = selection.float;
+  renderEditor();
 }
 
 // ────────────────────────────────────────────────────────────────────

@@ -98,6 +98,11 @@ Reiterzeile erst ab zwei offenen Sprites, damit sie keine Höhe kostet.
   Maustaste ziehen verstellt die Größe direkt auf der Zeichenfläche (nach rechts größer, 6 px
   Mausweg je Stufe); ein Umriss zeigt, was der Pinsel gleich trifft.
 - **Toleranz** steuert, wie ähnlich Farben für Zauberstab und Farbwahl sein dürfen.
+- **Füllen → „Grenzen: alle Ebenen“**: die Fläche endet dort, wo sich im *sichtbaren* Bild
+  etwas ändert (alle sichtbaren Ebenen zusammen), gemalt wird aber in die aktive Ebene. Damit
+  malt man eine Vorlage aus — Umrisse auf einer eigenen (gern gesperrten) Ebene, Farben auf
+  einer zweiten —, ohne die Vorlage anzufassen. Wie „Sample: All Layers“ in Aseprite.
+  Beim Bearbeiten einer Maske gilt immer die Maske selbst.
 - **Symmetrie** (↔ / ↕) spiegelt jeden Strich an der Mittelachse; beide Achsen zusammen
   ergeben vier Spiegelungen. Gilt für alle Mal- und Formwerkzeuge, die Achsen werden
   gestrichelt eingeblendet.
@@ -139,6 +144,21 @@ Drei Wege zur selben Sache — ein Bereich, den man als Ganzes bewegt:
 Beim Absetzen überschreiben nur gefüllte Pixel — transparente Stellen des Blocks lassen
 den Untergrund stehen. Was über den Rand hinausgeschoben wird, ist weg (`Strg`+`Z` holt es
 zurück).
+
+### Skalieren mit Anfassern
+
+An jeder Auswahl sitzen acht **Anfasser** (Ecken und Kantenmitten), solange ein
+Auswahl-Werkzeug aktiv ist. Anfassen hebt den Inhalt an wie beim Verschieben; dann:
+
+- **Ecke** ziehen ändert Breite und Höhe, **Kante** nur eine davon; die gegenüberliegende
+  Seite bleibt stehen.
+- Mit **Umschalt** bleibt das Seitenverhältnis (an der Ecke gewinnt die stärker gezogene
+  Richtung, an einer Kante wächst die andere Seite mittig mit).
+- Skaliert wird mit **nächstem Nachbarn** — keine Mischfarben, Pixel bleiben Pixel.
+- Jede Größe wird vom **Original** der Schwebe-Sitzung gerechnet: erst klein, dann wieder
+  groß ziehen bringt das Bild unverändert zurück. Wer zwischendurch dreht oder spiegelt,
+  macht das gedrehte Bild zum neuen Original.
+- Lasso- und Farbauswahl skalieren ihre Form mit.
 
 ### Der schwebende Inhalt
 
@@ -648,6 +668,7 @@ geprüft und mit `JSON.parse` gelesen.
 | `H` | Hand — Ansicht verschieben, ohne zu zeichnen; auf einer Hilfslinie: Linie ziehen |
 | Ziehen in der Auswahl | Bereich ausschneiden und verschieben |
 | `Alt` + Ziehen | Kopie verschieben, Original bleibt |
+| Anfasser ziehen | Auswahl skalieren (`Umschalt`: Seitenverhältnis halten) |
 | Pfeiltasten | Auswahl pixelweise verschieben |
 | `Strg+A` / `C` / `X` / `V` | Alles wählen · Kopieren · Ausschneiden · Einfügen |
 | `Entf` | Auswahl leeren |

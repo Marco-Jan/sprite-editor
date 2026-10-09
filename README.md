@@ -35,7 +35,8 @@ Zeichnen, animieren, Tilemaps für Spiel-Levels bauen und als Bild, GIF, Godot-S
 - Linie, Rechteck, Ellipse — Kontur oder gefüllt
 - **Clean Stroke**: saubere 1-Pixel-Striche ohne doppelte Eckpixel
 - **Symmetrie** an einer oder beiden Achsen
-- Auswahl, Lasso, Farbwahl — ausschneiden, verschieben, drehen
+- Auswahl, Lasso, Farbwahl — ausschneiden, verschieben, drehen, **mit Anfassern skalieren**
+- Füllen mit **Grenzen von allen Ebenen** — Vorlagen ausmalen, ohne sie anzufassen
 - Pipette, Hand, Zoom auf den Mauszeiger, Finger-Gesten
 
 </td>

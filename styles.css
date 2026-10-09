@@ -1172,6 +1172,11 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 #qp-sort { padding: 5px 8px; flex: none; }
 
 /* Hilfslinien: im Verschieben-Modus kein Pinsel-Umriss */
+/* Anfasser einer Auswahl (js/scale.js) */
+#editor-canvas-wrap[data-handle="nw"], #editor-canvas-wrap[data-handle="se"] { cursor: nwse-resize; }
+#editor-canvas-wrap[data-handle="ne"], #editor-canvas-wrap[data-handle="sw"] { cursor: nesw-resize; }
+#editor-canvas-wrap[data-handle="n"],  #editor-canvas-wrap[data-handle="s"]  { cursor: ns-resize; }
+#editor-canvas-wrap[data-handle="e"],  #editor-canvas-wrap[data-handle="w"]  { cursor: ew-resize; }
 #editor-canvas-wrap.is-guide-edit #brush-cursor,
 #editor-canvas-wrap.is-tile-mode #brush-cursor { display: none; }
 #gd-show.is-active, #gd-edit.is-active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent-line); }

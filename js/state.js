@@ -60,6 +60,7 @@ export const state = {
   outputFormat:  'ts',     // Schlüssel aus CODE_FORMATS (codegen.js)
   mirror:        'off',    // 'off' | 'x' (senkrechte Achse) | 'y' | 'both'
   shapeFill:     false,    // Rechteck/Ellipse gefüllt statt nur Kontur
+  fillVisible:   false,    // Füllen: Grenzen von allen sichtbaren Ebenen (js/fill.js)
   pixelPerfect:  false,    // Stift/Radierer 1 px: L-Ecken entfernen (js/pixelperfect.js)
   maskEdit:      false,    // Werkzeuge malen in die Maske der aktiven Ebene (js/mask.js)
   // Tilemap-Ebenen (js/tiles.js, js/tilemap.js): 'pixel' = Kacheln bemalen,
@@ -114,6 +115,10 @@ export const selection = {
   anchor: null,  // {x,y} — Startecke beim Aufziehen
   grab:  null,   // {dx,dy} — Griffversatz innerhalb der Auswahl beim Ziehen
   path:  null,   // Stützpunkte der Lasso-Spur, solange gezogen wird
+  // Skalieren mit Anfassern (js/scale.js): { h, start } solange gezogen
+  // wird; `base` ist das unskalierte Original der Schwebe-Sitzung.
+  scale: null,
+  base:  null,   // { cells, mask, result } — result: der Stand nach dem letzten Skalieren
 };
 
 // Auswahl vergessen. Wirft einen schwebenden Inhalt WEG — Aufrufer müssen
@@ -128,6 +133,8 @@ export function clearSelection() {
   selection.anchor = null;
   selection.grab = null;
   selection.path = null;
+  selection.scale = null;
+  selection.base = null;
 }
 
 export function isInSelection(x, y) {
