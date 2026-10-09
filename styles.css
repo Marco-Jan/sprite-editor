@@ -1724,7 +1724,7 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 /* ── Bitty, der Helfer (js/helper.js, Figur aus js/bitty.js) ──────────
    Sitzt rechts in der Kopfzeile; die Sprechblase liegt über den Panels,
    aber unter Dialogen und Rückfragen. Bewusst ruhig gehalten: keine
-   Signalfarben, die Markierung der Tour ist ein gedämpftes Grau-Blau. */
+   Signalfarben; die Tour umrandet in Bittys Blau (--accent). */
 .bitty-btn {
   appearance: none;
   margin-left: auto;
@@ -1784,9 +1784,10 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   gap: var(--sp-2);
   margin-top: var(--sp-3);
 }
-/* Was die Tour gerade zeigt */
+/* Tour: Markierung und Blase im Blau von Bitty */
+.bitty-bubble.is-tour { border-color: var(--accent); }
 .bitty-spot {
-  outline: 2px solid #6b7488;
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 @keyframes bittyIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
