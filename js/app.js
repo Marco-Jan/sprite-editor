@@ -5,7 +5,9 @@ import {
   state, sprites, paletteMaterials, selection, flatGrid, defaultLayer,
   getGrid, getSprite, getPal, getMaxIdx, getPaletteName, getPreviewName, listSprites,
   createSprite, clearSelection, isInSelection, blankLike, editingMask,
+  paletteExists, getPaletteByName,
 } from './state.js';
+import { parseStartHash } from './fromstart.js';
 import { DEFAULT_PALETTE, MAX_COLORS } from './data.js';
 import {
   t, tn, colorLabelShort, applyStatic, initLangSwitch, onLangChange, getLang,
@@ -1802,6 +1804,26 @@ async function init() {
   // Gespeicherter Stand war unlesbar: er liegt gesichert daneben und wird
   // nicht überschrieben. Gleich zum Herunterladen anbieten.
   if (loaded.rescued) showConfirmToast(t('store.rescued'), () => downloadBackup('rescue'), t('help.backupDownload'));
+  else offerStartDrawing();
+}
+
+// Vom Probier-Raster der Startseite gekommen (editor.html#start=…)?
+// Erst fragen — das Projekt kann schon voll sein. Der Hash geht in jedem
+// Fall weg, sonst käme die Frage bei jedem Neuladen wieder.
+function offerStartDrawing() {
+  const r = parseStartHash(location.hash);
+  if (!location.hash.startsWith('#start=')) return;
+  history.replaceState(null, '', location.pathname + location.search);
+  if (!r) return;
+  showConfirmToast(t('start.ask'), () => {
+    // Gleiche Palette schon da (zweites Mal übernommen)? Dann die nehmen.
+    const base = 'start_' + r.name;
+    const same = paletteExists(base) && JSON.stringify(getPaletteByName(base)) === JSON.stringify(r.palette);
+    const palName = same ? base : createPaletteFromImport(r.palette, base);
+    stopPlayback();
+    const id = createSprite({ name: t('start.name'), palette: palName || DEFAULT_PALETTE, grid: r.grid });
+    renderCallbacks.onSelectSprite(id); // zeichnet und speichert
+  }, t('start.take'));
 }
 
 // Hilfe → Sicherung: Zeilen nur für vorhandene Sicherungen, mit Datum.

@@ -4,7 +4,8 @@
 // Abschnitt 01: Farbe wählen, klicken oder ziehen (Rechtsklick radiert).
 // Abschnitt 02: dasselbe Bild mit einer anderen Palette — wie im Editor
 // merkt sich das Bild nur die Nummern, die Palette macht die Farben.
-// Klassisches Skript ohne Module, wie landing-i18n.js. Speichert nichts.
+// Klassisches Skript ohne Module, wie landing-i18n.js. Speichert nichts —
+// „Im Editor weitermalen“ trägt das Bild im Link mit (siehe syncCta).
 (function () {
   'use strict';
   var N = 16;
@@ -81,6 +82,7 @@
     drawGrid(board, 24, true);
     drawGrid(preview, 12, false);
     syncSwatches();
+    syncCta();
   }
 
   // ── Farben (Abschnitt 01) ──
@@ -169,6 +171,19 @@
     for (var i = 0; i < palBtns.length; i++) {
       palBtns[i].setAttribute('aria-pressed', String(/** @type {HTMLElement} */ (palBtns[i]).dataset.pal === pal));
     }
+  }
+
+  // ── „Im Editor weitermalen“ nimmt das Bild mit ──
+  // Im Hash, nicht im Speicher: editor.html#start=eis.14213d,…,f2f8ff.0011…
+  // (Palettenname, ihre 5 Farben, dann 16×16 Ziffern 0–5 Zeile für Zeile).
+  // Der Editor legt daraus einen Sprite an (app.js, takeStartDrawing).
+  var cta = /** @type {HTMLAnchorElement|null} */ (document.querySelector('#malen a[href^="editor.html"]'));
+  function syncCta() {
+    if (!cta) return;
+    var empty = true;
+    for (var i = 0; i < cells.length; i++) if (cells[i]) { empty = false; break; }
+    cta.href = empty ? 'editor.html' : 'editor.html#start=' + pal + '.' +
+      PALETTES[pal].join(',').replace(/#/g, '') + '.' + Array.prototype.join.call(cells, '');
   }
 
   syncPal();

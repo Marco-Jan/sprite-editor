@@ -57,6 +57,7 @@ const PRECACHE = [
   'js/filesystem.js',
   'js/fill.js',
   'js/frames.js',
+  'js/fromstart.js',
   'js/fullscreen.js',
   'js/gamejson.js',
   'js/gif.js',
