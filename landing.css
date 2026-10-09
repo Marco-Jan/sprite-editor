@@ -687,8 +687,11 @@ kbd {
   text-shadow: 0 1px 10px rgba(12, 8, 22, 0.85);
 }
 /* Zweite graue Zeile (Größen im Browser / in der Desktop-App) dicht darunter. */
-/* Aufklappbare Anleitung unter den Knöpfen: klein, bis man sie öffnet. */
+/* Anleitung unter den Knöpfen: aufgeklappt schwebt sie als Box über dem
+   Inhalt — nichts darunter rutscht weg (Schließen: Klick daneben, Esc;
+   js/landing-fx.js). */
 .dl-help {
+  position: relative;
   max-width: 34rem;
   margin: calc(-1 * var(--sp-2)) 0 var(--sp-5);
   color: var(--text-muted);
@@ -698,22 +701,36 @@ kbd {
 .dl-help summary {
   cursor: pointer;
   width: fit-content;
+  list-style-position: inside;
   color: var(--text-muted);
   text-decoration: underline dotted;
   text-underline-offset: 3px;
 }
-.dl-help summary:hover { color: var(--text); }
-.dl-help[open] {
-  padding: var(--sp-3) var(--sp-4);
+.dl-help summary:hover,
+.dl-help[open] summary { color: var(--text); }
+.dl-help ol {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 8px);
+  left: 0;
+  width: min(34rem, calc(100vw - 2 * var(--gutter)));
+  margin: 0;
+  padding: var(--sp-4) var(--sp-4) var(--sp-4) calc(var(--sp-4) + 1.2rem);
+  display: grid;
+  gap: 0.5rem;
+  line-height: 1.5;
   border: 1px solid var(--line-strong);
   border-radius: 10px;
-  background: rgba(18, 18, 24, 0.82);
+  background: rgba(18, 18, 24, 0.97);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
   text-shadow: none;
 }
-.dl-help[open] summary { margin-bottom: var(--sp-2); color: var(--text); text-decoration: none; font-weight: 600; }
-.dl-help ol { margin: 0; padding-left: 1.2rem; display: grid; gap: 0.45rem; line-height: 1.5; }
 .dl-help b { color: var(--text); }
 .dl-help code { font-size: 0.95em; color: var(--text); }
+/* Die Box darf über den Rand des Kopfbereichs ragen; die Kulisse selbst
+   bleibt beschnitten. */
+.stage--hero { overflow: visible; }
+.stage--hero .scene { overflow: hidden; }
 .hero-platforms + .hero-platforms { margin-top: calc(-1 * var(--sp-4)); }
 .hero-chips {
   display: flex;
