@@ -249,6 +249,13 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   cursor: pointer;
 }
 .check input { accent-color: var(--accent); cursor: pointer; }
+
+/* Licht-Panel: Richtungen als 3×3-Feld, in der Mitte die Sonne. */
+.light-dirs { display: grid; grid-template-columns: repeat(3, 32px); gap: 2px; }
+.light-dirs .btn { min-width: 0; padding: 4px 0; justify-content: center; }
+.light-dirs .btn.is-active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); }
+.light-sun { display: grid; place-items: center; }
+.light-sun::before { content: ''; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
 .check.is-disabled { opacity: 0.45; cursor: not-allowed; }
 
 /* Felder (Label + Steuerelement) */

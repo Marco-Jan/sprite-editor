@@ -708,6 +708,72 @@
         </div>
       </section>
 
+      <section class="panel collapsed" data-panel="light">
+        <div class="panel-head">
+          <h2 class="panel-title" data-i18n="lgt.title">Licht</h2>
+          <button class="panel-toggle" type="button" aria-expanded="false"></button>
+        </div>
+        <div class="panel-body">
+          <div class="field field--inline">
+            <span class="field-label" data-i18n="lgt.dir">Lichtquelle</span>
+            <div class="light-dirs" id="light-dirs" role="group" data-i18n-attr="aria-label:lgt.dirTitle" aria-label="Woher das Licht kommt">
+              <button class="btn light-dir is-active" data-dx="-1" data-dy="-1" aria-pressed="true" data-i18n-attr="title:lgt.dirNW" title="Licht von oben links">↖</button>
+              <button class="btn light-dir" data-dx="0" data-dy="-1" aria-pressed="false" data-i18n-attr="title:lgt.dirN" title="Licht von oben">↑</button>
+              <button class="btn light-dir" data-dx="1" data-dy="-1" aria-pressed="false" data-i18n-attr="title:lgt.dirNE" title="Licht von oben rechts">↗</button>
+              <button class="btn light-dir" data-dx="-1" data-dy="0" aria-pressed="false" data-i18n-attr="title:lgt.dirW" title="Licht von links">←</button>
+              <span class="light-sun" aria-hidden="true"></span>
+              <button class="btn light-dir" data-dx="1" data-dy="0" aria-pressed="false" data-i18n-attr="title:lgt.dirE" title="Licht von rechts">→</button>
+              <button class="btn light-dir" data-dx="-1" data-dy="1" aria-pressed="false" data-i18n-attr="title:lgt.dirSW" title="Licht von unten links">↙</button>
+              <button class="btn light-dir" data-dx="0" data-dy="1" aria-pressed="false" data-i18n-attr="title:lgt.dirS" title="Licht von unten">↓</button>
+              <button class="btn light-dir" data-dx="1" data-dy="1" aria-pressed="false" data-i18n-attr="title:lgt.dirSE" title="Licht von unten rechts">↘</button>
+            </div>
+          </div>
+
+          <label class="field field--inline">
+            <span class="field-label" data-i18n="lgt.amount">Stärke</span>
+            <input type="range" id="light-amount" min="5" max="40" value="15">
+            <span id="light-amount-val" class="field-value">15%</span>
+          </label>
+
+          <label class="field field--inline">
+            <span class="field-label" data-i18n="lgt.width">Breite</span>
+            <select id="light-width" class="input input--sm" data-i18n-attr="title:lgt.widthTitle" title="Wie viele Pixel vom Rand her beleuchtet bzw. schattiert werden">
+              <option value="1">1 px</option>
+              <option value="2">2 px</option>
+              <option value="3">3 px</option>
+            </select>
+          </label>
+
+          <label class="check">
+            <input type="checkbox" id="light-highlight" checked>
+            <span data-i18n="lgt.highlight">Lichtkante (heller)</span>
+          </label>
+          <label class="check">
+            <input type="checkbox" id="light-shadow" checked>
+            <span data-i18n="lgt.shadow">Schattenkante (dunkler)</span>
+          </label>
+          <label class="check" data-i18n-attr="title:lgt.freeTitle" title="Fehlt in der Palette eine passende hellere oder dunklere Farbe, wird eine freie Farbe berechnet — sonst bleibt der Pixel, wie er ist">
+            <input type="checkbox" id="light-free">
+            <span data-i18n="lgt.free">Auch Farben außerhalb der Palette</span>
+          </label>
+
+          <button class="btn btn--block btn--accent" id="light-btn" data-i18n="lgt.apply" data-i18n-attr="title:lgt.applyTitle"
+                  title="Kanten zur Lichtquelle hin aufhellen, abgewandte Kanten abdunkeln — auf der aktuellen Ebene, mit Auswahl nur darin">Licht anwenden</button>
+
+          <div class="field field--inline">
+            <span class="field-label" data-i18n="lgt.cast">Schlagschatten</span>
+            <input type="color" id="light-cast-color" value="#1a1a1a" data-i18n-attr="title:lgt.castColor" title="Schattenfarbe">
+            <select id="light-cast-dist" class="input input--sm" data-i18n-attr="title:lgt.castDist" title="Wie weit der Schatten fällt">
+              <option value="1">1 px</option>
+              <option value="2">2 px</option>
+              <option value="3">3 px</option>
+            </select>
+            <button class="btn" id="light-cast-btn" data-i18n="lgt.castApply" data-i18n-attr="title:lgt.castApplyTitle"
+                    title="Silhouette von der Lichtquelle weg versetzt als Schatten in leere Pixel malen">Werfen</button>
+          </div>
+        </div>
+      </section>
+
     </aside>
 
   </div>

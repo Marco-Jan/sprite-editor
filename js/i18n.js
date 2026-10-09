@@ -506,6 +506,33 @@ const STATIC = {
     'cln.outlineThick': 'Edge thickness',
     'cln.outlineApply': 'Apply',
 
+    // ── Licht ──
+    'lgt.title':        'Light',
+    'lgt.dir':          'Light source',
+    'lgt.dirTitle':     'Where the light comes from',
+    'lgt.dirNW':        'Light from the top left',
+    'lgt.dirN':         'Light from above',
+    'lgt.dirNE':        'Light from the top right',
+    'lgt.dirW':         'Light from the left',
+    'lgt.dirE':         'Light from the right',
+    'lgt.dirSW':        'Light from the bottom left',
+    'lgt.dirS':         'Light from below',
+    'lgt.dirSE':        'Light from the bottom right',
+    'lgt.amount':       'Strength',
+    'lgt.width':        'Width',
+    'lgt.widthTitle':   'How many pixels from the edge get lit or shaded',
+    'lgt.highlight':    'Light edge (brighter)',
+    'lgt.shadow':       'Shadow edge (darker)',
+    'lgt.free':         'Allow colors outside the palette',
+    'lgt.freeTitle':    'If the palette has no matching lighter or darker color, compute a free color — otherwise the pixel stays as it is',
+    'lgt.apply':        'Apply light',
+    'lgt.applyTitle':   'Brighten edges facing the light, darken edges facing away — on the current layer, only inside the selection if there is one',
+    'lgt.cast':         'Drop shadow',
+    'lgt.castColor':    'Shadow color',
+    'lgt.castDist':     'How far the shadow falls',
+    'lgt.castApply':    'Cast',
+    'lgt.castApplyTitle': 'Paint the silhouette, offset away from the light, as a shadow into empty pixels',
+
     // ── Modal: neuer Sprite ──
     'mod.newTitle':     'New sprite',
     'mod.name':         'Name',
@@ -1029,6 +1056,12 @@ const MSG = {
     'cln.outlined':    'Outline gezeichnet — {n} Pixel.',
     'cln.outlineNone': 'Keine Outline nötig — Sprite leer?',
 
+    // Licht
+    'lgt.done':        'Licht gesetzt — {lit} Pixel heller, {shaded} dunkler.',
+    'lgt.none':        'Nichts beleuchtet — keine Kanten oder keine passenden Palettenfarben (Häkchen „Auch Farben außerhalb der Palette“?).',
+    'lgt.castDone':    'Schlagschatten gemalt — {n} Pixel.',
+    'lgt.castNone':    'Kein Platz für einen Schatten — Sprite leer oder Rand erreicht?',
+
     // Schablone
     'tpl.needSprite':  'Erst einen Sprite anlegen.',
     'tpl.needTpl':     'Erst eine Schablone laden.',
@@ -1461,6 +1494,11 @@ const MSG = {
     'cln.despeckleNone': 'Nothing found to despeckle.',
     'cln.outlined':    'Outline drawn — {n} pixels.',
     'cln.outlineNone': 'No outline needed — is the sprite empty?',
+
+    'lgt.done':        'Light applied — {lit} pixels brighter, {shaded} darker.',
+    'lgt.none':        'Nothing lit — no edges or no matching palette colors (tick “Allow colors outside the palette”?).',
+    'lgt.castDone':    'Drop shadow painted — {n} pixels.',
+    'lgt.castNone':    'No room for a shadow — sprite empty or at the border?',
 
     'tpl.needSprite':  'Create a sprite first.',
     'tpl.needTpl':     'Load a stencil first.',
