@@ -173,6 +173,15 @@ export function initLangSwitch() {
 // Deutsch kommt aus dem HTML selbst (Snapshot), hier steht nur Englisch.
 const STATIC = {
   en: {
+    'gd.layouts':          'Own layouts',
+    'gd.layoutsTitle':     'Saved guide layouts — they apply to all sprites',
+    'gd.layoutApply':      'Apply',
+    'gd.layoutApplyTitle': 'Put the lines and division of this layout on the sprite — scaled proportionally for another size',
+    'gd.layoutDelTitle':   'Delete the chosen layout',
+    'gd.layoutName':       'Name of the layout',
+    'gd.layoutSave':       'Save',
+    'gd.layoutSaveTitle':  'Save the current lines and division as a layout — the same name replaces it',
+
     // ── Kacheln ──
     'tile.title':          'Tiles',
     'tile.offNote':        'The active layer is not a tilemap. A tilemap is made of tiles of a fixed size — paint a tile and it changes everywhere it is placed. Good for game levels and patterns.',
@@ -778,6 +787,14 @@ const STATIC = {
 // ════════════════════════════════════════════════════════════════════
 const MSG = {
   de: {
+    'gd.layoutNone':     'noch keine gespeichert',
+    'gd.layoutNeedName': 'Erst einen Namen für das Layout eingeben.',
+    'gd.layoutSaved':    'Layout „{name}“ gespeichert — gilt für alle Sprites.',
+    'gd.layoutReplaced': 'Layout „{name}“ ersetzt.',
+    'gd.layoutApplied':  'Layout „{name}“ angewendet.',
+    'gd.layoutScaled':   'Layout „{name}“ angewendet — von {w} × {h} auf diese Größe umgerechnet.',
+    'gd.layoutDeleted':  'Layout „{name}“ gelöscht.',
+
     // ── Kacheln (tilemap.js) ──
     'tile.picked':      'Kachel {k} aufgenommen.',
     'tile.pickedEmpty': 'Hier liegt keine Kachel.',
@@ -1276,6 +1293,14 @@ const MSG = {
   },
 
   en: {
+    'gd.layoutNone':     'none saved yet',
+    'gd.layoutNeedName': 'Enter a name for the layout first.',
+    'gd.layoutSaved':    'Layout “{name}” saved — it applies to all sprites.',
+    'gd.layoutReplaced': 'Layout “{name}” replaced.',
+    'gd.layoutApplied':  'Layout “{name}” applied.',
+    'gd.layoutScaled':   'Layout “{name}” applied — scaled from {w} × {h} to this size.',
+    'gd.layoutDeleted':  'Layout “{name}” deleted.',
+
     // ── Tiles (tilemap.js) ──
     'tile.picked':      'Picked tile {k}.',
     'tile.pickedEmpty': 'There is no tile here.',

@@ -56,6 +56,7 @@ const PRECACHE = [
   'js/fullscreen.js',
   'js/gamejson.js',
   'js/gif.js',
+  'js/guidelayouts.js',
   'js/guides.js',
   'js/history.js',
   'js/i18n-at.js',

@@ -520,6 +520,17 @@
             </select>
           </label>
           <button class="btn" id="gd-fit" data-i18n="gd.fit" data-i18n-attr="title:gd.fitTitle" title="Ober- und Unterkante der Einteilung auf das Gezeichnete setzen">An Figur anpassen</button>
+          <!-- Eigene Layouts: für alle Sprites, js/guidelayouts.js -->
+          <span class="field-label" data-i18n="gd.layouts">Eigene Layouts</span>
+          <div class="field-controls gd-layout-row">
+            <select id="gd-layouts" class="input input--sm" data-i18n-attr="title:gd.layoutsTitle" title="Gespeicherte Hilfslinien-Layouts — gelten für alle Sprites"></select>
+            <button class="btn" id="gd-layout-apply" data-i18n="gd.layoutApply" data-i18n-attr="title:gd.layoutApplyTitle" title="Linien und Einteilung dieses Layouts auf den Sprite legen — bei anderer Größe anteilig umgerechnet">Anwenden</button>
+            <button class="btn btn--danger-soft" id="gd-layout-del" data-i18n-attr="title:gd.layoutDelTitle;aria-label:gd.layoutDelTitle" title="Gewähltes Layout löschen" aria-label="Gewähltes Layout löschen">×</button>
+          </div>
+          <div class="field-controls gd-layout-row">
+            <input type="text" id="gd-layout-name" class="input input--sm" maxlength="40" autocomplete="off" data-i18n-attr="placeholder:gd.layoutName;title:gd.layoutName" placeholder="Name des Layouts" title="Name des Layouts">
+            <button class="btn" id="gd-layout-save" data-i18n="gd.layoutSave" data-i18n-attr="title:gd.layoutSaveTitle" title="Die jetzigen Linien und die Einteilung als Layout speichern — gleicher Name ersetzt">Speichern</button>
+          </div>
           <p class="field-note" data-i18n="gd.note">Nur zum Zeichnen — die Linien erscheinen in keinem Export. Im Modus „Verschieben“ Linien ziehen, eine freie Linie aus dem Bild ziehen löscht sie, ein Tipp daneben beendet den Modus.</p>
         </div>
       </section>
