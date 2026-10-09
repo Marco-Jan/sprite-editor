@@ -61,7 +61,7 @@ import { initMenubar } from './menubar.js';
 import { initFullscreen, enterFullscreen, exitFullscreen } from './fullscreen.js';
 import { normalizeTags } from './tags.js';
 import { initPreview, renderPreview } from './preview.js';
-import { initGuides, guidePointerDown, toggleEdit as toggleGuideEdit, toggleShow as toggleGuides } from './guides.js';
+import { initGuides, guidePointerDown, guideAt, toggleEdit as toggleGuideEdit, toggleShow as toggleGuides } from './guides.js';
 import { parseTsSprite } from './tsimport.js';
 import { CODE_FORMATS, getFormat, codeFilename } from './codegen.js';
 import {
@@ -390,6 +390,9 @@ function initCanvasEvents() {
   const canvas = $('editor-canvas');
 
   canvas.addEventListener('pointerdown', e => {
+    // Hand-Werkzeug auf einer Hilfslinie: die Linie ziehen statt die Ansicht
+    // verschieben (stopPropagation hält das Verschieben in view.js ab).
+    if (state.tool === 'pan' && e.button === 0 && guideAt(e)) { e.stopPropagation(); guidePointerDown(e); return; }
     // Leertaste, Hand-Werkzeug oder mittlere Taste: verschieben, nicht malen (view.js).
     if (isPanMode() || e.button === 1) return;
     // Beim Abspielen wird nicht gemalt — der Tipp hält an.
