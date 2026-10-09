@@ -40,6 +40,7 @@ export function renderTabs() {
   const list = bar.querySelector('.tab-list');
   list.replaceChildren();
   const closable = tabs.length > 1;
+  bar.classList.toggle('is-single', !closable); // Handy: Zeile erst ab zwei (CSS)
   for (const id of tabs) {
     const sp = sprites[id];
     const active = id === state.curSprite;

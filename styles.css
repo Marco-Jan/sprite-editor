@@ -669,23 +669,30 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 }
 .stage-ident { display: flex; align-items: baseline; gap: var(--sp-2); min-width: 0; }
 
-/* Reiter der geöffneten Sprites (js/tabs.js). Am Rechner stehen sie statt
-   des Namens links in der Kopfzeile und nehmen den freien Platz; passen sie
-   nicht alle hin, scrollt die Reihe seitlich (auch per Mausrad). Am Handy
-   bleibt die Kopfzeile, wie sie war — gewechselt wird im Sprites-Panel. */
-.sprite-tabs { display: none; }
-@media (min-width: 1100.02px) {
-  #stage-head:has(> .sprite-tabs) > .stage-ident { display: none; }
-  .sprite-tabs {
-    display: flex;
-    align-items: center;
-    gap: var(--sp-1);
-    flex: 1 1 0;
-    min-width: 0;
-  }
+/* Reiter der geöffneten Sprites (js/tabs.js) — Karteireiter wie in
+   Aseprite: oben rund, unten gerade. Sie stehen links in der Kopfzeile
+   statt des Namens, sitzen auf deren Unterkante und überdecken die Linie;
+   der aktive hat unten die Farbe der Fläche darunter und geht so in sie
+   über. Passen nicht alle hin, scrollt die Reihe seitlich (Mausrad, am
+   Handy wischen). --head-pad-y ist das Polster der Kopfzeile, damit die
+   Reiter genau bis an ihre Unterkante reichen. */
+#stage-head { --head-pad-y: var(--sp-2); --tab-below: var(--bg); }
+/* Steht oben eine Leiste (Werkzeuge, Farben), geht der Reiter in sie über. */
+#stage:has(> .bar-zone[data-zone="top"] > :is(#toolbar, #color-bar, #timeline)) > #stage-head { --tab-below: var(--surface-1); }
+#stage-head:has(> .sprite-tabs) > .stage-ident { display: none; }
+.sprite-tabs {
+  display: flex;
+  align-items: flex-end;
+  align-self: stretch;
+  gap: var(--sp-1);
+  flex: 1 1 0;
+  min-width: 0;
+  margin-block: calc(-1 * var(--head-pad-y)) calc(-1 * var(--head-pad-y) - 1px);
+  padding-top: var(--sp-1);
 }
 .tab-list {
   display: flex;
+  align-items: flex-end;
   gap: 2px;
   min-width: 0;
   overflow-x: auto;
@@ -698,20 +705,24 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   gap: 4px;
   flex: none;
   max-width: 200px;
-  height: 30px;
+  height: 32px;
   padding: 0 6px 0 12px;
   border: 1px solid var(--line);
-  border-radius: var(--r-md);
+  border-bottom-color: var(--line-strong);
+  border-radius: var(--r-md) var(--r-md) 0 0;
   background: var(--surface-2);
   color: var(--text-muted);
   font-size: var(--fs-sm);
   cursor: pointer;
   user-select: none;
 }
-.sprite-tab:hover { color: var(--text); border-color: var(--line-strong); }
+.sprite-tab:hover { color: var(--text); background: var(--surface-3); }
 .sprite-tab.is-active {
-  background: var(--accent-bg);
-  border-color: var(--accent-line);
+  height: 35px;
+  border-color: var(--line-strong);
+  border-top: 2px solid var(--accent);
+  border-bottom-color: var(--tab-below);
+  background: var(--tab-below);
   color: var(--text);
   font-weight: 600;
 }
@@ -735,7 +746,13 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 }
 .tab-close:hover { opacity: 1; background: var(--surface-4); }
 .tab-close .ui-ico { width: 12px; height: 12px; }
-.tab-new { flex: none; }
+.tab-new { flex: none; align-self: center; }
+/* Finger: größere Schließ-Knöpfe. */
+@media (pointer: coarse) {
+  .sprite-tab { height: 38px; padding-left: 14px; }
+  .sprite-tab.is-active { height: 41px; }
+  .tab-close { width: 28px; height: 28px; }
+}
 .stage-title {
   overflow: hidden;
   font-size: var(--fs-lg);
@@ -2251,7 +2268,14 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
   .bar-handle { margin-inline-end: 0; }
 
   /* Kopf der Bühne in einer Zeile. */
-  #stage-head { flex-wrap: nowrap; gap: var(--sp-2); padding: var(--sp-1) var(--sp-3); }
+  #stage-head { flex-wrap: nowrap; gap: var(--sp-2); padding: var(--sp-1) var(--sp-3); --head-pad-y: var(--sp-1); }
+  /* Reiter am Handy: eigene Zeile unter den Knöpfen, wischbar — erst ab
+     zwei offenen Sprites, sonst kostete sie nur Höhe (dann steht oben wie
+     bisher der Name). */
+  #stage-head:has(> .sprite-tabs:not(.is-single)) { flex-wrap: wrap; row-gap: var(--sp-1); }
+  .sprite-tabs { order: 99; flex-basis: 100%; margin-top: 0; padding-top: 0; }
+  .sprite-tabs.is-single { display: none; }
+  #stage-head:has(> .sprite-tabs.is-single) > .stage-ident { display: flex; }
   .stage-ident { flex: 1 1 auto; }
   .stage-dims { display: none; }
   .stage-head-right { flex-wrap: nowrap; gap: var(--sp-2); }
