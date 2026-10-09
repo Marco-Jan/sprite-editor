@@ -90,7 +90,7 @@ Zeichnen, animieren, Tilemaps für Spiel-Levels bauen und als Bild, GIF, Godot-S
 - Läuft komplett im Browser, **nichts wird hochgeladen**
 - Funktioniert **offline**, installierbar als App
 - Speichert automatisch (IndexedDB), Projektdatei als Backup
-- Sprites bis 1024 × 1024 Pixel
+- Sprites bis 1024 × 1024 Pixel — die **Desktop-App** schafft bis **8192 × 8192**
 - Am Handy bedienbar
 
 </td>

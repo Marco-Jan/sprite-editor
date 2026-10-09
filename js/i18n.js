@@ -173,6 +173,8 @@ export function initLangSwitch() {
 // Deutsch kommt aus dem HTML selbst (Snapshot), hier steht nur Englisch.
 const STATIC = {
   en: {
+    'mod.bigHint': 'In the browser up to 1024 × 1024 pixels — the desktop app handles canvases up to 8192 × 8192.',
+
     'gd.even':      'Evenly',
     'gd.evenTitle': 'Type a number — the lines spread out evenly right away (4 lines = 5 equal parts). 0 removes them.',
     'gd.evenH':     'Number of horizontal lines',
@@ -1076,7 +1078,7 @@ const MSG = {
     'sprite.confirmDelete': 'Sprite „{name}“ wirklich löschen?',
     'sprite.created':       '„{name}“ angelegt.',
     'sprite.needName':      'Bitte einen Namen eingeben.',
-    'sprite.needSize':      'Breite und Höhe müssen zwischen 1 und 1024 liegen.',
+    'sprite.needSize':      'Breite und Höhe müssen zwischen 1 und 1024 liegen — größer geht in der Desktop-App (bis 8192 × 8192).',
     'sprite.emptyGrid':     '— Leeres Grid —',
     'sprite.option':        '{name} ({w}×{h})',
     'sprite.confirmClear':  'Alle Pixel dieses Sprites löschen?',
@@ -1153,7 +1155,7 @@ const MSG = {
     'tf.centered':    'Inhalt mittig gesetzt.',
     'tf.centerFail':  'Nicht verschoben — {reason}.',
     'mod.sizeCurrent':  '„{name}“ ist derzeit {w}×{h} Pixel.',
-    'mod.sizeInvalid':  'Breite und Höhe müssen zwischen 1 und 1024 liegen.',
+    'mod.sizeInvalid':  'Breite und Höhe müssen zwischen 1 und 1024 liegen — größer geht in der Desktop-App (bis 8192 × 8192).',
 
     'tf.resized':     'Größe jetzt {w}×{h}{lost}.',
     'tf.resizeLost':  ' — {n} Pixel abgeschnitten',
@@ -1570,7 +1572,7 @@ const MSG = {
     'sprite.confirmDelete': 'Really delete the sprite “{name}”?',
     'sprite.created':       '“{name}” created.',
     'sprite.needName':      'Please enter a name.',
-    'sprite.needSize':      'Width and height must be between 1 and 1024.',
+    'sprite.needSize':      'Width and height must be between 1 and 1024 — bigger works in the desktop app (up to 8192 × 8192).',
     'sprite.emptyGrid':     '— Empty grid —',
     'sprite.option':        '{name} ({w}×{h})',
     'sprite.confirmClear':  'Erase every pixel of this sprite?',
@@ -1643,7 +1645,7 @@ const MSG = {
     'tf.centered':    'Content moved to the middle.',
     'tf.centerFail':  'Not moved — {reason}.',
     'mod.sizeCurrent':  '“{name}” is currently {w}×{h} pixels.',
-    'mod.sizeInvalid':  'Width and height must be between 1 and 1024.',
+    'mod.sizeInvalid':  'Width and height must be between 1 and 1024 — bigger works in the desktop app (up to 8192 × 8192).',
 
     'tf.resized':     'Size is now {w}×{h}{lost}.',
     'tf.resizeLost':  ' — {n} pixels cut off',

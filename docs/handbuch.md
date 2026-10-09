@@ -719,7 +719,8 @@ Projektdatei (siehe [Speichern](#speichern)).
 - Sprites sind höchstens **1024 × 1024** Pixel groß. Jedes Pixel ist im Arbeitsspeicher
   eine JS-Zahl; ein 1024er-Sprite mit 8 Frames und 2 Ebenen braucht rund ein halbes
   Gigabyte. Am Rechner läuft das flüssig, am Handy kann es bei vielen Frames eng werden.
-  Für größere Bilder müsste das Datenmodell auf Byte-Felder umgestellt werden.
+  Für größere Bilder gibt es die **Desktop-App** ([spritebit-rs](https://github.com/spritebit/spritebit-rs)):
+  sie speichert Bilder in Kacheln und schafft Zeichenflächen bis **8192 × 8192** Pixel.
 - Große Sprites (ab 256 × 256): die Zeichenfläche wird mit gedeckelter Auflösung gezeichnet
   und per CSS gezoomt (`js/raster.js`, sonst lehnen Browser die Fläche ab — iOS ab ~16 Mio.
   Pixel); nicht aktive Ebenen kommen aus einem Zwischenspeicher; die Bildchen in Timeline,

@@ -61,6 +61,8 @@ Projektdateien.
 
 ## Technisches
 
+- Sprite-Größe: im Browser bis 1024 × 1024 Pixel, in der Desktop-App bis
+  8192 × 8192 (Bilder in Kacheln, nur Bemaltes belegt Speicher).
 - Kein Konto, kein Server, keine Telemetrie. Nichts wird hochgeladen.
 - Speicherort ist der Browser (IndexedDB); „Projekt sichern“ schreibt eine
   JSON-Datei, die auch die Desktop-App öffnet.

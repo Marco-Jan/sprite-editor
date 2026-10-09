@@ -99,7 +99,8 @@
       "Export als PNG, PDF, GIF und Spritesheet mit JSON-Atlas",
       "Export für Godot 4: Kachelbild und Szene mit TileMapLayer",
       "Export als TypeScript, JavaScript, JSON, SVG, CSS, C-Header, Python und Text",
-      "Funktioniert offline und lässt sich als App installieren (PWA), Desktop-App für Windows"
+      "Funktioniert offline und lässt sich als App installieren (PWA)",
+      "Desktop-App für Windows mit Zeichenflächen bis 8192 × 8192 Pixel, aktualisiert sich selbst"
     ]
   }
   </script>
@@ -175,7 +176,7 @@
              es anbietet, js/pwa.js) und der Quellcode beider Repos. Ziele in js/site-links.js. -->
         <div class="cta-row">
           <a class="btn btn--primary btn--lg" href="editor.html"><span data-i18n="hero.ctaWeb">Im Browser öffnen</span><span class="ver" data-version="web"></span></a>
-          <a class="btn btn--ghost btn--lg" data-link="download" data-link-soon data-link-state="download" href="#"><svg class="btn-ico" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 19h16"/></svg><span data-when="ready"><span data-i18n="hero.ctaDownload">Desktop-App für Windows</span><span class="ver" data-version="desktop"></span></span><span data-when="soon" hidden><span data-i18n="hero.ctaDesktop">Desktop-App</span> <span class="soon-badge" data-i18n="soon">bald</span></span></a>
+          <a class="btn btn--ghost btn--lg" data-link="download" data-link-soon data-link-state="download" href="#" data-i18n-attr="title:hero.ctaDownloadTitle" title="Dieselben Funktionen als Windows-Programm — mit Zeichenflächen bis 8192 × 8192 Pixel (im Browser bis 1024 × 1024). Aktualisiert sich selbst."><svg class="btn-ico" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 19h16"/></svg><span data-when="ready"><span data-i18n="hero.ctaDownload">Desktop-App für Windows</span><span class="ver" data-version="desktop"></span></span><span data-when="soon" hidden><span data-i18n="hero.ctaDesktop">Desktop-App</span> <span class="soon-badge" data-i18n="soon">bald</span></span></a>
         </div>
         <div class="cta-sub">
           <button type="button" class="btn btn--ghost btn--sm" data-install hidden data-i18n-attr="title:end.installTitle" title="Installiert die Web-Version über den Browser: eigenes Fenster, Symbol im Startmenü, läuft offline. Das ist nicht die Desktop-App."><svg class="btn-ico" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 8h18M12 11v5M9.5 13.5h5"/></svg><span data-i18n="end.install">Als Browser-App installieren</span></button>
@@ -187,6 +188,7 @@
         <!-- Nur sichtbar, wenn in diesem Browser eine ältere Desktop-Version geladen wurde (js/site-links.js). -->
         <p class="dl-update" data-dl-update hidden><span data-i18n="dl.update">Update für deine Desktop-App:</span> <span class="dl-vers"><span data-dl-from></span> → <span data-dl-to></span></span></p>
         <p class="hero-platforms" data-i18n-html="hero.platforms">Kostenlos · kein Abo · kein Konto · Open Source (MIT-Lizenz)</p>
+        <p class="hero-platforms" data-i18n-html="hero.sizes">Im Browser bis 1024 × 1024 Pixel · in der Desktop-App bis 8192 × 8192</p>
         <p class="note" data-i18n-html="hero.note">
           Deine Pixel bleiben im Speicher deines Browsers, auf deinem Rechner.
           Nichts wird hochgeladen — und einmal geöffnet, läuft der Editor auch offline.

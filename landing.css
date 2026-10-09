@@ -681,6 +681,8 @@ kbd {
   font-size: var(--fs-sm);
   text-shadow: 0 1px 10px rgba(12, 8, 22, 0.85);
 }
+/* Zweite graue Zeile (Größen im Browser / in der Desktop-App) dicht darunter. */
+.hero-platforms + .hero-platforms { margin-top: calc(-1 * var(--sp-4)); }
 .hero-chips {
   display: flex;
   flex-wrap: wrap;
