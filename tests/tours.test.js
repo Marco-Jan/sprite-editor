@@ -15,7 +15,9 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = f => readFileSync(join(ROOT, f), 'utf8');
 
 const helper = read('js/helper.js');
-const block = helper.slice(helper.indexOf('const TOURS = {'), helper.indexOf('const TOPICS'));
+// Touren und die Lektion zum Mitmachen — beide zeigen per Selektor auf Ziele.
+const block = helper.slice(helper.indexOf('const TOURS = {'), helper.indexOf('const TOPICS'))
+  + helper.slice(helper.indexOf('const LESSON = ['), helper.indexOf('let lessonTimer'));
 const html = read('editor.html');
 const i18n = read('js/i18n.js');
 
@@ -30,6 +32,9 @@ test('jedes Tour-Ziel gibt es im Editor', () => {
   }
   for (const [, p] of block.matchAll(/(?:panel: '|data-panel="|data-target=")([\w-]+)/g)) {
     if (!html.includes(`data-panel="${p}"`)) fehlend.add(`Panel ${p}`);
+  }
+  for (const [, tool] of block.matchAll(/data-tool="([\w-]+)"/g)) {
+    if (!html.includes(`data-tool="${tool}"`)) fehlend.add(`Werkzeug ${tool}`);
   }
   for (const [, f] of block.matchAll(/label\[for="([\w-]+)"\]/g)) {
     if (!html.includes(`for="${f}"`)) fehlend.add(`label for=${f}`);

@@ -17,6 +17,8 @@
 // oder ein Klick daneben schließt sie (die Tour nur über ihre Knöpfe).
 import { t, i18nVariants } from './i18n.js';
 import { search } from './search.js';
+import { state, getSprite, createSprite } from './state.js';
+import { renderCallbacks } from './render.js';
 
 const KEY = 'spritebit_bitty';
 const TIP_COUNT = 11;
@@ -237,7 +239,7 @@ function collect() {
   /** @type {Entry[]} */
   const out = [];
   // Touren — Stichwörter stehen in beiden Sprachen im Text (bitty.tourWords.*)
-  for (const n of ['start', ...TOPICS]) {
+  for (const n of ['lesson', 'start', ...TOPICS]) {
     out.push({ kind: 'tour', label: t(`bitty.tourName.${n}`), names: '', sub: '', text: t(`bitty.tourWords.${n}`), el: null, tour: n });
   }
   // Werkzeuge: Name und Tooltip (dort steht auch das Kürzel)
@@ -370,7 +372,7 @@ export function openHelpAt(target) {
 function go(h) {
   const back = query.value;
   if (h.kind === 'help') { openHelpAt(h.el); return; }
-  if (h.kind === 'tour') { startTour(h.tour); return; }
+  if (h.kind === 'tour') { if (h.tour === 'lesson') startLesson(); else startTour(h.tour); return; }
   const disabled = /** @type {HTMLButtonElement} */ (h.el).disabled;
   // Befehl ausführen: Werkzeug wählen, Knopf drücken, Menüpunkt auslösen.
   if ((h.kind === 'tool' || h.kind === 'action' || h.kind === 'menu') && !h.danger && !disabled) {
@@ -454,8 +456,89 @@ function syncHintsItem() {
   document.getElementById('bitty-hints-btn')?.setAttribute('aria-checked', String(prefs.hints !== false));
 }
 
+// ── Lektion zum Mitmachen ──────────────────────────────────────────
+// „Dein erster animierter Sprite“: Bitty gibt eine Aufgabe und schaut
+// selbst nach, ob sie erledigt ist (alle 300 ms, nur solange die Lektion
+// läuft). Kein Raten über Klicks — gezählt wird, was im Bild steht.
+// `start` merkt sich den Stand beim Beginn eines Schritts, `done` vergleicht.
+
+// Gemalte Pixel im Frame f (alle Ebenen)
+function pixels(f) {
+  const sp = getSprite();
+  let n = 0;
+  for (const g of sp?.frames[f]?.cels || []) for (const row of g) for (const v of row) if (v !== 0) n++;
+  return n;
+}
+const frameKey = f => JSON.stringify(getSprite()?.frames[f]?.cels || null);
+
+let gifClicked = false;
+
+/** @type {{ key: string, sel: string[], start?: () => any, done: (c: any) => boolean }[]} */
+const LESSON = [
+  { key: 'bitty.l.1', sel: ['[data-tool="pencil"]'], start: () => pixels(getSprite().frame), done: n => pixels(getSprite().frame) >= n + 8 },
+  { key: 'bitty.l.2', sel: ['[data-tool="fill"]'], start: () => pixels(getSprite().frame), done: n => state.tool === 'fill' && pixels(getSprite().frame) > n },
+  { key: 'bitty.l.3', sel: ['#tl-dup', '#tl-add'], start: () => getSprite().frames.length, done: n => getSprite().frames.length > n },
+  // Erst wenn sich im aktuellen Frame etwas getan hat UND er sich vom
+  // Nachbarn unterscheidet — ein leerer Frame per + zählt noch nicht.
+  { key: 'bitty.l.4', sel: ['#tl-frames', '#timeline'], start: () => frameKey(getSprite().frame), done: k => {
+    const sp = getSprite();
+    return sp.frames.length > 1 && frameKey(sp.frame) !== k && frameKey(sp.frame) !== frameKey(sp.frame === 0 ? 1 : 0);
+  } },
+  { key: 'bitty.l.5', sel: ['#tl-play'], done: () => !!state.playing },
+  { key: 'bitty.l.6', sel: ['#export-gif-btn'], start: () => { gifClicked = false; }, done: () => gifClicked },
+];
+
+let lessonTimer = 0;
+
+function stopLesson() { clearInterval(lessonTimer); lessonTimer = 0; }
+
+function lessonStep(i) {
+  stopLesson();
+  if (i >= LESSON.length) {
+    setTarget(null);
+    say(t('bitty.l.done'), [{ label: t('bitty.done'), primary: true, onClick: endTour }], { tour: true });
+    bitty?.hop();
+    return;
+  }
+  const s = LESSON[i];
+  const panel = openPanelFor(s);
+  const ctx = s.start ? s.start() : null;
+  const actions = [
+    { label: t('bitty.l.skip'), onClick: () => lessonStep(i + 1) },
+    { label: t('bitty.l.quit'), onClick: endTour },
+  ];
+  requestAnimationFrame(() => {
+    setTarget(findTarget(s.sel) || (panel && visible(panel) ? panel : null));
+    say(t(s.key), actions, { tour: true, step: t('bitty.l.stepOf', { n: i + 1, total: LESSON.length }) });
+  });
+  lessonTimer = window.setInterval(() => {
+    if (!getSprite() || !s.done(ctx)) return;
+    stopLesson();
+    // Geschafft: kurz loben, dann weiter.
+    setTarget(null);
+    say(t(`bitty.l.yay.${(i % 3) + 1}`), [], { tour: true, step: t('bitty.l.stepOf', { n: i + 1, total: LESSON.length }) });
+    window.setTimeout(() => { if (inTour()) lessonStep(i + 1); }, 1100);
+  }, 300);
+}
+
+export function startLesson() {
+  setTarget(null);
+  say(t('bitty.l.hello'), [
+    {
+      label: t('bitty.show'), primary: true, onClick: () => {
+        // Frischer, kleiner Sprite — das eigene Bild bleibt, wie es ist.
+        const id = createSprite({ name: t('bitty.l.name'), size: 16 });
+        renderCallbacks.onSelectSprite(id);
+        lessonStep(0);
+      },
+    },
+    { label: t('bitty.later'), onClick: endTour },
+  ], { tour: true });
+}
+
 // ── Tour ───────────────────────────────────────────────────────────
 function endTour() {
+  stopLesson();
   prefs.tour = true;
   savePrefs();
   hide();
@@ -509,6 +592,7 @@ export function startTour(name = 'start') {
 function chooseTour() {
   setTarget(null);
   say(t('bitty.whichTour'), [
+    { label: t('bitty.tourName.lesson'), primary: true, onClick: startLesson },
     { label: t('bitty.tourName.start'), onClick: () => tourStep('start', 0) },
     ...TOPICS.map(n => ({ label: t(`bitty.tourName.${n}`), onClick: () => tourStep(n, 0) })),
     { label: t('bitty.close'), onClick: endTour },
@@ -559,6 +643,8 @@ export function initHelper() {
     if (isOpen()) hide(); else showTip();
   });
   document.getElementById('bitty-tour-btn')?.addEventListener('click', chooseTour);
+  // Lektion, letzter Schritt: wurde ein GIF exportiert?
+  document.getElementById('export-gif-btn')?.addEventListener('click', () => { gifClicked = true; });
   document.getElementById('bitty-hints-btn')?.addEventListener('click', () => {
     prefs.hints = prefs.hints === false;
     if (prefs.hints) prefs.off = {}; // wieder an = alle wieder an
