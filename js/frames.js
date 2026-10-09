@@ -11,6 +11,7 @@
 //
 // Abspielen läuft in der Zeichenfläche. Gezeichnet wird dabei nicht: ein
 // Tipp auf die Fläche hält an (app.js), jede Frame-Aktion ebenso.
+import { remapCells, samePalette } from './remap.js';
 import { state, getSprite, getPaletteByName, clearSelection, frameDuration, MAX_FPS, thumbGrid, isLinked, newFrameCels } from './state.js';
 import { cellToColor } from './data.js';
 import { renderAll, renderEditor, renderCallbacks } from './render.js';
@@ -915,6 +916,7 @@ export function copyCelRange() {
   const r = curRange();
   if (!sp || !r) return;
   celClip = copyCels(sp, r);
+  celClip.pal = { ...getPaletteByName(sp.palette) }; // für Einfügen in andere Paletten (remap.js)
   showInfoToast(t('tl.celsCopied', { n: rangeSize(r) }));
   syncCelButtons();
 }
@@ -936,10 +938,23 @@ export function clearCelRange() {
 export function pasteCelRange() {
   const sp = getSprite();
   if (!sp || !celClip) return;
-  const used = celEdit(s => pasteCels(s, celClip, s.frame, s.layer), (s, u) => {
+  // Andere Palette im Ziel: nach der Farbe übertragen (wie beim Einfügen einer
+  // Auswahl). Geteilte Bilder werden einmal umgerechnet und bleiben geteilt.
+  let clip = celClip, free = 0;
+  const toPal = getPaletteByName(sp.palette);
+  if (celClip.pal && !samePalette(celClip.pal, toPal)) {
+    const memo = new Map();
+    const conv = g => {
+      if (!memo.has(g)) { const r = remapCells(g, celClip.pal, toPal); free = Math.max(free, r.free); memo.set(g, r.cells); }
+      return memo.get(g);
+    };
+    clip = { ...celClip, cels: celClip.cels.map(row => row.map(conv)) };
+  }
+  const used = celEdit(s => pasteCels(s, clip, s.frame, s.layer), (s, u) => {
     if (u) setRange(rangeSize(u) > 1 ? u : null);
   });
   if (!used) showInfoToast(t('tl.pasteNone'));
+  else if (clip !== celClip) showInfoToast(free ? t('tl.pasteFree', { n: free }) : t('tl.pasteMapped'));
 }
 
 export function linkCelRange() {

@@ -86,6 +86,7 @@ const PRECACHE = [
   'js/qpdrag.js',
   'js/raster.js',
   'js/reduce.js',
+  'js/remap.js',
   'js/render.js',
   'js/scale.js',
   'js/selection.js',

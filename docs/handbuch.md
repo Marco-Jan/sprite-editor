@@ -150,6 +150,15 @@ Beim Absetzen überschreiben nur gefüllte Pixel — transparente Stellen des Bl
 den Untergrund stehen. Was über den Rand hinausgeschoben wird, ist weg (`Strg`+`Z` holt es
 zurück).
 
+### Einfügen in einen Sprite mit anderer Palette
+
+Pixel speichern nur die *Nummer* ihrer Farbe. Fügt man in einen Sprite mit anderer Palette
+ein, wird darum nach der **Farbe** übertragen: gibt es sie in der Ziel-Palette, bekommt der
+Pixel deren Nummer, sonst kommt sie als freie Farbe hinein (Bild → Palette holt sie später in
+die Palette). So sieht das Eingefügte genauso aus wie im Original. **Strg + Umschalt + V**
+übernimmt stattdessen die Nummern — dann färbt die neue Palette das Eingefügte um. In eine
+Maske wird nie umgerechnet.
+
 ### Skalieren mit Anfassern
 
 An jeder Auswahl sitzen acht **Anfasser** (Ecken und Kantenmitten), solange ein

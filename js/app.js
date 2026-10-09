@@ -756,7 +756,8 @@ function initKeyboardEvents() {
         if (!hasClipboard()) info(t('sel.clipEmpty'));
         else {
           setTool('select');
-          info(t('sel.pasted', { n: pasteClipboard() }));
+          // Strg+Umschalt+V: die Nummern unverändert (sonst nach der Farbe, remap.js).
+          info(t('sel.pasted', { n: pasteClipboard(e.shiftKey) }));
           updateSelectionUI();
         }
       }
