@@ -819,6 +819,19 @@ function setToolOpts(open) {
   optsBox.hidden = !open;
   optsBtn.classList.toggle('is-active', open);
   optsBtn.setAttribute('aria-expanded', String(open));
+  if (open) placeToolOpts();
+}
+
+// Liegt die Werkzeugleiste im Dock, ist sie eine Schublade (position:
+// fixed) — genau über dem Platz, an dem die Options-Zeile in der Bühne
+// sitzt. Die Zeile läge dann unsichtbar dahinter; sie schwebt darum direkt
+// über der Schublade.
+const toolbarIsDrawer = () => MOBILE.matches && !!$('toolbar').closest('.rail');
+
+function placeToolOpts() {
+  const over = toolbarIsDrawer();
+  optsBox.classList.toggle('is-over-drawer', over);
+  optsBox.style.bottom = over ? `${window.innerHeight - $('toolbar').getBoundingClientRect().top}px` : '';
 }
 
 // Hat das aktive Werkzeug überhaupt Optionen? (app.js blendet die Gruppen
@@ -856,6 +869,10 @@ function initToolOpts() {
     if (b && MOBILE.matches && b.classList.contains('is-active')) setToolOpts(optsBox.hidden);
   }, true);
   setToolOpts(false);
+  // Schublade zu → Options-Zeile mit zu; sie gehört zur Leiste.
+  new MutationObserver(() => {
+    if (toolbarIsDrawer() && !$('toolbar').classList.contains('is-shown')) setToolOpts(false);
+  }).observe(tb, { attributes: true, attributeFilter: ['class'] });
 }
 
 function syncToolOpts() {
