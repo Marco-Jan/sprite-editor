@@ -67,7 +67,7 @@ Texte gefunden, die auf Deutsch nur den Schlüsselnamen anzeigten.
 | `tests/tags.test.js` | Tags: Abschnitte, Richtungen, Abspielen im Tag |
 | `tests/onion.test.js` | Timeline-Einstellungen und welche Frames durchscheinen |
 | `tests/palorder.test.js` | Palette umsortieren, ohne dass sich das Bild ändert |
-| `tests/pixelperfect.test.js` | Pixel-perfekt: keine L-Ecken, Untergrund kommt zurück |
+| `tests/pixelperfect.test.js` | Clean Stroke: keine L-Ecken, Untergrund kommt zurück |
 | `tests/light.test.js` | Kantenlicht und Schlagschatten |
 | `tests/tablist.test.js` | Reiter: öffnen, schließen, ordnen |
 | `tests/pack.test.js` | Kompaktes Speicherformat (Bytes, Prüfsumme) |

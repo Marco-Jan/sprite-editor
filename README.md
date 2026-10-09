@@ -33,7 +33,7 @@ Zeichnen, animieren, Paletten bauen und als Bild, GIF oder Code exportieren.
 **🎨 Zeichnen**
 - Stift, Pinsel, Spray, Füllen, Radierer, Zauberstab
 - Linie, Rechteck, Ellipse — Kontur oder gefüllt
-- **Pixel-perfekt**: saubere 1-Pixel-Linien ohne doppelte Eckpixel
+- **Clean Stroke**: saubere 1-Pixel-Striche ohne doppelte Eckpixel
 - **Symmetrie** an einer oder beiden Achsen
 - Auswahl, Lasso, Farbwahl — ausschneiden, verschieben, drehen
 - Pipette, Hand, Zoom auf den Mauszeiger, Finger-Gesten
@@ -211,7 +211,7 @@ npm run check   # Typprüfung
 ## In English
 
 **spritebit** is a free, open-source pixel art editor for sprites that runs entirely in your
-browser — offline, no account, nothing uploaded. Draw with pixel-perfect strokes and symmetry,
+browser — offline, no account, nothing uploaded. Draw clean 1-pixel strokes (Clean Stroke) with symmetry,
 animate on a layer × frame timeline with linked cels, tags and onion skin, build palettes,
 add light and drop shadows, and export to PNG, GIF, spritesheets or nine code formats
 (TypeScript, JSON, SVG, CSS, C, Python …). The UI is available in German, English and Austrian
