@@ -11,16 +11,18 @@
 #              Tests grün, wird Cargo.lock committet, sonst zurückgerollt.
 #              Web: Offline-Liste sw.js neu schreiben (tools/make_sw.py).
 #   3. Prüfen  Web: npm test + Typprüfung. Rust: cargo test + clippy.
-#   4. Pushen  beide Repos, jeweils der aktuelle Branch.
-#   5. --live     Web-Branch in main mergen und pushen → Vercel geht online.
+#   4. Main    Web: der Branch wird lokal nach main gemergt (Konflikte werden
+#              vorab erkannt; weicht main inhaltlich ab, laufen die Tests dort
+#              noch einmal) — kein Pull Request auf GitHub nötig.
+#   5. Pushen  beide Repos; Web: Branch und main → Vercel geht online.
 #   6. --release  Tag v<Version aus Cargo.toml> pushen → GitHub baut die
 #                 Desktop-Release (nur, wenn es die Version noch nicht gibt).
 #
 # Bei jedem Fehler bricht es ab, bevor etwas gepusht wird.
 #
-#   python tools/deploy.py                 # prüfen, pflegen, pushen
+#   python tools/deploy.py                 # prüfen, pflegen, nach main mergen, pushen
 #   python tools/deploy.py --dry-run       # Probelauf: prüfen, nichts committen, nichts pushen
-#   python tools/deploy.py --live          # … und Web live schalten (main)
+#   python tools/deploy.py --no-main       # Web nur den Branch pushen, nicht nach main
 #   python tools/deploy.py --release       # … und Desktop-Release starten
 #   python tools/deploy.py --only web      # nur ein Repo (web | rs)
 #   python tools/deploy.py --no-update     # ohne cargo update
@@ -266,27 +268,46 @@ def web(args):
     run(['npx', '--yes', '-p', 'typescript@5', 'tsc', '-p', 'jsconfig.json'], WEB, quiet=True)
     ok('Typprüfung sauber')
 
+    to_main = not args.no_main and br != LIVE_BRANCH
+    if to_main:
+        # Vorab, ohne etwas anzufassen: lässt sich der Branch konfliktfrei mergen?
+        r = run(['git', 'merge-tree', '--write-tree', f'origin/{LIVE_BRANCH}', br], WEB, quiet=True, check=False)
+        if r.returncode != 0:
+            fail(f'{br} lässt sich nicht konfliktfrei nach {LIVE_BRANCH} mergen — bitte von Hand lösen.')
+        ok(f'{br} lässt sich konfliktfrei nach {LIVE_BRANCH} mergen')
+
     push(WEB, 'Web', br, args.dry_run)
+    if to_main:
+        merge_to_main(br, args.dry_run)
+    elif br == LIVE_BRANCH:
+        ok(f'Auf {LIVE_BRANCH} gepusht — Vercel baut jetzt die Website.')
 
-    if args.live:
-        live(br, args.dry_run)
 
-
-def live(br, dry):
-    step(f'Web live schalten ({br} → {LIVE_BRANCH})')
-    if br == LIVE_BRANCH:
-        ok(f'Schon auf {LIVE_BRANCH} — der Push oben geht direkt online.')
-        return
+def merge_to_main(br, dry):
+    step(f'Web nach {LIVE_BRANCH} ({br} → {LIVE_BRANCH})')
     if dry:
-        info(f'(Probelauf) würde {br} in {LIVE_BRANCH} mergen und pushen')
+        info(f'(Probelauf) würde {br} nach {LIVE_BRANCH} mergen und pushen → Vercel')
         return
+    if not git(WEB, 'branch', '--list', LIVE_BRANCH):
+        git(WEB, 'branch', LIVE_BRANCH, f'origin/{LIVE_BRANCH}')
     git(WEB, 'checkout', '-q', LIVE_BRANCH)
     try:
-        git(WEB, 'pull', '-q', '--ff-only', 'origin', LIVE_BRANCH)
+        git(WEB, 'merge', '-q', '--ff-only', f'origin/{LIVE_BRANCH}')
+        before = git(WEB, 'rev-parse', 'HEAD')
         r = run(['git', 'merge', '--no-ff', '-m', f'Merge {br} nach {LIVE_BRANCH}', br], WEB, quiet=True, check=False)
         if r.returncode != 0:
             git(WEB, 'merge', '--abort', check=False)
             fail(f'Merge {br} → {LIVE_BRANCH} hat Konflikte — bitte von Hand lösen.')
+        # Hatte main eigene Änderungen, ist das Ergebnis ungetestet — dann hier testen.
+        if git(WEB, 'rev-parse', 'HEAD^{tree}') != git(WEB, 'rev-parse', f'{br}^{{tree}}'):
+            info(f'{LIVE_BRANCH} weicht vom getesteten Branch ab — Tests auf dem Ergebnis …')
+            try:
+                run(['npm', 'test'], WEB, quiet=True)
+            except Abort:
+                git(WEB, 'reset', '-q', '--hard', before)
+                raise
+            ok('Tests auf dem Ergebnis grün')
+        ok(f'{br} nach {LIVE_BRANCH} gemergt')
         run(['git', 'push', 'origin', LIVE_BRANCH], WEB)
         ok(f'{LIVE_BRANCH} gepusht — Vercel baut jetzt die Website.')
     finally:
@@ -372,7 +393,8 @@ def release(root, dry):
 def main():
     ap = argparse.ArgumentParser(description='Beide spritebit-Repos prüfen, pflegen und pushen.')
     ap.add_argument('--dry-run', action='store_true', help='Probelauf: prüfen, nichts committen, nichts pushen')
-    ap.add_argument('--live', action='store_true', help=f'Web-Branch in {LIVE_BRANCH} mergen und pushen')
+    ap.add_argument('--no-main', action='store_true', help=f'Web nur den Branch pushen, nicht nach {LIVE_BRANCH} mergen')
+    ap.add_argument('--live', action='store_true', help=argparse.SUPPRESS)  # früher nötig, jetzt Standard
     ap.add_argument('--release', action='store_true', help='Desktop-Release mit der Version aus Cargo.toml starten')
     ap.add_argument('--only', choices=['web', 'rs'], help='nur ein Repo')
     ap.add_argument('--no-update', action='store_true', help='ohne cargo update')
