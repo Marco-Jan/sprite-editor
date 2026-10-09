@@ -39,13 +39,13 @@
 
   // ── Englische Fassung ─────────────────────────────────────────────
   var EN = {
-    'meta.title':   'spritebit – pixel art editor online, export as code',
-    'meta.desc':    'A pixel art editor for the browser: draw, build palettes, trace photos as a stencil and export in nine code formats. No build, no sign-up, everything stays local.',
+    'meta.title':   'spritebit – pixel art editor online: sprites, animation & tilemaps',
+    'meta.desc':    'A free pixel art editor for the browser and Windows: draw sprites, animate with layers and a timeline, build tilemaps for game levels and export as PNG, GIF, spritesheet, Godot scene or code. No account, everything stays local.',
     'meta.locale':  'en_US',
-    'meta.ogTitle': 'spritebit – pixel art editor online, export as code',
-    'meta.ogDesc':  'From an empty grid to a finished sprite. Draw, build palettes, export — all in the browser, nothing gets uploaded.',
+    'meta.ogTitle': 'spritebit – pixel art editor online: sprites, animation & tilemaps',
+    'meta.ogDesc':  'From an empty grid to a finished sprite, an animation and a game level. Draw, animate, build tiles, export — all in the browser, nothing gets uploaded.',
     'meta.ogAlt':   'spritebit — a pixel staircase in green and blue next to the wordmark.',
-    'meta.twDesc':  'Draw, build palettes, export — all in the browser, nothing gets uploaded.',
+    'meta.twDesc':  'Draw, animate, build tilemaps, export — all in the browser, nothing gets uploaded.',
 
     'nav.skip':     'Skip to content',
     'nav.aria':     'Sections',
@@ -61,7 +61,7 @@
     'hero.h1':      'Pixel art editor for sprites',
     'hero.lead':    'An empty grid, a handful of colors, and off you go. The editor runs entirely in the browser — no build, no account, no cloud.',
     'hero.note':    'Your pixels stay in your browser’s storage, on your own machine. Nothing is uploaded — and once opened, the editor works offline too.',
-    'hero.chips':   '<li>Frames &amp; GIF</li><li>Layers</li><li>9 code formats</li><li>Works offline</li><li>No account</li>',
+    'hero.chips':   '<li>Frames &amp; GIF</li><li>Layers</li><li>Tilemaps</li><li>9 code formats</li><li>Works offline</li><li>No account</li>',
 
     's1.eyebrow':   '<span class="st-num">01</span> The first pixel',
     's1.h2':        'This is how a sprite grows.',
@@ -76,8 +76,8 @@
     's2.swatchAria': 'Palette indices 0 to 5; index 0 is transparent.',
     's2.lead':      'The grid stores nothing but the numbers. Change one color and every pixel with that index recolors at once — without you touching a single pixel.',
     's2.facts': ''
-      + '<li><span class="fact-key">Index 0</span> is always transparent, <span class="fact-key">1–9</span> are yours to fill.</li>'
-      + '<li><span class="fact-key">Nine schemes</span> come built in, and you add your own beside them.</li>'
+      + '<li><span class="fact-key">Index 0</span> is always transparent, up to <span class="fact-key">255 colors</span> per palette.</li>'
+      + '<li><span class="fact-key">17 palettes</span> come built in, and you add your own beside them.</li>'
       + '<li><span class="fact-key">Every sprite</span> remembers its own palette.</li>',
 
     's3.eyebrow':   '<span class="st-num">03</span> Tools',
@@ -117,17 +117,27 @@
       + '<li class="tool">'
       +   '<h3>Animation</h3>'
       +   '<p class="keys-row"><kbd>,</kbd><kbd>.</kbd><kbd>Enter</kbd></p>'
-      +   '<p>Frames in a timeline, onion skin, playback with its own pace per frame.</p>'
+      +   '<p>A timeline grid of layers and frames, tags, linked cels, onion skin — a pace of its own per frame.</p>'
       + '</li>'
       + '<li class="tool">'
       +   '<h3>Layers</h3>'
       +   '<p class="keys-row"><kbd>+</kbd><kbd>⧉</kbd><kbd>⤓</kbd></p>'
-      +   '<p>Paint on top of each other, hide, lock, opacity — what you see is what gets exported.</p>'
+      +   '<p>Paint on top of each other, hide, lock, opacity, masks — what you see is what gets exported.</p>'
       + '</li>'
       + '<li class="tool">'
       +   '<h3>Guides</h3>'
       +   '<p class="keys-row"><kbd>G</kbd></p>'
-      +   '<p>Free lines and figure proportions from chibi to hero — for drawing only, never in the export.</p>'
+      +   '<p>Free lines and figure proportions from chibi to hero, savable as your own layouts — never in the export.</p>'
+      + '</li>'
+      + '<li class="tool">'
+      +   '<h3>Light</h3>'
+      +   '<p class="keys-row"><kbd>↖</kbd><kbd>☀</kbd></p>'
+      +   '<p>Pick a light source — edges and a cast shadow come as layers of their own and can be changed any time.</p>'
+      + '</li>'
+      + '<li class="tool">'
+      +   '<h3>Tiles</h3>'
+      +   '<p class="keys-row"><kbd>▦</kbd></p>'
+      +   '<p>Tilemaps for game levels: paint a tile once, it changes everywhere. Out as a Godot scene.</p>'
       + '</li>',
 
     's4.eyebrow':   '<span class="st-num">04</span> Scene',
@@ -158,7 +168,8 @@
       + '<li class="fmt"><span class="fmt-ext">.png</span><h3>Image</h3><p>With a transparent background, enlarged 1× to 32×</p></li>'
       + '<li class="fmt"><span class="fmt-ext">.pdf</span><h3>PDF</h3><p>For printing or passing on</p></li>'
       + '<li class="fmt"><span class="fmt-ext">.gif</span><h3>Animation</h3><p>All frames as a GIF, loops forever</p></li>'
-      + '<li class="fmt"><span class="fmt-ext">.png</span><h3>Spritesheet</h3><p>All sprites and frames in one image, with a list of where each one sits</p></li>',
+      + '<li class="fmt"><span class="fmt-ext">.png</span><h3>Spritesheet</h3><p>All sprites and frames in one image, with a list of where each one sits</p></li>'
+      + '<li class="fmt"><span class="fmt-ext">.tscn</span><h3>Godot tilemap</h3><p>Tile image plus a scene with a TileMapLayer — open it straight in Godot 4</p></li>',
     's5.subLead':   'For developers the sprite also comes out as code — nine formats, each one usable on its own.',
     's5.codeFormats': ''
       + '<li class="fmt"><span class="fmt-ext">.ts</span><h3>TypeScript</h3><p>Number grid plus color list, fully typed</p></li>'
@@ -235,7 +246,7 @@
   // Nur die auffaelligen Stellen; der Rest bleibt der deutsche
   // Ausgangszustand aus dem HTML.
   var AT = {
-    'meta.title':   'spritebit – Pixel Art Editor online, Export ois Code',
+    'meta.title':   'spritebit – Pixel Art Editor online: Sprites, Animation & Tilemaps',
     'meta.locale':  'de_AT',
 
     'nav.skip':     'Zum Inhalt springa',
@@ -247,7 +258,7 @@
     'nav.langLabel': 'Sproch',
 
     'hero.eyebrow': 'spritebit · Fang kloa an.',
-    'hero.chips':   '<li>Frames &amp; GIF</li><li>Ebenen</li><li>9 Code-Formate</li><li>Rennt a offline</li><li>Ka Konto</li>',
+    'hero.chips':   '<li>Frames &amp; GIF</li><li>Ebenen</li><li>Tilemaps</li><li>9 Code-Formate</li><li>Rennt a offline</li><li>Ka Konto</li>',
     'hero.h1':      'Pixel Art Editor fia Sprites',
     'hero.lead':    'A laares Raster, a Handvoll Farben, und du moist los. Da Editor rennt komplett im Browser — ka Build, ka Konto, ka Cloud.',
     'hero.note':    'Deine Pixel bleibn im Speicher vom Browser, auf deim Rechner. Es wird nix aufeglodn — und amoi offn, rennt da Editor a offline.',
