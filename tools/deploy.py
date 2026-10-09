@@ -4,6 +4,8 @@
 # ════════════════════════════════════════════════════════════════════
 # Ein Durchgang für Web (dieses Repo) und Desktop (spritebit-rs daneben):
 #
+#   0. Version fragt nach der neuen Version für Web und Desktop (Enter =
+#              bleibt), trägt sie ein und committet sie
 #   1. Vorab   alles committet? kein Repo hinter GitHub zurück?
 #   2. Pflege  Rust: cargo update (nur verträgliche Versionen) — bleiben die
 #              Tests grün, wird Cargo.lock committet, sonst zurückgerollt.
@@ -23,6 +25,8 @@
 #   python tools/deploy.py --only web      # nur ein Repo (web | rs)
 #   python tools/deploy.py --no-update     # ohne cargo update
 #   python tools/deploy.py --rs <ordner>   # spritebit-rs liegt woanders
+#   python tools/deploy.py --web-version 3.2.0 --rs-version 1.0.1   # ohne Nachfragen
+#   python tools/deploy.py --yes           # nichts fragen, Versionen bleiben
 #
 # Reine Standardbibliothek. Braucht git, node/npx, python und cargo.
 import argparse
@@ -148,6 +152,92 @@ def push(cwd, name, br, dry):
     ok(f'{name}: {br} gepusht')
 
 
+# ── Versionen ────────────────────────────────────────────────────────
+# Web: "version" in package.json. Desktop: [workspace.package] in Cargo.toml
+# (dazu die Anforderung der App an spritebit-core, sonst baut sie nicht).
+SEMVER = re.compile(r'^(\d+)\.(\d+)\.(\d+)$')
+APP_TOML = os.path.join('crates', 'spritebit-app', 'Cargo.toml')
+
+
+def parse_ver(v):
+    m = SEMVER.match(v.strip())
+    return tuple(int(x) for x in m.groups()) if m else None
+
+
+def bump_patch(v):
+    a, b, c = parse_ver(v)
+    return f'{a}.{b}.{c + 1}'
+
+
+def web_version():
+    m = re.search(r'"version":\s*"([^"]+)"', open(os.path.join(WEB, 'package.json'), encoding='utf-8').read())
+    return m.group(1) if m else '0.0.0'
+
+
+def rs_version(root):
+    m = re.search(r'(?m)^version = "([^"]+)"', open(os.path.join(root, 'Cargo.toml'), encoding='utf-8').read())
+    return m.group(1) if m else '0.0.0'
+
+
+def sub_file(path, pattern, repl):
+    s = open(path, encoding='utf-8').read()
+    new, n = re.subn(pattern, repl, s, count=1, flags=re.M)
+    if not n:
+        fail(f'Version in {path} nicht gefunden.')
+    with open(path, 'w', encoding='utf-8', newline='') as f:
+        f.write(new)
+
+
+def set_web_version(v):
+    sub_file(os.path.join(WEB, 'package.json'), r'"version":\s*"[^"]+"', f'"version": "{v}"')
+
+
+def set_rs_version(root, v):
+    sub_file(os.path.join(root, 'Cargo.toml'), r'^version = "[^"]+"', f'version = "{v}"')
+    sub_file(os.path.join(root, APP_TOML), r'(spritebit-core = \{ version = ")[^"]+(")', rf'\g<1>{v}\g<2>')
+
+
+def ask(name, current, given, interactive):
+    """Neue Version: per Option, per Eingabe oder unverändert."""
+    if given:
+        v = given
+    elif not interactive:
+        return current
+    else:
+        hint = bump_patch(current) if parse_ver(current) else ''
+        while True:
+            v = input(f'  {name}: jetzt {color("1", current)} — neue Version (Enter = bleibt, z. B. {hint}): ').strip()
+            if not v:
+                return current
+            if parse_ver(v) and parse_ver(v) >= (parse_ver(current) or (0, 0, 0)):
+                break
+            warn('Bitte in der Form 1.2.3 angeben, nicht kleiner als die jetzige.')
+    if not parse_ver(v):
+        fail(f'{name}: „{v}“ ist keine Version der Form 1.2.3.')
+    if parse_ver(current) and parse_ver(v) < parse_ver(current):
+        fail(f'{name}: {v} ist kleiner als die jetzige Version {current}.')
+    return v
+
+
+def ask_versions(args):
+    interactive = sys.stdin.isatty() and not args.yes
+    if interactive:
+        step('Versionen')
+    args.web_new = None
+    args.rs_new = None
+    if args.only != 'rs':
+        cur = web_version()
+        v = ask('Web', cur, args.web_version, interactive)
+        args.web_new = v if v != cur else None
+    if args.only != 'web' and os.path.isdir(args.rs):
+        cur = rs_version(args.rs)
+        v = ask('Desktop', cur, args.rs_version, interactive)
+        args.rs_new = v if v != cur else None
+        if args.rs_new and not args.release and interactive:
+            a = input(f'  Desktop-Release v{v} gleich starten? [J/n]: ').strip().lower()
+            args.release = a in ('', 'j', 'ja', 'y', 'yes')
+
+
 # ── Web ──────────────────────────────────────────────────────────────
 def web(args):
     step('Web (sprite-editor)')
@@ -155,6 +245,13 @@ def web(args):
     require_clean(WEB, 'Web')
     ahead = require_not_behind(WEB, 'Web', br)
     ok(f'Branch {br}, {ahead} Commit(s) noch nicht auf GitHub')
+
+    if args.web_new:
+        if args.dry_run:
+            info(f'(Probelauf) würde Version {args.web_new} in package.json eintragen')
+        else:
+            set_web_version(args.web_new)
+            commit_if_changed(WEB, ['package.json'], f'Version {args.web_new}')
 
     info('Offline-Liste (sw.js) …')
     run([sys.executable, os.path.join('tools', 'make_sw.py')], WEB, quiet=True)
@@ -206,6 +303,14 @@ def rs(args):
     require_clean(root, 'Rust')
     ahead = require_not_behind(root, 'Rust', br)
     ok(f'Branch {br}, {ahead} Commit(s) noch nicht auf GitHub')
+
+    if args.rs_new:
+        if args.dry_run:
+            info(f'(Probelauf) würde Version {args.rs_new} in Cargo.toml eintragen')
+        else:
+            set_rs_version(root, args.rs_new)
+            run(['cargo', 'update', '--workspace'], root, quiet=True)  # nur die eigenen Pakete im Lockfile
+            commit_if_changed(root, ['Cargo.toml', APP_TOML, 'Cargo.lock'], f'Version {args.rs_new}')
 
     if args.no_update:
         info('cargo update übersprungen (--no-update)')
@@ -272,10 +377,14 @@ def main():
     ap.add_argument('--only', choices=['web', 'rs'], help='nur ein Repo')
     ap.add_argument('--no-update', action='store_true', help='ohne cargo update')
     ap.add_argument('--rs', default=RS_DEFAULT, help='Ordner von spritebit-rs')
+    ap.add_argument('--web-version', help='neue Web-Version (ohne Nachfrage)')
+    ap.add_argument('--rs-version', help='neue Desktop-Version (ohne Nachfrage)')
+    ap.add_argument('--yes', action='store_true', help='nichts fragen — Versionen bleiben, wenn nicht angegeben')
     args = ap.parse_args()
     if args.dry_run:
         print(color('33', 'Probelauf — es wird nichts gepusht.'))
     try:
+        ask_versions(args)
         if args.only != 'rs':
             web(args)
         if args.only != 'web':
