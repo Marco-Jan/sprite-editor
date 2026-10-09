@@ -29,14 +29,52 @@
   // Schreibt tools/deploy.py: web = package.json, desktop = neueste
   // veröffentlichte Release (höchster v…-Tag von spritebit-rs).
   var VERSIONS = {
-    web:     '3.1.8',
-    desktop: '1.0.2',
+    web:     '3.1.9',
+    desktop: '1.0.3',
   };
 
   // Abgeleitete Adressen
   if (LINKS.github) {
     LINKS.license = LINKS.github + '/blob/main/LICENSE';
     LINKS.issues  = LINKS.github + '/issues';
+  }
+
+  // ── Update-Hinweis für die Desktop-App ─────────────────────────────
+  // Wer "Desktop-App laden" klickt, bekommt die Version in diesem Browser
+  // gemerkt. Gibt es beim nächsten Besuch eine neuere, wird der Download
+  // hervorgehoben und darunter steht "v1.0.0 → v1.0.1". Kein Server, kein
+  // Konto — nur dieser Browser auf diesem Gerät weiß davon. Ohne Download
+  // (oder ohne localStorage, etwa im privaten Fenster) gibt es keinen Hinweis.
+  var DL_KEY = 'spritebit_desktop_downloaded';
+
+  function cmpVersion(a, b) {
+    var x = String(a).split('.'), y = String(b).split('.');
+    for (var i = 0; i < 3; i++) {
+      var d = (parseInt(x[i], 10) || 0) - (parseInt(y[i], 10) || 0);
+      if (d) return d;
+    }
+    return 0;
+  }
+  function downloaded() {
+    try { return localStorage.getItem(DL_KEY); } catch (e) { return null; }
+  }
+  function rememberDownload() {
+    try { localStorage.setItem(DL_KEY, VERSIONS.desktop); } catch (e) {}
+    showUpdate();
+  }
+
+  function showUpdate() {
+    var have = downloaded();
+    var newer = !!(have && VERSIONS.desktop && cmpVersion(VERSIONS.desktop, have) > 0);
+    var dls = document.querySelectorAll('[data-link="download"]');
+    for (var i = 0; i < dls.length; i++) dls[i].classList.toggle('has-update', newer);
+    var notes = document.querySelectorAll('[data-dl-update]');
+    for (var j = 0; j < notes.length; j++) {
+      notes[j].hidden = !newer;
+      if (!newer) continue;
+      notes[j].querySelector('[data-dl-from]').textContent = 'v' + have;
+      notes[j].querySelector('[data-dl-to]').textContent = 'v' + VERSIONS.desktop;
+    }
   }
 
   function apply() {
@@ -70,6 +108,12 @@
       vers[v].textContent = num ? 'v' + num : '';
       vers[v].hidden = !num;
     }
+    // Download merken, Update-Hinweis zeigen
+    var dls = document.querySelectorAll('[data-link="download"]');
+    for (var d = 0; d < dls.length; d++) {
+      dls[d].addEventListener('click', function () { if (LINKS.download) rememberDownload(); });
+    }
+    showUpdate();
     // Spalten, in denen kein einziger Link uebrig ist, zeigen ihren Hinweis.
     var groups = document.querySelectorAll('[data-link-group]');
     for (var k = 0; k < groups.length; k++) {

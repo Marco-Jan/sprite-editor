@@ -188,6 +188,7 @@
     'hero.ctaDownload': 'Download desktop app',
     'hero.ctaDesktop':  'Desktop app',
     'hero.ctaGithub':   'Open source on GitHub',
+    'dl.update':        'Update for your desktop app:',
     'hero.platforms':   'Free · no subscription · no account · open source (MIT license)',
     'soon':             'soon',
     'foot.tag':         'Pixel art editor for sprites — in the browser and as a desktop app. Open source under the MIT license.',
@@ -302,6 +303,7 @@
 
     'hero.ctaWeb':      'Im Browser aufmochn',
     'hero.ctaDownload': 'Desktop-App owalodn',
+    'dl.update':        'A Update fia dei Desktop-App:',
     'hero.platforms':   'Gratis · ka Abo · ka Konto · Open Source (MIT-Lizenz)',
     'foot.tag':         'Pixel-Art-Editor fia Sprites — im Browser und ois Desktop-App. Open Source unta MIT-Lizenz.',
     'foot.releases':    'Olle Versionen',
