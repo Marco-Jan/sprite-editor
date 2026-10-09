@@ -48,7 +48,7 @@
     'meta.twDesc':  'Draw, animate, build tilemaps, export — all in the browser, nothing gets uploaded.',
 
     'nav.skip':     'Skip to content',
-    'nav.aria':     'Sections',
+    'nav.aria':     'Pages',
     'nav.pixel':    'Pixel',
     'nav.color':    'Color',
     'nav.tools':    'Tools',
@@ -60,12 +60,11 @@
     'hero.eyebrow': 'spritebit · Start small.',
     'hero.h1':      'Pixel art editor for sprites',
     'hero.lead':    'An empty grid, a handful of colors, and off you go. The editor runs entirely in the browser — no build, no account, no cloud.',
-    'hero.note':    'Your pixels stay in your browser’s storage, on your own machine. Nothing is uploaded — and once opened, the editor works offline too.',
-    'hero.chips':   '<li>Frames &amp; GIF</li><li>Layers</li><li>Tilemaps</li><li>9 code formats</li><li>Works offline</li><li>No account</li>',
+    'hero.chips': '<li>Frames &amp; GIF</li><li>Layers</li><li>Tilemaps</li><li>Made for games</li><li>Works offline</li><li>No account</li>',
 
     's1.eyebrow':   '<span class="st-num">01</span> The first pixel',
-    's1.h2':        'This is how a sprite grows.',
-    's1.lead':      'Outline first, then the fur, then the eyes. A sprite grows cell by cell — and beside it grows the code you take away at the end.',
+    's1.h2': 'Just start painting.',
+    's1.lead': 'Pick a color, click, drag — that is exactly how the editor feels. Just with more tools, layers and a timeline for animations.',
     's1.artAlt':    "A pixel dog's face appearing cell by cell: the outline first, then fur, eyes and muzzle.",
     's1.caption':   'Pixel by pixel, just like in the editor',
     's1.demoCap':   'This is how the finished sprite leaves the editor. <span class="fc-dim">Example, trimmed to five rows.</span>',
@@ -74,11 +73,8 @@
     's2.h2':        'And then you tip the whole palette over.',
     's2.artAlt':    'The same staircase cycling through three palettes: cool blue-green, warm browns, forest green.',
     's2.swatchAria': 'Palette indices 0 to 5; index 0 is transparent.',
-    's2.lead':      'The grid stores nothing but the numbers. Change one color and every pixel with that index recolors at once — without you touching a single pixel.',
-    's2.facts': ''
-      + '<li><span class="fact-key">Index 0</span> is always transparent, up to <span class="fact-key">255 colors</span> per palette.</li>'
-      + '<li><span class="fact-key">17 palettes</span> come built in, and you add your own beside them.</li>'
-      + '<li><span class="fact-key">Every sprite</span> remembers its own palette.</li>',
+    's2.lead': 'The picture only remembers which color goes where — not which shade. Swap the palette and everything glows in new colors at once, without touching a single pixel.',
+    's2.facts': '<li><span class="fact-key">17 palettes</span> are built in, you can add your own next to them.</li><li>The editor picks matching colors from a <span class="fact-key">photo</span>.</li><li>Great for <span class="fact-key">variants</span>: the same character in red, blue, green.</li>',
 
     's3.eyebrow':   '<span class="st-num">03</span> Tools',
     's3.h2':        'Everything the hand needs.',
@@ -140,26 +136,10 @@
       +   '<p>Tilemaps for game levels: paint a tile once, it changes everywhere. Out as a Godot scene.</p>'
       + '</li>',
 
-    's4.eyebrow':   '<span class="st-num">04</span> Scene',
+    's4.eyebrow': '<span class="st-num">03</span> Made for games',
     's4.h2':        'A sprite rarely comes alone.',
-    's4.lead':      'Sooner or later there are many: a character, their dog, a bird, a bush. The editor keeps them all side by side and helps bring them together.',
-    's4.cards': ''
-      + '<li class="tool">'
-      +   '<h3>Photo as a stencil</h3>'
-      +   '<p>Load a photo, lay it over the grid, boil it down to a few colors. The colors from the image become your palette.</p>'
-      +   '<p class="tool-meta">Plus: remove the background, despeckle, draw an outline.</p>'
-      + '</li>'
-      + '<li class="tool tool--anim">'
-      +   '<h3>Animation</h3>'
-      +   '<div class="filmstrip" aria-hidden="true"><div class="film-frames"><span class="ff"><img src="assets/landing/bird-a.png" alt="" width="17" height="7"></span><span class="ff"><img src="assets/landing/bird-b.png" alt="" width="17" height="7"></span><span class="ff"><img src="assets/landing/bird-a.png" alt="" width="17" height="7"></span><span class="ff"><img src="assets/landing/bird-b.png" alt="" width="17" height="7"></span></div><div class="film-play"><img class="fp-a" src="assets/landing/bird-a.png" alt="" width="17" height="7"><img class="fp-b" src="assets/landing/bird-b.png" alt="" width="17" height="7"></div></div>'
-      +   '<p>Frames in a timeline, onion skin, a pace of its own per frame.</p>'
-      +   '<p class="tool-meta">Out as a GIF, a spritesheet or code.</p>'
-      + '</li>'
-      + '<li class="tool">'
-      +   '<h3>All together</h3>'
-      +   '<p>All sprites go into one image, equally sized side by side — plus a list of where each one sits.</p>'
-      +   '<p class="tool-meta">That way any engine reads them straight in.</p>'
-      + '</li>',
+    's4.lead': 'A character, their dog, a bird, a whole level: animations, tiles and a template from a photo — everything for your game in one place.',
+    's4.cards': '<li class="tool tool--anim"><h3>Animation</h3><div class="filmstrip" aria-hidden="true"><div class="film-frames"><span class="ff"><img src="assets/landing/bird-a.png" alt="" width="17" height="7"></span><span class="ff"><img src="assets/landing/bird-b.png" alt="" width="17" height="7"></span><span class="ff"><img src="assets/landing/bird-a.png" alt="" width="17" height="7"></span><span class="ff"><img src="assets/landing/bird-b.png" alt="" width="17" height="7"></span></div><div class="film-play"><img class="fp-a" src="assets/landing/bird-a.png" alt="" width="17" height="7"><img class="fp-b" src="assets/landing/bird-b.png" alt="" width="17" height="7"></div></div><p>Frames, layers and tags in one timeline — with onion skin and a pace of its own per frame.</p></li><li class="tool tool--tiles"><h3>Tiles</h3><div class="tilestrip" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><p>Paint a tile once, it changes everywhere — that is how levels and patterns come together. Exports straight to Godot.</p></li><li class="tool"><h3>Photo as a stencil</h3><p>Load a photo, lay it over the grid, boil it down to a few colors — the colors from the image become your palette.</p></li>',
 
     's5.eyebrow':   '<span class="st-num">05</span> Export',
     's5.h2':        'And then it may leave.',
@@ -200,7 +180,6 @@
     'hero.ctaDownload': 'Desktop app for Windows',
     'hero.ctaDesktop':  'Desktop app',
     'hero.ctaGithub':   'Open source on GitHub',
-    'dl.update':        'Update for your desktop app:',
     'hero.platforms':   'Free · no subscription · no account · open source (MIT license)',
     'hero.sizes':       'In the browser up to 1024 × 1024 pixels · in the desktop app up to 8192 × 8192',
     'donate.label':     'Support spritebit',
@@ -224,6 +203,76 @@
     'foot.communitySoon': 'Channels coming soon.',
     'foot.legal':       'Legal',
     'foot.mit':         'Free software under the MIT license',
+
+    // ── Neue Seiten (2026-10): Funktionen, Export, Desktop-App, Ausprobieren ──
+    'nav.features': 'Features',
+    'nav.desktop': 'Desktop app',
+    'nav.home': 'spritebit — home',
+    'hero.installLink': 'How to install the desktop app →',
+    's1.facts': '<li><span class="fact-key">Drag</span> paints a line, <span class="fact-key">right-click</span> erases.</li><li>Everything stays in your browser — <span class="fact-key">no account</span>, nothing is uploaded.</li><li>Further down you recolor this very picture.</li>',
+    's1.cta': 'Keep painting in the editor',
+    'demo.erase': 'Eraser',
+    'demo.clear': 'Clear',
+    'demo.sample': 'Example',
+    'demo.pal.forest': 'Forest',
+    'demo.pal.dusk': 'Dusk',
+    'demo.pal.ice': 'Ice',
+    'demo.pal.gray': 'Gray',
+    'demo.canvasAlt': 'A small pixel grid to try out: pick a color, then click or drag.',
+    'demo.tools': 'Colors and tools',
+    'demo.previewAlt': 'Your picture from above in the chosen palette.',
+    'demo.palettes': 'Palettes',
+    'more.h2': 'Discover more',
+    'more.fnH': 'Features',
+    'more.fnP': 'Tools, layers, light, guides — everything the editor can do.',
+    'more.exH': 'Export',
+    'more.exP': 'Image, GIF, spritesheet, Godot or ready-made code for your project.',
+    'more.dkH': 'Desktop app',
+    'more.dkP': 'spritebit for Windows — bigger canvases, updates itself.',
+    'fn.metaTitle': 'Features – spritebit',
+    'fn.metaDesc': 'All spritebit tools: painting, shapes, selection, layers with masks, animation with a timeline, light, tiles for game levels and guides.',
+    'fn.eyebrow': 'spritebit · Features',
+    'fn.h1': 'Everything your hand needs.',
+    'fn.lead': 'Undo per stroke, auto-save on the side and a key for every tool. Here is everything the editor can do.',
+    'fn.toolsH': 'Tools',
+    'fn.photoEyebrow': 'Photo → sprite',
+    'fn.photoH': 'From a photo to a clean sprite.',
+    'fn.photoSteps': '<li>Load a photo as a <b>stencil</b> and lay it over the grid.</li><li>Reduce it to <b>a few colors</b> — they become your palette.</li><li><b>Remove the background</b>, smooth it, draw an <b>outline</b>.</li><li>Refine the rest by hand with pencil and eraser.</li>',
+    'ex.metaTitle': 'Export – spritebit',
+    'ex.metaDesc': 'Export pixel art as PNG, PDF, GIF, a spritesheet with a JSON atlas, a Godot tilemap or as code: TypeScript, JavaScript, JSON, SVG, CSS, C header, Python and text.',
+    'ex.eyebrow': 'spritebit · Export',
+    'ex.h1': 'And then it may leave.',
+    'ex.lead': 'As an image, as an animation, for Godot — or as ready-made code for your project. The colors always come along.',
+    'ex.formatsH': 'Formats',
+    'ex.codeEyebrow': 'For developers',
+    'ex.codeH': 'This is how a sprite leaves the editor.',
+    'dk.metaTitle': 'Desktop app for Windows – spritebit',
+    'dk.metaDesc': 'spritebit as a free Windows program: pixel art on canvases up to 8192 × 8192, offline, no installation, updates with one click.',
+    'dk.eyebrow': 'spritebit · Desktop app',
+    'dk.h1': 'spritebit for Windows.',
+    'dk.lead': 'The same tools as in the browser — as a program of its own, with large canvases and updates with one click.',
+    'dk.platforms': 'Windows 10 and 11 · free · no installation needed',
+    'dk.installEyebrow': 'Install',
+    'dk.installH': 'Ready in a minute.',
+    'dk.compareEyebrow': 'Browser or desktop?',
+    'dk.compareH': 'Both can do almost everything.',
+    'dk.colWeb': 'In the browser',
+    'dk.colDesk': 'Desktop app',
+    'dk.rowSize': 'Largest canvas',
+    'dk.rowStart': 'Getting started',
+    'dk.webStart': 'Open the page',
+    'dk.deskStart': 'Unzip, start',
+    'dk.rowOffline': 'Without internet',
+    'dk.yes': 'Yes',
+    'dk.rowUpdate': 'Updates',
+    'dk.webUpdate': 'Automatically when opened',
+    'dk.deskUpdate': '“Update now” in the app',
+    'dk.rowFiles': 'Project files',
+    'dk.same': 'The same in both',
+    'dk.warnEyebrow': 'Why Windows warns',
+    'dk.warnH': '“Windows protected your PC”',
+    'dk.warnP': 'Windows warns about programs that do not (yet) have a purchased signing certificate. spritebit is open source — the source code is public on GitHub. Click <b>“More info”</b> and then <b>“Run anyway”</b>; you only need to do this once.',
+    'dk.donate': 'Support the certificate (Ko-fi)',
   };
 
   // ── Snapshot + Anwenden ───────────────────────────────────────────
@@ -258,7 +307,7 @@
     'meta.locale':  'de_AT',
 
     'nav.skip':     'Zum Inhalt springa',
-    'nav.aria':     'Abschnitte',
+    'nav.aria':     'Seitn',
     'nav.color':    'Farb',
     'nav.tools':    'Wergzeig',
     'nav.scene':    'Szene',
@@ -266,45 +315,28 @@
     'nav.langLabel': 'Sproch',
 
     'hero.eyebrow': 'spritebit · Fang kloa an.',
-    'hero.chips':   '<li>Frames &amp; GIF</li><li>Ebenen</li><li>Tilemaps</li><li>9 Code-Formate</li><li>Rennt a offline</li><li>Ka Konto</li>',
+    'hero.chips': '<li>Frames &amp; GIF</li><li>Ebenen</li><li>Tilemaps</li><li>Fia Spü</li><li>Rennt a offline</li><li>Ka Konto</li>',
     'hero.h1':      'Pixel Art Editor fia Sprites',
     'hero.lead':    'A laares Raster, a Handvoll Farben, und du moist los. Da Editor rennt komplett im Browser — ka Build, ka Konto, ka Cloud.',
-    'hero.note':    'Deine Pixel bleibn im Speicher vom Browser, auf deim Rechner. Es wird nix aufeglodn — und amoi offn, rennt da Editor a offline.',
 
     's1.eyebrow':   '<span class="st-num">01</span> Da erste Pixel',
-    's1.h2':        'So entsteht a Sprite.',
-    's1.lead':      'Zerst d’Umrandung, dann s’Föll, dann d’Augn. A Sprite entsteht Feld für Feld — und danebn wachst da Code mit, den du am End mitnimmst.',
+    's1.h2': 'Moi afoch los.',
+    's1.lead': 'Farb aussuachn, klickn, ziagn — genau so fühlt si da Editor an. Nur mit mehr Wergzeig, Ebenen und ana Timeline fia Animationen.',
     's1.caption':   'Pixel für Pixel, wia im Editor',
     's1.demoCap':   'So verlasst da fertige Sprite den Editor. <span class="fc-dim">Beispiel, auf fünf Zeiln kürzt.</span>',
 
     's2.eyebrow':   '<span class="st-num">02</span> Farb',
     's2.h2':        'Und dann kippst d’Palettn um.',
-    's2.lead':      'S’Raster speichert nur d’Zahlen. Änderst a Farb, färbn sich olle Pixel mit dem Index glei mit um — ohne dass d’a Pixel angreifst.',
+    's2.lead': 'S’Buidl merkt si nur, wöche Farb wohin ghört — ned wöchn Ton. Tausch d’Palettn, und olles leicht sofort in neichn Farben, ohne dass d’a Pixel angreifst.',
 
     's3.eyebrow':   '<span class="st-num">03</span> Wergzeig',
     's3.h2':        'Olles, wos d’Hand braucht.',
     's3.lead':      'Undo greift pro Strich, Auto-Save rennt nebnbei, und für jedes Wergzeig gibt’s a Tastn. D’Maus muass d’Leistn ned suachn.',
 
-    's4.eyebrow':   '<span class="st-num">04</span> Szene',
+    's4.eyebrow': '<span class="st-num">03</span> Fia Spü',
     's4.h2':        'A Sprite kummt selten alloa.',
-    's4.lead':      'Irgendwann san’s vüle: a Figur, ihr Hund, a Vogl, a Buschn. Da Editor hoit sie olle nebnanand und hüft, sie zammzbringa.',
-    's4.cards': ''
-      + '<li class="tool">'
-      +   '<h3>A Foto ois Vorlog</h3>'
-      +   '<p>Foto lodn, drüberlegn, auf a poar Farben eindampfn. D’Farben aus dem Buidl werdn zu deina Palettn.</p>'
-      +   '<p class="tool-meta">Dazua: Hintagrund weg, glätten, Outline ziagn.</p>'
-      + '</li>'
-      + '<li class="tool tool--anim">'
-      +   '<h3>Animation</h3>'
-      +   '<div class="filmstrip" aria-hidden="true"><div class="film-frames"><span class="ff"><img src="assets/landing/bird-a.png" alt="" width="17" height="7"></span><span class="ff"><img src="assets/landing/bird-b.png" alt="" width="17" height="7"></span><span class="ff"><img src="assets/landing/bird-a.png" alt="" width="17" height="7"></span><span class="ff"><img src="assets/landing/bird-b.png" alt="" width="17" height="7"></span></div><div class="film-play"><img class="fp-a" src="assets/landing/bird-a.png" alt="" width="17" height="7"><img class="fp-b" src="assets/landing/bird-b.png" alt="" width="17" height="7"></div></div>'
-      +   '<p>Frames in ana Timeline, Onion Skin, a eigenes Tempo je Frame.</p>'
-      +   '<p class="tool-meta">Außa ois GIF, Spritesheet oder Code.</p>'
-      + '</li>'
-      + '<li class="tool">'
-      +   '<h3>Olle zamm</h3>'
-      +   '<p>Olle Sprites kemman in a Buidl, gleich groß nebnanand — und dazua a Listn, wo welcher hockt.</p>'
-      +   '<p class="tool-meta">Damit liest a jede Engine des glei ein.</p>'
-      + '</li>',
+    's4.lead': 'A Figur, ihr Hund, a Vogl, a ganzes Level: Animationen, Kacheln und a Vorlog aus an Foto — olles fia dei Spü an oan Ort.',
+    's4.cards': '<li class="tool tool--anim"><h3>Animation</h3><div class="filmstrip" aria-hidden="true"><div class="film-frames"><span class="ff"><img src="assets/landing/bird-a.png" alt="" width="17" height="7"></span><span class="ff"><img src="assets/landing/bird-b.png" alt="" width="17" height="7"></span><span class="ff"><img src="assets/landing/bird-a.png" alt="" width="17" height="7"></span><span class="ff"><img src="assets/landing/bird-b.png" alt="" width="17" height="7"></span></div><div class="film-play"><img class="fp-a" src="assets/landing/bird-a.png" alt="" width="17" height="7"><img class="fp-b" src="assets/landing/bird-b.png" alt="" width="17" height="7"></div></div><p>Frames, Ebenen und Tags in ana Timeline — mit Onion Skin und a eigenem Tempo je Frame.</p></li><li class="tool tool--tiles"><h3>Kacheln</h3><div class="tilestrip" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><p>Oa Kachl anmoin, überoi gändert — so entstehn Levels und Muster. Außa direkt noch Godot.</p></li><li class="tool"><h3>A Foto ois Vorlog</h3><p>Foto lodn, drüberlegn, auf a poar Farben eindampfn — d’Farben aus dem Buidl werdn zu deina Palettn.</p></li>',
 
     's5.eyebrow':   '<span class="st-num">05</span> Export',
     's5.h2':        'Und dann derf’s geh.',
@@ -322,7 +354,6 @@
 
     'hero.ctaWeb':      'Im Browser aufmochn',
     'hero.ctaDownload': 'Desktop-App fia Windows',
-    'dl.update':        'A Update fia dei Desktop-App:',
     'hero.platforms':   'Gratis · ka Abo · ka Konto · Open Source (MIT-Lizenz)',
     'hero.sizes':       'Im Browser bis 1024 × 1024 Pixel · in da Desktop-App bis 8192 × 8192',
     'donate.label':     'spritebit unterstützn',
@@ -335,6 +366,22 @@
     'foot.issues':      'Föhla meldn',
     'foot.communitySoon': 'De Kanäle kumman boid.',
     'foot.legal':       'Rechtlichs',
+
+    // ── Neue Seiten (2026-10): Funktionen, Export, Desktop-App, Ausprobieren ──
+    'nav.features': 'Funktionen',
+    'nav.home': 'spritebit — Startseitn',
+    'hero.installLink': 'So installierst d’Desktop-App →',
+    's1.facts': '<li><span class="fact-key">Ziagn</span> moit durchgehend, <span class="fact-key">Rechtsklick</span> radiert.</li><li>Olles bleibt in deim Browser — <span class="fact-key">ka Konto</span>, nix wird aufeglodn.</li><li>Untn färbst genau des Buidl um.</li>',
+    's1.cta': 'Im Editor weitamoin',
+    'demo.clear': 'Ausleern',
+    'demo.pal.dusk': 'Omd',
+    'more.h2': 'Mehr entdeckn',
+    'fn.h1': 'Olles, wos d’Hand braucht.',
+    'ex.h1': 'Und dann derf’s geh.',
+    'dk.installH': 'In ana Minutn startklar.',
+    'dk.compareH': 'Beides kann fost olles.',
+    'dk.webStart': 'Seitn aufmochn',
+    'dk.yes': 'Jo',
   };
 
   function pick(key, fallback) {

@@ -1,4 +1,4 @@
-// Tests für die Texte (js/i18n.js, js/i18n-at.js, editor.html, index.html).
+// Tests für die Texte (js/i18n.js, js/i18n-at.js, editor.html und die Seiten der Startseite).
 //
 // Texte liegen an mehreren Stellen: Deutsch im HTML, Englisch in STATIC.en,
 // Laufzeit-Texte in MSG.de/MSG.en, Dialekt in i18n-at.js. Vergisst man einen
@@ -86,7 +86,7 @@ test('jedes data-i18n im HTML hat einen englischen Text', () => {
   // ein eigenes Skript ohne Modul-Import (js/landing-i18n.js).
   const landing = keysOfBlock(read('js/landing-i18n.js'), 'var EN = {');
   const fehlend = new Set();
-  for (const [page, tabelle] of [['editor.html', EN], ['index.html', landing]]) {
+  for (const [page, tabelle] of [['editor.html', EN], ['index.html', landing], ['funktionen.html', landing], ['export.html', landing], ['desktop.html', landing]]) {
     const html = read(page);
     for (const m of html.matchAll(/data-i18n(?:-html)?="([\w.]+)"/g)) {
       if (!tabelle.has(m[1])) fehlend.add(`${m[1]}  (${page})`);

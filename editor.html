@@ -1099,7 +1099,8 @@
       <div><b>Füllen</b> — zusammenhängende gleiche Fläche. Mit <b>Grenzen: alle Ebenen</b> endet die Fläche dort, wo sich im sichtbaren Bild etwas ändert — gemalt wird trotzdem in die aktive Ebene. So malst du eine Vorlage (z. B. Umrisse auf einer eigenen Ebene) Fläche für Fläche aus, ohne sie anzufassen.</div>
       <div><b>Radierer</b> — setzt auf transparent.</div>
       <div><b>Zauberstab</b> — löscht zusammenhängende <i>ähnliche</i> Fläche; <i>Toleranz</i> steuert, wie viel Abweichung mitgeht.</div>
-      <div><b>Linie · Rechteck · Ellipse</b> — aufziehen, die Vorschau zeigt das Ergebnis, Loslassen zeichnet. <i>Gefüllt</i> schaltet zwischen Kontur und Fläche.</div>
+      <div><b>Linie · Rechteck · Ellipse</b> — aufziehen, die Vorschau zeigt das Ergebnis, Loslassen zeichnet. <i>Gefüllt</i> schaltet zwischen Kontur und Fläche. Mit <span class="kbd">Umschalt</span> rastet die Linie auf 0°, 45° und 90° ein, Rechteck und Ellipse werden Quadrat und Kreis.</div>
+      <div><b>Gerade malen</b>: <span class="kbd">Umschalt</span> halten und malen — der Strich geht nur waagerecht, senkrecht oder im 45°-Winkel. Die Richtung rastet nach ein paar Pixeln ein und bleibt bis zum Loslassen; mitten im Strich gedrückt, beginnt die gerade Linie dort.</div>
       <div><b>Auswahl · Lasso · Farbwahl</b> — drei Wege zur selben Sache: ein Bereich, den man als Ganzes bewegt.</div>
       <div><b>Hand</b> — schiebt nur die Ansicht und verändert nichts am Bild; auf einer Hilfslinie zieht sie die Linie. Dasselbe Verschieben geht jederzeit mit gehaltener <span class="kbd">Leertaste</span>.</div>
     </div>
@@ -1118,6 +1119,7 @@
       <div>In die Auswahl fassen und ziehen → der Bereich wird <b>ausgeschnitten</b> und <b>schwebt</b>. Er bleibt in der Luft, bis du ihn absetzt — solange lässt er sich beliebig oft verschieben, drehen und spiegeln, ohne dass darunter etwas kaputtgeht.</div>
       <div><b>Abgesetzt</b> wird beim Abwählen (<span class="kbd">Esc</span>), bei einer neuen Auswahl, beim Werkzeug- oder Sprite-Wechsel — oder automatisch beim Schließen des Tabs.</div>
       <div><span class="kbd">Alt</span>+Ziehen lässt das Original stehen — man verschiebt eine <b>Kopie</b>.</div>
+      <div><b>Einfügen in einen anderen Sprite</b>: hat er eine andere Palette, wird nach der <i>Farbe</i> übertragen — das Eingefügte sieht aus wie im Original. Farben, die es dort nicht gibt, kommen als freie Farben hinein. <span class="kbd">Strg</span>+<span class="kbd">Umschalt</span>+<span class="kbd">V</span> übernimmt stattdessen die Nummern (dann färbt die neue Palette um).</div>
       <div><b>Skalieren</b>: an den acht Anfassern am Rahmen ziehen — Ecken ändern Breite und Höhe, Kanten nur eine; mit <span class="kbd">Umschalt</span> bleibt das Seitenverhältnis. Pixel bleiben scharf (nächster Nachbar), und jede Größe wird vom Original gerechnet: klein und wieder groß ziehen verliert nichts.</div>
       <div>Feinarbeit mit den <b>Pfeiltasten</b>: ein Pixel pro Druck. <b>Füllen</b> färbt die ganze Auswahl in der aktuellen Farbe.</div>
       <div>Beim Absetzen überschreiben nur gefüllte Pixel; transparente Stellen lassen den Untergrund stehen.</div>
@@ -1237,6 +1239,7 @@
       <div class="sc-row"><b>Klick</b><span>Malen</span></div>
       <div class="sc-row"><b>Rechtsklick</b><span>Löschen (gedrückt halten = durchgehend)</span></div>
       <div class="sc-row"><b>Alt + Klick</b><span>Pipette auf das Grid</span></div>
+      <div class="sc-row"><b>Umschalt + Malen</b><span>Nur waagerecht, senkrecht oder 45° · bei Formen: einrasten, Quadrat, Kreis</span></div>
       <div class="sc-row"><b>Alt + Rechts ziehen</b><span>Größe von Pinsel, Radierer und Spray</span></div>
       <div class="sc-row"><b>Alt + Klick (Kacheln setzen)</b><span>Kachel aufnehmen</span></div>
       <div class="sc-row"><b>Strg + C / V (in der Timeline)</b><span>Zellen kopieren / einfügen</span></div>
@@ -1257,6 +1260,7 @@
       <div class="sc-row"><b>Anfasser ziehen</b><span>Auswahl skalieren (Umschalt: Seitenverhältnis halten)</span></div>
       <div class="sc-row"><b>Pfeiltasten</b><span>Auswahl pixelweise verschieben</span></div>
       <div class="sc-row"><b>Strg + A / C / X / V</b><span>Alles · Kopieren · Ausschneiden · Einfügen</span></div>
+      <div class="sc-row"><b>Strg + Umschalt + V</b><span>Einfügen mit den Nummern statt den Farben (andere Palette)</span></div>
       <div class="sc-row"><b>Entf</b><span>Auswahl leeren</span></div>
       <div class="sc-row"><b>Enter</b><span>Drehung übernehmen · sonst Animation abspielen / anhalten</span></div>
       <div class="sc-row"><b>Pos1 / Ende</b><span>Zum ersten / letzten Frame</span></div>

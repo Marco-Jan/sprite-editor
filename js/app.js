@@ -15,6 +15,7 @@ import { initLayout, isMobileLayout, refreshToolOpts } from './layout.js';
 import { initTabs } from './tabs.js';
 import { draggedSize, clampSize, SIZED_TOOLS } from './sizedrag.js';
 import { calcInput } from './calc.js';
+import { snapDir, project, snapEnd } from './lock.js';
 import { applyIcons, iconSvg } from './icons.js';
 import { showConfirmToast, showInfoToast } from './toast.js';
 import {
@@ -199,6 +200,38 @@ function applyTemplateTrace(mode, n) {
 // ────────────────────────────────────────────────────────────────────
 // Tool-Dispatch + UI-Sync
 // ────────────────────────────────────────────────────────────────────
+// Umschalt beim Malen (js/lock.js): die Richtung rastet auf waagerecht,
+// senkrecht oder 45° ein. `start` ist die Stelle, an der Umschalt griff;
+// `last` der zuletzt gemalte Punkt (dazwischen wird als Linie gefüllt).
+let lock = null; // { start, dir, last }
+
+function strokeTo(c, shift) {
+  if (!lock) { applyTool(c.x, c.y); return; }
+  if (!shift) {
+    // Ohne Umschalt frei — und der nächste Umschalt-Zug beginnt hier.
+    applyTool(c.x, c.y);
+    lock = { start: c, dir: null, last: c };
+    return;
+  }
+  if (!lock.dir) {
+    lock.dir = snapDir(c.x - lock.start.x, c.y - lock.start.y);
+    if (!lock.dir) return;
+  }
+  const q = project(lock.start, lock.dir, c);
+  if (q.x === lock.last.x && q.y === lock.last.y) return;
+  for (const [x, y] of shapeCells('line', lock.last, q)) applyTool(x, y);
+  lock.last = q;
+}
+
+// Formen mit Umschalt: Linie auf 0°/45°/90°, Rechteck und Ellipse gleich breit wie hoch.
+function shapeEnd(start, c, shift) {
+  if (!shift) return c;
+  if (state.tool === 'line') return snapEnd(start, c);
+  const dx = c.x - start.x, dy = c.y - start.y;
+  const d = Math.max(Math.abs(dx), Math.abs(dy));
+  return { x: start.x + (dx < 0 ? -d : d), y: start.y + (dy < 0 ? -d : d) };
+}
+
 function applyTool(x, y) {
   // Pixel-perfect: Stift und Radierer mit 1 px.
   if (ppActive()) { paintPixelPerfect(x, y, state.tool === 'eraser' ? 0 : state.curColor); return; }
@@ -536,6 +569,7 @@ function initCanvasEvents() {
     ppBegin();
     const c = cellFromEvent(e);
     if (c) applyTool(c.x, c.y);
+    lock = c ? { start: c, dir: null, last: c } : null;
   });
 
   canvas.addEventListener('pointermove', e => {
@@ -560,7 +594,7 @@ function initCanvasEvents() {
     if (selection.mode === 'scale')   { updateScale(e);   info(selectionInfo(t('info.scale'))); return; }
 
     if (shapeStart) {
-      const c = cellFromEventClamped(e);
+      const c = shapeEnd(shapeStart, cellFromEventClamped(e), e.shiftKey);
       state.shape.cells = shapeCells(state.tool, shapeStart, c);
       renderEditor();
       const w = Math.abs(c.x - shapeStart.x) + 1, h = Math.abs(c.y - shapeStart.y) + 1;
@@ -586,7 +620,7 @@ function initCanvasEvents() {
       : t('info.at', { x: c.x, y: c.y, val })
         + (state.isDrawing ? t('info.suffixPaint') : '')
         + (state.isErasing ? t('info.suffixErase') : ''));
-    if (state.isDrawing && !e.altKey) applyTool(c.x, c.y);
+    if (state.isDrawing && !e.altKey) strokeTo(c, e.shiftKey);
     if (state.isErasing) eraseAt(e);
   });
 
@@ -606,6 +640,7 @@ function initCanvasEvents() {
     }
     if (state.isDrawing || state.isErasing) commitStroke();
     ppEnd();
+    lock = null;
     state.isDrawing = false;
     state.isErasing = false;
   };
@@ -721,7 +756,8 @@ function initKeyboardEvents() {
         if (!hasClipboard()) info(t('sel.clipEmpty'));
         else {
           setTool('select');
-          info(t('sel.pasted', { n: pasteClipboard() }));
+          // Strg+Umschalt+V: die Nummern unverändert (sonst nach der Farbe, remap.js).
+          info(t('sel.pasted', { n: pasteClipboard(e.shiftKey) }));
           updateSelectionUI();
         }
       }

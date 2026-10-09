@@ -29,6 +29,8 @@ import { saveState } from './storage.js';
 import { beginStroke, commitStroke, recordOp } from './history.js';
 import { magicWandRegion } from './spritefx.js';
 import { HANDLES, handlePos, dragHandle, scaleGrid } from './scale.js';
+import { remapCells, samePalette } from './remap.js';
+import { showInfoToast } from './toast.js';
 import { MAX_SIDE } from './state.js';
 import { t } from './i18n.js';
 
@@ -516,6 +518,10 @@ export function copySelection() {
   clipboard = {
     cells: currentCells(),
     mask: selection.mask ? selection.mask.map(row => [...row]) : null,
+    // Die Palette, aus der die Nummern stammen — beim Einfügen in einen
+    // Sprite mit anderer Palette wird nach der Farbe übertragen (remap.js).
+    pal: { ...getPal() },
+    fromMask: state.maskEdit,
   };
   return maskCount(selection.rect, selection.mask);
 }
@@ -557,9 +563,20 @@ export function hasClipboard() { return !!clipboard; }
 // Einfügen an der Ecke der aktuellen Auswahl, sonst links oben. Das
 // Eingefügte schwebt sofort — man kann es also erst hinschieben und dann
 // absetzen, ohne dass unterwegs etwas überschrieben wird.
-export function pasteClipboard() {
+export function pasteClipboard(raw = false) {
   if (!clipboard || !getSprite()) return 0;
   commitFloat();
+  // Andere Palette im Ziel: nach der Farbe übertragen, damit es gleich
+  // aussieht (raw = Strg+Umschalt+V: die Nummern unverändert übernehmen).
+  // In eine Maske wird nie umgerechnet — dort zählt nur „gemalt oder nicht“.
+  let cells = clipboard.cells;
+  const toPal = getPal();
+  if (!raw && !state.maskEdit && !clipboard.fromMask && clipboard.pal && !samePalette(clipboard.pal, toPal)) {
+    const r = remapCells(cells, clipboard.pal, toPal);
+    cells = r.cells;
+    if (r.free) showInfoToast(t('sel.pasteFree', { n: r.free }));
+    else if (r.mapped) showInfoToast(t('sel.pasteMapped', { n: r.mapped }));
+  }
 
   const { W, H } = gridSize();
   const h = clipboard.cells.length, w = clipboard.cells[0].length;
@@ -571,7 +588,7 @@ export function pasteClipboard() {
   selection.mode = null;
   selection.rect = { x, y, w, h };
   selection.mask = clipboard.mask ? clipboard.mask.map(row => [...row]) : null;
-  selection.float = clipboard.cells.map(row => [...row]);
+  selection.float = cells.map(row => [...row]);
   selection.owner = state.curSprite;
   afterChange();
   return countCells(selection.float);
