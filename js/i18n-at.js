@@ -254,6 +254,8 @@ export const STATIC_AT = {
   'lgt.highlight':    'Liachtkantn (heller)',
   'lgt.shadow':       'Schottnkantn (dunkler)',
   'lgt.cast':         'Schlagschottn',
+  'lgt.commit':       'Ois Ebene übernehma',
+  'lgt.previewNote':  'Vorschau — im Buidl is no nix gändert.',
 
   // ── Modale ──
   'mod.newTitle':      'A neicher Sprite',

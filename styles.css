@@ -267,6 +267,14 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   font-size: var(--fs-sm);
 }
 .light-stale[hidden] { display: none; }
+.light-preview-note {
+  margin: 0;
+  padding: var(--sp-1) var(--sp-2);
+  border-left: 2px solid var(--accent);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+.light-preview-note[hidden] { display: none; }
 .light-sun::before { content: ''; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
 .check.is-disabled { opacity: 0.45; cursor: not-allowed; }
 

@@ -226,14 +226,18 @@ aus Grafikprogrammen kennt: das Original bleibt unberührt, Licht und Schatten l
 Ebenen darüber bzw. darunter. Ein 2D-Sprite kennt seine Form nicht — darum wird nicht „echt“
 beleuchtet, sondern so, wie man es in Pixel-Art von Hand macht.
 
+**Vorschau:** Solange das Panel offen ist, zeigt die Zeichenfläche Licht und Schatten sofort —
+jede Änderung im Panel ist direkt zu sehen, im Bild ist dabei noch nichts verändert.
+
 1. **Lichtquelle** im 3×3-Feld wählen: von wo das Licht kommt (8 Richtungen).
-2. **Licht-Ebene anlegen:** über der aktiven Ebene entsteht „Licht · *Name*“ — Kanten zur
-   Lampe hin werden heller, abgewandte dunkler.
+2. **Licht** einstellen — Kanten zur Lampe hin werden heller, abgewandte dunkler.
    - **Stärke** (5–40 %), **Breite** (1–3 px), **Lichtkante** / **Schattenkante** einzeln.
    - Die neuen Farben kommen aus **derselben Farbfamilie der Palette**; fehlt eine passende,
      bleibt der Pixel — mit **Auch Farben außerhalb der Palette** wird eine freie Farbe berechnet.
-3. **Schlagschatten:** Farbe und Abstand (1–3 px), **Werfen** — unter der aktiven Ebene
-   entsteht „Schatten · *Name*“, die Silhouette fällt von der Lampe weg.
+3. **Schlagschatten** anhaken, Farbe und Abstand (1–3 px) wählen — die Silhouette fällt von
+   der Lampe weg.
+4. **Als Ebene übernehmen:** über der aktiven Ebene entsteht „Licht · *Name*“, darunter (wenn
+   angehakt) „Schatten · *Name*“ — in einem Undo-Schritt.
 
 **Ändern statt neu malen:** Gibt es die Ebenen schon, rechnet **jede Änderung im Panel** sie
 sofort neu — Richtung, Stärke, Breite, Schattenfarbe. Die alten Verfärbungen verschwinden

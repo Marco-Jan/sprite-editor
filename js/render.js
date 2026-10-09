@@ -53,6 +53,8 @@ export const renderCallbacks = {
   onRenderTabs:      () => {},
   // Licht-Panel an die Effekt-Ebenen der aktiven Ebene angleichen (app.js).
   onLightPanel:      () => {},
+  // Licht-Vorschau, solange das Panel offen ist: { base, light, shadow } oder null.
+  getLightPreview:   () => /** @type {{base: number, light: any[][]|null, shadow: any[][]|null} | null} */ (null),
 };
 
 // HTML-Escaping für Nutzer-Eingaben (Sprite-/Palettennamen landen im innerHTML).
@@ -203,11 +205,16 @@ export function renderEditor() {
   const sp = getSprite();
   const big = W * H > BIG_PIXELS;
   if (sp) {
+    // Licht-Vorschau (Panel offen, noch keine Licht-Ebene): Schatten unter,
+    // Licht über der Figur — so, wie es als Ebene aussehen wird.
+    const pv = renderCallbacks.getLightPreview();
     sp.layers.forEach((L, li) => {
       if (!L.visible || L.opacity <= 0) return;
       const g = sp.frames[sp.frame].cels[li];
+      if (pv?.shadow && li === pv.base) paintGrid(ctx, pv.shadow, pal, 0, 0, r, { alpha: L.opacity, key: 'pv-shadow' });
       if (big && li !== sp.layer) paintCanvas(ctx, cachedLayer(g, pal), r, L.opacity);
       else paintGrid(ctx, g, pal, 0, 0, r, { alpha: L.opacity, key: 'layer' });
+      if (pv?.light && li === pv.base) paintGrid(ctx, pv.light, pal, 0, 0, r, { alpha: L.opacity, key: 'pv-light' });
     });
   }
 

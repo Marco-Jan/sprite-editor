@@ -530,13 +530,14 @@ const STATIC = {
     'lgt.shadow':       'Shadow edge (darker)',
     'lgt.free':         'Allow colors outside the palette',
     'lgt.freeTitle':    'If the palette has no matching lighter or darker color, compute a free color — otherwise the pixel stays as it is',
-    'lgt.applyTitle':   'Adds a light layer above the active layer: edges facing the light get brighter, edges facing away darker. The original stays untouched; changing direction, strength or width recomputes the layer right away',
+    'lgt.commit':       'Apply as layer',
+    'lgt.commitTitle':  'Adds light (and, if ticked, shadow) as separate layers — the original stays untouched. Afterwards every change here recomputes the layers right away',
+    'lgt.previewNote':  'Preview — nothing in the image has changed yet.',
     'lgt.stale':        'The figure has changed since.',
     'lgt.redo':         'Recompute',
     'lgt.cast':         'Drop shadow',
     'lgt.castColor':    'Shadow color',
     'lgt.castDist':     'How far the shadow falls',
-    'lgt.castApplyTitle': 'Adds a shadow layer below the active layer: the silhouette, offset away from the light',
 
     // ── Modal: neuer Sprite ──
     'mod.newTitle':     'New sprite',

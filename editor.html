@@ -764,20 +764,23 @@
             <span data-i18n="lgt.free">Auch Farben außerhalb der Palette</span>
           </label>
 
-          <button class="btn btn--block btn--accent" id="light-btn" data-i18n-attr="title:lgt.applyTitle"
-                  title="Legt über der aktiven Ebene eine Licht-Ebene an: Kanten zur Lichtquelle hin heller, abgewandte dunkler. Das Original bleibt unverändert; Richtung, Stärke und Breite ändern rechnet die Ebene sofort neu">Licht-Ebene anlegen</button>
-
-          <div class="field field--inline">
-            <span class="field-label" data-i18n="lgt.cast">Schlagschatten</span>
+          <label class="check">
+            <input type="checkbox" id="light-cast-on">
+            <span data-i18n="lgt.cast">Schlagschatten</span>
+          </label>
+          <div class="field field--inline light-cast-row">
             <input type="color" id="light-cast-color" value="#1a1a1a" data-i18n-attr="title:lgt.castColor" title="Schattenfarbe">
             <select id="light-cast-dist" class="input input--sm" data-i18n-attr="title:lgt.castDist" title="Wie weit der Schatten fällt">
               <option value="1">1 px</option>
               <option value="2">2 px</option>
               <option value="3">3 px</option>
             </select>
-            <button class="btn" id="light-cast-btn" data-i18n-attr="title:lgt.castApplyTitle"
-                    title="Legt unter der aktiven Ebene eine Schatten-Ebene an: die Silhouette, von der Lichtquelle weg versetzt">Werfen</button>
           </div>
+
+          <!-- Vorschau, solange das Panel offen ist und es noch keine Licht-Ebene gibt (app.js) -->
+          <p class="light-preview-note" id="light-preview-note" data-i18n="lgt.previewNote" hidden>Vorschau — im Bild ist noch nichts verändert.</p>
+          <button class="btn btn--block btn--accent" id="light-btn" data-i18n="lgt.commit" data-i18n-attr="title:lgt.commitTitle"
+                  title="Legt Licht (und, wenn angehakt, Schatten) als eigene Ebenen an — das Original bleibt unverändert. Danach rechnet jede Änderung hier die Ebenen sofort neu">Als Ebene übernehmen</button>
           <p class="field-note" id="light-status"></p>
           <div class="light-stale" id="light-stale" hidden>
             <span data-i18n="lgt.stale">An der Figur wurde weitergemalt.</span>
