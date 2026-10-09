@@ -156,6 +156,7 @@ function buildPayload(withSprites = true) {
       outputFormat: state.outputFormat,
       mirror:    state.mirror,
       shapeFill: state.shapeFill,
+      pixelPerfect: state.pixelPerfect,
       onion:      state.onion,
       timeline:   state.tlOpts,
       showGuides: state.showGuides,
@@ -481,6 +482,7 @@ function applyPayload(payload) {
     if (ui.outputFormat) state.outputFormat = ui.outputFormat;
     if (ui.mirror) state.mirror = ui.mirror;
     if (typeof ui.shapeFill === 'boolean') state.shapeFill = ui.shapeFill;
+    if (typeof ui.pixelPerfect === 'boolean') state.pixelPerfect = ui.pixelPerfect;
     if (typeof ui.onion === 'boolean') state.onion = ui.onion;
     if (ui.timeline) state.tlOpts = normalizeTlOpts(ui.timeline);
     if (typeof ui.showGuides === 'boolean') state.showGuides = ui.showGuides;

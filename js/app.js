@@ -18,6 +18,7 @@ import {
   renderAll, renderEditor, renderSpriteList, syncColorActive, updateOutput, currentCode, renderMaterials,
   renderFreeColorsList, countCurrentColor,
   cellFromEvent, cellFromEventClamped, cellToColor, paintCell, paintBrush, paintSpray, floodFill,
+  ppActive, ppBegin, ppEnd, paintPixelPerfect,
   renderCallbacks, shapeCells, commitShape,
 } from './render.js';
 import {
@@ -194,6 +195,8 @@ function applyTemplateTrace(mode, n) {
 // Tool-Dispatch + UI-Sync
 // ────────────────────────────────────────────────────────────────────
 function applyTool(x, y) {
+  // Pixel-perfect: Stift und Radierer mit 1 px (wie in Aseprite).
+  if (ppActive()) { paintPixelPerfect(x, y, state.tool === 'eraser' ? 0 : state.curColor); return; }
   if (state.tool === 'brush')  { paintBrush(x, y);  return; }
   if (state.tool === 'spray')  { paintSpray(x, y);  return; }
   if (state.tool === 'fill')   { floodFill(x, y);   return; }
@@ -248,6 +251,7 @@ function updateToolUI() {
   $('tolerance-group').hidden  = !needsTolerance;
   $('select-group').hidden     = !isSelectTool(state.tool);
   $('shape-group').hidden      = !isShapeTool(state.tool);
+  $('pixel-perfect-group').hidden = !['pencil', 'eraser'].includes(state.tool);
   if (!isSelectTool(state.tool)) $('editor-canvas-wrap').classList.remove('is-move');
   updateSelectionUI();
   refreshToolOpts();
@@ -304,6 +308,7 @@ function updateSelectionUI() {
 function eraseAt(e) {
   const c = cellFromEvent(e);
   if (!c) return;
+  if (ppActive()) { paintPixelPerfect(c.x, c.y, 0); return; }
   const prev = state.curColor;
   state.curColor = 0;
   paintCell(c.x, c.y);
@@ -391,6 +396,7 @@ function initCanvasEvents() {
         commitFloat(); // sonst radiert man in ein Loch, unter dem noch etwas hängt
         state.isErasing = true;
         beginStroke();
+        ppBegin();
         eraseAt(e);
       }
       return;
@@ -478,6 +484,7 @@ function initCanvasEvents() {
 
     state.isDrawing = true;
     beginStroke();
+    ppBegin();
     const c = cellFromEvent(e);
     if (c) applyTool(c.x, c.y);
   });
@@ -537,6 +544,7 @@ function initCanvasEvents() {
       updateSelectionUI();
     }
     if (state.isDrawing || state.isErasing) commitStroke();
+    ppEnd();
     state.isDrawing = false;
     state.isErasing = false;
   };
@@ -751,6 +759,13 @@ function initToolbar() {
 
   $('mirror-x-btn').addEventListener('click', () => toggleMirror('x'));
   $('mirror-y-btn').addEventListener('click', () => toggleMirror('y'));
+
+  $('pixel-perfect-btn').addEventListener('click', () => {
+    state.pixelPerfect = !state.pixelPerfect;
+    $('pixel-perfect-btn').classList.toggle('is-active', state.pixelPerfect);
+    $('pixel-perfect-btn').setAttribute('aria-pressed', String(state.pixelPerfect));
+    saveState();
+  });
 
   $('shape-fill-btn').addEventListener('click', () => {
     state.shapeFill = !state.shapeFill;
@@ -1381,6 +1396,8 @@ function syncUiFromState() {
   if (fmtSel) { fmtSel.value = state.outputFormat; syncFormatUI(); }
   $('shape-fill-btn').classList.toggle('is-active', state.shapeFill);
   $('shape-fill-btn').setAttribute('aria-pressed', String(state.shapeFill));
+  $('pixel-perfect-btn').classList.toggle('is-active', !!state.pixelPerfect);
+  $('pixel-perfect-btn').setAttribute('aria-pressed', String(!!state.pixelPerfect));
   updateMirrorUI();
   syncImagePanel();
   updateToolUI();

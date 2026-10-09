@@ -808,7 +808,7 @@ const syncAllBarFades = () => fadeEls().forEach(syncBarFade);
 // Größe, Stärke usw. wandern in eine eigene Zeile darüber, die der
 // Regler-Knopf oder ein zweiter Tipp aufs aktive Werkzeug aufklappt. Am
 // breiten Fenster kommen sie an ihren Platz zurück (Platzhalter).
-const OPT_IDS = ['brush-size-group', 'strength-group', 'tolerance-group', 'shape-group', 'select-group'];
+const OPT_IDS = ['brush-size-group', 'strength-group', 'tolerance-group', 'pixel-perfect-group', 'shape-group', 'select-group'];
 let optsBox, optsBtn, optsMarks;
 // Die Statuszeile liegt am Desktop unter den Leisten. Auf dem Handy ist
 // jede Zeile Höhe zu schade dafür — sie wandert als schwebende Pille in die
