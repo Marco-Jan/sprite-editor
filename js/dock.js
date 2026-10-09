@@ -17,6 +17,9 @@ import { iconSvg } from './icons.js';
 
 
 let openPanel = null;
+// Woher ein Gast kam — er kann auch in der seitlichen Leisten-Zone stehen,
+// die nicht in seiner Leiste (.rail) liegt.
+const guestHome = new WeakMap();
 const MOBILE_Q = window.matchMedia('(max-width: 1100px)');
 const docks = [];
 
@@ -40,18 +43,23 @@ function show(panel) {
   // Ein "Gast" (siehe unten) geht zurück in seine Leiste.
   document.querySelectorAll('[data-dock].is-guest').forEach(p => {
     p.classList.remove('is-guest', 'is-shown');
-    p.closest('.rail').append(p);
+    (guestHome.get(p) || p.closest('.rail'))?.append(p);
     // Zurück in die Schublade: Leisten stehen dort wieder senkrecht.
     if (p.classList.contains('is-bar-drawer') && !MOBILE_Q.matches) p.classList.add('is-vertical');
   });
   openPanel = panel;
   document.querySelectorAll('.rail > [data-dock]').forEach(p => p.classList.toggle('is-shown', p === panel));
-  // Hat die Seite schon angepinnte Panels, öffnet sich das Panel als Gast
-  // unten in derselben Spalte statt als Schublade daneben.
+  // Hat die Seite schon angepinnte Panels — oder seitlich angepinnte
+  // Leisten (Werkzeuge, Farbzeile, Timeline) —, öffnet sich das Panel als
+  // Gast unten in derselben Spalte statt als Schublade darüber.
   const rail = panel?.closest('.rail');
-  const pins = rail?.querySelector('.rail-pins');
-  if (pins && rail.classList.contains('has-pins')) {
-    pins.append(panel);
+  const side = rail?.id === 'rail-left' ? 'left' : 'right';
+  const pins = rail?.classList.contains('has-pins') ? rail.querySelector('.rail-pins') : null;
+  const zone = !pins && rail && !MOBILE_Q.matches ? document.querySelector(`.bar-zone--side[data-zone="${side}"]`) : null;
+  const column = pins || (zone && zone.children.length ? zone : null);
+  if (column) {
+    guestHome.set(panel, rail);
+    column.append(panel);
     panel.classList.add('is-guest');
     // In der breiten Panel-Spalte liegt eine Leiste wie ein Panel, nicht senkrecht.
     panel.classList.remove('is-vertical');
