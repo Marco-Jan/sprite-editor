@@ -166,7 +166,7 @@ export function attachGrid(sp) {
 }
 
 // ── Ebenen ──────────────────────────────────────────────────────────
-// continuous: „durchgehende" Ebene wie in Aseprite — ein neuer Frame
+// continuous: „durchgehende" Ebene — ein neuer Frame
 // bekommt hier keine leere Zelle, sondern teilt sich das Bild des vorigen.
 export function defaultLayer(n = 1) {
   return { name: t('ly.name', { n }), visible: true, locked: false, opacity: 1, continuous: false };
@@ -243,7 +243,7 @@ export function mapFrames(sp, fn) {
 }
 
 // ── Verknüpfte Zellen ───────────────────────────────────────────────
-// Wie in Aseprite: mehrere Frames zeigen auf einer Ebene dasselbe Bild.
+// Verknüpfte Zellen: mehrere Frames zeigen auf einer Ebene dasselbe Bild.
 // Malt man in einem, ändert es sich in allen — gut für einen Hintergrund,
 // der stillsteht. Im Speicher ist das schlicht dasselbe Array-Objekt; im
 // Speicherstand steht statt des zweiten Bildes { link: k } — „wie in

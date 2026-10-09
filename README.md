@@ -33,7 +33,7 @@ Zeichnen, animieren, Paletten bauen und als Bild, GIF oder Code exportieren.
 **🎨 Zeichnen**
 - Stift, Pinsel, Spray, Füllen, Radierer, Zauberstab
 - Linie, Rechteck, Ellipse — Kontur oder gefüllt
-- **Pixel-perfekt** wie in Aseprite: keine doppelten Eckpixel
+- **Pixel-perfekt**: saubere 1-Pixel-Linien ohne doppelte Eckpixel
 - **Symmetrie** an einer oder beiden Achsen
 - Auswahl, Lasso, Farbwahl — ausschneiden, verschieben, drehen
 - Pipette, Hand, Zoom auf den Mauszeiger, Finger-Gesten
@@ -42,7 +42,7 @@ Zeichnen, animieren, Paletten bauen und als Bild, GIF oder Code exportieren.
 <td width="50%" valign="top">
 
 **🎞️ Animieren**
-- **Timeline als Raster** wie in Aseprite: Ebenen × Frames
+- **Timeline als Raster**: Ebenen × Frames, wie in gängigen Animations-Programmen
 - Zellen kopieren, verschieben, **verknüpfen**
 - **Tags** mit Name, Farbe und Richtung (vorwärts, rückwärts, Ping-Pong)
 - **Onion Skin** mit Farben, Deckkraft und mehreren Frames
@@ -75,7 +75,7 @@ Zeichnen, animieren, Paletten bauen und als Bild, GIF oder Code exportieren.
 <td valign="top">
 
 **🧰 Arbeitsplatz**
-- **Reiter** für geöffnete Sprites, wie in Aseprite und Photoshop
+- **Reiter** für geöffnete Sprites, wie man es aus Grafikprogrammen kennt
 - Panels anpinnen, lösen, frei verschieben — die Anordnung bleibt
 - Ebenen mit Deckkraft, Sperre und Sichtbarkeit
 - Schablone: Foto als Vorlage zum Abpausen
@@ -212,7 +212,7 @@ npm run check   # Typprüfung
 
 **spritebit** is a free, open-source pixel art editor for sprites that runs entirely in your
 browser — offline, no account, nothing uploaded. Draw with pixel-perfect strokes and symmetry,
-animate on an Aseprite-style timeline with linked cels, tags and onion skin, build palettes,
+animate on a layer × frame timeline with linked cels, tags and onion skin, build palettes,
 add light and drop shadows, and export to PNG, GIF, spritesheets or nine code formats
 (TypeScript, JSON, SVG, CSS, C, Python …). The UI is available in German, English and Austrian
 German. [Open the editor →](https://spritebit.at/editor.html)

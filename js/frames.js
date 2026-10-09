@@ -288,7 +288,7 @@ export function toggleOnion() {
 }
 
 // ────────────────────────────────────────────────────────────────────
-// Timeline — ein Raster wie in Aseprite
+// Timeline — ein Raster aus Ebenen × Frames
 // ────────────────────────────────────────────────────────────────────
 // Spalten sind Frames, Zeilen Ebenen (oberste oben, wie im Ebenen-Panel).
 //

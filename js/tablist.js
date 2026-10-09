@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════════
-// TABLIST — welche Sprites als Reiter offen sind (wie Aseprite/Photoshop)
+// TABLIST — welche Sprites als Reiter offen sind
 // ════════════════════════════════════════════════════════════════════
 // Ein Reiter ist ein geöffneter Sprite. Schließen nimmt nur den Reiter weg;
 // der Sprite bleibt im Projekt und öffnet sich wieder, sobald man ihn im
@@ -27,7 +27,7 @@ export function syncTabs(tabs, ids, cur) {
 
 /**
  * Reiter schließen. Ist es der aktive, wird der rechte Nachbar aktiv
- * (am Ende der linke) — wie in Aseprite und im Browser.
+ * (am Ende der linke) — wie im Browser.
  * @returns {{ tabs: string[], cur: string | null }}
  */
 export function closeTab(tabs, id, cur) {

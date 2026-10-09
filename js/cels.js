@@ -12,7 +12,7 @@
 // Verknüpfte Zellen (state.js) teilen sich ein Bild-Objekt. Verschieben
 // nimmt das Objekt mit (die Verknüpfung bleibt), Kopieren macht neue
 // Objekte — wobei innerhalb des kopierten Bereichs Verknüpfte untereinander
-// verknüpft bleiben, wie in Aseprite.
+// verknüpft bleiben.
 import { blankLike, isLinked } from './state.js';
 import { dc } from './data.js';
 

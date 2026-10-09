@@ -670,7 +670,7 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 .stage-ident { display: flex; align-items: baseline; gap: var(--sp-2); min-width: 0; }
 
 /* Reiter der geöffneten Sprites (js/tabs.js) — Karteireiter wie in
-   Aseprite: oben rund, unten gerade. Sie stehen links in der Kopfzeile
+   Grafikprogrammen: oben rund, unten gerade. Sie stehen links in der Kopfzeile
    statt des Namens, sitzen auf deren Unterkante und überdecken die Linie;
    der aktive hat unten die Farbe der Fläche darunter und geht so in sie
    über. Passen nicht alle hin, scrollt die Reihe seitlich (Mausrad, am

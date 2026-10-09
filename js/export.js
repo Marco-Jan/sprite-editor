@@ -336,7 +336,7 @@ function buildSheet(scale) {
     cell: { w: cellW * scale, h: cellH * scale },
     columns: cols,
     frames,
-    // Tags je Sprite — wie Aseprites frameTags, die Engines kennen das.
+    // Tags je Sprite — im üblichen frameTags-Format, das Engines kennen.
     tags: all.filter(s => s.tags?.length).map(s => ({
       sprite: s.name, id: s.id,
       tags: s.tags.map(g => ({ name: g.name, from: g.from, to: g.to, direction: g.dir })),

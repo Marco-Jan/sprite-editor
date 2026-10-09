@@ -25,6 +25,14 @@
     tiktok:    '',
     reddit:    '',
   };
+  // Versionen an den Knöpfen ("Editor öffnen", "Desktop-App laden").
+  // Schreibt tools/deploy.py: web = package.json, desktop = neueste
+  // veröffentlichte Release (höchster v…-Tag von spritebit-rs).
+  var VERSIONS = {
+    web:     '3.1.7',
+    desktop: '1.0.1',
+  };
+
   // Abgeleitete Adressen
   if (LINKS.github) {
     LINKS.license = LINKS.github + '/blob/main/LICENSE';
@@ -55,6 +63,13 @@
       s.querySelector('[data-when="ready"]').hidden = !ready;
       s.querySelector('[data-when="soon"]').hidden = ready;
     }
+    // Versions-Schilder an den Knöpfen
+    var vers = document.querySelectorAll('[data-version]');
+    for (var v = 0; v < vers.length; v++) {
+      var num = VERSIONS[vers[v].getAttribute('data-version')];
+      vers[v].textContent = num ? 'v' + num : '';
+      vers[v].hidden = !num;
+    }
     // Spalten, in denen kein einziger Link uebrig ist, zeigen ihren Hinweis.
     var groups = document.querySelectorAll('[data-link-group]');
     for (var k = 0; k < groups.length; k++) {
@@ -66,6 +81,7 @@
   }
 
   window.SITE_LINKS = LINKS;
+  window.SITE_VERSIONS = VERSIONS;
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply);
   else apply();
 })();

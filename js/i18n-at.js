@@ -128,7 +128,7 @@ export const STATIC_AT = {
   'tool.strength':       'Stärke',
   'tool.tolerance':      'Toleranz',
   'tool.shapeFill':      'Ausgfüllt',
-  'tool.pixelPerfectTitle': 'Wia in Aseprite: haut beim Zeichnen de doppltn Eckpixel an de Stiagnstufn weg — saubere 1-Pixel-Linien (Stift, Radiergummi mit Greß 1)',
+  'tool.pixelPerfectTitle': 'Wia in bekanntn Pixel-Art-Programmen: haut beim Zeichnen de doppltn Eckpixel an de Stiagnstufn weg — saubere 1-Pixel-Linien (Stift, Radiergummi mit Greß 1)',
   'tool.shapeFillTitle': 'Viereck und Ellipse ausgfüllt statt nur d’Umrandung',
 
   'tool.selLabel':       'Auswoi',

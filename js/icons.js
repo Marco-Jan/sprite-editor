@@ -64,7 +64,7 @@ export const ICONS = {
   // Verknüpfte Zellen: Kettenglied — und dasselbe auseinandergezogen.
   link:    '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
   unlink:  '<path d="M15 9.5l2.2-2.2a3.5 3.5 0 0 0-5-5L10 4.5"/><path d="M9 14.5l-2.2 2.2a3.5 3.5 0 0 0 5 5L14 19.5"/><path d="M3 3l3 3M18 18l3 3M3 9h3M15 21v-3"/>',
-  // Durchgehende Ebene (Aseprite): zwei verbundene Punkte — oder getrennt.
+  // Durchgehende Ebene: zwei verbundene Punkte — oder getrennt.
   contOn:  '<circle cx="6" cy="12" r="3.2"/><circle cx="18" cy="12" r="3.2"/><path d="M9.2 12h5.6"/>',
   contOff: '<circle cx="6" cy="12" r="3.2"/><circle cx="18" cy="12" r="3.2"/>',
   // Frame-Tag: ein Anhänger-Etikett.

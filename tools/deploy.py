@@ -14,7 +14,9 @@
 #   4. Main    Web: der Branch wird lokal nach main gemergt (Konflikte werden
 #              vorab erkannt; weicht main inhaltlich ab, laufen die Tests dort
 #              noch einmal) — kein Pull Request auf GitHub nötig.
-#   5. Pushen  beide Repos; Web: Branch und main, dann der Vercel Deploy Hook
+#              Die Knöpfe der Startseite bekommen die Versionen (Web aus
+#              package.json, Desktop = höchster veröffentlichter v…-Tag).
+#   5. Pushen  erst Desktop (samt Release-Tag), dann Web: Branch und main, dann der Vercel Deploy Hook
 #              (tools/deploy-hook.txt) → die Website wird gebaut.
 #   6. --release  Tag v<Version aus Cargo.toml> pushen → GitHub baut die
 #                 Desktop-Release (nur, wenn es die Version noch nicht gibt).
@@ -248,6 +250,39 @@ def ask_versions(args):
             args.release = a in ('', 'j', 'ja', 'y', 'yes')
 
 
+# ── Versionen an den Knöpfen der Startseite (js/site-links.js) ───────
+SITE_LINKS = os.path.join('js', 'site-links.js')
+
+
+def released_desktop(root):
+    """Höchste veröffentlichte Desktop-Version (v…-Tags auf GitHub) oder None."""
+    if not os.path.isdir(os.path.join(root, '.git')):
+        return None
+    out = git(root, 'ls-remote', '--tags', 'origin', check=False)
+    vers = [parse_ver(m) for m in re.findall(r'refs/tags/v(\d+\.\d+\.\d+)$', out, re.M)]
+    vers = [v for v in vers if v]
+    return '.'.join(map(str, max(vers))) if vers else None
+
+
+def sync_site_versions(args):
+    path = os.path.join(WEB, SITE_LINKS)
+    s = open(path, encoding='utf-8').read()
+    want = {'web': web_version(), 'desktop': released_desktop(args.rs)}
+    new = s
+    for key, ver in want.items():
+        if ver:
+            new = re.sub(rf"(\b{key}:\s*')[^']*(')", rf"\g<1>{ver}\g<2>", new, count=1)
+    if new == s:
+        ok(f'Versionen auf der Startseite aktuell (Web {want["web"]}, Desktop {want["desktop"] or "–"})')
+        return
+    if args.dry_run:
+        info(f'(Probelauf) würde auf der Startseite eintragen: Web {want["web"]}, Desktop {want["desktop"]}')
+        return
+    with open(path, 'w', encoding='utf-8', newline='') as f:
+        f.write(new)
+    commit_if_changed(WEB, [SITE_LINKS], f'Startseite: Versionen Web {want["web"]}, Desktop {want["desktop"]}')
+
+
 # ── Web ──────────────────────────────────────────────────────────────
 def web(args):
     step('Web (sprite-editor)')
@@ -262,6 +297,8 @@ def web(args):
         else:
             set_web_version(args.web_new)
             commit_if_changed(WEB, ['package.json'], f'Version {args.web_new}')
+
+    sync_site_versions(args)
 
     info('Offline-Liste (sw.js) …')
     run([sys.executable, os.path.join('tools', 'make_sw.py')], WEB, quiet=True)
@@ -447,10 +484,12 @@ def main():
         print(color('33', 'Probelauf — es wird nichts gepusht.'))
     try:
         ask_versions(args)
-        if args.only != 'rs':
-            web(args)
+        # Erst der Desktop: ein neuer Release-Tag steht danach schon auf GitHub
+        # und landet im selben Durchgang als Versionsnummer auf der Website.
         if args.only != 'web':
             rs(args)
+        if args.only != 'rs':
+            web(args)
     except Abort as e:
         print(color('1;31', f'\n✗ Abgebrochen: {e}'))
         sys.exit(1)
