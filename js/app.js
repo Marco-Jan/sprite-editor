@@ -70,7 +70,7 @@ import {
   canUndo, canRedo, clearHistory, historyCallbacks, rollbackTo,
 } from './history.js';
 import {
-  startMarquee, updateMarquee, startLasso, updateLasso, startMove, updateMove,
+  startMarquee, updateMarquee, startLasso, updateLasso, startMove, updateMove, handleAt, startScale, updateScale,
   endSelectionPointer, selectByColor, fillSelection, commitFloat, isFloating,
   selectAll, deselect, nudgeSelection, selectionInfo,
   copySelection, cutSelection, pasteClipboard, deleteSelection, hasClipboard,
@@ -256,6 +256,7 @@ function updateToolUI() {
   $('tolerance-group').hidden  = !needsTolerance;
   $('select-group').hidden     = !isSelectTool(state.tool);
   $('shape-group').hidden      = !isShapeTool(state.tool);
+  $('fill-group').hidden       = state.tool !== 'fill';
   $('pixel-perfect-group').hidden = !['pencil', 'eraser'].includes(state.tool);
   if (!isSelectTool(state.tool)) $('editor-canvas-wrap').classList.remove('is-move');
   updateSelectionUI();
@@ -357,6 +358,11 @@ let shapeStart = null;
 // Ereignis am Start — dort bleibt die Vorschau stehen.
 let sizeDrag = null;
 
+function syncFillVisible() {
+  $('fill-visible-btn').classList.toggle('is-active', state.fillVisible);
+  $('fill-visible-btn').setAttribute('aria-pressed', String(state.fillVisible));
+}
+
 function setBrushSize(n) {
   state.brushSize = clampSize(n);
   $('brush-size').value = String(state.brushSize);
@@ -445,6 +451,14 @@ function initCanvasEvents() {
 
     // ── Auswahl anfassen (vor der Pipette, damit Alt+Ziehen kopiert) ──
     if (isSelectTool(state.tool)) {
+      // Anfasser an Ecken und Kanten: skalieren (js/scale.js).
+      const h = handleAt(e);
+      if (h) {
+        if (layerBlocked()) return;
+        startScale(e, h);
+        info(selectionInfo(t('info.scale')));
+        return;
+      }
       const c = cellFromEventClamped(e);
       if (isInSelection(c.x, c.y)) {
         if (layerBlocked()) return;
@@ -543,6 +557,7 @@ function initCanvasEvents() {
     if (selection.mode === 'marquee') { updateMarquee(e); info(selectionInfo(t('info.marquee'))); return; }
     if (selection.mode === 'lasso')   { updateLasso(e);   info(selectionInfo()); return; }
     if (selection.mode === 'move')    { updateMove(e);    info(selectionInfo(t('info.move'))); return; }
+    if (selection.mode === 'scale')   { updateScale(e);   info(selectionInfo(t('info.scale'))); return; }
 
     if (shapeStart) {
       const c = cellFromEventClamped(e);
@@ -558,9 +573,11 @@ function initCanvasEvents() {
     const c = cellFromEvent(e);
     if (!c) return;
 
-    // Zeiger über der Auswahl → Verschiebe-Cursor.
+    // Zeiger über der Auswahl → Verschiebe-Cursor, über einem Anfasser → Skalier-Cursor.
     if (isSelectTool(state.tool)) {
-      $('editor-canvas-wrap').classList.toggle('is-move', isInSelection(c.x, c.y));
+      const h = handleAt(e);
+      $('editor-canvas-wrap').dataset.handle = h || '';
+      $('editor-canvas-wrap').classList.toggle('is-move', !h && isInSelection(c.x, c.y));
     }
     const cur = getGrid()[c.y][c.x];
     const val = typeof cur === 'string' ? cur : t('info.index', { i: cur });
@@ -808,6 +825,12 @@ function initToolbar() {
     state.pixelPerfect = !state.pixelPerfect;
     $('pixel-perfect-btn').classList.toggle('is-active', state.pixelPerfect);
     $('pixel-perfect-btn').setAttribute('aria-pressed', String(state.pixelPerfect));
+    saveState();
+  });
+
+  $('fill-visible-btn').addEventListener('click', () => {
+    state.fillVisible = !state.fillVisible;
+    syncFillVisible();
     saveState();
   });
 
@@ -1636,6 +1659,7 @@ function syncUiFromState() {
   if (fmtSel) { fmtSel.value = state.outputFormat; syncFormatUI(); }
   $('shape-fill-btn').classList.toggle('is-active', state.shapeFill);
   $('shape-fill-btn').setAttribute('aria-pressed', String(state.shapeFill));
+  syncFillVisible();
   $('pixel-perfect-btn').classList.toggle('is-active', !!state.pixelPerfect);
   $('pixel-perfect-btn').setAttribute('aria-pressed', String(!!state.pixelPerfect));
   updateMirrorUI();

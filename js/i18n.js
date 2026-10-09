@@ -173,6 +173,9 @@ export function initLangSwitch() {
 // Deutsch kommt aus dem HTML selbst (Snapshot), hier steht nur Englisch.
 const STATIC = {
   en: {
+    'tool.fillVisible':      'Edges: all layers',
+    'tool.fillVisibleTitle': 'The edges of the fill come from all visible layers — the paint goes into the active one. That way you colour in a template that sits on a layer of its own, area by area.',
+
     'donate.menu':  'Support spritebit (Ko-fi)',
     'donate.title': 'spritebit stays free either way. Donations go towards a code-signing certificate so Windows stops warning about the desktop app.',
 
@@ -687,7 +690,7 @@ const STATIC = {
       + '<div><b>Spray</b> — random pixels; <i>strength</i> = amount per event.</div>'
       + '<div><b>Size</b> 1–64 with the slider or number field; <span class="kbd">Alt</span> + right-drag changes it right on the drawing area. An outline shows what brush, eraser and spray are about to hit.</div>'
       + '<div><b>Clean Stroke</b> — with the pencil (and the eraser at size 1) the L-shaped corners of a freehand line disappear: clean 1-pixel lines as if placed by hand.</div>'
-      + '<div><b>Fill</b> — the connected area of the same value.</div>'
+      + '<div><b>Fill</b> — the connected area of the same value. With <b>Edges: all layers</b> the area ends wherever something changes in the visible image — the paint still goes into the active layer. That way you colour in a template (e.g. outlines on a layer of their own) area by area without touching it.</div>'
       + '<div><b>Eraser</b> — sets pixels back to transparent.</div>'
       + '<div><b>Magic wand</b> — erases a connected <i>similar</i> area; <i>tolerance</i> decides how much deviation still counts.</div>'
       + '<div><b>Line · Rectangle · Ellipse</b> — drag it open, the preview shows the result, letting go draws it. <i>Filled</i> switches between outline and area.</div>'
@@ -707,6 +710,7 @@ const STATIC = {
       + '<div>Grab inside the selection and drag → the area is <b>cut out</b> and <b>floats</b>. It stays in the air until you set it down — until then you can move, rotate and flip it as often as you like without damaging anything underneath.</div>'
       + '<div>It is <b>set down</b> when you deselect (<span class="kbd">Esc</span>), on a new selection, when you switch tool or sprite — or automatically when the tab closes.</div>'
       + '<div><span class="kbd">Alt</span>+drag leaves the original in place — you move a <b>copy</b>.</div>'
+      + '<div><b>Scale</b>: drag one of the eight handles on the frame — corners change width and height, edges only one; with <span class="kbd">Shift</span> the aspect ratio stays. Pixels stay sharp (nearest neighbour), and every size is computed from the original: shrinking and growing again loses nothing.</div>'
       + '<div>Fine work with the <b>arrow keys</b>: one pixel per press. <b>Fill</b> paints the whole selection in the current color.</div>'
       + '<div>Setting down only overwrites with filled pixels; transparent spots leave what is underneath alone.</div>'
       + '<div>Whatever is pushed past the edge is lost — <span class="kbd">Ctrl</span>+<span class="kbd">Z</span> brings it all back.</div>'
@@ -811,6 +815,7 @@ const STATIC = {
       + '<div class="sc-row"><b>Space + drag</b><span>Pan the image (middle mouse button works too)</span></div>'
       + '<div class="sc-row"><b>Drag inside the selection</b><span>Cut the area out and move it</span></div>'
       + '<div class="sc-row"><b>Alt + drag</b><span>Move a copy (the original stays)</span></div>'
+      + '<div class="sc-row"><b>Drag a handle</b><span>Scale the selection (Shift: keep aspect ratio)</span></div>'
       + '<div class="sc-row"><b>Arrow keys</b><span>Nudge the selection pixel by pixel</span></div>'
       + '<div class="sc-row"><b>Ctrl + A / C / X / V</b><span>All · Copy · Cut · Paste</span></div>'
       + '<div class="sc-row"><b>Del</b><span>Erase the selection</span></div>'
@@ -833,6 +838,7 @@ const STATIC = {
 // ════════════════════════════════════════════════════════════════════
 const MSG = {
   de: {
+    'info.scale': 'Skalieren — Umschalt hält das Seitenverhältnis',
     'gd.layoutNone':     'noch keine gespeichert',
     'gd.layoutNeedName': 'Erst einen Namen für das Layout eingeben.',
     'gd.layoutSaved':    'Layout „{name}“ gespeichert — gilt für alle Sprites.',
@@ -1339,6 +1345,7 @@ const MSG = {
   },
 
   en: {
+    'info.scale': 'Scaling — Shift keeps the aspect ratio',
     'gd.layoutNone':     'none saved yet',
     'gd.layoutNeedName': 'Enter a name for the layout first.',
     'gd.layoutSaved':    'Layout “{name}” saved — it applies to all sprites.',

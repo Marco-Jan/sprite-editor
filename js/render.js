@@ -4,11 +4,14 @@
 // Liest aus state, schreibt ins DOM. Event-Bindings für statische Elemente
 // leben in app.js; nur Handler an dynamisch erzeugten Elementen (Sprite-Karten,
 // Farb-Swatches) werden hier gesetzt und rufen dann renderCallbacks auf.
+import { HANDLES, handlePos } from './scale.js';
+import { fillRegion } from './fill.js';
 import { maskedCel } from './mask.js';
 import {
   state, sprites, customPalettes, paletteMaterials, selection,
   getGrid, getSprite, getPal, getPaletteName, getMaxIdx, getPreviewName,
   getAllPaletteOptions, isCustomPalette, listSprites, getPaletteByName, allGrids, flatGrid, thumbGrid,
+  editingMask,
 } from './state.js';
 import { PALETTE_GROUP_SPLIT, MAX_COLORS, cellToColor, paletteSize } from './data.js';
 import { onionFrames } from './onion.js';
@@ -269,6 +272,9 @@ export function renderEditor() {
   }
 
   if (selection.rect) drawSelectionFrame(ctx, selection.rect, selection.mask, r);
+  if (selection.rect && ['select', 'lasso', 'magic'].includes(state.tool) && selection.mode !== 'marquee' && selection.mode !== 'lasso') {
+    drawHandles(ctx, selection.rect, r);
+  }
   if (selection.path) drawLassoPath(ctx, selection.path, r);
   if (state.mirror !== 'off') drawMirrorGuides(ctx, W, H, r);
   renderCallbacks.onDrawTiles(ctx, W, H, r);
@@ -355,6 +361,24 @@ function drawSelectionFrame(ctx, r, mask, cs) {
   ctx.setLineDash([4, 4]);
   ctx.strokeStyle = 'rgba(255,255,255,0.95)';
   ctx.stroke();
+  ctx.restore();
+}
+
+// Anfasser zum Skalieren (js/scale.js): acht kleine Quadrate am Rahmen —
+// gleich groß am Bildschirm, egal wie weit gezoomt ist.
+function drawHandles(ctx, rect, cs) {
+  const k = cs / state.cellSize;          // Canvas-Pixel je Bildschirm-Pixel
+  const s = Math.max(3, Math.round(8 * k)), half = s / 2;
+  ctx.save();
+  for (const h of HANDLES) {
+    const p = handlePos(rect, h);
+    const x = Math.round(p.x * cs - half), y = Math.round(p.y * cs - half);
+    ctx.fillStyle = 'rgba(255,255,255,0.95)';
+    ctx.fillRect(x, y, s, s);
+    ctx.lineWidth = Math.max(1, k);
+    ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+    ctx.strokeRect(x + 0.5, y + 0.5, s - 1, s - 1);
+  }
   ctx.restore();
 }
 
@@ -547,20 +571,14 @@ export function paintSpray(x, y) {
 
 export function floodFill(startX, startY) {
   const grid = getGrid();
-  const H = grid.length, W = grid[0].length;
   const fill = state.curColor;
+  // „Grenzen: alle Ebenen“ (js/fill.js): die Fläche endet dort, wo sich im
+  // sichtbaren Bild etwas ändert — gemalt wird trotzdem in die aktive Ebene.
+  // In einer Maske gilt immer die Maske selbst.
+  const sp = getSprite();
+  const ref = state.fillVisible && sp && !editingMask() ? flatGrid(sp) : grid;
   // Bei Symmetrie startet die Füllung an jedem Spiegelpunkt einmal.
-  for (const [sx, sy] of mirrored(startX, startY)) {
-    const target = grid[sy]?.[sx];
-    if (target === undefined || target === fill) continue;
-    const stack = [[sx, sy]];
-    while (stack.length) {
-      const [x, y] = stack.pop();
-      if (x < 0 || y < 0 || x >= W || y >= H || grid[y][x] !== target) continue;
-      grid[y][x] = fill;
-      stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
-    }
-  }
+  for (const [sx, sy] of mirrored(startX, startY)) fillRegion(grid, ref, sx, sy, fill);
   afterPaint();
 }
 

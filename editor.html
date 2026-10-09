@@ -332,6 +332,11 @@
                   title="Rechteck und Ellipse gefüllt statt nur als Kontur zeichnen">Gefüllt</button>
         </div>
 
+        <div class="tool-group" id="fill-group" hidden>
+          <button class="btn" id="fill-visible-btn" aria-pressed="false" data-i18n="tool.fillVisible" data-i18n-attr="title:tool.fillVisibleTitle"
+                  title="Die Grenzen der Füllung kommen von allen sichtbaren Ebenen — gemalt wird in die aktive. So malst du eine Vorlage, die auf einer eigenen Ebene liegt, Fläche für Fläche aus.">Grenzen: alle Ebenen</button>
+        </div>
+
         <div class="tool-group" id="select-group" hidden>
           <span class="field-label" data-i18n="tool.selLabel">Auswahl</span>
           <div class="btn-group">
@@ -1091,7 +1096,7 @@
       <div><b>Spray</b> — zufällige Pixel; <i>Stärke</i> = Menge pro Ereignis.</div>
       <div><b>Größe</b> 1–64 per Regler oder Zahlenfeld; <span class="kbd">Alt</span> + rechte Maustaste ziehen verstellt sie direkt auf der Zeichenfläche. Ein Umriss zeigt, was Pinsel, Radierer und Spray gleich treffen.</div>
       <div><b>Clean Stroke</b> — beim Stift (und beim Radierer mit Größe 1) verschwinden die L-Ecken einer freihändigen Linie: saubere 1-Pixel-Linien wie von Hand gesetzt.</div>
-      <div><b>Füllen</b> — zusammenhängende gleiche Fläche.</div>
+      <div><b>Füllen</b> — zusammenhängende gleiche Fläche. Mit <b>Grenzen: alle Ebenen</b> endet die Fläche dort, wo sich im sichtbaren Bild etwas ändert — gemalt wird trotzdem in die aktive Ebene. So malst du eine Vorlage (z. B. Umrisse auf einer eigenen Ebene) Fläche für Fläche aus, ohne sie anzufassen.</div>
       <div><b>Radierer</b> — setzt auf transparent.</div>
       <div><b>Zauberstab</b> — löscht zusammenhängende <i>ähnliche</i> Fläche; <i>Toleranz</i> steuert, wie viel Abweichung mitgeht.</div>
       <div><b>Linie · Rechteck · Ellipse</b> — aufziehen, die Vorschau zeigt das Ergebnis, Loslassen zeichnet. <i>Gefüllt</i> schaltet zwischen Kontur und Fläche.</div>
@@ -1113,6 +1118,7 @@
       <div>In die Auswahl fassen und ziehen → der Bereich wird <b>ausgeschnitten</b> und <b>schwebt</b>. Er bleibt in der Luft, bis du ihn absetzt — solange lässt er sich beliebig oft verschieben, drehen und spiegeln, ohne dass darunter etwas kaputtgeht.</div>
       <div><b>Abgesetzt</b> wird beim Abwählen (<span class="kbd">Esc</span>), bei einer neuen Auswahl, beim Werkzeug- oder Sprite-Wechsel — oder automatisch beim Schließen des Tabs.</div>
       <div><span class="kbd">Alt</span>+Ziehen lässt das Original stehen — man verschiebt eine <b>Kopie</b>.</div>
+      <div><b>Skalieren</b>: an den acht Anfassern am Rahmen ziehen — Ecken ändern Breite und Höhe, Kanten nur eine; mit <span class="kbd">Umschalt</span> bleibt das Seitenverhältnis. Pixel bleiben scharf (nächster Nachbar), und jede Größe wird vom Original gerechnet: klein und wieder groß ziehen verliert nichts.</div>
       <div>Feinarbeit mit den <b>Pfeiltasten</b>: ein Pixel pro Druck. <b>Füllen</b> färbt die ganze Auswahl in der aktuellen Farbe.</div>
       <div>Beim Absetzen überschreiben nur gefüllte Pixel; transparente Stellen lassen den Untergrund stehen.</div>
       <div>Was über den Rand hinausgeschoben wird, geht verloren — <span class="kbd">Strg</span>+<span class="kbd">Z</span> holt alles zurück.</div>
@@ -1248,6 +1254,7 @@
       <div class="sc-row"><b>Leertaste + Ziehen</b><span>Bild verschieben (auch mit mittlerer Maustaste)</span></div>
       <div class="sc-row"><b>Ziehen in der Auswahl</b><span>Bereich ausschneiden und verschieben</span></div>
       <div class="sc-row"><b>Alt + Ziehen</b><span>Kopie verschieben (Original bleibt)</span></div>
+      <div class="sc-row"><b>Anfasser ziehen</b><span>Auswahl skalieren (Umschalt: Seitenverhältnis halten)</span></div>
       <div class="sc-row"><b>Pfeiltasten</b><span>Auswahl pixelweise verschieben</span></div>
       <div class="sc-row"><b>Strg + A / C / X / V</b><span>Alles · Kopieren · Ausschneiden · Einfügen</span></div>
       <div class="sc-row"><b>Entf</b><span>Auswahl leeren</span></div>

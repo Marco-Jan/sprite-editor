@@ -158,6 +158,7 @@ function buildPayload(withSprites = true) {
       outputFormat: state.outputFormat,
       mirror:    state.mirror,
       shapeFill: state.shapeFill,
+      fillVisible: state.fillVisible,
       pixelPerfect: state.pixelPerfect,
       tileMode: state.tileMode,
       tileAuto: state.tileAuto,
@@ -488,6 +489,7 @@ function applyPayload(payload) {
     if (ui.outputFormat) state.outputFormat = ui.outputFormat;
     if (ui.mirror) state.mirror = ui.mirror;
     if (typeof ui.shapeFill === 'boolean') state.shapeFill = ui.shapeFill;
+    if (typeof ui.fillVisible === 'boolean') state.fillVisible = ui.fillVisible;
     if (typeof ui.pixelPerfect === 'boolean') state.pixelPerfect = ui.pixelPerfect;
     if (ui.tileMode === 'pixel' || ui.tileMode === 'tiles') state.tileMode = ui.tileMode;
     if (ui.tileAuto === 'auto' || ui.tileAuto === 'manual') state.tileAuto = ui.tileAuto;
