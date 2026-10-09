@@ -47,7 +47,7 @@ zum Projekt.
 
 **Werkzeugleiste.** Am Rechner hat sie immer zwei Zeilen: oben die Werkzeuge, unten
 Symmetrie und dahinter die Einstellungen des gewählten Werkzeugs (Größe, Stärke, Toleranz,
-Pixel-perfekt, Gefüllt, Auswahl-Aktionen). So stehen die Regler immer an derselben Stelle.
+Clean Stroke, Gefüllt, Auswahl-Aktionen). So stehen die Regler immer an derselben Stelle.
 
 **Am Handy** (bis 1100 px Breite) liegen die Panels als Blatt von unten im Dock. Werkzeug-
 leiste, Farbzeile und Timeline sitzen angepinnt unter der Zeichenfläche oder — ohne Pin —
@@ -100,11 +100,11 @@ Reiterzeile erst ab zwei offenen Sprites, damit sie keine Höhe kostet.
   ergeben vier Spiegelungen. Gilt für alle Mal- und Formwerkzeuge, die Achsen werden
   gestrichelt eingeblendet.
 
-### Pixel-perfekt
+### Clean Stroke
 
 Zeichnet man mit 1 Pixel freihand eine Schräge, entstehen an jeder Treppenstufe L-Ecken:
 zwei Pixel, wo die Linie nur eins braucht — sie wirkt eckig und stellenweise doppelt dick.
-**Pixel-perfekt** nimmt dieses Eckpixel während des Strichs wieder heraus — wie in bekannten
+**Clean Stroke** nimmt dieses Eckpixel während des Strichs wieder heraus — wie in bekannten
 Pixel-Art-Programmen.
 
 - Gilt für den **Stift** und den **Radierer mit Größe 1**; der Schalter steht in der

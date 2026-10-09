@@ -404,7 +404,7 @@ const STATIC = {
     'tool.strength':    'Strength',
     'tool.tolerance':   'Tolerance',
     'tool.shapeFill':   'Filled',
-    'tool.pixelPerfect': 'Pixel-perfect',
+    'tool.pixelPerfect': 'Clean Stroke',
     'tool.pixelPerfectTitle': 'As in well-known pixel art tools: removes the doubled corner pixels at stair steps while drawing — clean 1-pixel lines (pencil, eraser at size 1)',
     'tool.shapeFillTitle': 'Draw rectangle and ellipse filled instead of outlined',
     'tool.selLabel':    'Selection',

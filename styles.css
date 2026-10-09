@@ -1280,7 +1280,7 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 #toolbar { flex-wrap: wrap; row-gap: var(--sp-2); }
 
 /* Zweite Zeile am Rechner: Symmetrie, dahinter die Einstellungen des
-   Werkzeugs (Groesse, Staerke, Toleranz, Pixel-perfekt, Gefuellt, Auswahl).
+   Werkzeugs (Groesse, Staerke, Toleranz, Clean Stroke, Gefuellt, Auswahl).
    Vorher haengten die Einstellungen hinten an der ersten Zeile und rutschten
    je nach Fensterbreite hin und her; ein Umbruch nur vor ihnen machte
    dagegen eine dritte Zeile auf, sobald Symmetrie aus Platzmangel schon in
