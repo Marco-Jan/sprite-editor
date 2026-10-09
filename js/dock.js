@@ -125,10 +125,11 @@ export function initDock() {
 
   // Klick irgendwo anders schließt ein offenes, nicht angepinntes Panel.
   // Dialoge und Hinweise, die aus dem Panel heraus geöffnet wurden, zählen
-  // dabei nicht als "woanders".
+  // dabei nicht als "woanders" — ebenso die Options-Zeile der Werkzeug-
+  // leiste, die auf dem Handy über deren Schublade schwebt (layout.js).
   document.addEventListener('pointerdown', e => {
     if (!openPanel || openPanel.contains(e.target)) return;
-    if (/** @type {HTMLElement} */ (e.target).closest('.dock-btn, .modal-overlay, #confirm-toast, #info-toast')) return;
+    if (/** @type {HTMLElement} */ (e.target).closest('.dock-btn, .modal-overlay, #confirm-toast, #info-toast, #tool-opts')) return;
     show(null);
   });
 

@@ -242,6 +242,17 @@ export const STATIC_AT = {
   'cln.outlineThick': 'Wia dick d’Kantn is',
   'cln.outlineApply': 'Anwendn',
 
+  // ── Licht ──
+  'lgt.title':        'Liacht',
+  'lgt.dir':          'Wo’s Liacht herkummt',
+  'lgt.amount':       'Wia stoak',
+  'lgt.width':        'Wia broat',
+  'lgt.highlight':    'Liachtkantn (heller)',
+  'lgt.shadow':       'Schottnkantn (dunkler)',
+  'lgt.apply':        'Liacht drauf',
+  'lgt.cast':         'Schlagschottn',
+  'lgt.castApply':    'Werfn',
+
   // ── Modale ──
   'mod.newTitle':      'A neicher Sprite',
   'mod.name':          'Nom',

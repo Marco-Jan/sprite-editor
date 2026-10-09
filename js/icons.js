@@ -104,6 +104,8 @@ export const ICONS = {
   // Vorschau: ein Bild im Bild — das Ganze und der Ausschnitt darin.
   preview: '<rect x="2" y="4" width="20" height="16" rx="2"/><rect x="7" y="9" width="7" height="6" rx="1" stroke-dasharray="2 2"/>',
   cleanup: '<path d="M11 3l1.9 5.1L18 10l-5.1 1.9L11 17l-1.9-5.1L4 10l5.1-1.9z"/><path d="M19 14v4M17 16h4M5 2v3M3.5 3.5h3"/>',
+  // Licht-Panel: Sonne — Kreis mit Strahlen.
+  light:   '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
 };
 
 export function iconSvg(name) {

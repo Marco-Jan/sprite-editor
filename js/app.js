@@ -45,6 +45,7 @@ import {
   medianCut, nearestColor, rgbToHex, hexToRgb,
   despeckleGrid, outlineGrid, magicWandDelete, autoRemoveBackground,
 } from './spritefx.js';
+import { lightGrid, dropShadowGrid } from './light.js';
 import { initExport } from './export.js';
 import { openReduceModal, initReduceModal } from './reduce.js';
 import { zoomAt, fitZoomToArea, isPanMode, setPanTool, initPan, initPinch } from './view.js';
@@ -1089,6 +1090,57 @@ function initCleanupPanel() {
 }
 
 // ────────────────────────────────────────────────────────────────────
+// Licht-Panel — Lichtquelle wählen, Kanten beleuchten, Schatten werfen
+// (Rechnung in js/light.js). Mit Auswahl wirkt beides nur darin.
+// ────────────────────────────────────────────────────────────────────
+function initLightPanel() {
+  let dir = { dx: -1, dy: -1 };
+  const dirBtns = [...document.querySelectorAll('#light-dirs .light-dir')];
+  dirBtns.forEach(b => b.addEventListener('click', () => {
+    dir = { dx: Number(b.dataset.dx), dy: Number(b.dataset.dy) };
+    dirBtns.forEach(o => {
+      o.classList.toggle('is-active', o === b);
+      o.setAttribute('aria-pressed', String(o === b));
+    });
+  }));
+  const amount = $('light-amount');
+  amount.addEventListener('input', () => { $('light-amount-val').textContent = amount.value + '%'; });
+
+  // Schwebender Auswahl-Inhalt liegt nicht im Grid — erst absetzen.
+  const inside = () => {
+    commitFloat();
+    return selection.rect ? isInSelection : undefined;
+  };
+
+  $('light-btn').addEventListener('click', () => {
+    if (layerBlocked(true)) return;
+    const opts = {
+      width: Number($('light-width').value) || 1,
+      amount: Number(amount.value) / 100,
+      highlight: $('light-highlight').checked,
+      shadow: $('light-shadow').checked,
+      allowHex: $('light-free').checked,
+      inside: inside(),
+    };
+    let r = { lit: 0, shaded: 0 };
+    recordOp(() => { r = lightGrid(getGrid(), getPal(), dir, opts); });
+    if (r.lit || r.shaded) renderAll();
+    showInfoToast(r.lit || r.shaded ? t('lgt.done', r) : t('lgt.none'));
+  });
+
+  $('light-cast-btn').addEventListener('click', () => {
+    if (layerBlocked(true)) return;
+    const col = $('light-cast-color').value;
+    const dist = Number($('light-cast-dist').value) || 1;
+    const within = inside();
+    let n = 0;
+    recordOp(() => { n = dropShadowGrid(getGrid(), dir, col, dist, within); });
+    if (n) renderAll();
+    showInfoToast(n ? t('lgt.castDone', { n }) : t('lgt.castNone'));
+  });
+}
+
+// ────────────────────────────────────────────────────────────────────
 // Schablonen-Panel (die Trace-Buttons; der Rest lebt in template.js)
 // ────────────────────────────────────────────────────────────────────
 function initTemplatePanel() {
@@ -1452,6 +1504,7 @@ async function init() {
   initImagePanel();
   initRotateSlider();
   initCleanupPanel();
+  initLightPanel();
   initTemplate();
   initTemplatePanel();
   initNewSpriteModal();
