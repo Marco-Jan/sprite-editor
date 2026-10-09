@@ -49,6 +49,8 @@ export const renderCallbacks = {
   onGuideInfo:       (_msg) => {},
   onRenderGuides:    () => {},
   onEditorRendered:  () => {},
+  // Reiter der geöffneten Sprites (tabs.js).
+  onRenderTabs:      () => {},
 };
 
 // HTML-Escaping für Nutzer-Eingaben (Sprite-/Palettennamen landen im innerHTML).
@@ -1096,6 +1098,7 @@ export function renderMaterials() {
 export function renderAll() {
   layerCache.clear();   // Struktur, Palette oder andere Ebenen können sich geändert haben
   renderSpriteList();
+  renderCallbacks.onRenderTabs();
   renderEditor();
   renderPalette();
   renderQuickPalette();

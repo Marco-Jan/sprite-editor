@@ -242,6 +242,10 @@ export const STATIC_AT = {
   'cln.outlineThick': 'Wia dick d’Kantn is',
   'cln.outlineApply': 'Anwendn',
 
+  // ── Reiter ──
+  'tabs.label':       'Offene Sprites',
+  'tabs.new':         'A neicher Sprite',
+
   // ── Licht ──
   'lgt.title':        'Liacht',
   'lgt.dir':          'Wo’s Liacht herkummt',

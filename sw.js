@@ -87,6 +87,8 @@ const PRECACHE = [
   'js/sprites.js',
   'js/state.js',
   'js/storage.js',
+  'js/tablist.js',
+  'js/tabs.js',
   'js/tags.js',
   'js/template.js',
   'js/tlmenu.js',

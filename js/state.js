@@ -43,6 +43,7 @@ export const paletteMaterials = {};
 export const state = {
   /** @type {string|null} id in `sprites`, null solange keiner existiert */
   curSprite:     null,
+  openTabs:      null,     // Reiter der geöffneten Sprites (js/tabs.js); null = alle
   /** @type {number|string} Zahl = Palette-Index | String "#RRGGBB" = freie Farbe */
   curColor:      1,
   cellSize:      16,

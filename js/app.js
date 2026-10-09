@@ -12,6 +12,7 @@ import {
 } from './i18n.js';
 import { initDock } from './dock.js';
 import { initLayout, isMobileLayout, refreshToolOpts } from './layout.js';
+import { initTabs } from './tabs.js';
 import { applyIcons, iconSvg } from './icons.js';
 import { showConfirmToast, showInfoToast } from './toast.js';
 import {
@@ -1504,6 +1505,7 @@ async function init() {
   initImagePanel();
   initRotateSlider();
   initCleanupPanel();
+  initTabs();
   initLightPanel();
   initTemplate();
   initTemplatePanel();

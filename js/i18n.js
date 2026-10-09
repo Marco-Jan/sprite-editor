@@ -506,6 +506,10 @@ const STATIC = {
     'cln.outlineThick': 'Edge thickness',
     'cln.outlineApply': 'Apply',
 
+    // ── Reiter ──
+    'tabs.label':       'Open sprites',
+    'tabs.new':         'New sprite',
+
     // ── Licht ──
     'lgt.title':        'Light',
     'lgt.dir':          'Light source',
@@ -1056,6 +1060,9 @@ const MSG = {
     'cln.outlined':    'Outline gezeichnet — {n} Pixel.',
     'cln.outlineNone': 'Keine Outline nötig — Sprite leer?',
 
+    // Reiter
+    'tabs.close':      'Reiter schließen (Mittelklick) — der Sprite bleibt im Projekt',
+
     // Licht
     'lgt.done':        'Licht gesetzt — {lit} Pixel heller, {shaded} dunkler.',
     'lgt.none':        'Nichts beleuchtet — keine Kanten oder keine passenden Palettenfarben (Häkchen „Auch Farben außerhalb der Palette“?).',
@@ -1494,6 +1501,8 @@ const MSG = {
     'cln.despeckleNone': 'Nothing found to despeckle.',
     'cln.outlined':    'Outline drawn — {n} pixels.',
     'cln.outlineNone': 'No outline needed — is the sprite empty?',
+
+    'tabs.close':      'Close tab (middle click) — the sprite stays in the project',
 
     'lgt.done':        'Light applied — {lit} pixels brighter, {shaded} darker.',
     'lgt.none':        'Nothing lit — no edges or no matching palette colors (tick “Allow colors outside the palette”?).',

@@ -149,6 +149,7 @@ function buildPayload(withSprites = true) {
     paletteMaterials,
     ui: {
       curSprite: state.curSprite,
+      openTabs:  state.openTabs,
       curColor:  state.curColor,
       cellSize:  state.cellSize,
       editorBg:  state.editorBg,
@@ -475,6 +476,8 @@ function applyPayload(payload) {
     const ui = payload.ui || {};
     state.curSprite = sprites[ui.curSprite] ? ui.curSprite : null;
     if (!state.curSprite) selectFirstSprite();
+    // Fehlt die Liste (ältere Stände), sind alle Sprites offen.
+    state.openTabs = Array.isArray(ui.openTabs) ? ui.openTabs.filter(id => sprites[id]) : null;
     if (ui.curColor != null) state.curColor = ui.curColor;
     if (ui.cellSize) state.cellSize = ui.cellSize;
     if (ui.editorBg) state.editorBg = ui.editorBg;
