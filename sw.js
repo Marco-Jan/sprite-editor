@@ -95,6 +95,8 @@ const PRECACHE = [
   'js/tabs.js',
   'js/tags.js',
   'js/template.js',
+  'js/tilemap.js',
+  'js/tiles.js',
   'js/tlmenu.js',
   'js/toast.js',
   'js/transform.js',

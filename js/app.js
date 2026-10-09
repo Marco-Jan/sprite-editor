@@ -61,6 +61,7 @@ import { initMenubar } from './menubar.js';
 import { initFullscreen, enterFullscreen, exitFullscreen } from './fullscreen.js';
 import { normalizeTags } from './tags.js';
 import { initPreview, renderPreview } from './preview.js';
+import { initTilemap, tileModeOn, tilePointerDown } from './tilemap.js';
 import { initGuides, guidePointerDown, guideAt, toggleEdit as toggleGuideEdit, toggleShow as toggleGuides } from './guides.js';
 import { parseTsSprite } from './tsimport.js';
 import { CODE_FORMATS, getFormat, codeFilename } from './codegen.js';
@@ -399,6 +400,13 @@ function initCanvasEvents() {
     if (isPlaying()) { e.preventDefault(); stopPlayback(); return; }
     // Hilfslinien verschieben: die Zeichenfläche gehört den Linien.
     if (state.guideEdit) { guidePointerDown(e); return; }
+    // Tilemap im Modus „Kacheln“: setzen, leeren, füllen, aufnehmen (tilemap.js).
+    if (tileModeOn() && (e.button === 0 || e.button === 2)) {
+      if (!e.altKey && layerBlocked()) return;
+      try { canvas.setPointerCapture(e.pointerId); } catch {}
+      tilePointerDown(e);
+      return;
+    }
     // Pointer einfangen → move/up feuern weiter, auch außerhalb des Canvas.
     try { canvas.setPointerCapture(e.pointerId); } catch {}
 
@@ -1686,6 +1694,7 @@ async function init() {
   initCleanupPanel();
   initTabs();
   initLightPanel();
+  initTilemap();
   initCalcFields();
   initTemplate();
   initTemplatePanel();

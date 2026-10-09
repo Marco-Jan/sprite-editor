@@ -789,6 +789,53 @@
         </div>
       </section>
 
+      <!-- Kacheln (Tilemap-Ebenen) — js/tilemap.js, Rechnung in js/tiles.js -->
+      <section class="panel collapsed" data-panel="tiles">
+        <div class="panel-head">
+          <h2 class="panel-title" data-i18n="tile.title">Kacheln</h2>
+          <button class="panel-toggle" type="button" aria-expanded="false"></button>
+        </div>
+        <div class="panel-body">
+          <div id="tile-off">
+            <p class="field-note" data-i18n="tile.offNote">Die aktive Ebene ist keine Tilemap. Eine Tilemap besteht aus Kacheln fester Größe — malt man eine Kachel an, ändert sie sich überall, wo sie liegt. Gut für Spiel-Levels und Muster.</p>
+            <p class="field-note" id="tile-off-mask" data-i18n="tile.offMask" hidden>Gerade wird eine Maske bearbeitet — Kacheln gibt es erst wieder danach.</p>
+            <div class="field field--inline">
+              <span class="field-label" data-i18n="tile.size">Kachelgröße</span>
+              <div class="field-controls">
+                <select id="tile-w" class="input input--sm" data-i18n-attr="title:tile.sizeW" title="Breite einer Kachel"></select>
+                <span class="field-unit">×</span>
+                <select id="tile-h" class="input input--sm" data-i18n-attr="title:tile.sizeH" title="Höhe einer Kachel"></select>
+              </div>
+            </div>
+            <button class="btn btn--block btn--accent" id="tile-new" data-i18n="tile.new" data-i18n-attr="title:tile.newTitle" title="Neue, leere Tilemap-Ebene über der aktiven anlegen">Neue Tilemap-Ebene</button>
+            <button class="btn btn--block" id="tile-convert" data-i18n="tile.convert" data-i18n-attr="title:tile.convertTitle" title="Die aktive Ebene in Kacheln zerlegen — gleiche Stellen werden eine Kachel">Aktive Ebene umwandeln</button>
+          </div>
+
+          <div id="tile-on" hidden>
+            <div class="btn-group" role="group" data-i18n-attr="aria-label:tile.modeGroup" aria-label="Was die Werkzeuge tun">
+              <button class="btn" id="tile-mode-pixel" aria-pressed="true" data-i18n="tile.modePixel" data-i18n-attr="title:tile.modePixelTitle" title="Kacheln bemalen — eine Kachel ändert sich überall, wo sie liegt">Pixel malen</button>
+              <button class="btn" id="tile-mode-tiles" aria-pressed="false" data-i18n="tile.modeTiles" data-i18n-attr="title:tile.modeTilesTitle" title="Kacheln aus der Liste ins Raster setzen">Kacheln setzen</button>
+            </div>
+            <label class="field field--inline" id="tile-auto-row">
+              <span class="field-label" data-i18n="tile.autoLabel">Neue Kacheln</span>
+              <select id="tile-auto" class="input input--sm">
+                <option value="auto" data-i18n="tile.auto">Auto — beim Malen anlegen</option>
+                <option value="manual" data-i18n="tile.manual">Manuell — nur vorhandene ändern</option>
+              </select>
+            </label>
+            <p class="field-note" id="tile-hint"></p>
+            <p class="field-note tile-info" id="tile-info"></p>
+            <div class="tile-list" id="tile-list" role="listbox" data-i18n-attr="aria-label:tile.listLabel" aria-label="Kacheln"></div>
+            <p class="field-note" id="tile-empty" data-i18n="tile.empty" hidden>Noch keine Kacheln — im Modus „Pixel malen“ (Auto) in eine leere Zelle malen.</p>
+            <div class="btn-row">
+              <button class="btn" id="tile-prune" data-i18n="tile.prune" data-i18n-attr="title:tile.pruneTitle" title="Kacheln entfernen, die nirgends mehr liegen">Unbenutzte entfernen</button>
+              <button class="btn btn--danger-soft" id="tile-unmap" data-i18n="tile.unmap" data-i18n-attr="title:tile.unmapTitle" title="Wieder eine normale Ebene — die Pixel bleiben, die Kacheln fallen weg">Normale Ebene</button>
+            </div>
+            <button class="btn btn--block btn--accent" id="tile-godot" data-i18n="tile.godot" data-i18n-attr="title:tile.godotTitle" title="ZIP mit Kachelbild (PNG), Godot-Szene (.tscn mit TileMapLayer) und JSON — den Ordner ins Godot-Projekt (res://) entpacken">Für Godot exportieren</button>
+          </div>
+        </div>
+      </section>
+
     </aside>
 
   </div>

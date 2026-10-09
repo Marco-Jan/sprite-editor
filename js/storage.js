@@ -159,6 +159,8 @@ function buildPayload(withSprites = true) {
       mirror:    state.mirror,
       shapeFill: state.shapeFill,
       pixelPerfect: state.pixelPerfect,
+      tileMode: state.tileMode,
+      tileAuto: state.tileAuto,
       onion:      state.onion,
       timeline:   state.tlOpts,
       showGuides: state.showGuides,
@@ -487,6 +489,8 @@ function applyPayload(payload) {
     if (ui.mirror) state.mirror = ui.mirror;
     if (typeof ui.shapeFill === 'boolean') state.shapeFill = ui.shapeFill;
     if (typeof ui.pixelPerfect === 'boolean') state.pixelPerfect = ui.pixelPerfect;
+    if (ui.tileMode === 'pixel' || ui.tileMode === 'tiles') state.tileMode = ui.tileMode;
+    if (ui.tileAuto === 'auto' || ui.tileAuto === 'manual') state.tileAuto = ui.tileAuto;
     if (typeof ui.onion === 'boolean') state.onion = ui.onion;
     if (ui.timeline) state.tlOpts = normalizeTlOpts(ui.timeline);
     if (typeof ui.showGuides === 'boolean') state.showGuides = ui.showGuides;
