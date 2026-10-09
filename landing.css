@@ -234,6 +234,21 @@ code {
 .btn--sm { padding: 0.45rem 0.85rem; font-size: var(--fs-sm); }
 .btn { gap: 0.55rem; }
 .btn-ico { flex: none; }
+/* Versions-Schild an "Editor öffnen" / "Desktop-App laden" (js/site-links.js). */
+.ver {
+  padding: 0.12em 0.45em;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.18);
+  font-size: 0.72em;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  opacity: 0.85;
+  font-variant-numeric: tabular-nums;
+}
+.btn--ghost .ver { background: rgba(255, 255, 255, 0.08); }
+/* Im Download-Knopf steckt die Beschriftung samt Schild in einer Hülle ("bald" / fertig). */
+.btn [data-when] { display: inline-flex; align-items: center; gap: 0.55rem; }
+.foot-col .ver { margin-left: 0.45em; padding: 0; background: none; color: var(--text-dim); }
 /* Noch nicht da (js/site-links.js): sichtbar, aber ohne Ziel. */
 .btn.is-soon { cursor: default; opacity: 0.75; }
 .btn.is-soon:hover { background: rgba(26, 26, 30, 0.55); border-color: var(--line-strong); transform: none; }
