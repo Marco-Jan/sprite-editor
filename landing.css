@@ -232,6 +232,21 @@ code {
 .btn--ghost:hover { background: var(--surface-2); border-color: var(--text-dim); }
 
 .btn--sm { padding: 0.45rem 0.85rem; font-size: var(--fs-sm); }
+.btn { gap: 0.55rem; }
+.btn-ico { flex: none; }
+/* Noch nicht da (js/site-links.js): sichtbar, aber ohne Ziel. */
+.btn.is-soon { cursor: default; opacity: 0.75; }
+.btn.is-soon:hover { background: rgba(26, 26, 30, 0.55); border-color: var(--line-strong); transform: none; }
+.soon-badge {
+  padding: 0.18em 0.5em;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-size: 0.72em;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
 .btn--lg { padding: 0.9rem 1.7rem; font-size: var(--fs-lg); }
 
 kbd {
@@ -611,6 +626,13 @@ kbd {
 }
 
 /* Stichworte unter dem Lead — kleine Pixel-Punkte in den Farben der Rampe. */
+/* Unter den Knoepfen: was es kostet und unter welcher Lizenz. */
+.hero-platforms {
+  margin-block: calc(-1 * var(--sp-3)) var(--sp-5);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  text-shadow: 0 1px 10px rgba(12, 8, 22, 0.85);
+}
 .hero-chips {
   display: flex;
   flex-wrap: wrap;
@@ -1044,15 +1066,17 @@ kbd {
 .closer-inner .note { text-shadow: 0 1px 10px rgba(12, 8, 22, 0.85); }
 
 /* ── 13 · Fuss ──────────────────────────────────────────────────── */
+/* Links Marke und ein Satz, rechts Spalten (Produkt, Open Source,
+   Community, Rechtliches), unten die Zeile mit © und Lizenz. Links, die
+   es noch nicht gibt, blendet js/site-links.js aus. */
 .foot { background: var(--bg); border-top: 1px solid var(--line); }
 .foot-inner {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--sp-4) var(--sp-6);
+  display: grid;
+  grid-template-columns: minmax(14rem, 1fr) 2.6fr;
+  gap: var(--sp-6) clamp(2rem, 5vw, 4rem);
   max-width: var(--page);
   margin-inline: auto;
-  padding: var(--sp-6) var(--gutter) clamp(2.5rem, 5vw, 3.5rem);
+  padding: clamp(2.5rem, 5vw, 3.5rem) var(--gutter);
 }
 .foot-brand {
   display: inline-flex;
@@ -1064,24 +1088,57 @@ kbd {
   letter-spacing: -0.03em;
 }
 .foot-brand img { image-rendering: pixelated; }
-.foot-note {
-  flex: 1 1 24rem;
-  max-width: 60ch;
+.foot-tag {
+  max-width: 34ch;
+  margin-top: var(--sp-3);
   color: var(--text-dim);
-  font-size: var(--fs-xs);
-  line-height: 1.65;
+  font-size: var(--fs-sm);
+  line-height: 1.6;
 }
-.foot-note code { color: var(--text-muted); }
+.foot-cols {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sp-5);
+}
+.foot-h {
+  margin: 0 0 var(--sp-3);
+  color: var(--text);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.foot-col ul { display: grid; gap: 0.55rem; margin: 0; padding: 0; list-style: none; }
+.foot-col a,
+.foot-linkbtn {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--fs-sm);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.foot-col a:hover,
+.foot-linkbtn:hover { color: var(--text); text-decoration: underline; }
+.foot-soon { color: var(--text-dim); font-size: var(--fs-sm); }
 .foot-meta {
-  display: inline-flex;
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--sp-3);
-  margin-inline-start: auto;
+  padding-top: var(--sp-5);
+  border-top: 1px solid var(--line);
   color: var(--text-dim);
   font-size: var(--fs-xs);
 }
-.foot-meta a { color: var(--text-muted); text-decoration: none; }
-.foot-meta a:hover { color: var(--text); text-decoration: underline; }
+@media (max-width: 860px) {
+  .foot-inner { grid-template-columns: 1fr; }
+  .foot-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 
 /* ── 14 · Responsive ────────────────────────────────────────────── */
 .stage--wide { height: clamp(230px, 30vw, 330px); }
@@ -1147,7 +1204,6 @@ kbd {
 
 @media (max-width: 560px) {
   .cta-row .btn { flex: 1 1 100%; }
-  .foot-meta { margin-inline-start: 0; }
 }
 
 /* ── 15 · Keyframes ─────────────────────────────────────────────── */

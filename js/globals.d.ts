@@ -11,6 +11,8 @@ interface Window {
     mode?: 'read' | 'readwrite';
     id?: string;
   }) => Promise<any>;
+  /** Links nach draussen der Startseite (js/site-links.js); leer = gibt es noch nicht. */
+  SITE_LINKS?: Record<string, string>;
 }
 
 interface Navigator {

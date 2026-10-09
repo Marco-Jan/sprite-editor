@@ -219,6 +219,11 @@
     <main id="stage">
 
       <div id="stage-head">
+        <!-- Reiter der geöffneten Sprites (js/tabs.js) — am Rechner statt des Namens -->
+        <div id="sprite-tabs" class="sprite-tabs">
+          <div class="tab-list" role="tablist" data-i18n-attr="aria-label:tabs.label" aria-label="Geöffnete Sprites"></div>
+          <button class="icon-btn tab-new" id="tab-new-btn" type="button" data-i18n-attr="title:tabs.new;aria-label:tabs.new" title="Neuer Sprite" aria-label="Neuer Sprite"><span class="ico" data-icon="plus"></span></button>
+        </div>
         <div class="stage-ident">
           <h1 id="stage-title" class="stage-title">Editor</h1>
           <span id="stage-dims" class="stage-dims"></span>
@@ -279,7 +284,12 @@
           <button class="tool-btn" data-tool="magic"  aria-pressed="false" data-i18n-attr="title:tool.colorSelTitle" title="Farbauswahl — zusammenhängende ähnliche Fläche wählen, Toleranz steuert wie viel mitgeht (K)"><span class="tool-ico" data-icon="magic"></span><span class="tool-name" data-i18n="tool.colorSel">Farbwahl</span></button>
         </div>
 
-        <div class="tool-sep" aria-hidden="true"></div>
+        <div class="tool-sep tool-sep--mirror" aria-hidden="true"></div>
+        <!-- Ab hier die zweite Zeile: Symmetrie und die Einstellungen des
+             gewaehlten Werkzeugs. Am Rechner beginnt sie immer neu (siehe
+             .tool-break), damit Groesse und Staerke nicht mal oben, mal unten
+             stehen — und nicht in eine dritte Zeile rutschen. -->
+        <div class="tool-break" aria-hidden="true"></div>
 
         <div class="tool-group" id="mirror-group" role="group" data-i18n-attr="aria-label:tool.mirror" aria-label="Symmetrie">
           <span class="field-label" data-i18n="tool.mirror">Symmetrie</span>
@@ -290,10 +300,6 @@
         </div>
 
         <div class="tool-sep tool-sep--opts" aria-hidden="true"></div>
-        <!-- Ab hier die Einstellungen des gewaehlten Werkzeugs. Am Rechner
-             beginnen sie immer eine neue Zeile (siehe .tool-break), damit
-             Groesse und Staerke nicht mal oben, mal unten stehen. -->
-        <div class="tool-break" aria-hidden="true"></div>
 
         <div class="tool-group" id="brush-size-group" hidden>
           <span class="field-label" data-i18n="tool.size">Größe</span>

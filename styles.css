@@ -668,6 +668,91 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   border-bottom: 1px solid var(--line);
 }
 .stage-ident { display: flex; align-items: baseline; gap: var(--sp-2); min-width: 0; }
+
+/* Reiter der geöffneten Sprites (js/tabs.js) — Karteireiter wie in
+   Aseprite: oben rund, unten gerade. Sie stehen links in der Kopfzeile
+   statt des Namens, sitzen auf deren Unterkante und überdecken die Linie;
+   der aktive hat unten die Farbe der Fläche darunter und geht so in sie
+   über. Passen nicht alle hin, scrollt die Reihe seitlich (Mausrad, am
+   Handy wischen). --head-pad-y ist das Polster der Kopfzeile, damit die
+   Reiter genau bis an ihre Unterkante reichen. */
+#stage-head { --head-pad-y: var(--sp-2); --tab-below: var(--bg); }
+/* Steht oben eine Leiste (Werkzeuge, Farben), geht der Reiter in sie über. */
+#stage:has(> .bar-zone[data-zone="top"] > :is(#toolbar, #color-bar, #timeline)) > #stage-head { --tab-below: var(--surface-1); }
+#stage-head:has(> .sprite-tabs) > .stage-ident { display: none; }
+.sprite-tabs {
+  display: flex;
+  align-items: flex-end;
+  align-self: stretch;
+  gap: var(--sp-1);
+  flex: 1 1 0;
+  min-width: 0;
+  margin-block: calc(-1 * var(--head-pad-y)) calc(-1 * var(--head-pad-y) - 1px);
+  padding-top: var(--sp-1);
+}
+.tab-list {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tab-list::-webkit-scrollbar { display: none; }
+.sprite-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  max-width: 200px;
+  height: 26px;
+  padding: 0 4px 0 10px;
+  border: 1px solid var(--line);
+  border-bottom-color: var(--line-strong);
+  border-radius: var(--r-md) var(--r-md) 0 0;
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  user-select: none;
+}
+.sprite-tab:hover { color: var(--text); background: var(--surface-3); }
+.sprite-tab.is-active {
+  height: 28px;
+  border-color: var(--line-strong);
+  border-top: 2px solid var(--accent);
+  border-bottom-color: var(--tab-below);
+  background: var(--tab-below);
+  color: var(--text);
+  font-weight: 600;
+}
+.sprite-tab:not(:has(.tab-close)) { padding-right: 10px; }
+.sprite-tab.is-dragging { opacity: 0.4; }
+.sprite-tab.is-drop-before { box-shadow: inset 2px 0 0 var(--accent); }
+.sprite-tab.is-drop-after  { box-shadow: inset -2px 0 0 var(--accent); }
+.tab-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tab-close {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.55;
+}
+.tab-close:hover { opacity: 1; background: var(--surface-4); }
+.tab-close .ui-ico { width: 12px; height: 12px; }
+.tab-new { flex: none; align-self: center; }
+/* Finger: etwas mehr Fläche, aber die Reiter sollen sich nicht vordrängen. */
+@media (pointer: coarse) {
+  .sprite-tab { height: 30px; padding-left: 12px; }
+  .sprite-tab.is-active { height: 32px; }
+  .tab-close { width: 24px; height: 24px; }
+}
 .stage-title {
   overflow: hidden;
   font-size: var(--fs-lg);
@@ -1194,27 +1279,28 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
    statt abschneiden. */
 #toolbar { flex-wrap: wrap; row-gap: var(--sp-2); }
 
-/* Die Einstellungen des Werkzeugs (Groesse, Staerke, Toleranz, Gefuellt,
-   Auswahl) stehen am Rechner immer in der zweiten Zeile. Vorher haengten sie
-   hinten an der ersten und rutschten je nach Fensterbreite und gewaehltem
-   Werkzeug hin und her — die Knoepfe sassen nie zweimal an derselben Stelle.
-   Der Umbruch ist ein leeres Element, das eine ganze Zeile breit ist; der
-   Trennstrich davor waere dann das letzte in Zeile eins und faellt weg.
-   Am Handy (bis 1100 px) stecken diese Felder in einer Schublade — dort
-   darf nichts umbrechen. */
+/* Zweite Zeile am Rechner: Symmetrie, dahinter die Einstellungen des
+   Werkzeugs (Groesse, Staerke, Toleranz, Pixel-perfekt, Gefuellt, Auswahl).
+   Vorher haengten die Einstellungen hinten an der ersten Zeile und rutschten
+   je nach Fensterbreite hin und her; ein Umbruch nur vor ihnen machte
+   dagegen eine dritte Zeile auf, sobald Symmetrie aus Platzmangel schon in
+   Zeile zwei stand. Jetzt beginnt Zeile zwei immer mit Symmetrie — eine
+   dritte gibt es nur, wenn Zeile zwei wirklich voll ist.
+   Der Umbruch ist ein leeres Element, eine ganze Zeile breit; der
+   Trennstrich davor waere das letzte in Zeile eins und faellt weg.
+   Am Handy (bis 1100 px) stecken die Einstellungen in einer eigenen Zeile
+   (js/layout.js) — dort bricht hier nichts um. */
 .tool-break { display: none; }
-/* Steht gerade keine Einstellung an (Hand, Stift ohne Groesse), bliebe sonst
-   eine leere zweite Zeile uebrig — darum nur umbrechen, wenn danach wirklich
-   etwas sichtbar ist. */
 @media (min-width: 1100.02px) {
-  #toolbar:has(> #brush-size-group:not([hidden]), > #strength-group:not([hidden]),
-               > #tolerance-group:not([hidden]), > #shape-group:not([hidden]),
-               > #select-group:not([hidden])) > .tool-break {
-    display: block; flex-basis: 100%; height: 0;
-  }
-  #toolbar:has(> #brush-size-group:not([hidden]), > #strength-group:not([hidden]),
-               > #tolerance-group:not([hidden]), > #shape-group:not([hidden]),
-               > #select-group:not([hidden])) > .tool-sep--opts {
+  #toolbar > .tool-break { display: block; flex-basis: 100%; height: 0; }
+  #toolbar > .tool-sep--mirror { display: none; }
+  /* Senkrecht angedockt ist alles eine Spalte — kein Umbruch. */
+  #toolbar.is-vertical > .tool-break { display: none; }
+  #toolbar.is-vertical > .tool-sep--mirror { display: block; }
+  /* Ohne Einstellung (Hand, Fuellen) stuende der Strich allein am Ende. */
+  #toolbar:not(:has(> #brush-size-group:not([hidden]), > #strength-group:not([hidden]),
+               > #tolerance-group:not([hidden]), > #pixel-perfect-group:not([hidden]),
+               > #shape-group:not([hidden]), > #select-group:not([hidden]))) > .tool-sep--opts {
     display: none;
   }
 }
@@ -2182,7 +2268,14 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
   .bar-handle { margin-inline-end: 0; }
 
   /* Kopf der Bühne in einer Zeile. */
-  #stage-head { flex-wrap: nowrap; gap: var(--sp-2); padding: var(--sp-1) var(--sp-3); }
+  #stage-head { flex-wrap: nowrap; gap: var(--sp-2); padding: var(--sp-1) var(--sp-3); --head-pad-y: var(--sp-1); }
+  /* Reiter am Handy: eigene Zeile unter den Knöpfen, wischbar — erst ab
+     zwei offenen Sprites, sonst kostete sie nur Höhe (dann steht oben wie
+     bisher der Name). */
+  #stage-head:has(> .sprite-tabs:not(.is-single)) { flex-wrap: wrap; row-gap: var(--sp-1); }
+  .sprite-tabs { order: 99; flex-basis: 100%; margin-top: 0; padding-top: 0; }
+  .sprite-tabs.is-single { display: none; }
+  #stage-head:has(> .sprite-tabs.is-single) > .stage-ident { display: flex; }
   .stage-ident { flex: 1 1 auto; }
   .stage-dims { display: none; }
   .stage-head-right { flex-wrap: nowrap; gap: var(--sp-2); }
@@ -2283,6 +2376,8 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
   #stage-head .icon-btn,
   .rail-dock .dock-btn,
   #color-bar .current-color { min-width: 44px; min-height: 44px; }
+  /* Das + bei den Reitern bleibt so flach wie sie (sonst hielte es die Zeile hoch). */
+  #stage-head .icon-btn.tab-new { min-width: 32px; min-height: 30px; }
   /* Die Timeline-Knoepfe duerfen etwas kleiner sein: sie stehen in zwei
      ruhigen Zeilen und nicht in einer scrollenden Reihe — dafuer passt die
      zweite Zeile am Stueck aufs Display. */

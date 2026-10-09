@@ -18,7 +18,11 @@ import { t, onLangChange } from './i18n.js';
 // DOM-Refs (werden in initTemplate() gesetzt, nicht beim Modul-Load —
 // damit das HTML existiert wenn wir's brauchen)
 // ────────────────────────────────────────────────────────────────────
-let tplImg, tplFile, tplOpacity, tplOpacityNum, tplScale, tplScaleNum, tplClear, tplCenterBtn, tplTraceBtn, tplTraceRawBtn, tplQuantRow;
+/** @type {HTMLImageElement} */
+let tplImg;
+/** @type {HTMLInputElement} */
+let tplFile, tplOpacity, tplOpacityNum, tplScale, tplScaleNum;
+let tplClear, tplCenterBtn, tplTraceBtn, tplTraceRawBtn, tplQuantRow;
 
 // Pixel-Offset gegenüber Mitte (state der Verschiebung)
 let tplOffsetX = 0, tplOffsetY = 0;
@@ -52,7 +56,7 @@ function applyTplOpacity(source) {
   const v = clamp(raw, 0, 100);
   tplOpacity.value    = v;
   tplOpacityNum.value = v;
-  tplImg.style.opacity = v / 100;
+  tplImg.style.opacity = String(v / 100);
 }
 
 function applyTplScale(source) {
@@ -308,12 +312,12 @@ function showTplControls(show) {
 // Initialisierung — Event-Bindings aufsetzen
 // ────────────────────────────────────────────────────────────────────
 export function initTemplate() {
-  tplImg        = document.getElementById('template-overlay');
-  tplFile       = document.getElementById('template-file');
-  tplOpacity    = document.getElementById('template-opacity');
-  tplOpacityNum = document.getElementById('template-opacity-num');
-  tplScale      = document.getElementById('template-scale');
-  tplScaleNum   = document.getElementById('template-scale-num');
+  tplImg        = /** @type {HTMLImageElement} */ (document.getElementById('template-overlay'));
+  tplFile       = /** @type {HTMLInputElement} */ (document.getElementById('template-file'));
+  tplOpacity    = /** @type {HTMLInputElement} */ (document.getElementById('template-opacity'));
+  tplOpacityNum = /** @type {HTMLInputElement} */ (document.getElementById('template-opacity-num'));
+  tplScale      = /** @type {HTMLInputElement} */ (document.getElementById('template-scale'));
+  tplScaleNum   = /** @type {HTMLInputElement} */ (document.getElementById('template-scale-num'));
   tplClear      = document.getElementById('template-clear');
   tplCenterBtn  = document.getElementById('template-center');
   tplTraceBtn    = document.getElementById('template-trace');
@@ -323,7 +327,8 @@ export function initTemplate() {
   tplImg.addEventListener('load', buildTplOffscreen);
 
   tplFile.addEventListener('change', e => {
-    const file = e.target.files && e.target.files[0];
+    const files = /** @type {HTMLInputElement} */ (e.target).files;
+    const file = files && files[0];
     if (!file) return;
     // Als Data-URL einlesen (statt ObjectURL) — überlebt Reload & taintet
     // den Canvas nicht (getImageData für Pipette/Trace bleibt erlaubt).
@@ -331,7 +336,7 @@ export function initTemplate() {
     reader.onload = ev => {
       tplName = file.name;
       tplRestored = false;
-      tplImg.src = ev.target.result;
+      tplImg.src = /** @type {string} */ (ev.target.result); // readAsDataURL liefert Text
       tplImg.hidden = false;
       centerTpl();
       applyTplOpacity();

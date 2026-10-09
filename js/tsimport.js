@@ -170,6 +170,7 @@ function framesFromColors(colorFrames, w, h) {
       if (c && !index.has(c)) { index.set(c, order.push(c)); }
     }
   }
+  /** @type {Record<string, string>} */
   const palette = {};
   for (const [hex, i] of index) if (i <= MAX_COLORS) palette[i] = hex;
 
@@ -332,6 +333,7 @@ function parseCHeader(text) {
   if (!W || !H || W > 512 || H > 512) return { ok: false, error: t('imp.errCBadSize', { w: W, h: H }) };
 
   const palBlock = text.match(/_PALETTE\s*\[[^\]]*\]\s*=\s*\{([\s\S]*?)\}/i);
+  /** @type {Record<string, string>} */
   const palette = {};
   const free = {};   // Indizes oberhalb der Palette = freie Farben
   if (palBlock) {
@@ -421,6 +423,7 @@ function parseTextRaster(text) {
   const W = Math.max(...chosen.map(b => b.rows[0].length));
   if (W > 512 || H > 512) return { ok: false, error: t('imp.errTxtBig', { w: W, h: H }) };
 
+  /** @type {Record<string, string>} */
   const palette = {};
   const frames = chosen.map(b => {
     const grid = [];
@@ -471,7 +474,10 @@ function parseGame(text) {
     return { ok: false, error: t('imp.errGame', { reason }) };
   }
   const hex = obj.palette.map(p => normalizeHex(p.color));
-  const palette = {}, materials = {};
+  /** @type {Record<string, string>} */
+  const palette = {};
+  /** @type {Record<string, string>} */
+  const materials = {};
   for (let i = 1; i < hex.length && i <= MAX_COLORS; i++) {
     if (hex[i]) palette[i] = hex[i];
     const m = obj.palette[i].material;

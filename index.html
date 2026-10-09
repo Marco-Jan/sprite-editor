@@ -158,11 +158,15 @@
           <li>Läuft offline</li>
           <li>Kein Konto</li>
         </ul>
+        <!-- Drei Wege hinein: Browser, Desktop-App, Quellcode. Ziele in js/site-links.js. -->
         <div class="cta-row">
-          <a class="btn btn--primary btn--lg" href="editor.html" data-i18n="nav.open">Editor öffnen</a>
+          <a class="btn btn--primary btn--lg" href="editor.html" data-i18n="hero.ctaWeb">Im Browser öffnen</a>
+          <a class="btn btn--ghost btn--lg" data-link="download" data-link-soon data-link-state="download" href="#"><svg class="btn-ico" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 19h16"/></svg><span data-when="ready" data-i18n="hero.ctaDownload">Desktop-App laden</span><span data-when="soon" hidden><span data-i18n="hero.ctaDesktop">Desktop-App</span> <span class="soon-badge" data-i18n="soon">bald</span></span></a>
+          <a class="btn btn--ghost btn--lg" data-link="github" href="https://github.com/spritebit/sprite-editor" rel="noopener"><svg class="btn-ico" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="currentColor"><path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.2.5-2.3 1.3-3.1-.2-.4-.6-1.6 0-3.2 0 0 1-.3 3.4 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.8.1 3.2.8.8 1.3 1.9 1.3 3.2 0 4.6-2.8 5.6-5.5 5.9.5.4.9 1.1.9 2.2v3.3c0 .3.1.7.8.6A12 12 0 0 0 12 .3"/></svg><span data-i18n="hero.ctaGithub">Open Source auf GitHub</span></a>
           <!-- Nur sichtbar, wenn der Browser die Installation anbietet (js/pwa.js). -->
           <button type="button" class="btn btn--ghost btn--lg" data-install hidden data-i18n="end.install">Als App installieren</button>
         </div>
+        <p class="hero-platforms" data-i18n-html="hero.platforms">Kostenlos · kein Abo · kein Konto · Open Source (MIT-Lizenz)</p>
         <p class="note" data-i18n-html="hero.note">
           Deine Pixel bleiben im Speicher deines Browsers, auf deinem Rechner.
           Nichts wird hochgeladen — und einmal geöffnet, läuft der Editor auch offline.
@@ -744,20 +748,62 @@
 <!-- ══ Fuß ════════════════════════════════════════════════════════ -->
 <footer class="foot">
   <div class="foot-inner">
-    <p class="foot-brand">
-      <img src="assets/icon.svg" alt="" width="24" height="24">
-      <span>sprite<span class="brand-bit">bit</span></span>
-    </p>
+    <div class="foot-about">
+      <p class="foot-brand">
+        <img src="assets/icon.svg" alt="" width="24" height="24">
+        <span>sprite<span class="brand-bit">bit</span></span>
+      </p>
+      <p class="foot-tag" data-i18n="foot.tag">Pixel-Art-Editor für Sprites — im Browser und als Desktop-App. Open Source unter MIT-Lizenz.</p>
+    </div>
+
+    <nav class="foot-cols" data-i18n-attr="aria-label:foot.aria" aria-label="Weitere Seiten">
+      <div class="foot-col">
+        <h2 class="foot-h" data-i18n="foot.product">Produkt</h2>
+        <ul>
+          <li><a href="editor.html" data-i18n="hero.ctaWeb">Im Browser öffnen</a></li>
+          <li><a data-link="download" href="#" data-i18n="foot.download">Desktop-App (Windows)</a></li>
+          <li><a data-link="releases" href="#" data-i18n="foot.releases">Alle Versionen</a></li>
+          <li><button type="button" class="foot-linkbtn" data-install hidden data-i18n="end.install">Als App installieren</button></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h2 class="foot-h" data-i18n="foot.oss">Open Source</h2>
+        <ul>
+          <li><a data-link="github" href="https://github.com/spritebit/sprite-editor" rel="noopener" data-i18n="foot.srcWeb">Quellcode (Web)</a></li>
+          <li><a data-link="githubRs" href="#" rel="noopener" data-i18n="foot.srcDesktop">Quellcode (Desktop)</a></li>
+          <li><a data-link="license" href="#" rel="noopener" data-i18n="foot.license">MIT-Lizenz</a></li>
+          <li><a data-link="issues" href="#" rel="noopener" data-i18n="foot.issues">Fehler melden</a></li>
+        </ul>
+      </div>
+      <div class="foot-col" data-link-group>
+        <h2 class="foot-h" data-i18n="foot.community">Community</h2>
+        <ul>
+          <li><a data-link="discord" href="#" rel="noopener">Discord</a></li>
+          <li><a data-link="youtube" href="#" rel="noopener">YouTube</a></li>
+          <li><a data-link="instagram" href="#" rel="noopener">Instagram</a></li>
+          <li><a data-link="tiktok" href="#" rel="noopener">TikTok</a></li>
+          <li><a data-link="reddit" href="#" rel="noopener">Reddit</a></li>
+          <li class="foot-soon" data-when="empty" data-i18n="foot.communitySoon">Kanäle folgen bald.</li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h2 class="foot-h" data-i18n="foot.legal">Rechtliches</h2>
+        <ul>
+          <li><a href="impressum.html" data-i18n="foot.imprint">Impressum</a></li>
+          <li><a href="datenschutz.html" data-i18n="foot.privacy">Datenschutz</a></li>
+        </ul>
+      </div>
+    </nav>
+
     <p class="foot-meta">
       <span>© 2026 Marco Jan</span>
       <span aria-hidden="true">·</span>
-      <a href="impressum.html" data-i18n="foot.imprint">Impressum</a>
-      <span aria-hidden="true">·</span>
-      <a href="datenschutz.html" data-i18n="foot.privacy">Datenschutz</a>
+      <span data-i18n="foot.mit">Freie Software unter MIT-Lizenz</span>
     </p>
   </div>
 </footer>
 
+<script src="js/site-links.js"></script>
 <script src="js/landing-i18n.js"></script>
 <script src="js/landing-fx.js"></script>
 <script src="js/pwa.js"></script>
