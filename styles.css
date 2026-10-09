@@ -2116,7 +2116,9 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
 .is-vertical .btn-group { flex-direction: column; }
 .is-vertical .btn-group .btn { border-radius: var(--r-md); }
 .is-vertical .field--inline { flex-direction: column; }
-.is-vertical .size-btns { flex-wrap: wrap; justify-content: center; max-width: 64px; }
+#brush-size { width: 110px; }
+#brush-size-num { width: 3.5rem; }
+.is-vertical #brush-size { width: 100%; }
 .is-vertical #quick-palette { flex-direction: column; flex-wrap: nowrap; }
 .is-vertical .qp-sep { width: 22px; height: 1px; }
 /* Timeline in der schmalen Spalte: die Gruppen sind kurz (drei Knoepfe) und
@@ -2597,7 +2599,7 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
     border-radius: var(--r-lg) var(--r-lg) 0 0;
   }
   #tool-opts[hidden], #tool-opts > [hidden] { display: none; }
-  #tool-opts .size-btns { flex-wrap: wrap; }
+  #tool-opts #brush-size { width: 120px; }
   #tool-opts .brush-sz { min-width: 32px; padding: 7px 6px; }
   #tool-opts input[type="range"] { width: 120px; }
 }

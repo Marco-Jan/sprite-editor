@@ -410,6 +410,7 @@ const STATIC = {
     'tool.mirrorX':     'Vertical axis — what appears on the left appears on the right',
     'tool.mirrorY':     'Horizontal axis — top and bottom mirrored',
     'tool.size':        'Size',
+    'tool.sizeTitle':   'Size of brush, eraser and spray — or Alt + right-drag',
     'tool.strength':    'Strength',
     'tool.tolerance':   'Tolerance',
     'tool.shapeFill':   'Filled',

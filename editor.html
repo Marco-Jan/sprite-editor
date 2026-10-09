@@ -303,17 +303,9 @@
 
         <div class="tool-group" id="brush-size-group" hidden>
           <span class="field-label" data-i18n="tool.size">Größe</span>
-          <div class="size-btns">
-            <button class="brush-sz is-active" data-size="1">1</button>
-            <button class="brush-sz" data-size="2">2</button>
-            <button class="brush-sz" data-size="3">3</button>
-            <button class="brush-sz" data-size="4">4</button>
-            <button class="brush-sz" data-size="5">5</button>
-            <button class="brush-sz" data-size="6">6</button>
-            <button class="brush-sz" data-size="7">7</button>
-            <button class="brush-sz" data-size="8">8</button>
-            <button class="brush-sz" data-size="9">9</button>
-          </div>
+          <!-- 1–64 Pixel; Alt + rechte Maustaste ziehen geht auch (js/sizedrag.js) -->
+          <input type="range" id="brush-size" min="1" max="64" value="1" data-i18n-attr="title:tool.sizeTitle" title="Größe von Pinsel, Radierer und Spray — auch mit Alt + rechter Maustaste ziehen">
+          <input type="number" id="brush-size-num" class="input input--num" min="1" max="64" value="1" data-i18n-attr="title:tool.sizeTitle" title="Größe von Pinsel, Radierer und Spray — auch mit Alt + rechter Maustaste ziehen">
         </div>
 
         <label class="field field--inline" id="strength-group" hidden>

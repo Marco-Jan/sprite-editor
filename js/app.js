@@ -13,7 +13,7 @@ import {
 import { initDock } from './dock.js';
 import { initLayout, isMobileLayout, refreshToolOpts } from './layout.js';
 import { initTabs } from './tabs.js';
-import { draggedSize, SIZED_TOOLS } from './sizedrag.js';
+import { draggedSize, clampSize, SIZED_TOOLS } from './sizedrag.js';
 import { applyIcons, iconSvg } from './icons.js';
 import { showConfirmToast, showInfoToast } from './toast.js';
 import {
@@ -356,9 +356,9 @@ let shapeStart = null;
 let sizeDrag = null;
 
 function setBrushSize(n) {
-  state.brushSize = n;
-  document.querySelectorAll('.brush-sz').forEach(b =>
-    b.classList.toggle('is-active', Number(b.dataset.size) === n));
+  state.brushSize = clampSize(n);
+  $('brush-size').value = String(state.brushSize);
+  if (document.activeElement !== $('brush-size-num')) $('brush-size-num').value = String(state.brushSize);
 }
 
 const shapeLabel = tool => t(`shape.${tool}`);
@@ -819,8 +819,11 @@ function initToolbar() {
   selAction('sel-fill-btn',   () => { info(t('sel.filled',      { n: fillSelection() })); });
   selAction('sel-none-btn',   () => { deselect(); info(t('sel.dropped')); }, false);
 
-  document.querySelectorAll('.brush-sz').forEach(btn =>
-    btn.addEventListener('click', () => { setBrushSize(Number(btn.dataset.size)); saveState(); }));
+  // Größe: Regler und Zahlenfeld zeigen dasselbe (1–64).
+  $('brush-size').addEventListener('input', e => setBrushSize(e.target.value));
+  $('brush-size-num').addEventListener('input', e => { if (e.target.value !== '') setBrushSize(e.target.value); });
+  $('brush-size-num').addEventListener('change', e => { setBrushSize(e.target.value); e.target.value = String(state.brushSize); });
+  for (const id of ['brush-size', 'brush-size-num']) $(id).addEventListener('change', saveState);
 
   const strength = $('strength-slider');
   strength.addEventListener('input', () => {
@@ -1607,8 +1610,7 @@ function syncUiFromState() {
   $('tolerance-val').textContent = state.wandTolerance + '%';
   $('bg-dark-btn').classList.toggle('is-active', state.editorBg === 'dark');
   $('bg-bw-btn').classList.toggle('is-active', state.editorBg === 'bw');
-  document.querySelectorAll('.brush-sz').forEach(b =>
-    b.classList.toggle('is-active', Number(b.dataset.size) === state.brushSize));
+  setBrushSize(state.brushSize);
   const fmtSel = $('output-format');
   if (fmtSel) { fmtSel.value = state.outputFormat; syncFormatUI(); }
   $('shape-fill-btn').classList.toggle('is-active', state.shapeFill);
