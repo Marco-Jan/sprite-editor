@@ -21,7 +21,15 @@ import { state, getSprite, createSprite } from './state.js';
 import { renderCallbacks } from './render.js';
 
 const KEY = 'spritebit_bitty';
-const TIP_COUNT = 11;
+// Tipps: abwechselnd zur Bedienung (bitty.tip.*) und zum Handwerk
+// Pixel-Art (bitty.art.*), damit nicht erst zehnmal Tastenkürzel kommen.
+const APP_TIPS = 11, ART_TIPS = 10;
+const TIPS = [];
+for (let i = 1; i <= Math.max(APP_TIPS, ART_TIPS); i++) {
+  if (i <= APP_TIPS) TIPS.push(`bitty.tip.${i}`);
+  if (i <= ART_TIPS) TIPS.push(`bitty.art.${i}`);
+}
+const TIP_COUNT = TIPS.length;
 
 // Touren: je Schritt ein Ziel (erstes sichtbares gewinnt) und ein Text.
 // `panel` klappt dieses Panel vorher auf; ist das Ziel darin gerade
@@ -188,8 +196,13 @@ function showTip(auto = false, advance = true) {
   const actions = [{ label: t('bitty.next'), primary: true, onClick: () => showTip() }];
   if (auto) actions.push({ label: t('bitty.quiet'), onClick: () => { prefs.quiet = true; savePrefs(); hide(); } });
   else actions.push({ label: t('bitty.close'), onClick: hide });
-  // Ohne Zähler: wie viele Tipps es gibt, ist nicht das Thema.
-  say(t(`bitty.tip.${i + 1}`), actions, { autoClose: auto, search: true, focus: !auto });
+  // Ohne Zähler: wie viele Tipps es gibt, ist nicht das Thema. Pixel-Art-
+  // Tipps bekommen eine kleine Überschrift, sie sind eine andere Sorte.
+  const key = TIPS[i];
+  say(t(key), actions, {
+    autoClose: auto, search: true, focus: !auto,
+    step: key.startsWith('bitty.art.') ? t('bitty.artLabel') : '',
+  });
 }
 
 // ── Suche ──────────────────────────────────────────────────────────
@@ -202,7 +215,7 @@ function showTip(auto = false, advance = true) {
 // findet „layer“ die „Ebenen“ — angezeigt wird aber, was auf dem
 // Bildschirm steht.
 
-/** @typedef {{ kind: 'help'|'tool'|'panel'|'menu'|'action'|'tour', label: string, names: string, sub: string, text: string, el: HTMLElement | null, danger?: boolean, tour?: string }} Entry */
+/** @typedef {{ kind: 'help'|'tool'|'panel'|'menu'|'action'|'tour'|'tip', label: string, names: string, sub: string, text: string, el: HTMLElement | null, danger?: boolean, tour?: string, tip?: number }} Entry */
 
 // Was Bitty nie selbst drückt, sondern nur zeigt: alles, was löscht oder
 // zurücksetzt. Lieber einmal zu vorsichtig.
@@ -242,6 +255,11 @@ function collect() {
   for (const n of ['lesson', 'start', ...TOPICS]) {
     out.push({ kind: 'tour', label: t(`bitty.tourName.${n}`), names: '', sub: '', text: t(`bitty.tourWords.${n}`), el: null, tour: n });
   }
+  // Tipps — vor allem die zum Handwerk („schatten“, „kontur“)
+  TIPS.forEach((key, k) => {
+    const txt = t(key);
+    out.push({ kind: 'tip', label: txt.length > 60 ? txt.slice(0, 57) + ' …' : txt, names: '', sub: '', text: txt, el: null, tip: k + 1 });
+  });
   // Werkzeuge: Name und Tooltip (dort steht auch das Kürzel)
   document.querySelectorAll('#toolbar [data-tool]').forEach(el => {
     const nameEl = el.querySelector('.tool-name');
@@ -373,6 +391,8 @@ function go(h) {
   const back = query.value;
   if (h.kind === 'help') { openHelpAt(h.el); return; }
   if (h.kind === 'tour') { if (h.tour === 'lesson') startLesson(); else startTour(h.tour); return; }
+  // Tipp: Suchfeld leeren, sonst stünden weiter die Treffer statt des Tipps da.
+  if (h.kind === 'tip') { prefs.tip = h.tip; query.value = ''; showTip(false, false); return; }
   const disabled = /** @type {HTMLButtonElement} */ (h.el).disabled;
   // Befehl ausführen: Werkzeug wählen, Knopf drücken, Menüpunkt auslösen.
   if ((h.kind === 'tool' || h.kind === 'action' || h.kind === 'menu') && !h.danger && !disabled) {
