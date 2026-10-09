@@ -78,7 +78,7 @@ const TOURS = {
 };
 const TOPICS = ['anim', 'layers', 'tiles', 'photo'];
 
-/** @type {{ tour: boolean, tip: number, quiet: boolean, hints?: boolean, off?: Record<string, boolean> }} */
+/** @type {{ tour: boolean, tip: number, quiet: boolean, hints?: boolean, off?: Record<string, boolean>, moments?: Record<string, boolean> }} */
 let prefs = { tour: false, tip: 0, quiet: false, hints: true, off: {} };
 function loadPrefs() {
   try { prefs = { ...prefs, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch { /* privates Fenster */ }
@@ -556,6 +556,47 @@ export function startLesson() {
   ], { tour: true });
 }
 
+// ── Persönlichkeit ─────────────────────────────────────────────────
+// Ein paar Momente, in denen Bitty sich freut — jeder genau einmal im
+// Leben dieses Browsers, damit es nett bleibt und nicht nervt. Wer Bitty
+// mit „Nicht von selbst“ ruhig gestellt hat, bekommt nur das Hüpfen.
+// Dazu: nach 5 Minuten ohne Eingabe döst er ein, bei der nächsten wacht er auf.
+const IDLE_MS = 5 * 60 * 1000;
+let lastInput = Date.now();
+
+function moment(id, key) {
+  bitty?.hop();
+  if (prefs.moments?.[id]) return;
+  prefs.moments = { ...prefs.moments, [id]: true };
+  savePrefs();
+  if (prefs.quiet || isOpen()) return; // nicht dazwischenreden
+  setTarget(null);
+  say(t(key), [{ label: t('bitty.ok'), primary: true, onClick: hide }], { autoClose: true });
+}
+
+function initMoments() {
+  // Erster Export — egal welcher Weg
+  for (const id of ['export-png-btn', 'export-pdf-btn', 'export-gif-btn', 'export-sheet-btn', 'save-code-btn', 'copy-btn']) {
+    document.getElementById(id)?.addEventListener('click', () => moment('export', 'bitty.m.export'));
+  }
+  // Erste abgespielte Animation: der Abspiel-Knopf wird gedrückt (auch per Enter)
+  const play = document.getElementById('tl-play');
+  if (play) {
+    new MutationObserver(() => {
+      if (play.getAttribute('aria-pressed') === 'true' && (getSprite()?.frames.length || 0) > 1) moment('anim', 'bitty.m.anim');
+    }).observe(play, { attributes: true, attributeFilter: ['aria-pressed'] });
+  }
+  // Dösen und Aufwachen
+  const wake = () => {
+    lastInput = Date.now();
+    if (bitty?.isAsleep()) bitty.sleep(false);
+  };
+  for (const ev of ['pointerdown', 'keydown', 'wheel']) document.addEventListener(ev, wake, { capture: true, passive: true });
+  window.setInterval(() => {
+    if (!bitty?.isAsleep() && !isOpen() && Date.now() - lastInput > IDLE_MS) bitty?.sleep(true);
+  }, 15000);
+}
+
 // ── Tour ───────────────────────────────────────────────────────────
 function endTour() {
   stopLesson();
@@ -663,6 +704,7 @@ export function initHelper() {
     if (isOpen()) hide(); else showTip();
   });
   document.getElementById('bitty-tour-btn')?.addEventListener('click', chooseTour);
+  initMoments();
   // Lektion, letzter Schritt: wurde ein GIF exportiert?
   document.getElementById('export-gif-btn')?.addEventListener('click', () => { gifClicked = true; });
   document.getElementById('bitty-hints-btn')?.addEventListener('click', () => {

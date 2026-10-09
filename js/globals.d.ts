@@ -18,11 +18,13 @@ interface Window {
   /** Bitty, das Maskottchen (js/bitty.js) — Startseite und Editor. */
   Bitty?: {
     PALETTE: string[];
-    FRAMES: Record<'idle' | 'squish' | 'blink' | 'hop', string[]>;
+    FRAMES: Record<'idle' | 'squish' | 'blink' | 'hop' | 'doze', string[]>;
     draw(canvas: HTMLCanvasElement, name: string, palette?: string[]): void;
     mount(canvas: HTMLCanvasElement, opts?: { palette?: string[] }): {
       hop(): void;
       setPalette(p?: string[]): void;
+      sleep(on: boolean): void;
+      isAsleep(): boolean;
       stop(): void;
     };
   };

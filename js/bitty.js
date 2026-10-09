@@ -32,10 +32,13 @@
     '...1111111111...',
     _,
   ];
+  // ausgeatmet: eine Zeile flacher, der Boden bleibt, wo er ist
+  var SQUISH = [_].concat(IDLE.slice(0, 10), IDLE.slice(11));
   var FRAMES = {
     idle: IDLE,
-    // ausgeatmet: eine Zeile flacher, der Boden bleibt, wo er ist
-    squish: [_].concat(IDLE.slice(0, 10), IDLE.slice(11)),
+    squish: SQUISH,
+    // dösend: ausgeatmet und Augen halb zu (beim Schlafen im Wechsel mit „blink“)
+    doze: SQUISH.slice(0, 9).concat(['.13333333333331.'], SQUISH.slice(10)),
     // Augen halb zu: die obere Augenzeile wird Körper
     blink: IDLE.slice(0, 8).concat(['.13333333333331.'], IDLE.slice(9)),
     // in der Luft: zwei Pixel höher
@@ -69,7 +72,7 @@
    */
   function mount(canvas, opts) {
     var palette = (opts && opts.palette) || PALETTE;
-    var timer = 0, blinkAt = 0, busy = false, up = true, stopped = false;
+    var timer = 0, blinkAt = 0, busy = false, up = true, stopped = false, asleep = false;
 
     function show(name) { draw(canvas, name, palette); }
 
@@ -77,6 +80,13 @@
     function tick() {
       if (stopped) return;
       if (busy || document.hidden) { timer = window.setTimeout(tick, 400); return; }
+      // Schlafen: Augen zu, langsam atmen, kein Blinzeln.
+      if (asleep) {
+        up = !up;
+        show(up ? 'blink' : 'doze');
+        timer = window.setTimeout(tick, 1600);
+        return;
+      }
       var now = Date.now();
       if (now >= blinkAt) {
         blinkAt = now + 2500 + Math.random() * 3500;
@@ -109,6 +119,14 @@
     return {
       hop: function () { play([['squish', 90], ['hop', 170], ['squish', 90], ['idle', 120], ['hop', 140], ['idle', 0]]); },
       setPalette: function (p) { palette = p || PALETTE; if (!busy) show(up ? 'idle' : 'squish'); },
+      // Einschlafen bzw. aufwachen. Bei „Bewegung reduzieren“ nur die Augen.
+      sleep: function (on) {
+        if (asleep === !!on) return;
+        asleep = !!on;
+        if (still) { show(asleep ? 'blink' : 'idle'); return; }
+        if (!asleep) this.hop();
+      },
+      isAsleep: function () { return asleep; },
       stop: function () { stopped = true; window.clearTimeout(timer); },
     };
   }
