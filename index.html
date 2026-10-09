@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title data-i18n="meta.title">spritebit – Pixel Art Editor online, Export als Code</title>
-  <meta name="description" data-i18n-attr="content:meta.desc" content="Pixel-Art-Editor für den Browser: zeichnen, Paletten bauen, Fotos als Vorlage abpausen und in neun Code-Formaten exportieren. Kein Build, keine Anmeldung, alles bleibt lokal.">
+  <title data-i18n="meta.title">spritebit – Pixel Art Editor online: Sprites, Animation &amp; Tilemaps</title>
+  <meta name="description" data-i18n-attr="content:meta.desc" content="Kostenloser Pixel-Art-Editor im Browser und für Windows: Sprites zeichnen, mit Ebenen und Timeline animieren, Tilemaps für Spiel-Levels bauen und als PNG, GIF, Spritesheet, Godot-Szene oder Code exportieren. Ohne Konto, alles bleibt lokal.">
   <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#121214">
 
@@ -22,15 +22,15 @@
   <meta property="og:site_name" content="spritebit">
   <meta property="og:locale" data-i18n-attr="content:meta.locale" content="de_DE">
   <meta property="og:url" content="https://spritebit.at/">
-  <meta property="og:title" data-i18n-attr="content:meta.ogTitle" content="spritebit – Pixel Art Editor online, Export als Code">
-  <meta property="og:description" data-i18n-attr="content:meta.ogDesc" content="Vom leeren Raster zum fertigen Sprite. Zeichnen, Paletten bauen, exportieren — alles im Browser, nichts wird hochgeladen.">
+  <meta property="og:title" data-i18n-attr="content:meta.ogTitle" content="spritebit – Pixel Art Editor online: Sprites, Animation &amp; Tilemaps">
+  <meta property="og:description" data-i18n-attr="content:meta.ogDesc" content="Vom leeren Raster zum fertigen Sprite, zur Animation und zum Spiel-Level. Zeichnen, animieren, Kacheln bauen, exportieren — alles im Browser, nichts wird hochgeladen.">
   <meta property="og:image" content="https://spritebit.at/assets/og-image.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" data-i18n-attr="content:meta.ogAlt" content="spritebit — Pixel-Treppe in Grün und Blau neben dem Schriftzug.">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" data-i18n-attr="content:meta.ogTitle" content="spritebit – Pixel Art Editor online, Export als Code">
-  <meta name="twitter:description" data-i18n-attr="content:meta.twDesc" content="Zeichnen, Paletten bauen, exportieren — alles im Browser, nichts wird hochgeladen.">
+  <meta name="twitter:title" data-i18n-attr="content:meta.ogTitle" content="spritebit – Pixel Art Editor online: Sprites, Animation &amp; Tilemaps">
+  <meta name="twitter:description" data-i18n-attr="content:meta.twDesc" content="Zeichnen, animieren, Tilemaps bauen, exportieren — alles im Browser, nichts wird hochgeladen.">
   <meta name="twitter:image" content="https://spritebit.at/assets/og-image.png">
 
   <link rel="stylesheet" href="landing.css">
@@ -69,26 +69,37 @@
     "url": "https://spritebit.at/",
     "applicationCategory": "DesignApplication",
     "applicationSubCategory": "Pixel-Art-Editor",
-    "operatingSystem": "Web-Browser",
-    "inLanguage": "de",
-    "description": "Pixel-Art-Editor für den Browser: zeichnen, Paletten bauen, Fotos als Vorlage abpausen und in neun Code-Formaten exportieren. Kein Build, keine Anmeldung, alles bleibt lokal.",
+    "operatingSystem": "Web-Browser, Windows",
+    "inLanguage": [
+      "de",
+      "en"
+    ],
+    "description": "Kostenloser Pixel-Art-Editor im Browser und für Windows: Sprites zeichnen, mit Ebenen und Timeline animieren, Tilemaps für Spiel-Levels bauen und als PNG, GIF, Spritesheet, Godot-Szene oder Code exportieren. Ohne Konto, alles bleibt lokal.",
     "image": "https://spritebit.at/assets/og-image.png",
     "isAccessibleForFree": true,
+    "license": "https://opensource.org/licenses/MIT",
+    "downloadUrl": "https://github.com/spritebit/spritebit-rs/releases/latest",
     "offers": {
       "@type": "Offer",
       "price": "0",
       "priceCurrency": "EUR"
     },
     "featureList": [
-      "Zeichnen mit Stift, Pinsel, Spray, Füllen, Radierer und Zauberstab",
+      "Zeichnen mit Stift, Pinsel (1–64 px), Spray, Füllen, Radierer und Zauberstab",
+      "Clean Stroke für saubere 1-Pixel-Linien, Symmetrie über zwei Achsen",
       "Formen: Linie, Rechteck, Ellipse mit Live-Vorschau",
-      "Auswahl per Rechteck, Lasso und Farbauswahl",
-      "Freies Drehen, Spiegeln und Verschieben der Auswahl",
-      "Index-basierte Paletten mit bis zu 255 Farben und Umfärben per Knopf",
-      "Foto als Vorlage abpausen",
-      "Export als PNG, PDF und Spritesheet",
+      "Auswahl per Rechteck, Lasso und Farbauswahl; freies Drehen, Spiegeln und Verschieben",
+      "Ebenen mit Deckkraft, Sperre und Masken",
+      "Animation: Timeline als Raster aus Ebenen und Frames, Tags, verknüpfte Zellen, Onion Skin",
+      "Tilemaps für Spiel-Levels mit Kachelsatz, Auto- und Manuell-Modus",
+      "Licht und Schlagschatten als eigene, jederzeit änderbare Ebenen",
+      "Index-basierte Paletten mit bis zu 255 Farben, 17 eingebaute Paletten",
+      "Foto als Vorlage abpausen und auf wenige Farben reduzieren",
+      "Hilfslinien und Figuren-Proportionen, als eigene Layouts speicherbar",
+      "Export als PNG, PDF, GIF und Spritesheet mit JSON-Atlas",
+      "Export für Godot 4: Kachelbild und Szene mit TileMapLayer",
       "Export als TypeScript, JavaScript, JSON, SVG, CSS, C-Header, Python und Text",
-      "Funktioniert offline und lässt sich als App installieren (PWA)"
+      "Funktioniert offline und lässt sich als App installieren (PWA), Desktop-App für Windows"
     ]
   }
   </script>
@@ -154,6 +165,7 @@
         <ul class="hero-chips" data-i18n-html="hero.chips">
           <li>Frames &amp; GIF</li>
           <li>Ebenen</li>
+          <li>Tilemaps</li>
           <li>9 Code-Formate</li>
           <li>Läuft offline</li>
           <li>Kein Konto</li>
@@ -527,8 +539,8 @@
           Pixel mit diesem Index sofort mit um — ohne dass du ein Pixel anfasst.
         </p>
         <ul class="facts" data-i18n-html="s2.facts">
-          <li><span class="fact-key">Index 0</span> ist immer transparent, <span class="fact-key">1–9</span> belegst du frei.</li>
-          <li><span class="fact-key">Neun Schemata</span> sind eingebaut, eigene legst du daneben an.</li>
+          <li><span class="fact-key">Index 0</span> ist immer transparent, bis zu <span class="fact-key">255 Farben</span> je Palette.</li>
+          <li><span class="fact-key">17 Paletten</span> sind eingebaut, eigene legst du daneben an.</li>
           <li><span class="fact-key">Jeder Sprite</span> merkt sich seine eigene Palette.</li>
         </ul>
       </div>
@@ -580,17 +592,27 @@
       <li class="tool">
         <h3>Animation</h3>
         <p class="keys-row"><kbd>,</kbd><kbd>.</kbd><kbd>Enter</kbd></p>
-        <p>Frames in einer Timeline, Onion Skin, abspielen mit eigenem Tempo je Frame.</p>
+        <p>Timeline als Raster aus Ebenen und Frames, Tags, verknüpfte Zellen, Onion Skin — eigenes Tempo je Frame.</p>
       </li>
       <li class="tool">
         <h3>Ebenen</h3>
         <p class="keys-row"><kbd>+</kbd><kbd>⧉</kbd><kbd>⤓</kbd></p>
-        <p>Übereinander malen, ausblenden, sperren, Deckkraft — exportiert wird, was du siehst.</p>
+        <p>Übereinander malen, ausblenden, sperren, Deckkraft, Masken — exportiert wird, was du siehst.</p>
       </li>
       <li class="tool">
         <h3>Hilfslinien</h3>
         <p class="keys-row"><kbd>G</kbd></p>
-        <p>Freie Linien und Figuren-Proportionen von Chibi bis Held — nur zum Zeichnen, nie im Export.</p>
+        <p>Freie Linien und Figuren-Proportionen von Chibi bis Held, als eigene Layouts speicherbar — nie im Export.</p>
+      </li>
+      <li class="tool">
+        <h3>Licht</h3>
+        <p class="keys-row"><kbd>↖</kbd><kbd>☀</kbd></p>
+        <p>Lichtquelle wählen — Kanten und Schlagschatten kommen als eigene Ebene und lassen sich jederzeit umstellen.</p>
+      </li>
+      <li class="tool">
+        <h3>Kacheln</h3>
+        <p class="keys-row"><kbd>▦</kbd></p>
+        <p>Tilemaps für Spiel-Levels: eine Kachel anmalen, überall geändert. Raus als Godot-Szene.</p>
       </li>
     </ul>
   </section>
@@ -679,6 +701,7 @@
       <li class="fmt"><span class="fmt-ext">.pdf</span><h3>PDF</h3><p>Zum Drucken oder Weitergeben</p></li>
       <li class="fmt"><span class="fmt-ext">.gif</span><h3>Animation</h3><p>Alle Frames als GIF, läuft endlos</p></li>
       <li class="fmt"><span class="fmt-ext">.png</span><h3>Spritesheet</h3><p>Alle Sprites und Frames in einem Bild, mit Liste wo welcher sitzt</p></li>
+      <li class="fmt"><span class="fmt-ext">.tscn</span><h3>Godot-Tilemap</h3><p>Kachelbild plus Szene mit TileMapLayer — direkt in Godot 4 öffnen</p></li>
     </ul>
 
     <p class="section-lead section-lead--sub" data-i18n="s5.subLead">

@@ -520,6 +520,17 @@
             </select>
           </label>
           <button class="btn" id="gd-fit" data-i18n="gd.fit" data-i18n-attr="title:gd.fitTitle" title="Ober- und Unterkante der Einteilung auf das Gezeichnete setzen">An Figur anpassen</button>
+          <!-- Eigene Layouts: für alle Sprites, js/guidelayouts.js -->
+          <span class="field-label" data-i18n="gd.layouts">Eigene Layouts</span>
+          <div class="field-controls gd-layout-row">
+            <select id="gd-layouts" class="input input--sm" data-i18n-attr="title:gd.layoutsTitle" title="Gespeicherte Hilfslinien-Layouts — gelten für alle Sprites"></select>
+            <button class="btn" id="gd-layout-apply" data-i18n="gd.layoutApply" data-i18n-attr="title:gd.layoutApplyTitle" title="Linien und Einteilung dieses Layouts auf den Sprite legen — bei anderer Größe anteilig umgerechnet">Anwenden</button>
+            <button class="btn btn--danger-soft" id="gd-layout-del" data-i18n-attr="title:gd.layoutDelTitle;aria-label:gd.layoutDelTitle" title="Gewähltes Layout löschen" aria-label="Gewähltes Layout löschen">×</button>
+          </div>
+          <div class="field-controls gd-layout-row">
+            <input type="text" id="gd-layout-name" class="input input--sm" maxlength="40" autocomplete="off" data-i18n-attr="placeholder:gd.layoutName;title:gd.layoutName" placeholder="Name des Layouts" title="Name des Layouts">
+            <button class="btn" id="gd-layout-save" data-i18n="gd.layoutSave" data-i18n-attr="title:gd.layoutSaveTitle" title="Die jetzigen Linien und die Einteilung als Layout speichern — gleicher Name ersetzt">Speichern</button>
+          </div>
           <p class="field-note" data-i18n="gd.note">Nur zum Zeichnen — die Linien erscheinen in keinem Export. Im Modus „Verschieben“ Linien ziehen, eine freie Linie aus dem Bild ziehen löscht sie, ein Tipp daneben beendet den Modus.</p>
         </div>
       </section>
@@ -1040,9 +1051,18 @@
     </div>
 
     <p class="modal-intro" data-i18n-html="help.intro">
-      Pixel-Editor mit Foto-Vorlage. Du malst frei — oder paust ein Foto als <b>Schablone</b> ab
+      Pixel-Editor für Sprites, Animationen und Spiel-Levels. Du malst frei — mit Ebenen, Frames, Licht und Kacheln — oder paust ein Foto als <b>Schablone</b> ab
       und lässt es automatisch zu einem sauberen Sprite verarbeiten.
     </p>
+
+    <h3 class="help-h" data-i18n="help.h.workspace">Arbeitsfläche: Reiter und Panels</h3>
+    <div class="help-list" data-i18n-html="help.workspace">
+      <div>Die <b>Reiter</b> über der Zeichenfläche zeigen die geöffneten Sprites — anklicken wechselt, <b>×</b> schließt den Reiter (der Sprite bleibt in der Liste), <b>+</b> legt einen neuen an.</div>
+      <div>Jedes Panel wohnt im <b>Dock</b> am Rand und klappt als Schublade auf. Im Panel-Kopf heftet die <b>Pinnadel</b> es fest in die Spalte daneben, das <b>Fenster</b>-Symbol lässt es frei schweben. Am Kopf anfassen und ziehen setzt es woanders hin.</div>
+      <div>Werkzeuge, Farbzeile und Timeline lassen sich genauso oben, unten oder seitlich anpinnen — seitlich liegen sie wie Panels untereinander.</div>
+      <div>In Feldern für Größen darf man rechnen: <code>24 * 4</code>, <code>24x4</code>, <code>(16+8)*2</code> oder <code>96 : 4</code> — beim Verlassen des Felds steht das Ergebnis darin.</div>
+      <div><b>Vollbild</b> blendet alles außer der Zeichenfläche aus; die Leisten holen die Griffe am Rand zurück.</div>
+    </div>
 
     <h3 class="help-h" data-i18n="help.h.palettes">Farbpaletten</h3>
     <div class="help-list" data-i18n-html="help.palettes">
@@ -1057,12 +1077,14 @@
       <div><b>Stift</b> — einzelne Pixel.</div>
       <div><b>Pinsel</b> — Fläche; <i>Stärke</i> = Dichte, <i>Größe</i> = Kantenlänge.</div>
       <div><b>Spray</b> — zufällige Pixel; <i>Stärke</i> = Menge pro Ereignis.</div>
+      <div><b>Größe</b> 1–64 per Regler oder Zahlenfeld; <span class="kbd">Alt</span> + rechte Maustaste ziehen verstellt sie direkt auf der Zeichenfläche. Ein Umriss zeigt, was Pinsel, Radierer und Spray gleich treffen.</div>
+      <div><b>Clean Stroke</b> — beim Stift (und beim Radierer mit Größe 1) verschwinden die L-Ecken einer freihändigen Linie: saubere 1-Pixel-Linien wie von Hand gesetzt.</div>
       <div><b>Füllen</b> — zusammenhängende gleiche Fläche.</div>
       <div><b>Radierer</b> — setzt auf transparent.</div>
       <div><b>Zauberstab</b> — löscht zusammenhängende <i>ähnliche</i> Fläche; <i>Toleranz</i> steuert, wie viel Abweichung mitgeht.</div>
       <div><b>Linie · Rechteck · Ellipse</b> — aufziehen, die Vorschau zeigt das Ergebnis, Loslassen zeichnet. <i>Gefüllt</i> schaltet zwischen Kontur und Fläche.</div>
       <div><b>Auswahl · Lasso · Farbwahl</b> — drei Wege zur selben Sache: ein Bereich, den man als Ganzes bewegt.</div>
-      <div><b>Hand</b> — schiebt nur die Ansicht und verändert nichts am Bild. Nützlich, wenn man herangezoomt arbeitet oder jemandem etwas zeigt, ohne versehentlich zu malen. Dasselbe geht jederzeit mit gehaltener <span class="kbd">Leertaste</span>.</div>
+      <div><b>Hand</b> — schiebt nur die Ansicht und verändert nichts am Bild; auf einer Hilfslinie zieht sie die Linie. Dasselbe Verschieben geht jederzeit mit gehaltener <span class="kbd">Leertaste</span>.</div>
     </div>
 
     <h3 class="help-h" data-i18n="help.h.mirror">Symmetrie</h3>
@@ -1099,8 +1121,9 @@
     <h3 class="help-h" data-i18n="help.h.guides">Hilfslinien</h3>
     <div class="help-list" data-i18n-html="help.guides">
       <div>Panel <b>Hilfslinien</b> im Dock — nur zum Zeichnen, sie erscheinen in keinem Export. <span class="kbd">G</span> blendet alle ein und aus.</div>
-      <div><b>Freie Linien</b>: „+ Waagerecht“ / „+ Senkrecht“ setzt eine Linie in die Mitte. Im Modus <b>Verschieben</b> zieht man Linien auf der Zeichenfläche an ihren Platz (immer auf einer Pixelgrenze); aus dem Bild gezogen ist eine Linie gelöscht. Solange wird nicht gemalt — ein Tipp neben die Linien oder <span class="kbd">Esc</span> beendet den Modus; ohne Linien endet er von selbst.</div>
+      <div><b>Freie Linien</b>: „+ Waagerecht“ / „+ Senkrecht“ setzt eine Linie in die Mitte. Im Modus <b>Verschieben</b> zieht man Linien auf der Zeichenfläche an ihren Platz (immer auf einer Pixelgrenze); aus dem Bild gezogen ist eine Linie gelöscht. Solange wird nicht gemalt — ein Tipp neben die Linien oder <span class="kbd">Esc</span> beendet den Modus. Mit dem <b>Hand</b>-Werkzeug lässt sich eine Linie auch ohne den Modus greifen.</div>
       <div><b>Figur</b>: teilt eine Figur in 2 (Chibi), 3, 4, 6 oder 8 Kopfhöhen und markiert Kinn, Brust, Hüfte, Knie usw. samt Körperachse. „An Figur anpassen“ setzt Ober- und Unterkante auf das Gezeichnete; beide lassen sich im Modus Verschieben ziehen.</div>
+      <div><b>Eigene Layouts</b>: Linien und Einteilung unter einem Namen speichern und auf jeden Sprite anwenden — bei anderer Größe werden sie anteilig umgerechnet. Gleicher Name ersetzt, × löscht. Die Layouts gelten für alle Sprites.</div>
       <div>Die Linien gehören zum Sprite und werden mit dem Projekt gespeichert.</div>
     </div>
 
@@ -1113,20 +1136,41 @@
 
     <h3 class="help-h" data-i18n="help.h.layers">Ebenen</h3>
     <div class="help-list" data-i18n-html="help.layers">
-      <div>Jeder Sprite kann mehrere <b>Ebenen</b> haben — das Panel <b>Ebenen</b> im Dock. Gemalt wird immer in die <b>aktive</b> Ebene; angezeigt werden alle sichtbaren übereinander, die oberste in der Liste liegt oben.</div>
+      <div>Jeder Sprite kann mehrere <b>Ebenen</b> haben — das Panel <b>Ebenen</b> im Dock und die Zeilen der Timeline. Gemalt wird immer in die <b>aktive</b> Ebene; angezeigt werden alle sichtbaren übereinander, die oberste in der Liste liegt oben.</div>
       <div><b>Auge</b> blendet aus, <b>Schloss</b> sperrt — in eine gesperrte oder ausgeblendete Ebene wird nicht gemalt. Der Regler stellt die <b>Deckkraft</b>, Doppelklick auf den Namen benennt um, Ziehen ordnet.</div>
-      <div><b>+</b> legt eine leere Ebene an, daneben duplizieren, <b>nach unten zusammenführen</b> (in jedem Frame) und löschen.</div>
-      <div>Jede Ebene hat in jedem Frame ihr eigenes Bild. Exportiert wird, was man sieht: alle sichtbaren Ebenen zusammengefügt. Halbdurchsichtige Ebenen werden dabei mit der Farbe darunter gemischt.</div>
+      <div><b>+</b> legt eine leere Ebene an, daneben duplizieren, <b>nach unten zusammenführen</b>, <b>alle sichtbaren zusammenführen</b> und löschen — jeweils in jedem Frame.</div>
+      <div><b>Maske</b>: blendet Teile einer Ebene aus, ohne sie zu löschen (gilt für alle Frames). Im Modus <i>Maske bearbeiten</i> malen alle Werkzeuge in die Maske — Malen blendet aus, Radieren wieder ein, Ausgeblendetes erscheint rötlich. Die Maske lässt sich aus- und einschalten, <b>anwenden</b> (löscht die ausgeblendeten Pixel) oder löschen.</div>
+      <div>Jede Ebene hat in jedem Frame ihr eigenes Bild. Exportiert wird, was man sieht: alle sichtbaren Ebenen zusammengefügt, Masken berücksichtigt. Halbdurchsichtige Ebenen werden dabei mit der Farbe darunter gemischt.</div>
+    </div>
+
+    <h3 class="help-h" data-i18n="help.h.light">Licht und Schatten</h3>
+    <div class="help-list" data-i18n-html="help.light">
+      <div>Panel <b>Licht</b>: wähle, woher das Licht kommt (8 Richtungen), Stärke und Breite der Licht- und Schattenkante — auf Wunsch mit <b>Schlagschatten</b> in eigener Farbe und Entfernung.</div>
+      <div>Solange das Panel offen ist, zeigt die Zeichenfläche eine <b>Vorschau</b>. <b>Als Ebene übernehmen</b> legt Licht und Schatten als eigene, gesperrte Ebenen über bzw. unter der Figur an — für alle Frames; das Original bleibt unverändert.</div>
+      <div>Danach rechnet jede Änderung im Panel die Ebenen sofort neu. Malt man an der Figur weiter, erscheint <b>Neu berechnen</b>. Stellenweise wegnehmen geht mit einer Maske auf der Licht-Ebene.</div>
+      <div><i>Auch Farben außerhalb der Palette</i>: fehlt eine passende hellere oder dunklere Palettenfarbe, wird eine freie Farbe berechnet.</div>
+    </div>
+
+    <h3 class="help-h" data-i18n="help.h.tiles">Kacheln (Tilemaps)</h3>
+    <div class="help-list" data-i18n-html="help.tiles">
+      <div>Für Spiel-Levels und Muster: eine <b>Tilemap-Ebene</b> besteht aus Kacheln fester Größe (8–64 px). Jede Kachel steht einmal im Kachelsatz der Ebene — malt man sie an, ändert sie sich <b>überall</b>, wo sie liegt, auch in anderen Frames.</div>
+      <div>Panel <b>Kacheln</b>: <b>Neue Tilemap-Ebene</b> oder <b>Aktive Ebene umwandeln</b> (gleiche Stellen werden eine Kachel). Ein blaues Raster zeigt die Kacheln; der Rand, der in keine ganze Kachel passt, ist abgedunkelt.</div>
+      <div><b>Pixel malen</b>: mit allen Werkzeugen die Kacheln bemalen. <i>Auto</i> legt beim Malen in eine leere Zelle eine neue Kachel an, <i>Manuell</i> ändert nur vorhandene.</div>
+      <div><b>Kacheln setzen</b>: eine Kachel in der Liste wählen — dann setzt der Stift sie ins Raster, Radierer oder Rechtsklick leert eine Zelle, Füllen füllt eine Fläche, <span class="kbd">Alt</span>+Klick nimmt die Kachel unter dem Zeiger auf.</div>
+      <div><b>Unbenutzte entfernen</b> räumt den Kachelsatz auf, <b>Normale Ebene</b> macht wieder eine gewöhnliche Ebene daraus (die Pixel bleiben).</div>
+      <div><b>Für Godot exportieren</b>: Kachelbild (PNG), Szene <code>.tscn</code> mit einer <code>TileMapLayer</code> je Tilemap-Ebene und ein JSON für andere Engines. Den Ordner ins Godot-Projekt legen und die Szene öffnen (Godot 4.3 oder neuer). Exportiert wird der aktuelle Frame.</div>
     </div>
 
     <h3 class="help-h" data-i18n="help.h.anim">Animation — Frames</h3>
     <div class="help-list" data-i18n-html="help.anim">
-      <div>Jeder Sprite kann mehrere <b>Frames</b> haben. Die <b>Timeline</b> (unten) zeigt sie als kleine Bilder: antippen wählt, ziehen sortiert um. <b>+</b> fügt einen leeren Frame ein, daneben duplizieren und löschen.</div>
-      <div>Am Handy schaltet der Knopf <b>Mehrere wählen</b> (neben Duplizieren) den Auswahl-Modus ein: dann markiert ein Tipp den Frame, statt zu ihm zu wechseln. Nochmal drücken beendet ihn und hebt die Markierung auf.</div>
-      <div>Mit <span class="kbd">Strg</span>+Klick wählt man einzelne Frames dazu, mit <span class="kbd">Shift</span>+Klick eine ganze Spanne — wie im Dateimanager. <b>Löschen</b> nimmt dann alle markierten in einem Schritt mit (ein <span class="kbd">Strg</span>+<span class="kbd">Z</span> holt sie zurück). Ein einfacher Klick hebt die Auswahl wieder auf. Das Feld <b>Frame</b> springt auf eine eingetippte Nummer.</div>
-      <div>▶ spielt in der Zeichenfläche ab (<span class="kbd">Enter</span>), ein Tipp auf die Fläche hält an. <b>FPS</b> gilt für den ganzen Sprite, <b>Dauer</b> lässt einzelne Frames länger stehen (z. B. ein Blinzeln).</div>
-      <div><b>Onion Skin</b> lässt den vorigen Frame rot und den nächsten blau durchscheinen — zum Ausrichten der Bewegung.</div>
-      <div>Größe ändern, drehen, spiegeln, zuschneiden und Paletten umfärben wirken auf <b>alle Frames</b>. Gezeichnet wird immer im aktuellen Frame.</div>
+      <div>Jeder Sprite kann mehrere <b>Frames</b> haben. Die <b>Timeline</b> ist ein Raster: je Ebene eine Zeile, je Frame eine Spalte. Ein Klick auf eine Zelle wählt Frame und Ebene; die Frames in der Kopfzeile lassen sich ziehen. <b>+</b> fügt einen leeren Frame ein, daneben duplizieren und löschen.</div>
+      <div>Links in jeder Zeile: Auge, Schloss und Name der Ebene, Ziehen ordnet. <b>Durchgehend</b> sorgt dafür, dass neue Frames auf dieser Ebene das Bild des vorigen teilen — gut für Hintergründe.</div>
+      <div><b>Zellen</b>: <span class="kbd">Shift</span>+Klick oder Ziehen spannt einen Bereich auf; im Bereich ziehen verschiebt die Zellen (<span class="kbd">Strg</span>: kopiert). Kopieren, Einfügen und Leeren gehen per Knopf oder mit <span class="kbd">Strg</span>+<span class="kbd">C</span> / <span class="kbd">V</span> und <span class="kbd">Entf</span>.</div>
+      <div><b>Verknüpfen</b>: die markierten Frames teilen sich je Ebene ein Bild — malt man in einem, ändern sich alle. <b>Verknüpfung lösen</b> gibt jeder Zelle wieder ihr eigenes Bild.</div>
+      <div><b>Tags</b> benennen einen Abschnitt, z. B. „Laufen“: Frames markieren, dann <b>Tag anlegen</b>. Ein Klick auf den Tag stellt Name, Frames und Richtung (vorwärts, rückwärts, Ping-Pong) ein und spielt ihn ab; GIFs lassen sich je Tag exportieren.</div>
+      <div>Mehrere Frames: <span class="kbd">Strg</span>+Klick einzeln, <span class="kbd">Shift</span>+Klick eine Spanne. Am Handy schaltet <b>Mehrere wählen</b> den Auswahl-Modus ein. Das Feld <b>Frame</b> springt auf eine eingetippte Nummer.</div>
+      <div>▶ spielt ab (<span class="kbd">Enter</span>), ein Tipp auf die Fläche hält an. <b>FPS</b> gilt für den ganzen Sprite, <b>Dauer</b> lässt einzelne Frames länger stehen (z. B. ein Blinzeln). <b>Onion Skin</b> lässt die Nachbar-Frames durchscheinen; Anzahl, Stärke und Darstellung stehen im ⚙-Menü der Timeline — dort stellt man auch ein, wo die Timeline andockt.</div>
+      <div>Größe ändern, drehen, spiegeln, zuschneiden und Paletten umfärben wirken auf <b>alle Frames</b>. Gezeichnet wird immer in der aktiven Zelle.</div>
       <div>Export: <b>GIF</b> spielt die Animation endlos ab, das <b>Spritesheet</b> legt die Frames nebeneinander, und alle Code-Formate enthalten alle Frames samt Dauer.</div>
     </div>
 
@@ -1165,6 +1209,8 @@
       <div><b>PNG / PDF</b> exportieren den aktuellen Frame transparent; mit <i>Farb-Legende</i> wird die Palette ins Bild gerendert. <b>GIF</b> enthält die ganze Animation.</div>
       <div>Sind in der Timeline <b>mehrere Frames markiert</b> (Strg/Shift+Klick), speichern PNG und PDF <b>je eine Datei pro Frame</b> — durchnummeriert als <code>name_f01.png</code>, <code>name_f02.png</code> … Das GIF enthält dann nur die markierten Frames; so schneidet man einen Abschnitt heraus, ohne etwas zu löschen.</div>
       <div><b>Spritesheet</b> packt alle Sprites in gleich große Zellen — bei Animationen eine Zeile je Sprite mit allen Frames — und legt einen JSON-Atlas mit Namen, Koordinaten und Dauer daneben. So lesen Engines es direkt ein.</div>
+      <div><b>Kacheln</b>: „Für Godot exportieren“ im Panel Kacheln schreibt Kachelbild, Szene und JSON (siehe Kacheln).</div>
+      <div><b>Desktop-App</b>: spritebit gibt es auch als Programm für Windows (Download auf der Startseite). Es liest und schreibt dieselben Projektdateien.</div>
       <div><b>Projekt sichern / Öffnen</b> schreibt alle Sprites und Paletten in eine JSON-Datei.</div>
     </div>
 
@@ -1174,6 +1220,8 @@
       <div class="sc-row"><b>Rechtsklick</b><span>Löschen (gedrückt halten = durchgehend)</span></div>
       <div class="sc-row"><b>Alt + Klick</b><span>Pipette auf das Grid</span></div>
       <div class="sc-row"><b>Alt + Rechts ziehen</b><span>Größe von Pinsel, Radierer und Spray</span></div>
+      <div class="sc-row"><b>Alt + Klick (Kacheln setzen)</b><span>Kachel aufnehmen</span></div>
+      <div class="sc-row"><b>Strg + C / V (in der Timeline)</b><span>Zellen kopieren / einfügen</span></div>
       <div class="sc-row"><b>Shift + Alt halten</b><span>Schablone in den Vordergrund</span></div>
       <div class="sc-row"><b>Shift + Alt + Ziehen</b><span>Schablone verschieben</span></div>
       <div class="sc-row"><b>Shift + Alt + Rechtsklick</b><span>Schablonen-Pipette</span></div>

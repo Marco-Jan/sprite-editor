@@ -17,7 +17,9 @@ import { state, getSprite, flatGrid, FIGURE_HEADS } from './state.js';
 import { renderEditor, renderCallbacks } from './render.js';
 import { contentBounds } from './transform.js';
 import { saveState } from './storage.js';
-import { t } from './i18n.js';
+import { t, onLangChange } from './i18n.js';
+import { showInfoToast } from './toast.js';
+import { normalizeLayouts, makeLayout, upsertLayout, fitLayout } from './guidelayouts.js';
 
 /** @type {(id: string) => any} */
 const $ = id => document.getElementById(id);
@@ -268,6 +270,69 @@ function fitFigure() {
   changed();
 }
 
+// ── Eigene Layouts (guidelayouts.js) ────────────────────────────────
+// Für alle Sprites — darum in einem eigenen Eintrag im Browser, nicht im Sprite.
+const LAYOUT_KEY = 'spritebit_guide_layouts';
+let layouts = [];
+
+function loadLayouts() {
+  try { layouts = normalizeLayouts(JSON.parse(localStorage.getItem(LAYOUT_KEY) || '[]')); } catch { layouts = []; }
+}
+function storeLayouts() {
+  try { localStorage.setItem(LAYOUT_KEY, JSON.stringify(layouts)); } catch { /* privates Fenster o. Ä. */ }
+}
+
+function saveLayout() {
+  const sp = getSprite();
+  const inp = $('gd-layout-name');
+  const name = inp.value.trim();
+  if (!sp) return;
+  if (!name) { renderCallbacks.onGuideInfo(t('gd.layoutNeedName')); inp.focus(); return; }
+  const had = layouts.some(l => l.name === name);
+  layouts = upsertLayout(layouts, makeLayout(name, sp.guides, sp.grid[0].length, sp.grid.length));
+  storeLayouts();
+  inp.value = '';
+  renderGuides();
+  $('gd-layouts').value = name;
+  showInfoToast(t(had ? 'gd.layoutReplaced' : 'gd.layoutSaved', { name }));
+}
+
+function applyLayout() {
+  const sp = getSprite();
+  const l = layouts.find(x => x.name === $('gd-layouts').value);
+  if (!sp || !l) return;
+  const W = sp.grid[0].length, H = sp.grid.length;
+  sp.guides = fitLayout(l, W, H);
+  state.showGuides = true;
+  changed();
+  showInfoToast(t(l.width === W && l.height === H ? 'gd.layoutApplied' : 'gd.layoutScaled', { name: l.name, w: l.width, h: l.height }));
+}
+
+function deleteLayout() {
+  const name = $('gd-layouts').value;
+  if (!layouts.some(l => l.name === name)) return;
+  layouts = layouts.filter(l => l.name !== name);
+  storeLayouts();
+  renderGuides();
+  showInfoToast(t('gd.layoutDeleted', { name }));
+}
+
+function renderLayouts() {
+  const sel = $('gd-layouts');
+  if (!sel) return;
+  const keep = sel.value;
+  sel.innerHTML = layouts.length
+    ? layouts.map(l => `<option value="${esc(l.name)}">${esc(l.name)} (${l.width} × ${l.height})</option>`).join('')
+    : `<option value="">${esc(t('gd.layoutNone'))}</option>`;
+  if (layouts.some(l => l.name === keep)) sel.value = keep;
+  sel.disabled = !layouts.length;
+  $('gd-layout-apply').disabled = !layouts.length || !getSprite();
+  $('gd-layout-del').disabled = !layouts.length;
+  $('gd-layout-save').disabled = !getSprite();
+}
+
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
 export function renderGuides() {
   const g = guides();
   const show = $('gd-show'), edit = $('gd-edit');
@@ -280,6 +345,7 @@ export function renderGuides() {
   if (g && document.activeElement !== sel) sel.value = String(g.heads);
   $('gd-fit').disabled = !g;
   $('gd-clear').disabled = !g || (!g.h.length && !g.v.length);
+  renderLayouts();
 }
 
 export function initGuides() {
@@ -290,6 +356,12 @@ export function initGuides() {
   $('gd-clear').addEventListener('click', clearLines);
   $('gd-heads').addEventListener('change', e => setHeads(Number(e.target.value)));
   $('gd-fit').addEventListener('click', fitFigure);
+  loadLayouts();
+  $('gd-layout-save').addEventListener('click', saveLayout);
+  $('gd-layout-name').addEventListener('keydown', e => { if (e.key === 'Enter') saveLayout(); });
+  $('gd-layout-apply').addEventListener('click', applyLayout);
+  $('gd-layout-del').addEventListener('click', deleteLayout);
+  onLangChange(renderLayouts);
   $('editor-canvas').addEventListener('pointermove', hoverCursor);
   renderCallbacks.onDrawOverlay = drawOverlay;
   renderCallbacks.onRenderGuides = renderGuides;

@@ -1,61 +1,72 @@
 # spritebit
 
-> Pixel-Art-Editor, der komplett im Browser läuft. Kein Build, keine
-> Anmeldung, keine Cloud — die Arbeit bleibt im localStorage des Nutzers.
-> Sprites lassen sich als Bild oder in neun Code-Formaten exportieren.
-> Kostenlos, ohne Werbung, ohne Anmeldung.
+> Kostenloser Pixel-Art-Editor für Sprites, Animationen und Spiel-Levels. Läuft
+> komplett im Browser (offline, ohne Konto, nichts wird hochgeladen) und als
+> Desktop-App für Windows. Export als Bild, GIF, Spritesheet, Godot-Szene oder
+> in neun Code-Formaten. Open Source (MIT).
 
-Der Editor ist reines Frontend: HTML, CSS und ES-Module ohne Bundler. Weil
-ES-Module HTTP brauchen, funktioniert ein Aufruf über `file://` nicht.
+Die Web-Version ist reines Frontend: HTML, CSS und ES-Module ohne Bundler. Weil
+ES-Module HTTP brauchen, funktioniert ein Aufruf über `file://` nicht. Die
+Desktop-App ist in Rust geschrieben (egui) und liest und schreibt dieselben
+Projektdateien.
 
 ## Seiten
 
 - [Startseite](https://spritebit.at/): Was der Editor kann, in fünf Stationen erzählt.
 - [Editor](https://spritebit.at/editor.html): Die Anwendung selbst.
+- [Desktop-App (Windows)](https://github.com/spritebit/spritebit-rs/releases/latest): Download.
+- [Quellcode Web](https://github.com/spritebit/sprite-editor) · [Quellcode Desktop](https://github.com/spritebit/spritebit-rs)
+- [Handbuch](https://github.com/spritebit/sprite-editor/blob/main/docs/handbuch.md)
 
 ## Was der Editor kann
 
-- Zeichnen: Stift, Pinsel, Spray, Füllen, Radierer, Zauberstab. Formen als
-  Linie, Rechteck und Ellipse mit Live-Vorschau. Symmetrie über zwei Achsen.
-- Auswahl: Rechteck, Lasso (freie Form) und Farbauswahl. Der gewählte
-  Bereich wird ausgeschnitten und schwebt, bis er abgesetzt wird — er lässt
-  sich verschieben, frei drehen, spiegeln und kopieren, ohne den Untergrund
-  zu beschädigen.
-- Paletten: index-basiert. Index 0 ist immer transparent, 1 bis 9 sind frei
-  belegbar. Eine Farbe zu ändern färbt alle Pixel mit diesem Index sofort um.
-  Neun Schemata sind eingebaut, eigene lassen sich anlegen.
-- Foto-Vorlage: Bild laden, darüberlegen, per Median-Cut auf wenige Farben
-  reduzieren, Bildfarben als Palette übernehmen, Hintergrund entfernen,
-  glätten, Outline ziehen.
-- Bild: spiegeln, drehen (auch frei um beliebige Winkel), auf den Inhalt
-  zuschneiden, zentrieren, Fläche ändern, hart skalieren.
-- Undo und Redo pro Strich, Auto-Save, Tastenkürzel für jedes Werkzeug.
+- Zeichnen: Stift, Pinsel, Spray (Größe 1–64), Füllen, Radierer, Zauberstab.
+  Clean Stroke für saubere 1-Pixel-Linien. Formen als Linie, Rechteck und
+  Ellipse mit Live-Vorschau. Symmetrie über zwei Achsen.
+- Auswahl: Rechteck, Lasso (freie Form) und Farbauswahl. Der gewählte Bereich
+  schwebt, bis er abgesetzt wird — verschieben, frei drehen, spiegeln, kopieren.
+- Paletten: index-basiert, bis zu 255 Farben, 17 eingebaut, eigene anlegen.
+  Index 0 ist transparent. Eine Farbe zu ändern färbt alle Pixel mit diesem
+  Index sofort um. Nach Farbstufen sortieren.
+- Ebenen: Deckkraft, ausblenden, sperren, Masken (ausblenden ohne zu löschen),
+  zusammenführen.
+- Animation: Timeline als Raster aus Ebenen und Frames, Zellen kopieren und
+  verschieben, verknüpfte Zellen, durchgehende Ebenen, Tags mit Richtung
+  (vorwärts, rückwärts, Ping-Pong), Onion Skin, FPS und Dauer je Frame.
+- Kacheln (Tilemaps): Tilemap-Ebenen mit eigenem Kachelsatz (8–64 px). Eine
+  Kachel anmalen ändert sie überall, wo sie liegt. Auto- und Manuell-Modus,
+  Kacheln setzen und füllen. Export für Godot 4 (TileMapLayer) und als JSON.
+- Licht: Lichtquelle aus 8 Richtungen, Licht- und Schattenkante sowie
+  Schlagschatten als eigene, jederzeit neu berechnete Ebenen.
+- Foto-Vorlage: Bild laden, darüberlegen, auf wenige Farben reduzieren,
+  Bildfarben als Palette übernehmen, Hintergrund entfernen, glätten, Outline.
+- Bild: spiegeln, drehen (auch frei), zuschneiden, zentrieren, Fläche ändern,
+  hart skalieren. In Größenfeldern darf man rechnen (z. B. 24 * 4).
+- Hilfslinien und Figuren-Proportionen (2–8 Kopfhöhen), als eigene Layouts
+  speicherbar.
+- Arbeitsplatz: Reiter für geöffnete Sprites, Panels anpinnen, schweben lassen
+  oder ins Dock legen. Undo pro Strich, Auto-Save, Tastenkürzel für jedes Werkzeug.
 
 ## Export
 
-- Als Bild: PNG mit Transparenz (1× bis 32×), PDF, ein animiertes GIF sowie
-  ein Spritesheet aller Sprites und Frames mit begleitender JSON-Liste der
-  Positionen und Dauer.
-- Animation: mehrere Frames je Sprite, Timeline mit Vorschaubildern, Onion
-  Skinning, Abspielen mit FPS und eigener Dauer je Frame.
-- Ebenen: mehrere Ebenen je Sprite, ausblenden, sperren, Deckkraft,
-  zusammenführen; exportiert wird das zusammengefügte Bild.
-- Als Code: TypeScript, JavaScript, JSON, JSON für Spiele-Engines (mit
-  Material je Farbe), SVG, CSS (box-shadow), C-Header für Mikrocontroller,
-  Python und ein Text-Raster. Jedes Format enthält die Farben und ist für
-  sich allein benutzbar.
-- Zurück in den Editor kommen alle neun Formate — das Bild bleibt dabei
-  unverändert.
-  Der Import wertet keinen Code aus, er prüft den Text gegen eine
-  Zeichen-Whitelist.
+- Bild: PNG mit Transparenz (1× bis 32×), PDF, animiertes GIF (auch je Tag),
+  Spritesheet aller Sprites und Frames mit JSON-Atlas.
+- Godot 4: Kachelbild (PNG) plus Szene (.tscn) mit einer TileMapLayer je
+  Tilemap-Ebene, dazu ein JSON mit der Karte.
+- Code: TypeScript, JavaScript, JSON, JSON für Spiele-Engines (mit Material je
+  Farbe), SVG, CSS (box-shadow), C-Header für Mikrocontroller, Python und ein
+  Text-Raster. Jedes Format enthält die Farben und alle Frames.
+- Alle neun Code-Formate lassen sich wieder importieren — das Bild bleibt dabei
+  unverändert. Der Import wertet keinen Code aus.
 
 ## Technisches
 
 - Kein Konto, kein Server, keine Telemetrie. Nichts wird hochgeladen.
-- Speicherort ist der localStorage des Browsers; für Sicherungen schreibt
-  „Projekt sichern" eine JSON-Datei.
-- Läuft nach dem ersten Aufruf komplett offline (PWA), auch der PDF-Export,
-  und lässt sich als App installieren.
+- Speicherort ist der Browser (IndexedDB); „Projekt sichern“ schreibt eine
+  JSON-Datei, die auch die Desktop-App öffnet.
+- Läuft nach dem ersten Aufruf komplett offline (PWA) und lässt sich als App
+  installieren.
+- Sprachen: Deutsch, Englisch und Österreichisch.
 
 ## Rechtliches
 

@@ -173,6 +173,15 @@ export function initLangSwitch() {
 // Deutsch kommt aus dem HTML selbst (Snapshot), hier steht nur Englisch.
 const STATIC = {
   en: {
+    'gd.layouts':          'Own layouts',
+    'gd.layoutsTitle':     'Saved guide layouts — they apply to all sprites',
+    'gd.layoutApply':      'Apply',
+    'gd.layoutApplyTitle': 'Put the lines and division of this layout on the sprite — scaled proportionally for another size',
+    'gd.layoutDelTitle':   'Delete the chosen layout',
+    'gd.layoutName':       'Name of the layout',
+    'gd.layoutSave':       'Save',
+    'gd.layoutSaveTitle':  'Save the current lines and division as a layout — the same name replaces it',
+
     // ── Kacheln ──
     'tile.title':          'Tiles',
     'tile.offNote':        'The active layer is not a tilemap. A tilemap is made of tiles of a fixed size — paint a tile and it changes everywhere it is placed. Good for game levels and patterns.',
@@ -626,7 +635,31 @@ const STATIC = {
     // ── Hilfe-Modal ──
     'help.title':   'Help',
     'help.close':   'Close',
-    'help.intro':   'A pixel editor with a photo stencil. Draw freehand — or trace a photo as a <b>stencil</b> and have it turned into a clean sprite automatically.',
+    'help.intro':   'A pixel editor for sprites, animations and game levels. Draw freehand — with layers, frames, light and tiles — or trace a photo as a <b>stencil</b> and have it turned into a clean sprite automatically.',
+
+    'help.h.workspace': 'Workspace: tabs and panels',
+    'help.workspace': ''
+      + '<div>The <b>tabs</b> above the drawing area show the open sprites — click to switch, <b>×</b> closes the tab (the sprite stays in the list), <b>+</b> creates a new one.</div>'
+      + '<div>Every panel lives in the <b>dock</b> at the edge and opens as a drawer. In the panel head the <b>pin</b> fixes it in the column next to it, the <b>window</b> icon lets it float freely. Grab the head and drag to put it somewhere else.</div>'
+      + '<div>Tools, color bar and timeline can be pinned the same way at the top, bottom or side — at the side they stack like panels.</div>'
+      + '<div>Size fields can do maths: <code>24 * 4</code>, <code>24x4</code>, <code>(16+8)*2</code> or <code>96 : 4</code> — leaving the field puts the result in.</div>'
+      + '<div><b>Fullscreen</b> hides everything but the drawing area; the handles at the edge bring the bars back.</div>',
+
+    'help.h.light': 'Light and shadow',
+    'help.light': ''
+      + '<div>The <b>Light</b> panel: choose where the light comes from (8 directions), strength and width of the light and shadow edge — optionally with a <b>cast shadow</b> in its own color and distance.</div>'
+      + '<div>While the panel is open the drawing area shows a <b>preview</b>. <b>Apply as layer</b> creates light and shadow as separate, locked layers above and below the figure — for all frames; the original stays untouched.</div>'
+      + '<div>After that every change in the panel recomputes the layers right away. If you keep painting the figure, <b>Recompute</b> appears. Taking it away in places works with a mask on the light layer.</div>'
+      + '<div><i>Allow colors outside the palette</i>: if no fitting lighter or darker palette color exists, a free color is computed.</div>',
+
+    'help.h.tiles': 'Tiles (tilemaps)',
+    'help.tiles': ''
+      + '<div>For game levels and patterns: a <b>tilemap layer</b> is made of tiles of a fixed size (8–64 px). Each tile is stored once in the layer’s tileset — paint it and it changes <b>everywhere</b> it is placed, in other frames too.</div>'
+      + '<div>The <b>Tiles</b> panel: <b>New tilemap layer</b> or <b>Convert active layer</b> (identical spots become one tile). A blue grid shows the tiles; the edge that fits no whole tile is darkened.</div>'
+      + '<div><b>Paint pixels</b>: paint the tiles with every tool. <i>Auto</i> creates a new tile when you paint into an empty cell, <i>Manual</i> only changes existing ones.</div>'
+      + '<div><b>Place tiles</b>: pick a tile in the list — the pencil then places it in the grid, eraser or right-click clears a cell, fill fills an area, <span class="kbd">Alt</span>+click picks the tile under the pointer.</div>'
+      + '<div><b>Remove unused</b> tidies the tileset, <b>Normal layer</b> turns it back into an ordinary layer (the pixels stay).</div>'
+      + '<div><b>Export for Godot</b>: tile image (PNG), a <code>.tscn</code> scene with one <code>TileMapLayer</code> per tilemap layer and a JSON for other engines. Put the folder into your Godot project and open the scene (Godot 4.3 or newer). The current frame is exported.</div>',
 
     'help.h.palettes': 'Color palettes',
     'help.palettes': ''
@@ -640,12 +673,14 @@ const STATIC = {
       + '<div><b>Pencil</b> — single pixels.</div>'
       + '<div><b>Brush</b> — an area; <i>strength</i> = density, <i>size</i> = edge length.</div>'
       + '<div><b>Spray</b> — random pixels; <i>strength</i> = amount per event.</div>'
+      + '<div><b>Size</b> 1–64 with the slider or number field; <span class="kbd">Alt</span> + right-drag changes it right on the drawing area. An outline shows what brush, eraser and spray are about to hit.</div>'
+      + '<div><b>Clean Stroke</b> — with the pencil (and the eraser at size 1) the L-shaped corners of a freehand line disappear: clean 1-pixel lines as if placed by hand.</div>'
       + '<div><b>Fill</b> — the connected area of the same value.</div>'
       + '<div><b>Eraser</b> — sets pixels back to transparent.</div>'
       + '<div><b>Magic wand</b> — erases a connected <i>similar</i> area; <i>tolerance</i> decides how much deviation still counts.</div>'
       + '<div><b>Line · Rectangle · Ellipse</b> — drag it open, the preview shows the result, letting go draws it. <i>Filled</i> switches between outline and area.</div>'
       + '<div><b>Marquee · Lasso · Color select</b> — three ways to the same thing: an area you move as a whole.</div>'
-      + '<div><b>Hand</b> — moves the view only and changes nothing in the image. Useful when you work zoomed in, or when showing someone around without painting by accident. The same works any time by holding <span class="kbd">Space</span>.</div>',
+      + '<div><b>Hand</b> — moves the view only and changes nothing in the image; on a guide it drags the line. The same panning works any time by holding <span class="kbd">Space</span>.</div>',
 
     'help.h.mirror': 'Symmetry',
     'help.mirror': ''
@@ -678,8 +713,9 @@ const STATIC = {
     'help.h.guides': 'Guides',
     'help.guides': ''
       + '<div>The <b>Guides</b> panel in the dock — a drawing aid only, they never show up in an export. <span class="kbd">G</span> shows and hides them all.</div>'
-      + '<div><b>Free lines</b>: “+ Horizontal” / “+ Vertical” puts a line in the middle. In <b>Move</b> mode you drag lines into place on the drawing area (always on a pixel edge); dragged out of the image, a line is deleted. No painting meanwhile — a tap next to the lines or <span class="kbd">Esc</span> ends the mode; with no lines left it ends by itself.</div>'
+      + '<div><b>Free lines</b>: “+ Horizontal” / “+ Vertical” puts a line in the middle. In <b>Move</b> mode you drag lines into place on the drawing area (always on a pixel edge); dragged out of the image, a line is deleted. No painting meanwhile — a tap next to the lines or <span class="kbd">Esc</span> ends the mode. With the <b>hand</b> tool you can grab a line without the mode, too.</div>'
       + '<div><b>Figure</b>: divides a figure into 2 (chibi), 3, 4, 6 or 8 head heights and marks chin, chest, hip, knee etc. plus the body axis. “Fit to figure” sets the top and bottom to what is drawn; both can be dragged in Move mode.</div>'
+      + '<div><b>Own layouts</b>: save lines and division under a name and apply them to any sprite — for another size they are scaled proportionally. The same name replaces, × deletes. Layouts apply to all sprites.</div>'
       + '<div>The lines belong to the sprite and are saved with the project.</div>',
     'help.preview': ''
       + '<div>The <b>preview</b> panel always shows the <b>whole sprite</b>, however far you are zoomed in on the canvas — no grid, no guides, exactly what the export gives you.</div>'
@@ -687,18 +723,21 @@ const STATIC = {
       + '<div><b>Pixel size</b>: <i>fit</i> uses the room the panel has; <b>1×</b> shows the sprite at its real size — the way it will look in a game.</div>',
     'help.h.layers': 'Layers',
     'help.layers': ''
-      + '<div>Every sprite can have several <b>layers</b> — the <b>Layers</b> panel in the dock. You always paint into the <b>active</b> layer; all visible ones are shown on top of each other, the top one in the list lies on top.</div>'
+      + '<div>Every sprite can have several <b>layers</b> — the <b>Layers</b> panel in the dock and the rows of the timeline. You always paint into the <b>active</b> layer; all visible ones are shown on top of each other, the top one in the list lies on top.</div>'
       + '<div>The <b>eye</b> hides, the <b>padlock</b> locks — nothing gets painted into a locked or hidden layer. The slider sets the <b>opacity</b>, double-click the name to rename, drag to reorder.</div>'
-      + '<div><b>+</b> adds an empty layer, next to it duplicate, <b>merge down</b> (in every frame) and delete.</div>'
-      + '<div>Each layer has its own picture in every frame. What gets exported is what you see: all visible layers merged. Semi-transparent layers are mixed with the color below.</div>',
+      + '<div><b>+</b> adds an empty layer, next to it duplicate, <b>merge down</b>, <b>merge all visible</b> and delete — each in every frame.</div>'
+      + '<div><b>Mask</b>: hides parts of a layer without deleting them (for all frames). In <i>edit mask</i> mode every tool paints into the mask — painting hides, erasing reveals again, hidden parts show reddish. The mask can be switched off and on, <b>applied</b> (deletes the hidden pixels) or deleted.</div>'
+      + '<div>Each layer has its own picture in every frame. What gets exported is what you see: all visible layers merged, masks included. Semi-transparent layers are mixed with the color below.</div>',
     'help.h.anim': 'Animation — frames',
     'help.anim': ''
-      + '<div>Every sprite can have several <b>frames</b>. The <b>timeline</b> (at the bottom) shows them as small pictures: tap to select, drag to reorder. <b>+</b> inserts an empty frame, next to it duplicate and delete.</div>'
-      + '<div>On a phone the <b>select several</b> button (next to duplicate) turns on selection mode: a tap then marks the frame instead of switching to it. Press it again to leave and clear the marks.</div>'
-      + '<div><span class="kbd">Ctrl</span>+click picks single frames, <span class="kbd">Shift</span>+click a whole range — as in a file manager. <b>Delete</b> then removes all selected ones in one step (<span class="kbd">Ctrl</span>+<span class="kbd">Z</span> brings them back). A plain click clears the selection. The <b>frame</b> field jumps to a typed number.</div>'
-      + '<div>▶ plays in the drawing area (<span class="kbd">Enter</span>), a tap on the area stops it. <b>FPS</b> applies to the whole sprite, <b>duration</b> lets single frames stay longer (e.g. a blink).</div>'
-      + '<div><b>Onion skin</b> shows the previous frame in red and the next one in blue — for lining up the motion.</div>'
-      + '<div>Resizing, rotating, flipping, trimming and recoloring with a palette act on <b>all frames</b>. You always draw into the current frame.</div>'
+      + '<div>Every sprite can have several <b>frames</b>. The <b>timeline</b> is a grid: one row per layer, one column per frame. Clicking a cel picks frame and layer; the frames in the header can be dragged. <b>+</b> inserts an empty frame, next to it duplicate and delete.</div>'
+      + '<div>On the left of every row: eye, padlock and name of the layer, drag to reorder. <b>Continuous</b> makes new frames share the previous picture on this layer — good for backgrounds.</div>'
+      + '<div><b>Cels</b>: <span class="kbd">Shift</span>+click or dragging spans a range; dragging inside the range moves the cels (<span class="kbd">Ctrl</span>: copies). Copy, paste and clear work with the buttons or with <span class="kbd">Ctrl</span>+<span class="kbd">C</span> / <span class="kbd">V</span> and <span class="kbd">Del</span>.</div>'
+      + '<div><b>Link</b>: the selected frames share one picture per layer — paint in one and all of them change. <b>Unlink</b> gives every cel its own picture again.</div>'
+      + '<div><b>Tags</b> name a section, e.g. “Walk”: select frames, then <b>New tag</b>. Clicking the tag sets name, frames and direction (forward, reverse, ping-pong) and plays it; GIFs can be exported per tag.</div>'
+      + '<div>Several frames: <span class="kbd">Ctrl</span>+click picks single ones, <span class="kbd">Shift</span>+click a range. On a phone <b>Select several</b> turns on selection mode. The <b>frame</b> field jumps to a typed number.</div>'
+      + '<div>▶ plays (<span class="kbd">Enter</span>), a tap on the area stops it. <b>FPS</b> applies to the whole sprite, <b>duration</b> lets single frames stay longer (e.g. a blink). <b>Onion skin</b> lets the neighboring frames show through; count, strength and display are in the timeline’s ⚙ menu — where you also set where the timeline docks.</div>'
+      + '<div>Resizing, rotating, flipping, trimming and recoloring with a palette act on <b>all frames</b>. You always draw into the active cel.</div>'
       + '<div>Export: <b>GIF</b> loops the animation, the <b>spritesheet</b> lays the frames side by side, and every code format carries all frames with their duration.</div>',
 
     'help.h.stencil': 'Stencil',
@@ -734,6 +773,8 @@ const STATIC = {
       + '<div><b>PNG / PDF</b> export the current frame with transparency; with <i>color key</i> the palette is rendered into the image. <b>GIF</b> holds the whole animation.</div>'
       + '<div>With <b>several frames selected</b> in the timeline (Ctrl/Shift+click), PNG and PDF save <b>one file per frame</b> — numbered <code>name_f01.png</code>, <code>name_f02.png</code> … The GIF then holds just those frames, so you can cut out a section without deleting anything.</div>'
       + '<div><b>Spritesheet</b> packs all sprites into equally sized cells — for animations one row per sprite with all its frames — and drops a JSON atlas with names, coordinates and duration next to it. Engines read that straight away.</div>'
+      + '<div><b>Tiles</b>: “Export for Godot” in the Tiles panel writes tile image, scene and JSON (see Tiles).</div>'
+      + '<div><b>Desktop app</b>: spritebit is also a program for Windows (download on the start page). It reads and writes the same project files.</div>'
       + '<div><b>Save project / Open</b> writes all sprites and palettes into one JSON file.</div>',
 
     'help.h.keys': 'Keyboard shortcuts',
@@ -743,6 +784,8 @@ const STATIC = {
       + '<div class="sc-row"><b>Alt + click</b><span>Eyedropper on the grid</span></div>'
       + '<div class="sc-row"><b>Alt + right-drag</b><span>Size of brush, eraser and spray</span></div>'
       + '<div class="sc-row"><b>Hold Shift + Alt</b><span>Stencil to the front</span></div>'
+      + '<div class="sc-row"><b>Alt + click (place tiles)</b><span>Pick a tile</span></div>'
+      + '<div class="sc-row"><b>Ctrl + C / V (in the timeline)</b><span>Copy / paste cels</span></div>'
       + '<div class="sc-row"><b>Shift + Alt + drag</b><span>Move the stencil</span></div>'
       + '<div class="sc-row"><b>Shift + Alt + right-click</b><span>Stencil eyedropper</span></div>'
       + '<div class="sc-row"><b>0 – 9</b><span>Pick a color index</span></div>'
@@ -778,6 +821,14 @@ const STATIC = {
 // ════════════════════════════════════════════════════════════════════
 const MSG = {
   de: {
+    'gd.layoutNone':     'noch keine gespeichert',
+    'gd.layoutNeedName': 'Erst einen Namen für das Layout eingeben.',
+    'gd.layoutSaved':    'Layout „{name}“ gespeichert — gilt für alle Sprites.',
+    'gd.layoutReplaced': 'Layout „{name}“ ersetzt.',
+    'gd.layoutApplied':  'Layout „{name}“ angewendet.',
+    'gd.layoutScaled':   'Layout „{name}“ angewendet — von {w} × {h} auf diese Größe umgerechnet.',
+    'gd.layoutDeleted':  'Layout „{name}“ gelöscht.',
+
     // ── Kacheln (tilemap.js) ──
     'tile.picked':      'Kachel {k} aufgenommen.',
     'tile.pickedEmpty': 'Hier liegt keine Kachel.',
@@ -1276,6 +1327,14 @@ const MSG = {
   },
 
   en: {
+    'gd.layoutNone':     'none saved yet',
+    'gd.layoutNeedName': 'Enter a name for the layout first.',
+    'gd.layoutSaved':    'Layout “{name}” saved — it applies to all sprites.',
+    'gd.layoutReplaced': 'Layout “{name}” replaced.',
+    'gd.layoutApplied':  'Layout “{name}” applied.',
+    'gd.layoutScaled':   'Layout “{name}” applied — scaled from {w} × {h} to this size.',
+    'gd.layoutDeleted':  'Layout “{name}” deleted.',
+
     // ── Tiles (tilemap.js) ──
     'tile.picked':      'Picked tile {k}.',
     'tile.pickedEmpty': 'There is no tile here.',

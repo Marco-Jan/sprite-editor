@@ -5,7 +5,7 @@
 # spritebit
 
 **Pixel-Art-Editor für Sprites — im Browser, offline, ohne Konto.**
-Zeichnen, animieren, Paletten bauen und als Bild, GIF oder Code exportieren.
+Zeichnen, animieren, Tilemaps für Spiel-Levels bauen und als Bild, GIF, Godot-Szene oder Code exportieren.
 
 [**▶ Im Browser öffnen**](https://spritebit.at/editor.html) ·
 [**⬇ Desktop-App**](https://github.com/spritebit/spritebit-rs/releases/latest) ·
@@ -31,7 +31,7 @@ Zeichnen, animieren, Paletten bauen und als Bild, GIF oder Code exportieren.
 <td width="50%" valign="top">
 
 **🎨 Zeichnen**
-- Stift, Pinsel, Spray, Füllen, Radierer, Zauberstab
+- Stift, Pinsel, Spray, Füllen, Radierer, Zauberstab — Größe 1–64, `Alt` + Rechts ziehen
 - Linie, Rechteck, Ellipse — Kontur oder gefüllt
 - **Clean Stroke**: saubere 1-Pixel-Striche ohne doppelte Eckpixel
 - **Symmetrie** an einer oder beiden Achsen
@@ -65,6 +65,7 @@ Zeichnen, animieren, Paletten bauen und als Bild, GIF oder Code exportieren.
 
 **📦 Exportieren**
 - **PNG** (1×–32×), **PDF**, **GIF**, **Spritesheet** mit JSON-Atlas
+- **Godot 4**: Kachelbild + Szene mit `TileMapLayer`
 - **9 Code-Formate**: TS, JS, JSON, Spiel-JSON, SVG, CSS, C, Python, Text
 - Alles lässt sich auch **wieder importieren**
 - Mehrere Frames auf einmal, GIF je Tag
@@ -79,7 +80,8 @@ Zeichnen, animieren, Paletten bauen und als Bild, GIF oder Code exportieren.
 - Panels anpinnen, lösen, frei verschieben — die Anordnung bleibt
 - Ebenen mit Deckkraft, Sperre, Sichtbarkeit und **Masken**
 - Schablone: Foto als Vorlage zum Abpausen
-- Hilfslinien und Figuren-Proportionen (2–8 Kopfhöhen)
+- Hilfslinien und Figuren-Proportionen (2–8 Kopfhöhen), als **eigene Layouts** speicherbar
+- In Größenfeldern rechnen: `24 * 4`
 
 </td>
 <td valign="top">
@@ -90,6 +92,26 @@ Zeichnen, animieren, Paletten bauen und als Bild, GIF oder Code exportieren.
 - Speichert automatisch (IndexedDB), Projektdatei als Backup
 - Sprites bis 1024 × 1024 Pixel
 - Am Handy bedienbar
+
+</td>
+</tr>
+<tr>
+<td valign="top">
+
+**🧱 Kacheln (Tilemaps)**
+- Tilemap-Ebenen mit eigenem Kachelsatz, 8–64 px
+- Eine Kachel anmalen — sie ändert sich **überall**, wo sie liegt
+- *Auto* legt beim Malen neue Kacheln an, *Manuell* nicht
+- Kacheln setzen, füllen, aufnehmen; Ebenen umwandeln
+- Export für **Godot 4** und als JSON
+
+</td>
+<td valign="top">
+
+**🖥️ Web und Desktop**
+- Dieselben Funktionen im Browser und als **Windows-App** (Rust)
+- Beide lesen und schreiben dieselben Projektdateien
+- Die Desktop-App meldet neue Versionen
 
 </td>
 </tr>
@@ -164,6 +186,7 @@ export const HELD: number[][] = [
 | `0`–`9` | Farbe wählen |
 | Rechtsklick | Radieren |
 | `Alt` + Klick | Pipette |
+| `Alt` + Rechts ziehen | Pinselgröße |
 | `Strg` + Mausrad | Zoom auf den Mauszeiger |
 | `Leertaste` + Ziehen | Bild verschieben |
 | `Strg+Z` / `Strg+Y` | Rückgängig / Wiederholen |
@@ -187,7 +210,7 @@ Alle Kürzel stehen im [Handbuch](docs/handbuch.md#tastenkürzel) und im Editor 
 - **Ohne Fremdcode zur Laufzeit:** GIF-Encoder, ZIP, Code-Formate, Import-Parser — alles
   selbst geschrieben. Einzige Ausnahme ist jsPDF, lokal in `vendor/`.
 - **Typgeprüft ohne TypeScript-Build:** JSDoc-Typen, geprüft mit `npm run check`.
-- **Getestet:** über 170 Tests mit dem eingebauten Test-Runner von Node, `npm test` —
+- **Getestet:** über 200 Tests mit dem eingebauten Test-Runner von Node, `npm test` —
   ohne vorher etwas zu installieren.
 - **Offline-fähig:** Service Worker mit „Netz zuerst, Cache als Rückfall“ und Update-Band.
 
@@ -213,8 +236,10 @@ npm run check   # Typprüfung
 **spritebit** is a free, open-source pixel art editor for sprites that runs entirely in your
 browser — offline, no account, nothing uploaded. Draw clean 1-pixel strokes (Clean Stroke) with symmetry,
 animate on a layer × frame timeline with linked cels, tags and onion skin, build palettes,
-add light and drop shadows, and export to PNG, GIF, spritesheets or nine code formats
-(TypeScript, JSON, SVG, CSS, C, Python …). The UI is available in German, English and Austrian
+add light and drop shadows, build **tilemaps** for game levels (paint a tile once, it changes
+everywhere) and export to PNG, GIF, spritesheets, **Godot 4** scenes or nine code formats
+(TypeScript, JSON, SVG, CSS, C, Python …). A native Windows app with the same features is
+available too. The UI is available in German, English and Austrian
 German. [Open the editor →](https://spritebit.at/editor.html)
 
 ---
