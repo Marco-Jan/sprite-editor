@@ -173,6 +173,13 @@ export function initLangSwitch() {
 // Deutsch kommt aus dem HTML selbst (Snapshot), hier steht nur Englisch.
 const STATIC = {
   en: {
+    'gd.even':      'Evenly',
+    'gd.evenTitle': 'Type a number — the lines spread out evenly right away (4 lines = 5 equal parts). 0 removes them.',
+    'gd.evenH':     'Number of horizontal lines',
+    'gd.evenV':     'Number of vertical lines',
+    'gd.evenHUnit': 'horizontal',
+    'gd.evenVUnit': 'vertical',
+
     'gd.layouts':          'Own layouts',
     'gd.layoutsTitle':     'Saved guide layouts — they apply to all sprites',
     'gd.layoutApply':      'Apply',
@@ -713,7 +720,7 @@ const STATIC = {
     'help.h.guides': 'Guides',
     'help.guides': ''
       + '<div>The <b>Guides</b> panel in the dock — a drawing aid only, they never show up in an export. <span class="kbd">G</span> shows and hides them all.</div>'
-      + '<div><b>Free lines</b>: “+ Horizontal” / “+ Vertical” puts a line in the middle. In <b>Move</b> mode you drag lines into place on the drawing area (always on a pixel edge); dragged out of the image, a line is deleted. No painting meanwhile — a tap next to the lines or <span class="kbd">Esc</span> ends the mode. With the <b>hand</b> tool you can grab a line without the mode, too.</div>'
+      + '<div><b>Free lines</b>: “+ Horizontal” / “+ Vertical” puts a line in the middle, <b>Evenly</b> spreads a typed number of lines evenly right away (4 lines = 5 equal parts). In <b>Move</b> mode you drag lines into place on the drawing area (always on a pixel edge); dragged out of the image, a line is deleted. No painting meanwhile — a tap next to the lines or <span class="kbd">Esc</span> ends the mode. With the <b>hand</b> tool you can grab a line without the mode, too.</div>'
       + '<div><b>Figure</b>: divides a figure into 2 (chibi), 3, 4, 6 or 8 head heights and marks chin, chest, hip, knee etc. plus the body axis. “Fit to figure” sets the top and bottom to what is drawn; both can be dragged in Move mode.</div>'
       + '<div><b>Own layouts</b>: save lines and division under a name and apply them to any sprite — for another size they are scaled proportionally. The same name replaces, × deletes. Layouts apply to all sprites.</div>'
       + '<div>The lines belong to the sprite and are saved with the project.</div>',

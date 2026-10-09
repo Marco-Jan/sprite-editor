@@ -11,6 +11,21 @@
 // Die Desktop-Version rechnet und speichert genauso (spritebit-rs, guides_ui.rs).
 import { normalizeGuides } from './state.js';
 
+/**
+ * n Linien gleichmäßig über eine Strecke der Länge `size` verteilen — wie
+ * „Neues Hilfslinien-Layout“ in Photoshop: 4 Linien teilen in 5 gleiche Teile.
+ * Gerundet auf Pixelgrenzen, nie auf dem Rand, keine doppelt.
+ */
+export function evenLines(n, size) {
+  const k = Math.max(0, Math.min(Math.round(Number(n)) || 0, size - 1));
+  const out = [];
+  for (let i = 1; i <= k; i++) {
+    const v = Math.round((size * i) / (k + 1));
+    if (v > 0 && v < size && !out.includes(v)) out.push(v);
+  }
+  return out;
+}
+
 /** Liste aus dem Speicher prüfen; Unbrauchbares fällt weg. */
 export function normalizeLayouts(list) {
   if (!Array.isArray(list)) return [];

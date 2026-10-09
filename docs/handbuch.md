@@ -320,7 +320,11 @@ Die Schablone überlebt einen Reload (eigener localStorage-Key).
 Panel „Hilfslinien“ im Dock. Reine Zeichenhilfe: nur in der Zeichenfläche zu sehen, in
 keinem Export, kein Undo. Gespeichert je Sprite (`sp.guides`), `G` blendet alle ein/aus.
 
-- **Freie Linien** — „+ Waagerecht“ / „+ Senkrecht“ setzt eine Linie in die Mitte. Im
+- **Freie Linien** — „+ Waagerecht“ / „+ Senkrecht“ setzt eine Linie in die Mitte.
+  **Gleichmäßig**: eine Anzahl eintippen (z. B. 4 waagerecht, 8 senkrecht) — die Linien
+  verteilen sich sofort gleichmäßig, 4 Linien teilen in 5 gleiche Teile (wie „Neues
+  Hilfslinien-Layout“ in Photoshop). Die Linien dieser Richtung werden dabei ersetzt, 0
+  entfernt sie. Im
   Modus **Verschieben** gehört die Zeichenfläche den Linien: anfassen und ziehen (immer
   auf eine Pixelgrenze), aus dem Bild ziehen löscht. Gemalt wird solange nicht; ein Tipp
   neben die Linien oder `Esc` beendet den Modus, ohne Linien endet er von selbst.

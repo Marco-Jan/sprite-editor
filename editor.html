@@ -508,6 +508,14 @@
             <button class="btn" id="gd-add-v" data-i18n="gd.addV" data-i18n-attr="title:gd.addVTitle" title="Senkrechte Linie in die Mitte setzen">+ Senkrecht</button>
             <button class="btn btn--danger-soft" id="gd-clear" data-i18n="gd.clear" data-i18n-attr="title:gd.clearTitle" title="Alle freien Linien dieses Sprites entfernen">Alle löschen</button>
           </div>
+          <!-- Gleichmäßig verteilen (wie in Photoshop): js/guidelayouts.js evenLines -->
+          <div class="field-controls gd-even" data-i18n-attr="title:gd.evenTitle" title="Anzahl eintippen — die Linien verteilen sich sofort gleichmäßig (4 Linien = 5 gleiche Teile). 0 entfernt sie.">
+            <span class="field-label" data-i18n="gd.even">Gleichmäßig</span>
+            <input type="number" id="gd-even-h" class="input input--num" min="0" max="64" value="0" data-i18n-attr="aria-label:gd.evenH" aria-label="Anzahl waagerechter Linien">
+            <span class="field-unit" data-i18n="gd.evenHUnit">waagerecht</span>
+            <input type="number" id="gd-even-v" class="input input--num" min="0" max="64" value="0" data-i18n-attr="aria-label:gd.evenV" aria-label="Anzahl senkrechter Linien">
+            <span class="field-unit" data-i18n="gd.evenVUnit">senkrecht</span>
+          </div>
           <label class="field">
             <span class="field-label" data-i18n="gd.figure">Figur — Kopfhöhen</span>
             <select id="gd-heads" class="input input--sm">
@@ -1121,7 +1129,7 @@
     <h3 class="help-h" data-i18n="help.h.guides">Hilfslinien</h3>
     <div class="help-list" data-i18n-html="help.guides">
       <div>Panel <b>Hilfslinien</b> im Dock — nur zum Zeichnen, sie erscheinen in keinem Export. <span class="kbd">G</span> blendet alle ein und aus.</div>
-      <div><b>Freie Linien</b>: „+ Waagerecht“ / „+ Senkrecht“ setzt eine Linie in die Mitte. Im Modus <b>Verschieben</b> zieht man Linien auf der Zeichenfläche an ihren Platz (immer auf einer Pixelgrenze); aus dem Bild gezogen ist eine Linie gelöscht. Solange wird nicht gemalt — ein Tipp neben die Linien oder <span class="kbd">Esc</span> beendet den Modus. Mit dem <b>Hand</b>-Werkzeug lässt sich eine Linie auch ohne den Modus greifen.</div>
+      <div><b>Freie Linien</b>: „+ Waagerecht“ / „+ Senkrecht“ setzt eine Linie in die Mitte, <b>Gleichmäßig</b> verteilt eine eingetippte Anzahl Linien sofort gleichmäßig (4 Linien = 5 gleiche Teile). Im Modus <b>Verschieben</b> zieht man Linien auf der Zeichenfläche an ihren Platz (immer auf einer Pixelgrenze); aus dem Bild gezogen ist eine Linie gelöscht. Solange wird nicht gemalt — ein Tipp neben die Linien oder <span class="kbd">Esc</span> beendet den Modus. Mit dem <b>Hand</b>-Werkzeug lässt sich eine Linie auch ohne den Modus greifen.</div>
       <div><b>Figur</b>: teilt eine Figur in 2 (Chibi), 3, 4, 6 oder 8 Kopfhöhen und markiert Kinn, Brust, Hüfte, Knie usw. samt Körperachse. „An Figur anpassen“ setzt Ober- und Unterkante auf das Gezeichnete; beide lassen sich im Modus Verschieben ziehen.</div>
       <div><b>Eigene Layouts</b>: Linien und Einteilung unter einem Namen speichern und auf jeden Sprite anwenden — bei anderer Größe werden sie anteilig umgerechnet. Gleicher Name ersetzt, × löscht. Die Layouts gelten für alle Sprites.</div>
       <div>Die Linien gehören zum Sprite und werden mit dem Projekt gespeichert.</div>

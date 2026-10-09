@@ -3,9 +3,19 @@
 //   npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { normalizeLayouts, makeLayout, upsertLayout, fitLayout } from '../js/guidelayouts.js';
+import { normalizeLayouts, makeLayout, upsertLayout, fitLayout, evenLines } from '../js/guidelayouts.js';
 
 const G = { h: [8, 16], v: [12], heads: 4, top: 2, bottom: 30 };
+
+test('Linien gleichmäßig verteilen: n Linien = n + 1 gleiche Teile', () => {
+  assert.deepEqual(evenLines(1, 24), [12]);
+  assert.deepEqual(evenLines(3, 24), [6, 12, 18]);
+  assert.deepEqual(evenLines(4, 30), [6, 12, 18, 24]);
+  assert.deepEqual(evenLines(2, 10), [3, 7], 'gerundet');
+  assert.deepEqual(evenLines(0, 24), []);
+  assert.equal(evenLines(100, 8).length, 7, 'höchstens eine je Pixelgrenze');
+  assert.deepEqual(evenLines(-3, 24), []);
+});
 
 test('gleiche Größe: genau dieselben Linien', () => {
   const l = makeLayout(' Figur ', G, 24, 32);
