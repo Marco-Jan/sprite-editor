@@ -1730,7 +1730,9 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   margin-left: auto;
   display: grid;
   place-items: center;
-  width: 30px; height: 30px;
+  width: 40px; height: 40px;
+  /* ragt oben und unten in den Rand der Kopfzeile — sie wird nicht höher */
+  margin-block: -6px;
   padding: 0;
   border: 1px solid transparent;
   border-radius: var(--r-md);
@@ -1738,7 +1740,22 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   cursor: pointer;
 }
 .bitty-btn:hover, .bitty-btn[aria-expanded="true"] { background: var(--surface-3); border-color: var(--line); }
-.bitty-btn canvas { width: 24px; height: 24px; image-rendering: pixelated; }
+.bitty-btn canvas { width: 32px; height: 32px; image-rendering: pixelated; }
+/* Vollbild: die Kopfzeile ist weg, Bitty bleibt — in der Ecke oben rechts
+   (js/fullscreen.js setzt top/right und rückt „Vollbild beenden“ daneben). */
+body.editor-fullscreen .bitty-btn {
+  position: fixed;
+  z-index: 80;
+  margin: 0;
+  background: var(--surface-1);
+  border-color: var(--line);
+  box-shadow: var(--shadow-md);
+}
+@media (max-width: 1100px) {
+  /* Am Handy ist die Kopfzeile voll mit Menütiteln */
+  .bitty-btn { width: 34px; height: 34px; margin-block: -4px; }
+  .bitty-btn canvas { width: 28px; height: 28px; }
+}
 
 .bitty-bubble {
   position: fixed;
