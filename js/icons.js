@@ -92,6 +92,8 @@ export const ICONS = {
   eyeOff:  '<path d="M3 3l18 18"/><path d="M10.6 5.1A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.2M6.6 6.6C3.8 8.4 2 12 2 12s3.5 7 10 7a9.7 9.7 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
   lock:    '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
   unlock:  '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/>',
+  // Alle sichtbaren zusammenführen: zwei Pfeile in eine Linie.
+  mergeAll: '<path d="M8 2l4 4 4-4M8 8l4 4 4-4"/><path d="M4 17h16M4 21h16"/>',
   mergeDown:'<path d="M12 3v10M8 9l4 4 4-4"/><path d="M4 17h16M4 21h16"/>',
   // Export, nicht Code: Pfeil, der aus einer Ablage heraus zeigt. Die
   // Chevrons davor liessen das Panel wie einen Code-Editor aussehen.

@@ -3,7 +3,10 @@
 //   npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { lightGrid, dropShadowGrid, paletteStep, shiftHex } from '../js/light.js';
+import {
+  lightGrid, dropShadowGrid, paletteStep, shiftHex,
+  normalizeFx, fxSource, fxFor, lightCel, shadowCel, recomputeFx, fxStale,
+} from '../js/light.js';
 
 // Palette mit einer Farbfamilie Grün in drei Stufen und Grau.
 const PAL = { 1: '#2E7D32', 2: '#4CAF50', 3: '#A5D6A7', 4: '#808080', 5: '#FFFFFF', 6: '#000000' };
@@ -128,4 +131,62 @@ test('ohne Richtung passiert nichts', () => {
   const g = block(2);
   assert.deepEqual(lightGrid(g, PAL, { dx: 0, dy: 0 }), { lit: 0, shaded: 0 });
   assert.equal(dropShadowGrid(g, { dx: 0, dy: 0 }, 6), 0);
+});
+
+// ── Effekt-Ebenen ───────────────────────────────────────────────────
+const L = (fx = null) => ({ name: 'x', fx });
+const LIGHT = normalizeFx({ kind: 'light', dir: { dx: -1, dy: -1 } });
+const SHADOW = normalizeFx({ kind: 'shadow', dir: { dx: -1, dy: -1 }, color: 6, distance: 1 });
+
+test('normalizeFx: unbekanntes fällt weg, Werte werden begrenzt', () => {
+  assert.equal(normalizeFx(null), null);
+  assert.equal(normalizeFx({ kind: 'blur' }), null);
+  const f = normalizeFx({ kind: 'light', dir: { dx: 0, dy: 0 }, width: 9, amount: 5 });
+  assert.deepEqual(f.dir, { dx: -1, dy: -1 }, 'ohne Richtung: von oben links');
+  assert.equal(f.width, 3);
+  assert.equal(f.amount, 1);
+});
+
+test('Licht gehört zur normalen Ebene darunter, Schatten zur darüber', () => {
+  const layers = [L(SHADOW), L(), L(LIGHT), L(LIGHT)];
+  assert.equal(fxSource(layers, 0), 1);
+  assert.equal(fxSource(layers, 2), 1);
+  assert.equal(fxSource(layers, 3), 1, 'über eine andere Effekt-Ebene hinweg');
+  assert.equal(fxSource(layers, 1), -1, 'normale Ebene hat keine Quelle');
+  assert.equal(fxFor(layers, 1, 'shadow'), 0);
+  assert.equal(fxFor(layers, 1, 'light'), 2);
+});
+
+test('Licht-Zelle hält nur die geänderten Pixel, das Original bleibt', () => {
+  const base = block(2);
+  const before = base.map(r => r.slice());
+  const cel = lightCel(base, PAL, LIGHT);
+  assert.deepEqual(base, before, 'Original unverändert');
+  assert.equal(cel[1][1], 3, 'Lichtkante');
+  assert.equal(cel[5][5], 1, 'Schattenkante');
+  assert.equal(cel[3][3], 0, 'unveränderte Pixel bleiben leer');
+});
+
+test('Schatten-Zelle liegt nur in leeren Pixeln', () => {
+  const base = [[0, 0, 0], [0, 2, 0], [0, 0, 0]];
+  const cel = shadowCel(base, SHADOW);
+  assert.equal(cel[2][2], 6);
+  assert.equal(cel[1][1], 0);
+});
+
+test('neu berechnen ersetzt das alte Licht und merkt Änderungen an der Figur', () => {
+  const g = block(2);
+  const sp = { layers: [L(), L({ ...LIGHT })], frames: [{ cels: [g, block(0)] }, { cels: [g, block(0)] }] };
+  assert.ok(recomputeFx(sp, 1, PAL));
+  assert.equal(sp.frames[0].cels[1][1][1], 3);
+  assert.equal(sp.frames[0].cels[1], sp.frames[1].cels[1], 'verknüpfte Quelle → dieselbe Zelle');
+  assert.equal(fxStale(sp, 1), false);
+  // Richtung ändern: die alten Lichtkanten oben links sind weg
+  sp.layers[1].fx.dir = { dx: 1, dy: 1 };
+  recomputeFx(sp, 1, PAL);
+  assert.equal(sp.frames[0].cels[1][1][1], 1, 'oben links jetzt Schattenkante');
+  assert.equal(sp.frames[0].cels[1][5][5], 3, 'unten rechts jetzt Licht');
+  // an der Figur weitermalen → veraltet
+  g[3][3] = 4;
+  assert.equal(fxStale(sp, 1), true);
 });

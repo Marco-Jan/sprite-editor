@@ -51,6 +51,8 @@ export const renderCallbacks = {
   onEditorRendered:  () => {},
   // Reiter der geöffneten Sprites (tabs.js).
   onRenderTabs:      () => {},
+  // Licht-Panel an die Effekt-Ebenen der aktiven Ebene angleichen (app.js).
+  onLightPanel:      () => {},
 };
 
 // HTML-Escaping für Nutzer-Eingaben (Sprite-/Palettennamen landen im innerHTML).
@@ -1111,4 +1113,5 @@ export function renderAll() {
   renderCallbacks.onRenderTimeline();
   renderCallbacks.onRenderLayers();
   renderCallbacks.onRenderGuides();
+  renderCallbacks.onLightPanel();
 }

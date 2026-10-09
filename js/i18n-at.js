@@ -253,9 +253,7 @@ export const STATIC_AT = {
   'lgt.width':        'Wia broat',
   'lgt.highlight':    'Liachtkantn (heller)',
   'lgt.shadow':       'Schottnkantn (dunkler)',
-  'lgt.apply':        'Liacht drauf',
   'lgt.cast':         'Schlagschottn',
-  'lgt.castApply':    'Werfn',
 
   // ── Modale ──
   'mod.newTitle':      'A neicher Sprite',

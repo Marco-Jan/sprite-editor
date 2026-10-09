@@ -9,7 +9,7 @@
 // Die Liste im Panel zeigt die oberste Ebene oben. Alle Änderungen laufen
 // durch recordOp() und sind Undo-Schritte; nur das Wählen der aktiven Ebene
 // ist keine Änderung.
-import { getSprite, getPaletteByName, clearSelection, defaultLayer, blankLike, sampleGrid } from './state.js';
+import { getSprite, getPaletteByName, clearSelection, defaultLayer, blankLike, sampleGrid, copyLayer, flatGrid } from './state.js';
 import { dc, cellToColor } from './data.js';
 import { renderAll, renderEditor, renderCallbacks } from './render.js';
 import { recordOp, beginStroke, commitStroke } from './history.js';
@@ -80,7 +80,7 @@ export function duplicateLayer() {
   edit(sp => {
     const at = sp.layer + 1;
     const src = sp.layers[sp.layer];
-    sp.layers.splice(at, 0, { ...src, name: t('ly.copyName', { name: src.name }) });
+    sp.layers.splice(at, 0, { ...copyLayer(src), name: t('ly.copyName', { name: src.name }) });
     // Verknüpfte Zellen der Vorlage sind in der Kopie wieder verknüpft.
     const memo = new Map();
     sp.frames.forEach(f => {
@@ -140,6 +140,37 @@ export function mergeDown() {
     }
     s.layers.splice(top, 1);
     s.layer = below;
+  });
+}
+
+// Alle sichtbaren Ebenen in jedem Frame zu einer zusammenführen — auch
+// Licht und Schatten (die damit fest im Bild landen). Ausgeblendete bleiben,
+// wie sie sind. Die neue Ebene sitzt auf dem Platz der untersten sichtbaren.
+export function mergeVisible() {
+  const sp = getSprite();
+  if (!sp) return;
+  const vis = sp.layers.map((L, i) => (L.visible && L.opacity > 0 ? i : -1)).filter(i => i >= 0);
+  if (vis.length < 2) { showInfoToast(t('ly.nothingToMerge')); return; }
+  edit(s => {
+    const at = vis[0];
+    // Verknüpfte Zellen: dieselbe Kombination ergibt dasselbe, wieder geteilte Bild.
+    const ids = new Map();
+    const id = g => { if (!ids.has(g)) ids.set(g, ids.size); return ids.get(g); };
+    const memo = new Map();
+    const merged = s.frames.map((f, fi) => {
+      const key = vis.map(i => id(f.cels[i])).join(',');
+      if (!memo.has(key)) memo.set(key, dc(flatGrid(s, fi)));
+      return memo.get(key);
+    });
+    const keep = new Set(vis);
+    s.layers = s.layers.filter((_, i) => i === at || !keep.has(i));
+    // at ist die unterste sichtbare — darunter fällt nichts weg, der Platz bleibt at.
+    s.layers[at] = { ...defaultLayer(), name: t('ly.mergedName') };
+    s.frames.forEach((f, fi) => {
+      f.cels = f.cels.filter((_, i) => i === at || !keep.has(i));
+      f.cels[at] = merged[fi];
+    });
+    s.layer = at;
   });
 }
 
@@ -259,6 +290,7 @@ export function renderLayers() {
   $('ly-opacity-val').textContent = Math.round(L.opacity * 100) + '%';
   $('ly-del').disabled = n < 2;
   $('ly-merge').disabled = sp.layer === 0;
+  $('ly-merge-all').disabled = sp.layers.filter(L => L.visible && L.opacity > 0).length < 2;
 }
 
 // Beim Zeichnen nur das Vorschaubild der aktiven Ebene auffrischen.
@@ -317,6 +349,7 @@ export function initLayers() {
   $('ly-dup').addEventListener('click', duplicateLayer);
   $('ly-del').addEventListener('click', deleteLayer);
   $('ly-merge').addEventListener('click', mergeDown);
+  $('ly-merge-all').addEventListener('click', mergeVisible);
 
   // Deckkraft: live zeigen, als EIN Undo-Schritt festhalten.
   const op = $('ly-opacity');

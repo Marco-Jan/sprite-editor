@@ -255,6 +255,18 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 .light-dirs .btn { min-width: 0; padding: 4px 0; justify-content: center; }
 .light-dirs .btn.is-active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); }
 .light-sun { display: grid; place-items: center; }
+.light-stale {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--r-md);
+  background: var(--accent-bg);
+  font-size: var(--fs-sm);
+}
+.light-stale[hidden] { display: none; }
 .light-sun::before { content: ''; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
 .check.is-disabled { opacity: 0.45; cursor: not-allowed; }
 

@@ -455,6 +455,7 @@
             <button class="btn" id="ly-add" data-i18n-attr="title:ly.add" title="Neue Ebene über der aktiven"><span class="ico" data-icon="plus"></span></button>
             <button class="btn" id="ly-dup" data-i18n-attr="title:ly.dup" title="Ebene duplizieren"><span class="ico" data-icon="copy"></span></button>
             <button class="btn" id="ly-merge" data-i18n-attr="title:ly.merge" title="Nach unten zusammenführen — in jedem Frame"><span class="ico" data-icon="mergeDown"></span></button>
+            <button class="btn" id="ly-merge-all" data-i18n-attr="title:ly.mergeAll" title="Alle sichtbaren Ebenen zusammenführen — in jedem Frame, auch Licht und Schatten; ausgeblendete bleiben"><span class="ico" data-icon="mergeAll"></span></button>
             <button class="btn" id="ly-del" data-i18n-attr="title:ly.del" title="Ebene löschen"><span class="ico" data-icon="trash"></span></button>
           </div>
           <label class="field field--inline">
@@ -763,8 +764,8 @@
             <span data-i18n="lgt.free">Auch Farben außerhalb der Palette</span>
           </label>
 
-          <button class="btn btn--block btn--accent" id="light-btn" data-i18n="lgt.apply" data-i18n-attr="title:lgt.applyTitle"
-                  title="Kanten zur Lichtquelle hin aufhellen, abgewandte Kanten abdunkeln — auf der aktuellen Ebene, mit Auswahl nur darin">Licht anwenden</button>
+          <button class="btn btn--block btn--accent" id="light-btn" data-i18n-attr="title:lgt.applyTitle"
+                  title="Legt über der aktiven Ebene eine Licht-Ebene an: Kanten zur Lichtquelle hin heller, abgewandte dunkler. Das Original bleibt unverändert; Richtung, Stärke und Breite ändern rechnet die Ebene sofort neu">Licht-Ebene anlegen</button>
 
           <div class="field field--inline">
             <span class="field-label" data-i18n="lgt.cast">Schlagschatten</span>
@@ -774,8 +775,13 @@
               <option value="2">2 px</option>
               <option value="3">3 px</option>
             </select>
-            <button class="btn" id="light-cast-btn" data-i18n="lgt.castApply" data-i18n-attr="title:lgt.castApplyTitle"
-                    title="Silhouette von der Lichtquelle weg versetzt als Schatten in leere Pixel malen">Werfen</button>
+            <button class="btn" id="light-cast-btn" data-i18n-attr="title:lgt.castApplyTitle"
+                    title="Legt unter der aktiven Ebene eine Schatten-Ebene an: die Silhouette, von der Lichtquelle weg versetzt">Werfen</button>
+          </div>
+          <p class="field-note" id="light-status"></p>
+          <div class="light-stale" id="light-stale" hidden>
+            <span data-i18n="lgt.stale">An der Figur wurde weitergemalt.</span>
+            <button class="btn btn--sm" id="light-redo" data-i18n="lgt.redo">Neu berechnen</button>
           </div>
         </div>
       </section>

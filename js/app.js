@@ -4,7 +4,7 @@
 import {
   state, sprites, paletteMaterials, selection, flatGrid, defaultLayer,
   getGrid, getSprite, getPal, getMaxIdx, getPaletteName, getPreviewName, listSprites,
-  createSprite, clearSelection, isInSelection,
+  createSprite, clearSelection, isInSelection, blankLike,
 } from './state.js';
 import { DEFAULT_PALETTE, MAX_COLORS } from './data.js';
 import {
@@ -47,7 +47,7 @@ import {
   medianCut, nearestColor, rgbToHex, hexToRgb,
   despeckleGrid, outlineGrid, magicWandDelete, autoRemoveBackground,
 } from './spritefx.js';
-import { lightGrid, dropShadowGrid } from './light.js';
+import { normalizeFx, fxSource, fxFor, recomputeFx, fxStale } from './light.js';
 import { initExport } from './export.js';
 import { openReduceModal, initReduceModal } from './reduce.js';
 import { zoomAt, fitZoomToArea, isPanMode, setPanTool, initPan, initPinch } from './view.js';
@@ -1118,50 +1118,125 @@ function initCleanupPanel() {
 // (Rechnung in js/light.js). Mit Auswahl wirkt beides nur darin.
 // ────────────────────────────────────────────────────────────────────
 function initLightPanel() {
+  // Licht und Schatten liegen als eigene Ebenen (light.js: layer.fx) — das
+  // Original bleibt unberührt. Basis ist die aktive Ebene; ist die aktive
+  // selbst eine Effekt-Ebene, ihre Quelle. Gibt es zur Basis schon eine
+  // Licht- bzw. Schatten-Ebene, rechnet jede Änderung im Panel sie sofort
+  // neu; sonst legen „Licht anwenden“ / „Werfen“ sie an.
   let dir = { dx: -1, dy: -1 };
   const dirBtns = [...document.querySelectorAll('#light-dirs .light-dir')];
-  dirBtns.forEach(b => b.addEventListener('click', () => {
-    dir = { dx: Number(b.dataset.dx), dy: Number(b.dataset.dy) };
-    dirBtns.forEach(o => {
-      o.classList.toggle('is-active', o === b);
-      o.setAttribute('aria-pressed', String(o === b));
-    });
-  }));
   const amount = $('light-amount');
-  amount.addEventListener('input', () => { $('light-amount-val').textContent = amount.value + '%'; });
+  const showDir = () => dirBtns.forEach(o => {
+    const on = Number(o.dataset.dx) === dir.dx && Number(o.dataset.dy) === dir.dy;
+    o.classList.toggle('is-active', on);
+    o.setAttribute('aria-pressed', String(on));
+  });
 
-  // Schwebender Auswahl-Inhalt liegt nicht im Grid — erst absetzen.
-  const inside = () => {
-    commitFloat();
-    return selection.rect ? isInSelection : undefined;
-  };
-
-  $('light-btn').addEventListener('click', () => {
-    if (layerBlocked(true)) return;
-    const opts = {
+  const baseOf = sp => (sp.layers[sp.layer]?.fx ? fxSource(sp.layers, sp.layer) : sp.layer);
+  const fxValues = kind => (kind === 'light'
+    ? {
+      kind, dir,
       width: Number($('light-width').value) || 1,
       amount: Number(amount.value) / 100,
       highlight: $('light-highlight').checked,
       shadow: $('light-shadow').checked,
       allowHex: $('light-free').checked,
-      inside: inside(),
-    };
-    let r = { lit: 0, shaded: 0 };
-    recordOp(() => { r = lightGrid(getGrid(), getPal(), dir, opts); });
-    if (r.lit || r.shaded) renderAll();
-    showInfoToast(r.lit || r.shaded ? t('lgt.done', r) : t('lgt.none'));
-  });
+    }
+    : { kind, dir, color: $('light-cast-color').value, distance: Number($('light-cast-dist').value) || 1 });
 
-  $('light-cast-btn').addEventListener('click', () => {
-    if (layerBlocked(true)) return;
-    const col = $('light-cast-color').value;
-    const dist = Number($('light-cast-dist').value) || 1;
-    const within = inside();
-    let n = 0;
-    recordOp(() => { n = dropShadowGrid(getGrid(), dir, col, dist, within); });
-    if (n) renderAll();
-    showInfoToast(n ? t('lgt.castDone', { n }) : t('lgt.castNone'));
-  });
+  // Effekt-Ebene zur Basis anlegen oder neu berechnen. create = false:
+  // nur aktualisieren, wenn es sie schon gibt (Live-Änderung im Panel).
+  function upsert(kind, create) {
+    const sp = getSprite();
+    if (!sp) return;
+    const base = baseOf(sp);
+    if (base < 0) { showInfoToast(t('lgt.noBase')); return; }
+    let idx = fxFor(sp.layers, base, kind);
+    if (idx < 0 && !create) return;
+    commitFloat();
+    const fx = normalizeFx(fxValues(kind));
+    recordOp(() => {
+      if (idx < 0) {
+        idx = kind === 'light' ? base + 1 : base;
+        const name = t(kind === 'light' ? 'lgt.layerLight' : 'lgt.layerShadow', { name: sp.layers[base].name });
+        sp.layers.splice(idx, 0, { ...defaultLayer(), name, locked: true, fx });
+        sp.frames.forEach(f => f.cels.splice(idx, 0, blankLike(f.cels[0])));
+        if (sp.layer >= idx) sp.layer++;
+      } else {
+        sp.layers[idx].fx = fx;
+      }
+      recomputeFx(sp, idx, getPal());
+    });
+    renderAll();
+    saveState();
+  }
+
+  // Alle Effekt-Ebenen der Basis neu berechnen (nach Änderungen an der Figur).
+  function recomputeAll() {
+    const sp = getSprite();
+    if (!sp) return;
+    const base = baseOf(sp);
+    const idxs = ['light', 'shadow'].map(k => fxFor(sp.layers, base, k)).filter(i => i >= 0);
+    if (!idxs.length) return;
+    recordOp(() => idxs.forEach(i => recomputeFx(sp, i, getPal())));
+    renderAll();
+    saveState();
+  }
+
+  // Panel an die Effekt-Ebenen der Basis angleichen: ihre Einstellungen,
+  // Knopf-Beschriftungen, Hinweis „Figur geändert“.
+  function sync() {
+    const sp = getSprite();
+    if (!sp) return;
+    const base = baseOf(sp);
+    const li = fxFor(sp.layers, base, 'light');
+    const si = fxFor(sp.layers, base, 'shadow');
+    const lfx = li >= 0 ? sp.layers[li].fx : null;
+    const sfx = si >= 0 ? sp.layers[si].fx : null;
+    const own = lfx || sfx;
+    if (own) dir = { ...own.dir };
+    if (lfx) {
+      amount.value = String(Math.round(lfx.amount * 100));
+      $('light-amount-val').textContent = amount.value + '%';
+      $('light-width').value = String(lfx.width);
+      $('light-highlight').checked = lfx.highlight;
+      $('light-shadow').checked = lfx.shadow;
+      $('light-free').checked = lfx.allowHex;
+    }
+    if (sfx) {
+      if (typeof sfx.color === 'string') $('light-cast-color').value = sfx.color;
+      $('light-cast-dist').value = String(sfx.distance);
+    }
+    showDir();
+    $('light-btn').textContent = t(lfx ? 'lgt.applyUpdate' : 'lgt.applyNew');
+    $('light-cast-btn').textContent = t(sfx ? 'lgt.castUpdate' : 'lgt.castNew');
+    $('light-status').textContent = base >= 0
+      ? t(own ? 'lgt.statusOn' : 'lgt.statusOff', { name: sp.layers[base].name })
+      : '';
+    $('light-stale').hidden = !((li >= 0 && fxStale(sp, li)) || (si >= 0 && fxStale(sp, si)));
+  }
+  // Nach jeder Änderung angleichen — leicht verzögert, die Prüfsumme läuft
+  // über alle Frames der Ebene.
+  let syncTimer = 0;
+  renderCallbacks.onLightPanel = () => { clearTimeout(syncTimer); syncTimer = setTimeout(sync, 250); };
+
+  dirBtns.forEach(b => b.addEventListener('click', () => {
+    dir = { dx: Number(b.dataset.dx), dy: Number(b.dataset.dy) };
+    showDir();
+    upsert('light', false);
+    upsert('shadow', false);
+  }));
+  amount.addEventListener('input', () => { $('light-amount-val').textContent = amount.value + '%'; });
+  for (const id of ['light-amount', 'light-width', 'light-highlight', 'light-shadow', 'light-free']) {
+    $(id).addEventListener('change', () => upsert('light', false));
+  }
+  for (const id of ['light-cast-color', 'light-cast-dist']) {
+    $(id).addEventListener('change', () => upsert('shadow', false));
+  }
+  $('light-btn').addEventListener('click', () => upsert('light', true));
+  $('light-cast-btn').addEventListener('click', () => upsert('shadow', true));
+  $('light-redo').addEventListener('click', recomputeAll);
+  sync();
 }
 
 // ────────────────────────────────────────────────────────────────────

@@ -4,6 +4,7 @@
 // Alle anderen Module importieren von hier. Mutationen erfolgen über die
 // exportierten Objekte (state.curSprite = …, sprites[id] = …), NICHT über
 // lokale Re-Assignments — sonst sehen andere Module die Änderung nicht.
+import { normalizeFx } from './light.js';
 import { BUILTIN_PALETTES, DEFAULT_PALETTE, paletteSize, cellToColor } from './data.js';
 import { t } from './i18n.js';
 import { normalizeTags } from './tags.js';
@@ -169,8 +170,13 @@ export function attachGrid(sp) {
 // continuous: „durchgehende" Ebene — ein neuer Frame
 // bekommt hier keine leere Zelle, sondern teilt sich das Bild des vorigen.
 export function defaultLayer(n = 1) {
-  return { name: t('ly.name', { n }), visible: true, locked: false, opacity: 1, continuous: false };
+  return { name: t('ly.name', { n }), visible: true, locked: false, opacity: 1, continuous: false, fx: null };
 }
+
+// Kopie einer Ebene samt Effekt-Einstellungen (light.js) — eine flache
+// Kopie teilte sich das fx-Objekt mit dem Original, und Undo-Schnappschüsse
+// würden beim nächsten Neuberechnen still mitgeändert.
+export const copyLayer = l => ({ ...l, fx: l.fx ? { ...l.fx, dir: { ...l.fx.dir } } : null });
 
 export function normalizeLayer(l, n) {
   const op = Number(l?.opacity);
@@ -180,6 +186,7 @@ export function normalizeLayer(l, n) {
     locked: !!l?.locked,
     opacity: Number.isFinite(op) ? Math.max(0, Math.min(1, op)) : 1,
     continuous: !!l?.continuous,
+    fx: normalizeFx(l?.fx),
   };
 }
 
