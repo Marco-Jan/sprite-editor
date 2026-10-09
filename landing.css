@@ -646,8 +646,8 @@ kbd {
 /* Text auf der Kulisse: der Schleier allein reicht nicht, wenn dahinter die
    helle Skyline steht. Eine Stufe heller plus ein weicher Schatten haelt
    auch die Kleinschrift lesbar. */
-.hero-text .note { color: var(--text-muted); }
-.hero-text .note code { color: var(--text); }
+.hero-text .note, .hero-cta .note { color: var(--text-muted); }
+.hero-text .note code, .hero-cta .note code { color: var(--text); }
 .stage .eyebrow,
 .stage h1,
 .stage .lead,
@@ -668,8 +668,10 @@ kbd {
 }
 .cta-gh { display: inline-flex; flex-wrap: wrap; gap: var(--sp-2); }
 /* Im Kopf stehen die zwei großen Knöpfe untereinander — gleich breit wirkt ruhiger. */
-.hero-text .cta-row { display: inline-grid; grid-template-columns: minmax(0, 1fr); }
-.hero-text .cta-row .btn { justify-content: center; }
+.hero-cta .cta-row { display: grid; grid-template-columns: minmax(0, 1fr); margin-top: 0; }
+.hero-cta .cta-row .btn { justify-content: center; }
+.hero-cta { align-self: center; max-width: 30rem; }
+.hero-cta .dl-help { margin-top: 0; }
 .cta-sub .btn { color: var(--text-muted); }
 .cta-sub .btn:hover { color: var(--text); }
 
@@ -682,6 +684,33 @@ kbd {
   text-shadow: 0 1px 10px rgba(12, 8, 22, 0.85);
 }
 /* Zweite graue Zeile (Größen im Browser / in der Desktop-App) dicht darunter. */
+/* Aufklappbare Anleitung unter den Knöpfen: klein, bis man sie öffnet. */
+.dl-help {
+  max-width: 34rem;
+  margin: calc(-1 * var(--sp-2)) 0 var(--sp-5);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  text-shadow: 0 1px 10px rgba(12, 8, 22, 0.85);
+}
+.dl-help summary {
+  cursor: pointer;
+  width: fit-content;
+  color: var(--text-muted);
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+.dl-help summary:hover { color: var(--text); }
+.dl-help[open] {
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: rgba(18, 18, 24, 0.82);
+  text-shadow: none;
+}
+.dl-help[open] summary { margin-bottom: var(--sp-2); color: var(--text); text-decoration: none; font-weight: 600; }
+.dl-help ol { margin: 0; padding-left: 1.2rem; display: grid; gap: 0.45rem; line-height: 1.5; }
+.dl-help b { color: var(--text); }
+.dl-help code { font-size: 0.95em; color: var(--text); }
 .hero-platforms + .hero-platforms { margin-top: calc(-1 * var(--sp-4)); }
 .hero-chips {
   display: flex;
@@ -1267,7 +1296,7 @@ kbd {
 
 @media (max-width: 560px) {
   .cta-row .btn { flex: 1 1 100%; }
-  .hero-text .cta-row { display: grid; }
+  .hero-cta .cta-row { display: grid; }
 }
 
 /* ── 15 · Keyframes ─────────────────────────────────────────────── */

@@ -171,6 +171,10 @@
           <li>Läuft offline</li>
           <li>Kein Konto</li>
         </ul>
+      </div>
+
+      <!-- Rechte Spalte: die Wege hinein — sonst wächst die linke Spalte in die Kulisse. -->
+      <div class="hero-cta">
         <!-- Zwei Wege hinein (groß): Browser und Desktop-App. Darunter klein:
              die Web-Version als Browser-App installieren (nur wenn der Browser
              es anbietet, js/pwa.js) und der Quellcode beider Repos. Ziele in js/site-links.js. -->
@@ -187,12 +191,17 @@
         </div>
         <!-- Nur sichtbar, wenn in diesem Browser eine ältere Desktop-Version geladen wurde (js/site-links.js). -->
         <p class="dl-update" data-dl-update hidden><span data-i18n="dl.update">Update für deine Desktop-App:</span> <span class="dl-vers"><span data-dl-from></span> → <span data-dl-to></span></span></p>
+        <!-- Kurz erklärt: Desktop-App installieren und die Windows-Warnung (nicht signiert). -->
+        <details class="dl-help">
+          <summary data-i18n="dl.helpSummary">So installierst du die Desktop-App — und warum Windows warnt</summary>
+          <ol data-i18n-html="dl.helpSteps"><li><b>ZIP laden und entpacken</b> — Rechtsklick → „Alle extrahieren …“. Den Ordner z. B. auf den Desktop oder nach „Dokumente“ legen, nicht nach „Programme“: sonst kann sich die App nicht selbst aktualisieren.</li><li><b><code>spritebit.exe</code> doppelklicken</b> — eine Installation braucht es nicht.</li><li><b>Windows warnt beim ersten Start</b> („Der Computer wurde durch Windows geschützt“), weil die App noch nicht signiert ist. Auf <b>„Weitere Informationen“</b> und dann <b>„Trotzdem ausführen“</b> klicken — das ist nur einmal nötig. Der Quellcode liegt offen auf GitHub.</li><li><b>Updates</b> meldet die App selbst: „Jetzt aktualisieren“ lädt, prüft und tauscht sie mit einem Klick aus.</li></ol>
+        </details>
         <p class="hero-platforms" data-i18n-html="hero.platforms">Kostenlos · kein Abo · kein Konto · Open Source (MIT-Lizenz)</p>
         <p class="hero-platforms" data-i18n-html="hero.sizes">Im Browser bis 1024 × 1024 Pixel · in der Desktop-App bis 8192 × 8192</p>
-        <p class="note" data-i18n-html="hero.note">
-          Deine Pixel bleiben im Speicher deines Browsers, auf deinem Rechner.
-          Nichts wird hochgeladen — und einmal geöffnet, läuft der Editor auch offline.
-        </p>
+          <p class="note" data-i18n-html="hero.note">
+            Deine Pixel bleiben im Speicher deines Browsers, auf deinem Rechner.
+            Nichts wird hochgeladen — und einmal geöffnet, läuft der Editor auch offline.
+          </p>
       </div>
 
     </div>
