@@ -14,7 +14,8 @@
 #   4. Main    Web: der Branch wird lokal nach main gemergt (Konflikte werden
 #              vorab erkannt; weicht main inhaltlich ab, laufen die Tests dort
 #              noch einmal) — kein Pull Request auf GitHub nötig.
-#   5. Pushen  beide Repos; Web: Branch und main → Vercel geht online.
+#   5. Pushen  beide Repos; Web: Branch und main, dann der Vercel Deploy Hook
+#              (tools/deploy-hook.txt) → die Website wird gebaut.
 #   6. --release  Tag v<Version aus Cargo.toml> pushen → GitHub baut die
 #                 Desktop-Release (nur, wenn es die Version noch nicht gibt).
 #
@@ -32,15 +33,22 @@
 #
 # Reine Standardbibliothek. Braucht git, node/npx, python und cargo.
 import argparse
+import json
 import os
 import re
 import shutil
 import subprocess
 import sys
+import urllib.request
 
 WEB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RS_DEFAULT = os.path.join(os.path.dirname(WEB), 'spritebit-rs')
 LIVE_BRANCH = 'main'   # baut Vercel als Production
+# Vercel Deploy Hook: startet den Build von main auch dann, wenn Vercel die
+# Pushes nicht mitbekommt. Die Adresse ist geheim (wer sie kennt, kann Builds
+# auslösen) und steht darum NICHT im Repo, sondern in dieser Datei
+# (.gitignore) oder in der Umgebungsvariable SPRITEBIT_DEPLOY_HOOK.
+HOOK_FILE = os.path.join(WEB, 'tools', 'deploy-hook.txt')
 WIN = os.name == 'nt'
 
 try:
@@ -269,6 +277,8 @@ def web(args):
     ok('Typprüfung sauber')
 
     to_main = not args.no_main and br != LIVE_BRANCH
+    if hook_url():  # vor jedem Push prüfen, ob die Adresse taugt
+        ok('Vercel Deploy Hook eingerichtet')
     if to_main:
         # Vorab, ohne etwas anzufassen: lässt sich der Branch konfliktfrei mergen?
         r = run(['git', 'merge-tree', '--write-tree', f'origin/{LIVE_BRANCH}', br], WEB, quiet=True, check=False)
@@ -280,7 +290,10 @@ def web(args):
     if to_main:
         merge_to_main(br, args.dry_run)
     elif br == LIVE_BRANCH:
-        ok(f'Auf {LIVE_BRANCH} gepusht — Vercel baut jetzt die Website.')
+        if args.dry_run:
+            info('(Probelauf) würde den Vercel-Build anstoßen')
+        else:
+            vercel_hook()
 
 
 def merge_to_main(br, dry):
@@ -309,9 +322,36 @@ def merge_to_main(br, dry):
             ok('Tests auf dem Ergebnis grün')
         ok(f'{br} nach {LIVE_BRANCH} gemergt')
         run(['git', 'push', 'origin', LIVE_BRANCH], WEB)
-        ok(f'{LIVE_BRANCH} gepusht — Vercel baut jetzt die Website.')
+        ok(f'{LIVE_BRANCH} gepusht')
     finally:
         git(WEB, 'checkout', '-q', br)
+    vercel_hook()
+
+
+def hook_url():
+    """Adresse des Deploy Hooks oder None; eine falsche Adresse bricht ab."""
+    url = os.environ.get('SPRITEBIT_DEPLOY_HOOK', '').strip()
+    if not url and os.path.exists(HOOK_FILE):
+        url = open(HOOK_FILE, encoding='utf-8').read().strip()
+    if url and not url.startswith('https://api.vercel.com/'):
+        fail(f'{os.path.relpath(HOOK_FILE, WEB)} enthält keine Vercel-Adresse (https://api.vercel.com/…).')
+    return url or None
+
+
+def vercel_hook():
+    url = hook_url()
+    if not url:
+        warn('Kein Vercel Deploy Hook eingerichtet — ob Vercel baut, hängt dann an der Git-Verbindung.')
+        info('Einrichten: Vercel → Projekt → Settings → Git → Deploy Hooks → Branch „main“ →')
+        info(f'Adresse in {os.path.relpath(HOOK_FILE, WEB)} speichern (wird nicht committet).')
+        return
+    try:
+        with urllib.request.urlopen(urllib.request.Request(url, method='POST'), timeout=30) as r:
+            body = json.loads(r.read().decode('utf-8') or '{}')
+        state = body.get('job', {}).get('state', 'angenommen')
+        ok(f'Vercel-Build angestoßen ({state}) — in ein, zwei Minuten ist die Website aktuell.')
+    except Exception as e:
+        warn(f'Vercel Deploy Hook fehlgeschlagen: {e} — im Vercel-Dashboard von Hand deployen.')
 
 
 # ── Rust ─────────────────────────────────────────────────────────────

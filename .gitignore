@@ -23,3 +23,6 @@ build/
 
 # Python-Cache (tools/*.py)
 __pycache__/
+
+# Geheime Vercel-Deploy-Adresse (tools/deploy.py)
+tools/deploy-hook.txt
