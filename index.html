@@ -166,6 +166,8 @@
           <!-- Nur sichtbar, wenn der Browser die Installation anbietet (js/pwa.js). -->
           <button type="button" class="btn btn--ghost btn--lg" data-install hidden data-i18n="end.install">Als App installieren</button>
         </div>
+        <!-- Nur sichtbar, wenn in diesem Browser eine ältere Desktop-Version geladen wurde (js/site-links.js). -->
+        <p class="dl-update" data-dl-update hidden><span data-i18n="dl.update">Update für deine Desktop-App:</span> <span class="dl-vers"><span data-dl-from></span> → <span data-dl-to></span></span></p>
         <p class="hero-platforms" data-i18n-html="hero.platforms">Kostenlos · kein Abo · kein Konto · Open Source (MIT-Lizenz)</p>
         <p class="note" data-i18n-html="hero.note">
           Deine Pixel bleiben im Speicher deines Browsers, auf deinem Rechner.

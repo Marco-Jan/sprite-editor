@@ -248,6 +248,25 @@ code {
 .btn--ghost .ver { background: rgba(255, 255, 255, 0.08); }
 /* Im Download-Knopf steckt die Beschriftung samt Schild in einer Hülle ("bald" / fertig). */
 .btn [data-when] { display: inline-flex; align-items: center; gap: 0.55rem; }
+/* Neue Desktop-Version seit dem letzten Download in diesem Browser. */
+.btn.has-update { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 6px 22px rgba(110, 168, 254, 0.22); }
+.btn.has-update .ver { background: var(--accent); color: var(--bg); opacity: 1; }
+.foot-col a.has-update .ver { color: var(--accent); }
+.dl-update {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin: calc(-1 * var(--sp-3)) 0 var(--sp-4);
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--accent-line);
+  border-radius: 999px;
+  background: rgba(110, 168, 254, 0.12);
+  color: var(--text);
+  font-size: var(--fs-sm);
+}
+.dl-update[hidden] { display: none; }
+.dl-vers { font-weight: 700; font-variant-numeric: tabular-nums; }
 .foot-col .ver { margin-left: 0.45em; padding: 0; background: none; color: var(--text-dim); }
 /* Noch nicht da (js/site-links.js): sichtbar, aber ohne Ziel. */
 .btn.is-soon { cursor: default; opacity: 0.75; }
