@@ -135,7 +135,7 @@ sprite-editor/
     ├── render.js        ← alle DOM-/Canvas-Render-Funktionen
     ├── raster.js        ← Bilder als Ganzes zeichnen statt Pixel für Pixel
     ├── view.js          ← Ansicht der Zeichenfläche: zoomen, verschieben, Finger-Gesten
-    ├── pixelperfect.js  ← saubere 1-Pixel-Linien beim Freihandzeichnen (Aseprite)
+    ├── pixelperfect.js  ← saubere 1-Pixel-Linien beim Freihandzeichnen
     ├── selection.js     ← Auswahl: aufziehen, lassoen, ausschneiden, verschieben
     ├── transform.js     ← spiegeln, drehen, zuschneiden, zentrieren, Größe ändern
     ├── spritefx.js      ← Bild→Sprite-Helfer: Quantisierung, Glätten, Outline, Zauberstab
@@ -147,7 +147,7 @@ sprite-editor/
     ├── frames.js        ← Animation: Frames anlegen, wechseln, abspielen, Timeline
     ├── layers.js        ← Ebenen: anlegen, ordnen, ein-/ausblenden, sperren, Deckkraft
     ├── cels.js          ← Zellen der Timeline: verschieben, kopieren, leeren, verknüpfen
-    ├── tags.js          ← benannte Abschnitte der Animation, wie in Aseprite
+    ├── tags.js          ← benannte Abschnitte der Animation
     ├── onion.js         ← Einstellungen der Timeline und welche Frames durchscheinen
     ├── tlmenu.js        ← Einstellungen der Timeline (Knopf ⚙ in der Timeline-Leiste)
     │   ── Farben
@@ -159,7 +159,7 @@ sprite-editor/
     │   ── Sprites und Reiter
     ├── sprites.js       ← anlegen, umbenennen, duplizieren, löschen
     ├── tabs.js          ← Reiter der geöffneten Sprites über der Zeichenfläche
-    ├── tablist.js       ← welche Sprites als Reiter offen sind (wie Aseprite/Photoshop)
+    ├── tablist.js       ← welche Sprites als Reiter offen sind
     │   ── Import und Export
     ├── codegen.js       ← den aktuellen Sprite in verschiedene Textformate gießen
     ├── gamejson.js      ← "JSON (Spiel)": flaches Datenformat für Spiele-Engines

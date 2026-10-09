@@ -197,7 +197,7 @@ function applyTemplateTrace(mode, n) {
 // Tool-Dispatch + UI-Sync
 // ────────────────────────────────────────────────────────────────────
 function applyTool(x, y) {
-  // Pixel-perfect: Stift und Radierer mit 1 px (wie in Aseprite).
+  // Pixel-perfect: Stift und Radierer mit 1 px.
   if (ppActive()) { paintPixelPerfect(x, y, state.tool === 'eraser' ? 0 : state.curColor); return; }
   if (state.tool === 'brush')  { paintBrush(x, y);  return; }
   if (state.tool === 'spray')  { paintSpray(x, y);  return; }

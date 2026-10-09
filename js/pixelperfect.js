@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════════
-// PIXELPERFECT — saubere 1-Pixel-Linien beim Freihandzeichnen (Aseprite)
+// PIXELPERFECT — saubere 1-Pixel-Linien beim Freihandzeichnen
 // ════════════════════════════════════════════════════════════════════
 // Zeichnet man mit 1 Pixel freihand eine Schräge, entstehen an jeder
 // Treppenstufe L-Ecken: zwei Pixel, wo die Linie nur eins braucht — sie

@@ -68,7 +68,7 @@ oder `Ansicht → Vollbild`.
 
 ## Reiter
 
-Wie in Aseprite und Photoshop hat jeder **geöffnete Sprite** einen Reiter über der
+Wie man es aus Grafikprogrammen kennt, hat jeder **geöffnete Sprite** einen Reiter über der
 Zeichenfläche.
 
 - **Klick** wechselt zum Sprite.
@@ -104,7 +104,8 @@ Reiterzeile erst ab zwei offenen Sprites, damit sie keine Höhe kostet.
 
 Zeichnet man mit 1 Pixel freihand eine Schräge, entstehen an jeder Treppenstufe L-Ecken:
 zwei Pixel, wo die Linie nur eins braucht — sie wirkt eckig und stellenweise doppelt dick.
-**Pixel-perfekt** nimmt dieses Eckpixel während des Strichs wieder heraus, wie in Aseprite.
+**Pixel-perfekt** nimmt dieses Eckpixel während des Strichs wieder heraus — wie in bekannten
+Pixel-Art-Programmen.
 
 - Gilt für den **Stift** und den **Radierer mit Größe 1**; der Schalter steht in der
   zweiten Zeile der Werkzeugleiste und wird gemerkt.
@@ -355,7 +356,7 @@ Projektdatei). „Import → In aktuellen Sprite“ ersetzt den Sprite samt Eben
 ## Animation — Timeline
 
 Jeder Sprite hat einen oder mehrere **Frames** und eine oder mehrere **Ebenen**. Die
-**Timeline** zeigt beides als Raster wie in Aseprite: **Ebenen als Zeilen, Frames als
+**Timeline** zeigt beides als Raster, wie in gängigen Animations-Programmen: **Ebenen als Zeilen, Frames als
 Spalten**. Jedes Feld ist eine **Zelle** — das Bild einer Ebene in einem Frame. Die
 Timeline ist eine Leiste wie Werkzeugleiste und Farbzeile (Standard: unter der
 Zeichenfläche) und lässt sich genauso andocken, schweben lassen oder ins Dock legen.

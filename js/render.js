@@ -462,7 +462,7 @@ export function paintCell(x, y) {
   if (changed) afterPaint();
 }
 
-// ── Pixel-perfect (wie in Aseprite) ──────────────────────────────────
+// ── Pixel-perfect ────────────────────────────────────────────────────
 // Stift und Radierer mit 1 px: L-Ecken an Treppenstufen werden während des
 // Strichs wieder entfernt (js/pixelperfect.js). Die Punkte zwischen zwei
 // Mausereignissen werden dafür mit einer Linie verbunden — sonst hätte der

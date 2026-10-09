@@ -1,7 +1,7 @@
 // ════════════════════════════════════════════════════════════════════
 // TABS — Reiter der geöffneten Sprites über der Zeichenfläche
 // ════════════════════════════════════════════════════════════════════
-// Wie in Aseprite und Photoshop: ein Reiter je geöffnetem Sprite. Klick
+// Wie in Grafikprogrammen üblich: ein Reiter je geöffnetem Sprite. Klick
 // wechselt, × oder Mittelklick schließt den Reiter (der Sprite bleibt im
 // Projekt), Doppelklick benennt um, Ziehen ordnet, + legt einen neuen an.
 // Die Rechnung steht in js/tablist.js; hier nur DOM und Verdrahtung.

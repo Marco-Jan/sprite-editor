@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════════
-// TAGS — benannte Abschnitte der Animation, wie in Aseprite
+// TAGS — benannte Abschnitte der Animation
 // ════════════════════════════════════════════════════════════════════
 // Eine Figur hat oft mehrere Animationen in einem Sprite: „Laufen" in den
 // Frames 1–8, „Springen" in 9–14. Ein Tag gibt so einem Abschnitt einen
