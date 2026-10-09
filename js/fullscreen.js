@@ -83,28 +83,19 @@ function placeExitButton() {
   // gerade erst herein (rechts bündig, also Fensterbreite minus Breite).
   const rail = $('rail-right');
   if (peeking() === 'right' && rail?.offsetWidth) right = Math.min(right, innerWidth - rail.offsetWidth);
-  let r = innerWidth - right + 10;
-  // Bitty (js/helper.js) sitzt im Vollbild ganz in der Ecke, der Knopf daneben.
-  const bitty = $('bitty-btn');
-  if (bitty && isFullscreen()) {
-    bitty.style.top = Math.round(area.top + 10) + 'px';
-    bitty.style.right = Math.round(r) + 'px';
-    r += bitty.offsetWidth + 8;
-  }
   b.style.top = Math.round(area.top + 10) + 'px';
-  b.style.right = Math.round(r) + 'px';
+  b.style.right = Math.round(innerWidth - right + 10) + 'px';
 }
 
-// Bitty wohnt in der Kopfzeile. Die ist im Vollbild weg (display: none) —
-// darum zieht er solange an den Rand des Body um und danach zurück.
+// Bitty (js/helper.js) wohnt in der Kopfzeile. Die ist im Vollbild weg —
+// solange zieht er in die Werkzeugleiste, ans Ende ihrer ersten Zeile
+// (vor die Symmetrie), egal wo die Leiste angedockt ist.
 function moveBitty(full) {
   const bitty = $('bitty-btn');
+  const bar = $('toolbar');
   if (!bitty) return;
-  if (full) document.body.append(bitty);
-  else {
-    $('topbar')?.append(bitty);
-    bitty.style.top = bitty.style.right = '';
-  }
+  if (full && bar) bar.insertBefore(bitty, bar.querySelector('.tool-sep--mirror'));
+  else $('topbar')?.append(bitty);
 }
 
 function showExitButton() {
@@ -153,6 +144,4 @@ export function initFullscreen({ onToggle }) {
   });
 
   $('fs-exit')?.addEventListener('click', exitFullscreen);
-  // Bitty steht dauerhaft in der Ecke — bei neuer Fenstergröße nachrücken.
-  window.addEventListener('resize', () => { if (isFullscreen()) placeExitButton(); });
 }

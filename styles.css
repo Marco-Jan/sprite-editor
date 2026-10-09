@@ -1741,16 +1741,11 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 }
 .bitty-btn:hover, .bitty-btn[aria-expanded="true"] { background: var(--surface-3); border-color: var(--line); }
 .bitty-btn canvas { width: 32px; height: 32px; image-rendering: pixelated; }
-/* Vollbild: die Kopfzeile ist weg, Bitty bleibt — in der Ecke oben rechts
-   (js/fullscreen.js setzt top/right und rückt „Vollbild beenden“ daneben). */
-body.editor-fullscreen .bitty-btn {
-  position: fixed;
-  z-index: 80;
-  margin: 0;
-  background: var(--surface-1);
-  border-color: var(--line);
-  box-shadow: var(--shadow-md);
-}
+/* Vollbild: die Kopfzeile ist weg — Bitty sitzt dann in der Werkzeugleiste
+   (js/fullscreen.js), rechts am Ende der ersten Zeile bzw. unten in der Spalte. */
+#toolbar > .bitty-btn { margin: 0 0 0 auto; width: 36px; height: 36px; }
+#toolbar > .bitty-btn canvas { width: 28px; height: 28px; }
+#toolbar.is-vertical > .bitty-btn { margin: 0 auto; }
 @media (max-width: 1100px) {
   /* Am Handy ist die Kopfzeile voll mit Menütiteln */
   .bitty-btn { width: 34px; height: 34px; margin-block: -4px; }
