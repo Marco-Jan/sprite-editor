@@ -93,8 +93,10 @@ Reiterzeile erst ab zwei offenen Sprites, damit sie keine Höhe kostet.
 | Formen | Linie `I` · Rechteck `R` · Ellipse `O` — mit Live-Vorschau, *Gefüllt* schaltet Kontur/Fläche |
 | Auswahl | Rechteck `A` · Lasso `L` · Farbwahl `K` |
 
-- **Größe** (1–9) und **Stärke** gelten für Pinsel, Spray und Radierer. Die Stärke ist beim
-  Pinsel die Dichte, beim Spray die Menge.
+- **Größe** (1–64, per Regler oder Zahlenfeld) und **Stärke** gelten für Pinsel, Spray und
+  Radierer. Die Stärke ist beim Pinsel die Dichte, beim Spray die Menge. `Alt` + rechte
+  Maustaste ziehen verstellt die Größe direkt auf der Zeichenfläche (nach rechts größer, 6 px
+  Mausweg je Stufe); ein Umriss zeigt, was der Pinsel gleich trifft.
 - **Toleranz** steuert, wie ähnlich Farben für Zauberstab und Farbwahl sein dürfen.
 - **Symmetrie** (↔ / ↕) spiegelt jeden Strich an der Mittelachse; beide Achsen zusammen
   ergeben vier Spiegelungen. Gilt für alle Mal- und Formwerkzeuge, die Achsen werden
@@ -285,6 +287,11 @@ gerade.
 
 Alles ist ein einzelner Undo-Schritt, auch wenn dabei das ganze Grid ausgetauscht wird.
 
+In den Größenfeldern (hier, bei „Neuer Sprite“ und „Größe ändern“) darf man **rechnen**:
+`24 * 4`, `24x4`, `(16+8)*2`, `96 : 4` — beim Verlassen des Felds steht das Ergebnis darin.
+Erlaubt sind Zahlen, `+ − * /`, Klammern, `x`/`×` als Mal und `:` als geteilt; es wird
+nie Code ausgeführt (`js/calc.js`).
+
 Die freie Drehung rechnet per Rückwärts-Abbildung mit Nearest Neighbor — es wird nichts
 gemischt, jede Zelle behält ihren Palette-Index. Jede Vorschau geht vom **Original** aus,
 nicht vom zuletzt gedrehten Ergebnis; dreimal am Regler ziehen verwäscht die Form also
@@ -321,6 +328,13 @@ keinem Export, kein Undo. Gespeichert je Sprite (`sp.guides`), `G` blendet alle 
   üblichen Marken (Kinn, Brust, Nabel, Hüfte, Schritt, Knie — je nach Einteilung) und
   der Körperachse. „An Figur anpassen“ setzt Ober- und Unterkante auf den sichtbaren
   Inhalt; beide lassen sich im Modus Verschieben ziehen.
+- **Hand** — mit dem Hand-Werkzeug greift man eine Linie auch ohne den Modus Verschieben;
+  daneben verschiebt die Hand wie gewohnt die Ansicht.
+- **Eigene Layouts** — Linien und Einteilung unter einem Namen speichern („Speichern“,
+  gleicher Name ersetzt) und auf jeden Sprite anwenden. Bei einer anderen Sprite-Größe
+  werden die Linien anteilig umgerechnet. Die Layouts gelten für alle Sprites und liegen
+  im Browser (`localStorage`, Schlüssel `spritebit_guide_layouts`) bzw. in der Desktop-App
+  im Einstellungsordner (`guide_layouts.json`, gleiches Format).
 
 ---
 
@@ -382,6 +396,52 @@ einer freien Farbe gemischt — über leerem Grund bleibt sie deckend, weil Pixe
 Transparenz-Stufen kennen. Die Ebenen selbst stecken nur im Projekt (Speicherstand und
 Projektdatei). „Import → In aktuellen Sprite“ ersetzt den Sprite samt Ebenen
 (`Strg+Z` holt ihn zurück).
+
+---
+
+## Kacheln (Tilemaps)
+
+Für Spiel-Levels und wiederholte Muster. Eine **Tilemap-Ebene** ist ein Raster aus Kacheln
+fester Größe (8–64 px, Breite und Höhe getrennt). Jede Kachel steht einmal im **Kachelsatz**
+der Ebene; malt man eine Kachel an, ändert sie sich **überall**, wo sie liegt — auch in
+anderen Frames.
+
+- **Panel „Kacheln“** im Dock: *Neue Tilemap-Ebene* legt eine leere Tilemap über der
+  aktiven Ebene an, *Aktive Ebene umwandeln* zerlegt eine vorhandene Ebene in Kacheln
+  (gleiche Stellen werden eine Kachel). Ein blaues Raster zeigt die Kacheln; ist der
+  Sprite kein Vielfaches der Kachelgröße, ist der Rand abgedunkelt — er gehört zu keiner
+  Kachel.
+- **Pixel malen** — alle Werkzeuge malen wie gewohnt; was sich in einer Kachel ändert, wird
+  im Kachelsatz geändert und an allen anderen Stellen mitgezogen.
+  - *Auto*: Malen in eine leere Zelle legt eine neue Kachel an.
+  - *Manuell*: es entstehen keine neuen Kacheln, leere Zellen bleiben leer.
+- **Kacheln setzen** — eine Kachel in der Liste wählen; dann setzt der Stift (und jedes
+  andere Malwerkzeug) sie ins Raster, Radierer oder Rechtsklick leert eine Zelle, *Füllen*
+  füllt zusammenhängende gleiche Zellen, `Alt`+Klick nimmt die Kachel unter dem Zeiger auf.
+- **Unbenutzte entfernen** wirft Kacheln weg, die nirgends mehr liegen. **Normale Ebene**
+  macht wieder eine gewöhnliche Ebene daraus — die Pixel bleiben.
+- Strich und Mitziehen sind **ein** Undo-Schritt.
+
+**Wie es intern funktioniert:** Die Ebene speichert weiter ganz normale Pixel; welche
+Kachel wo liegt, ergibt sich aus dem Inhalt der Zellen. Darum funktionieren Frames,
+verknüpfte Zellen, Masken und alle Exporte ohne Sonderfall. Nach jeder Änderung gleicht
+`syncSprite` (`js/tiles.js`) Pixel und Kachelsatz ab: hat sich genau die aktive Zelle
+geändert, gilt das als Bemalen der Kacheln; alles andere (Kacheln setzen, Zellen ziehen,
+Größe ändern …) übernimmt den Inhalt. Widersprechen sich zwei bemalte Stellen derselben
+Kachel, werden sie eigene Kacheln. Gespiegelte oder gedrehte Kacheln gibt es (noch) nicht —
+eine gespiegelte Kachel ist eine eigene.
+
+**Für Godot exportieren** schreibt (im Browser als ZIP, in der Desktop-App in einen
+gewählten Ordner) einen Ordner `<sprite>/` mit
+
+- `<sprite>_<ebene>.png` — dem Kachelbild jeder Tilemap-Ebene (Kachel *k* an Stelle *k−1*,
+  zeilenweise, möglichst quadratisch),
+- `<sprite>.tscn` — einer Godot-4-Szene: ein `Node2D` mit einer `TileMapLayer` je
+  Tilemap-Ebene, Kachelsätze eingebettet, `texture_filter` auf „Nearest“,
+- `<sprite>.json` — Kachelgröße und Karte je Ebene für eigene Engines (`0` = leer).
+
+Den Ordner ins Godot-Projekt legen (die Pfade lauten `res://<sprite>/…`) und die Szene
+öffnen — Godot 4.3 oder neuer. Exportiert wird der aktuelle Frame.
 
 ---
 
@@ -558,6 +618,8 @@ geprüft und mit `JSON.parse` gelesen.
   Atlas nennt die echte Lage — auch für Sprites, die kleiner als die Zelle sind. Tags
   stehen mit im Atlas.
 - *Farb-Legende ins Bild* rendert die verwendeten Farben mit Hex-Codes unter den Sprite.
+- **Godot-Tilemap** — Kachelbild, Szene und JSON aus dem Panel „Kacheln“, siehe
+  [Kacheln](#kacheln-tilemaps).
 
 ---
 
@@ -567,7 +629,8 @@ geprüft und mit `JSON.parse` gelesen.
 |---|---|
 | Linksklick | Malen (ziehen = durchgehend) |
 | Rechtsklick | Löschen (ziehen = durchgehend) |
-| `Alt` + Klick | Pipette auf das Grid |
+| `Alt` + Klick | Pipette auf das Grid · im Modus „Kacheln setzen“: Kachel aufnehmen |
+| `Alt` + Rechts ziehen | Größe von Pinsel, Radierer und Spray |
 | `Shift` + `Alt` halten | Schablone in den Vordergrund |
 | `Shift` + `Alt` + Links + Ziehen | Schablone verschieben |
 | `Shift` + `Alt` + Rechtsklick | Schablonen-Pipette (exakter Hex) |
@@ -578,7 +641,7 @@ geprüft und mit `JSON.parse` gelesen.
 | `P` `B` `S` `F` `E` `W` | Stift · Pinsel · Spray · Füllen · Radierer · Zauberstab |
 | `I` `R` `O` | Linie · Rechteck · Ellipse |
 | `A` `L` `K` | Auswahl · Lasso · Farbwahl |
-| `H` | Hand — Ansicht verschieben, ohne zu zeichnen |
+| `H` | Hand — Ansicht verschieben, ohne zu zeichnen; auf einer Hilfslinie: Linie ziehen |
 | Ziehen in der Auswahl | Bereich ausschneiden und verschieben |
 | `Alt` + Ziehen | Kopie verschieben, Original bleibt |
 | Pfeiltasten | Auswahl pixelweise verschieben |
