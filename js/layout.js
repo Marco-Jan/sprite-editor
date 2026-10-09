@@ -388,6 +388,8 @@ function placeBar(id, zoneName) {
   const z = zoneOf(zoneName);
   z.append(el);
   [...z.children].sort((a, b) => layout.barOrder.indexOf(a.id) - layout.barOrder.indexOf(b.id)).forEach(c => z.append(c));
+  // Ein Gast (geöffnetes Panel aus dem Dock, js/dock.js) bleibt unten.
+  z.querySelectorAll(':scope > .is-guest').forEach(g => z.append(g));
 }
 
 // ── Knopf-Beschriftungen ────────────────────────────────────────────

@@ -2077,6 +2077,14 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
 .rail-pins > .panel.is-guest .panel-body { display: flex; }
 .rail-pins > .panel.is-guest .panel-toggle { display: none; }
 .rail-pins > .panel.is-guest .dock-close { display: inline-grid; }
+/* Dasselbe in der seitlichen Spalte der angepinnten Leisten. */
+.bar-zone--side > .panel.is-guest { flex: none; border-top: 1px solid var(--accent-line); background: var(--surface-1); }
+.bar-zone--side > .panel.is-guest .panel-body { display: flex; }
+.bar-zone--side > .panel.is-guest .panel-toggle { display: none; }
+.bar-zone--side > .panel.is-guest .dock-close { display: inline-grid; }
+.bar-zone--side > #toolbar.is-guest,
+.bar-zone--side > #color-bar.is-guest,
+.bar-zone--side > #timeline.is-guest { display: flex; border-top: 1px solid var(--accent-line); }
 
 /* ── 15 · Andock-Zonen für Werkzeugleiste und Farbzeile ─────────────
    Oben und unten liegen die Leisten waagerecht, links und rechts neben
