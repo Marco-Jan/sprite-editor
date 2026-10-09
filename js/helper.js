@@ -5,13 +5,17 @@
 //
 //   Tour   Beim allerersten Start zeigt er in ein paar Sprechblasen, wo
 //          was ist. Jederzeit wieder über Hilfe → „Tour mit Bitty“.
-//   Tipps  Ein Klick auf ihn zeigt den nächsten Tipp. Von selbst meldet
+//   Suche  Ein Klick auf ihn öffnet ein Suchfeld: findet Hilfe-Absätze,
+//          Werkzeuge, Panels und Menüpunkte (js/search.js) und führt hin —
+//          Hilfe aufschlagen, Panel aufklappen, aufs Werkzeug zeigen.
+//   Tipps  Unter dem Suchfeld steht der nächste Tipp. Von selbst meldet
 //          er sich höchstens einmal pro Besuch — und gar nicht mehr, wenn
 //          man „Nicht von selbst“ wählt.
 //
 // Die Sprechblase blockiert nichts: man kann daneben weitermalen. Esc
 // oder ein Klick daneben schließt sie (die Tour nur über ihre Knöpfe).
 import { t } from './i18n.js';
+import { search } from './search.js';
 
 const KEY = 'spritebit_bitty';
 const TIP_COUNT = 10;
@@ -88,10 +92,14 @@ function setTarget(el) {
  * Blase zeigen.
  * @param {string} text
  * @param {{ label: string, primary?: boolean, onClick: () => void }[]} actions
- * @param {{ tour?: boolean, step?: string, autoClose?: boolean }} [opts]
+ * @param {{ tour?: boolean, step?: string, autoClose?: boolean, search?: boolean, focus?: boolean }} [opts]
  */
 function say(text, actions, opts = {}) {
   clearTimeout(closeTimer);
+  // Suchfeld nur beim Klick auf Bitty (und seinen Tipps), nicht in der Tour.
+  const box = bubble.querySelector('.bitty-search');
+  box.hidden = !opts.search;
+  if (!opts.search) query.value = '';
   bubble.querySelector('.bitty-text').textContent = text;
   const stepEl = bubble.querySelector('.bitty-step');
   stepEl.textContent = opts.step || '';
@@ -108,9 +116,12 @@ function say(text, actions, opts = {}) {
   }));
   bubble.classList.toggle('is-tour', !!opts.tour);
   bubble.hidden = false;
+  renderResults();
   place();
   btn.setAttribute('aria-expanded', 'true');
   bitty?.hop();
+  // Von selbst nie den Fokus nehmen — man malt vielleicht gerade.
+  if (opts.search && opts.focus) query.focus({ preventScroll: true });
   if (opts.autoClose) closeTimer = window.setTimeout(hide, Math.min(14000, Math.max(6000, text.length * 70)));
 }
 
@@ -126,16 +137,166 @@ const isOpen = () => bubble && !bubble.hidden;
 const inTour = () => isOpen() && bubble.classList.contains('is-tour');
 
 // ── Tipps ──────────────────────────────────────────────────────────
-function showTip(auto = false) {
+// prefs.tip = Nummer des zuletzt gezeigten Tipps (1…TIP_COUNT, 0 = keiner).
+function showTip(auto = false, advance = true) {
   setTarget(null);
-  const i = ((prefs.tip % TIP_COUNT) + TIP_COUNT) % TIP_COUNT;
-  prefs.tip = i + 1;
-  savePrefs();
+  if (advance || !prefs.tip) {
+    prefs.tip = ((Math.max(0, prefs.tip | 0)) % TIP_COUNT) + 1;
+    savePrefs();
+  }
+  const i = prefs.tip - 1;
   /** @type {{ label: string, primary?: boolean, onClick: () => void }[]} */
   const actions = [{ label: t('bitty.next'), primary: true, onClick: () => showTip() }];
   if (auto) actions.push({ label: t('bitty.quiet'), onClick: () => { prefs.quiet = true; savePrefs(); hide(); } });
   else actions.push({ label: t('bitty.close'), onClick: hide });
-  say(t(`bitty.tip.${i + 1}`), actions, { step: t('bitty.tipOf', { n: i + 1, total: TIP_COUNT }), autoClose: auto });
+  // Ohne Zähler: wie viele Tipps es gibt, ist nicht das Thema.
+  say(t(`bitty.tip.${i + 1}`), actions, { autoClose: auto, search: true, focus: !auto });
+}
+
+// ── Suche ──────────────────────────────────────────────────────────
+// Was sich finden lässt, wird bei jedem Tippen frisch aus der Seite
+// gelesen: so ist es immer in der eingestellten Sprache und kennt auch
+// Panels, die erst später angelegt wurden. Es sind nur ein paar hundert
+// kurze Texte.
+
+/** @typedef {{ kind: 'help'|'tool'|'panel'|'menu', label: string, sub: string, text: string, el: HTMLElement }} Entry */
+
+let query = null, results = null, none = null;
+/** @type {Entry[]} */
+let hits = [];
+let sel = 0;
+
+const clean = s => (s || '').replace(/\s+/g, ' ').trim();
+
+/** @returns {Entry[]} */
+function collect() {
+  /** @type {Entry[]} */
+  const out = [];
+  // Werkzeuge: Name und Tooltip (dort steht auch das Kürzel)
+  document.querySelectorAll('#toolbar [data-tool]').forEach(el => {
+    const label = clean(el.querySelector('.tool-name')?.textContent) || clean(el.title);
+    out.push({ kind: 'tool', label, sub: clean(el.title), text: el.title, el });
+  });
+  // Panels
+  document.querySelectorAll('.panel[data-panel]').forEach(el => {
+    const label = clean(el.querySelector('.panel-title')?.textContent);
+    if (label) out.push({ kind: 'panel', label, sub: '', text: '', el });
+  });
+  // Menü (ohne Sprachen und Links nach draußen)
+  document.querySelectorAll('#menubar .mb-item').forEach(el => {
+    if (el.tagName === 'A' || el.classList.contains('lang-btn') || el.hidden) return;
+    const label = clean(el.querySelector('span')?.textContent);
+    const menu = clean(el.closest('.mb-menu')?.querySelector('.mb-title')?.textContent);
+    if (label) out.push({ kind: 'menu', label, sub: menu, text: menu, el });
+  });
+  // Hilfe: jeder Absatz und jede Kürzel-Zeile, mit Abschnitt
+  let section = '';
+  document.querySelectorAll('#help-modal-overlay .help-h, #help-modal-overlay .help-list > div, #help-modal-overlay .help-ol > li, #help-modal-overlay .sc-row')
+    .forEach(el => {
+      if (el.classList.contains('help-h')) { section = clean(el.textContent); return; }
+      const full = clean(el.textContent);
+      let label, sub;
+      if (el.classList.contains('sc-row')) {
+        label = clean(el.querySelector('span')?.textContent);
+        sub = `${section} · ${clean(el.querySelector('b')?.textContent)}`;
+      } else {
+        label = clean(el.querySelector('b')?.textContent) || full;
+        sub = section;
+      }
+      if (label.length > 60) label = label.slice(0, 57) + ' …';
+      out.push({ kind: 'help', label, sub, text: `${section} ${full}`, el });
+    });
+  return out;
+}
+
+function renderResults() {
+  const q = query.value.trim();
+  const body = bubble.querySelector('.bitty-body');
+  const searching = !bubble.querySelector('.bitty-search').hidden && !!q;
+  body.hidden = searching;
+  if (!searching) { results.hidden = true; none.hidden = true; hits = []; return; }
+  clearTimeout(closeTimer); // wer tippt, liest — nicht mehr von selbst schließen
+  hits = /** @type {Entry[]} */ (search(q, collect(), 8));
+  sel = 0;
+  none.hidden = hits.length > 0;
+  none.textContent = t('bitty.noHits');
+  results.hidden = !hits.length;
+  results.replaceChildren(...hits.map((h, i) => {
+    const li = document.createElement('li');
+    li.className = 'bitty-hit';
+    li.id = `bitty-hit-${i}`;
+    li.setAttribute('role', 'option');
+    const kind = document.createElement('span');
+    kind.className = 'bitty-kind';
+    kind.textContent = t(`bitty.kind.${h.kind}`);
+    const name = document.createElement('span');
+    name.className = 'bitty-hit-name';
+    name.textContent = h.label;
+    li.append(kind, name);
+    if (h.sub && h.sub !== h.label) {
+      const sub = document.createElement('span');
+      sub.className = 'bitty-hit-sub';
+      sub.textContent = h.sub;
+      li.append(sub);
+    }
+    li.addEventListener('pointerenter', () => { sel = i; markSel(); });
+    li.addEventListener('click', () => go(h));
+    return li;
+  }));
+  markSel();
+  place();
+}
+
+function markSel() {
+  results.querySelectorAll('.bitty-hit').forEach((li, i) => li.setAttribute('aria-selected', String(i === sel)));
+  if (hits.length) query.setAttribute('aria-activedescendant', `bitty-hit-${sel}`);
+  else query.removeAttribute('aria-activedescendant');
+  results.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest' });
+}
+
+// Kurz blau umranden (Hilfe-Absatz, Menüpunkt) — die bleiben nicht offen.
+function flash(el) {
+  el.classList.add('bitty-flash');
+  window.setTimeout(() => el.classList.remove('bitty-flash'), 2600);
+}
+
+// Zum Treffer hinführen.
+function go(h) {
+  const back = query.value;
+  if (h.kind === 'help') {
+    hide();
+    document.getElementById('help-btn')?.click();
+    requestAnimationFrame(() => { h.el.scrollIntoView({ block: 'center' }); flash(h.el); });
+    return;
+  }
+  if (h.kind === 'menu') {
+    hide();
+    const menu = h.el.closest('.mb-menu');
+    const title = menu?.querySelector('.mb-title');
+    if (title && menu.querySelector('.mb-drop')?.hidden) title.click();
+    requestAnimationFrame(() => { h.el.focus(); flash(h.el); });
+    return;
+  }
+  // Werkzeug oder Panel: Bitty zeigt darauf, ein Knopf führt es aus.
+  /** @type {{ label: string, primary?: boolean, onClick: () => void }[]} */
+  const actions = [];
+  if (h.kind === 'panel' && !visible(h.el)) {
+    // Panel liegt im Dock: Schublade aufmachen
+    document.querySelector(`.dock-btn[data-target="${h.el.dataset.dock || h.el.dataset.panel}"]`)?.click();
+  }
+  if (h.kind === 'tool') actions.push({ label: t('bitty.use'), primary: true, onClick: () => { h.el.click(); hide(); } });
+  else actions.push({ label: t('bitty.ok'), primary: true, onClick: hide });
+  actions.push({ label: t('bitty.back'), onClick: () => { showTip(false, false); query.value = back; renderResults(); } });
+  requestAnimationFrame(() => {
+    setTarget(visible(h.el) ? h.el : null);
+    say(t(h.kind === 'tool' ? 'bitty.foundTool' : 'bitty.foundPanel', { name: h.label }), actions);
+  });
+}
+
+function onSearchKey(e) {
+  if (e.key === 'ArrowDown' && hits.length) { e.preventDefault(); sel = (sel + 1) % hits.length; markSel(); }
+  else if (e.key === 'ArrowUp' && hits.length) { e.preventDefault(); sel = (sel - 1 + hits.length) % hits.length; markSel(); }
+  else if (e.key === 'Enter' && hits[sel]) { e.preventDefault(); go(hits[sel]); }
 }
 
 // ── Tour ───────────────────────────────────────────────────────────
@@ -189,9 +350,23 @@ export function initHelper() {
   bubble.setAttribute('aria-live', 'polite');
   bubble.setAttribute('aria-label', 'Bitty');
   bubble.hidden = true;
-  bubble.innerHTML = '<p class="bitty-step"></p><p class="bitty-text"></p><div class="bitty-actions"></div>';
+  bubble.innerHTML =
+    '<div class="bitty-search" hidden>' +
+      '<input type="search" class="input bitty-q" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="true" aria-controls="bitty-results">' +
+      '<ul class="bitty-results" id="bitty-results" role="listbox" hidden></ul>' +
+      '<p class="bitty-none" hidden></p>' +
+    '</div>' +
+    '<div class="bitty-body"><p class="bitty-step"></p><p class="bitty-text"></p><div class="bitty-actions"></div></div>';
   document.body.appendChild(bubble);
   btn.setAttribute('aria-controls', bubble.id);
+
+  query = /** @type {HTMLInputElement} */ (bubble.querySelector('.bitty-q'));
+  results = bubble.querySelector('.bitty-results');
+  none = bubble.querySelector('.bitty-none');
+  labelSearch();
+  query.addEventListener('input', renderResults);
+  query.addEventListener('keydown', onSearchKey);
+  query.addEventListener('focus', () => clearTimeout(closeTimer));
 
   btn.addEventListener('click', () => {
     if (inTour()) return;           // die Tour läuft über ihre Knöpfe
@@ -217,5 +392,13 @@ export function initHelper() {
   else if (!prefs.quiet) window.setTimeout(() => whenCalm(() => { if (!isOpen()) showTip(true); }), 20000);
 }
 
+function labelSearch() {
+  query.placeholder = t('bitty.searchPh');
+  query.setAttribute('aria-label', t('bitty.searchPh'));
+}
+
 // Sprachwechsel: offene Blase schließen, sie stünde in der alten Sprache da.
-export function relabelHelper() { if (isOpen() && !inTour()) hide(); }
+export function relabelHelper() {
+  if (query) labelSearch();
+  if (isOpen() && !inTour()) hide();
+}

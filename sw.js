@@ -96,6 +96,7 @@ const PRECACHE = [
   'js/remap.js',
   'js/render.js',
   'js/scale.js',
+  'js/search.js',
   'js/selection.js',
   'js/site-links.js',
   'js/sizedrag.js',
