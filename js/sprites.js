@@ -118,7 +118,10 @@ export function initNewSpriteModal() {
   };
 
   // Bei "eigene Größe" erscheinen zwei Zahlenfelder; sonst bleibt das Dropdown allein.
-  const syncCustomRow = () => { customRow.hidden = sizeSel.value !== 'custom'; };
+  const syncCustomRow = () => {
+    customRow.hidden = sizeSel.value !== 'custom';
+    document.getElementById('new-size-big').hidden = customRow.hidden;
+  };
   sizeSel.addEventListener('change', syncCustomRow);
 
   document.getElementById('new-sprite-btn').addEventListener('click', open);

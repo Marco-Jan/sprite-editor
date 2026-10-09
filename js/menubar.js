@@ -35,11 +35,24 @@ function syncChecks(m) {
   });
 }
 
+// Ein aufgeklapptes Menü ganz ins Bild schieben (8 px Abstand zum Rand) —
+// am Handy ragte „Ansicht“ sonst links hinaus.
+function keepInView(drop) {
+  drop.style.transform = '';
+  const r = drop.getBoundingClientRect();
+  const vw = document.documentElement.clientWidth, pad = 8;
+  let dx = 0;
+  if (r.right > vw - pad) dx = vw - pad - r.right;
+  if (r.left + dx < pad) dx = pad - r.left;
+  if (dx) drop.style.transform = `translateX(${Math.round(dx)}px)`;
+}
+
 function open(m, focus = false) {
   if (openMenu && openMenu !== m) close();
   openMenu = m;
   syncChecks(m);
   dropOf(m).hidden = false;
+  keepInView(dropOf(m));
   titleOf(m).setAttribute('aria-expanded', 'true');
   titleOf(m).classList.add('is-open');
   if (focus) itemsOf(m)[0]?.focus();

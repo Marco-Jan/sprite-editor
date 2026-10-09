@@ -2142,6 +2142,9 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
 .tile-item.is-active { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-line); }
 .tile-info { font-variant-numeric: tabular-nums; }
 .gd-layout-row { display: flex; gap: var(--sp-1); }
+.gd-even { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-1) var(--sp-2); }
+.gd-even .input--num { width: 3.5rem; }
+.gd-even > .field-label { flex: 1 1 100%; }
 .gd-layout-row > .input { flex: 1; min-width: 0; }
 .gd-layout-row > .btn { flex: 0 0 auto; }
 #gd-layout-del { width: 32px; padding-inline: 0; }

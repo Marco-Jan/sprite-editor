@@ -22,3 +22,23 @@
 
   items.forEach(function (el) { io.observe(el); });
 })();
+
+// Anleitung zur Desktop-App (<details class="dl-help">): schwebt als Box —
+// ein Klick daneben oder Esc schließt sie wieder.
+(function () {
+  var boxes = /** @type {NodeListOf<HTMLDetailsElement>} */ (document.querySelectorAll('details.dl-help'));
+  if (!boxes.length) return;
+  document.addEventListener('click', function (e) {
+    var t = /** @type {Node} */ (e.target);
+    boxes.forEach(function (d) { if (d.open && !d.contains(t)) d.open = false; });
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    boxes.forEach(function (d) {
+      if (!d.open) return;
+      d.open = false;
+      var sum = d.querySelector('summary');
+      if (sum) sum.focus();
+    });
+  });
+})();

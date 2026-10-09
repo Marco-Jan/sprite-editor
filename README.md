@@ -90,7 +90,7 @@ Zeichnen, animieren, Tilemaps für Spiel-Levels bauen und als Bild, GIF, Godot-S
 - Läuft komplett im Browser, **nichts wird hochgeladen**
 - Funktioniert **offline**, installierbar als App
 - Speichert automatisch (IndexedDB), Projektdatei als Backup
-- Sprites bis 1024 × 1024 Pixel
+- Sprites bis 1024 × 1024 Pixel — die **Desktop-App** schafft bis **8192 × 8192**
 - Am Handy bedienbar
 
 </td>
@@ -241,6 +241,14 @@ everywhere) and export to PNG, GIF, spritesheets, **Godot 4** scenes or nine cod
 (TypeScript, JSON, SVG, CSS, C, Python …). A native Windows app with the same features is
 available too. The UI is available in German, English and Austrian
 German. [Open the editor →](https://spritebit.at/editor.html)
+
+---
+
+## Unterstützen
+
+spritebit ist und bleibt kostenlos. Wer mag, kann auf [Ko-fi](https://ko-fi.com/baloou) einen Kaffee
+spendieren — das Geld fließt in ein Code-Signatur-Zertifikat, damit Windows bei der
+Desktop-App nicht mehr warnt.
 
 ---
 

@@ -173,6 +173,18 @@ export function initLangSwitch() {
 // Deutsch kommt aus dem HTML selbst (Snapshot), hier steht nur Englisch.
 const STATIC = {
   en: {
+    'donate.menu':  'Support spritebit (Ko-fi)',
+    'donate.title': 'spritebit stays free either way. Donations go towards a code-signing certificate so Windows stops warning about the desktop app.',
+
+    'mod.bigHint': 'In the browser up to 1024 × 1024 pixels — the desktop app handles canvases up to 8192 × 8192.',
+
+    'gd.even':      'Evenly',
+    'gd.evenTitle': 'Type a number — the lines spread out evenly right away (4 lines = 5 equal parts). 0 removes them.',
+    'gd.evenH':     'Number of horizontal lines',
+    'gd.evenV':     'Number of vertical lines',
+    'gd.evenHUnit': 'horizontal',
+    'gd.evenVUnit': 'vertical',
+
     'gd.layouts':          'Own layouts',
     'gd.layoutsTitle':     'Saved guide layouts — they apply to all sprites',
     'gd.layoutApply':      'Apply',
@@ -713,7 +725,7 @@ const STATIC = {
     'help.h.guides': 'Guides',
     'help.guides': ''
       + '<div>The <b>Guides</b> panel in the dock — a drawing aid only, they never show up in an export. <span class="kbd">G</span> shows and hides them all.</div>'
-      + '<div><b>Free lines</b>: “+ Horizontal” / “+ Vertical” puts a line in the middle. In <b>Move</b> mode you drag lines into place on the drawing area (always on a pixel edge); dragged out of the image, a line is deleted. No painting meanwhile — a tap next to the lines or <span class="kbd">Esc</span> ends the mode. With the <b>hand</b> tool you can grab a line without the mode, too.</div>'
+      + '<div><b>Free lines</b>: “+ Horizontal” / “+ Vertical” puts a line in the middle, <b>Evenly</b> spreads a typed number of lines evenly right away (4 lines = 5 equal parts). In <b>Move</b> mode you drag lines into place on the drawing area (always on a pixel edge); dragged out of the image, a line is deleted. No painting meanwhile — a tap next to the lines or <span class="kbd">Esc</span> ends the mode. With the <b>hand</b> tool you can grab a line without the mode, too.</div>'
       + '<div><b>Figure</b>: divides a figure into 2 (chibi), 3, 4, 6 or 8 head heights and marks chin, chest, hip, knee etc. plus the body axis. “Fit to figure” sets the top and bottom to what is drawn; both can be dragged in Move mode.</div>'
       + '<div><b>Own layouts</b>: save lines and division under a name and apply them to any sprite — for another size they are scaled proportionally. The same name replaces, × deletes. Layouts apply to all sprites.</div>'
       + '<div>The lines belong to the sprite and are saved with the project.</div>',
@@ -1069,7 +1081,7 @@ const MSG = {
     'sprite.confirmDelete': 'Sprite „{name}“ wirklich löschen?',
     'sprite.created':       '„{name}“ angelegt.',
     'sprite.needName':      'Bitte einen Namen eingeben.',
-    'sprite.needSize':      'Breite und Höhe müssen zwischen 1 und 1024 liegen.',
+    'sprite.needSize':      'Breite und Höhe müssen zwischen 1 und 1024 liegen — größer geht in der Desktop-App (bis 8192 × 8192).',
     'sprite.emptyGrid':     '— Leeres Grid —',
     'sprite.option':        '{name} ({w}×{h})',
     'sprite.confirmClear':  'Alle Pixel dieses Sprites löschen?',
@@ -1146,7 +1158,7 @@ const MSG = {
     'tf.centered':    'Inhalt mittig gesetzt.',
     'tf.centerFail':  'Nicht verschoben — {reason}.',
     'mod.sizeCurrent':  '„{name}“ ist derzeit {w}×{h} Pixel.',
-    'mod.sizeInvalid':  'Breite und Höhe müssen zwischen 1 und 1024 liegen.',
+    'mod.sizeInvalid':  'Breite und Höhe müssen zwischen 1 und 1024 liegen — größer geht in der Desktop-App (bis 8192 × 8192).',
 
     'tf.resized':     'Größe jetzt {w}×{h}{lost}.',
     'tf.resizeLost':  ' — {n} Pixel abgeschnitten',
@@ -1563,7 +1575,7 @@ const MSG = {
     'sprite.confirmDelete': 'Really delete the sprite “{name}”?',
     'sprite.created':       '“{name}” created.',
     'sprite.needName':      'Please enter a name.',
-    'sprite.needSize':      'Width and height must be between 1 and 1024.',
+    'sprite.needSize':      'Width and height must be between 1 and 1024 — bigger works in the desktop app (up to 8192 × 8192).',
     'sprite.emptyGrid':     '— Empty grid —',
     'sprite.option':        '{name} ({w}×{h})',
     'sprite.confirmClear':  'Erase every pixel of this sprite?',
@@ -1636,7 +1648,7 @@ const MSG = {
     'tf.centered':    'Content moved to the middle.',
     'tf.centerFail':  'Not moved — {reason}.',
     'mod.sizeCurrent':  '“{name}” is currently {w}×{h} pixels.',
-    'mod.sizeInvalid':  'Width and height must be between 1 and 1024.',
+    'mod.sizeInvalid':  'Width and height must be between 1 and 1024 — bigger works in the desktop app (up to 8192 × 8192).',
 
     'tf.resized':     'Size is now {w}×{h}{lost}.',
     'tf.resizeLost':  ' — {n} pixels cut off',

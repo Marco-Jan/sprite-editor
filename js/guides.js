@@ -19,7 +19,7 @@ import { contentBounds } from './transform.js';
 import { saveState } from './storage.js';
 import { t, onLangChange } from './i18n.js';
 import { showInfoToast } from './toast.js';
-import { normalizeLayouts, makeLayout, upsertLayout, fitLayout } from './guidelayouts.js';
+import { normalizeLayouts, makeLayout, upsertLayout, fitLayout, evenLines } from './guidelayouts.js';
 
 /** @type {(id: string) => any} */
 const $ = id => document.getElementById(id);
@@ -239,6 +239,20 @@ function addLine(kind) {
   toggleEdit(true);
 }
 
+// Gleichmäßig verteilen: die Linien dieser Richtung werden ersetzt —
+// jede Änderung der Zahl wirkt sofort.
+function setEven(kind, n) {
+  const sp = getSprite();
+  if (!sp) return;
+  const size = kind === 'h' ? sp.grid.length : sp.grid[0].length;
+  const list = sp.guides[kind];
+  list.length = 0;
+  list.push(...evenLines(n, size));
+  if (list.length) state.showGuides = true;
+  changed();
+  leaveIfEmpty();
+}
+
 function clearLines() {
   const g = guides();
   if (!g) return;
@@ -345,6 +359,11 @@ export function renderGuides() {
   if (g && document.activeElement !== sel) sel.value = String(g.heads);
   $('gd-fit').disabled = !g;
   $('gd-clear').disabled = !g || (!g.h.length && !g.v.length);
+  // Die Felder zeigen, wie viele Linien es gerade gibt (außer beim Tippen).
+  for (const k of ['h', 'v']) {
+    const inp = $('gd-even-' + k);
+    if (inp && document.activeElement !== inp) inp.value = String(g ? g[k].length : 0);
+  }
   renderLayouts();
 }
 
@@ -353,6 +372,12 @@ export function initGuides() {
   $('gd-edit').addEventListener('click', () => toggleEdit());
   $('gd-add-h').addEventListener('click', () => addLine('h'));
   $('gd-add-v').addEventListener('click', () => addLine('v'));
+  for (const k of ['h', 'v']) {
+    $('gd-even-' + k).addEventListener('input', e => {
+      if (e.target.value === '') return;
+      setEven(k, Math.max(0, Math.min(64, Math.round(Number(e.target.value)) || 0)));
+    });
+  }
   $('gd-clear').addEventListener('click', clearLines);
   $('gd-heads').addEventListener('change', e => setHeads(Number(e.target.value)));
   $('gd-fit').addEventListener('click', fitFigure);
