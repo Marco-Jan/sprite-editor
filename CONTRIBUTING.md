@@ -287,6 +287,11 @@ auf GitHub ist nicht nötig. Bei jedem Fehler bricht es ab, bevor etwas gepusht 
 
 Das Skript erwartet `spritebit-rs` neben diesem Ordner (sonst `--rs <ordner>`).
 
+**Vercel Deploy Hook:** Damit die Website sicher gebaut wird, ruft das Skript nach dem
+Push von `main` einen Vercel Deploy Hook auf (Vercel → Projekt → Settings → Git →
+Deploy Hooks, Branch `main`). Die Adresse ist geheim und gehört in `tools/deploy-hook.txt`
+(steht in `.gitignore`) oder in die Umgebungsvariable `SPRITEBIT_DEPLOY_HOOK`.
+
 **Web:** Die Seite ist statisch — jedes Hosting für Dateien genügt (derzeit Vercel). Nach
 neuen, umbenannten oder gelöschten Dateien `python tools/make_sw.py` laufen lassen.
 
