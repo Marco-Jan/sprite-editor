@@ -5,7 +5,10 @@ import {
   state, sprites, paletteMaterials, selection, flatGrid, defaultLayer,
   getGrid, getSprite, getPal, getMaxIdx, getPaletteName, getPreviewName, listSprites,
   createSprite, clearSelection, isInSelection, blankLike, editingMask,
+  paletteExists, getPaletteByName,
 } from './state.js';
+import { parseStartHash } from './fromstart.js';
+import { initHelper, relabelHelper, hint, openHelpAt } from './helper.js';
 import { DEFAULT_PALETTE, MAX_COLORS } from './data.js';
 import {
   t, tn, colorLabelShort, applyStatic, initLangSwitch, onLangChange, getLang,
@@ -54,7 +57,7 @@ import { initExport } from './export.js';
 import { openReduceModal, initReduceModal } from './reduce.js';
 import { zoomAt, fitZoomToArea, isPanMode, setPanTool, initPan, initPinch } from './view.js';
 import { initFrames, togglePlay, nextFrame, prevFrame, firstFrame, lastFrame, isPlaying, stop as stopPlayback } from './frames.js';
-import { initLayers } from './layers.js';
+import { initLayers, toggleLocked, toggleVisible, toggleMaskEdit, toggleMaskOn, setOpacity } from './layers.js';
 import { celKeyDown } from './frames.js';
 import { initTlMenu } from './tlmenu.js';
 import { initQuickPaletteDrag } from './qpdrag.js';
@@ -423,7 +426,46 @@ function layerBlocked(toast = false) {
     : !L.visible ? t('ly.hiddenInfo', { name: L.name }) : null;
   if (!msg) return false;
   if (toast) showInfoToast(msg); else info(msg);
+  // Bitty bietet an, es gleich zu beheben (einmal pro Besuch).
+  const i = sp.layer;
+  if (L.locked && !editingMask()) hint('layerLocked', t('bitty.h.locked', { name: L.name }), { label: t('bitty.h.unlock'), run: () => toggleLocked(i) }, layerRow());
+  else hint('layerHidden', t('bitty.h.hidden', { name: L.name }), { label: t('bitty.h.show'), run: () => toggleVisible(i) }, layerRow());
   return true;
+}
+
+const layerRow = () => $('layer-list')?.querySelector('.ly-row.is-active');
+
+// Bitty: man malt, sieht aber nichts — weil die Ebene unsichtbar ist, die
+// Farbe durchsichtig oder die Maske die Stelle ausblendet. Läuft beim
+// Ansetzen eines Strichs; die Gründe schließen sich gegenseitig nicht aus,
+// genannt wird der erste.
+let maskSince = 0;
+function paintHints(e) {
+  const sp = getSprite();
+  const L = sp?.layers[sp.layer];
+  if (!L || isSelectTool(state.tool) || state.tool === 'wand') return;
+  const i = sp.layer;
+  if (editingMask()) {
+    // Lange im Masken-Modus und wieder am Malen: vielleicht vergessen?
+    const now = Date.now();
+    if (!maskSince) maskSince = now;
+    else if (now - maskSince > 60000) hint('maskEdit', t('bitty.h.maskEdit', { name: L.name }), { label: t('bitty.h.leaveMask'), run: () => toggleMaskEdit(i) }, layerRow());
+    return;
+  }
+  maskSince = 0;
+  if (L.opacity <= 0) {
+    hint('layerOpacity', t('bitty.h.opacity', { name: L.name }), { label: t('bitty.h.opacityFull'), run: () => setOpacity(i, 1) }, layerRow());
+    return;
+  }
+  const paints = ['pencil', 'brush', 'spray', 'fill'].includes(state.tool) || isShapeTool(state.tool);
+  if (paints && state.curColor === 0) {
+    hint('color0', t('bitty.h.color0'), { label: t('bitty.h.color1'), run: () => { state.curColor = 1; syncColorActive(); } }, $('quick-palette'));
+    return;
+  }
+  const c = cellFromEvent(e);
+  if (c && L.mask?.on && L.mask.hide[c.y]?.[c.x]) {
+    hint('masked', t('bitty.h.masked', { name: L.name }), { label: t('bitty.h.maskOff'), run: () => toggleMaskOn() }, layerRow());
+  }
 }
 
 function initCanvasEvents() {
@@ -516,6 +558,7 @@ function initCanvasEvents() {
     }
 
     if (layerBlocked()) return;
+    paintHints(e);
 
     // ── Auswahl aufziehen / lassoen / nach Farbe wählen ──
     if (state.tool === 'select') {
@@ -1567,8 +1610,11 @@ function initImport() {
   const setError = msg => {
     errEl.textContent = msg;
     errEl.hidden = !msg;
+    $('import-help').hidden = !msg;
     if (msg) okEl.hidden = true;
   };
+  // Hilfe über dem Import-Dialog aufschlagen — der Text im Feld bleibt.
+  $('import-help').addEventListener('click', () => openHelpAt('[data-i18n-html="help.io"]'));
 
   // Live-Vorschau: sagt schon vor dem Laden, was erkannt wurde.
   const preview = () => {
@@ -1719,6 +1765,7 @@ function relabelUi() {
   syncSaveDirBtn();
   syncImagePanel();
   updateToolUI();
+  relabelHelper();
   renderAll();
   info(''); // die alte Statuszeile stünde sonst in der alten Sprache da
 }
@@ -1802,6 +1849,27 @@ async function init() {
   // Gespeicherter Stand war unlesbar: er liegt gesichert daneben und wird
   // nicht überschrieben. Gleich zum Herunterladen anbieten.
   if (loaded.rescued) showConfirmToast(t('store.rescued'), () => downloadBackup('rescue'), t('help.backupDownload'));
+  else offerStartDrawing();
+  initHelper(); // Bitty — wartet mit der Tour, bis keine Rückfrage mehr offen ist
+}
+
+// Vom Probier-Raster der Startseite gekommen (editor.html#start=…)?
+// Erst fragen — das Projekt kann schon voll sein. Der Hash geht in jedem
+// Fall weg, sonst käme die Frage bei jedem Neuladen wieder.
+function offerStartDrawing() {
+  const r = parseStartHash(location.hash);
+  if (!location.hash.startsWith('#start=')) return;
+  history.replaceState(null, '', location.pathname + location.search);
+  if (!r) return;
+  showConfirmToast(t('start.ask'), () => {
+    // Gleiche Palette schon da (zweites Mal übernommen)? Dann die nehmen.
+    const base = 'start_' + r.name;
+    const same = paletteExists(base) && JSON.stringify(getPaletteByName(base)) === JSON.stringify(r.palette);
+    const palName = same ? base : createPaletteFromImport(r.palette, base);
+    stopPlayback();
+    const id = createSprite({ name: t('start.name'), palette: palName || DEFAULT_PALETTE, grid: r.grid });
+    renderCallbacks.onSelectSprite(id); // zeichnet und speichert
+  }, t('start.take'));
 }
 
 // Hilfe → Sicherung: Zeilen nur für vorhandene Sicherungen, mit Datum.

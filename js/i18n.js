@@ -121,6 +121,32 @@ function pick(key, fallback) {
   return table && table[key] !== undefined ? table[key] : fallback;
 }
 
+/**
+ * Alle Sprachfassungen eines übersetzten Elements — für Bittys Suche, die
+ * auf Deutsch auch „layer“ finden soll. Deutsch kommt aus dem Snapshot,
+ * die anderen aus STATIC. Ohne `attr` der Text (bzw. das HTML bei
+ * data-i18n-html), mit `attr` dieses Attribut.
+ * @param {HTMLElement} el
+ * @param {string} [attr]
+ * @returns {string[]}
+ */
+export function i18nVariants(el, attr) {
+  if (!el) return [];
+  const s = snapshot(el);
+  let key = null, de = null;
+  if (attr) {
+    for (const pair of (el.dataset.i18nAttr || '').split(';')) {
+      const i = pair.indexOf(':');
+      if (i > 0 && pair.slice(0, i).trim() === attr) { key = pair.slice(i + 1).trim(); de = s.attrs[attr]; }
+    }
+  } else if (el.dataset.i18nHtml) { key = el.dataset.i18nHtml; de = s.html; }
+  else if (el.dataset.i18n) { key = el.dataset.i18n; de = s.text; }
+  if (!key) return [];
+  const out = [de];
+  for (const table of Object.values(STATIC)) if (table[key] != null) out.push(table[key]);
+  return out.filter(v => typeof v === 'string' && v);
+}
+
 const I18N_SELECTOR = '[data-i18n],[data-i18n-html],[data-i18n-attr]';
 
 export function applyStatic(root = document) {
@@ -177,6 +203,10 @@ const STATIC = {
     'tool.fillVisibleTitle': 'The edges of the fill come from all visible layers — the paint goes into the active one. That way you colour in a template that sits on a layer of its own, area by area.',
 
     'donate.menu':  'Support spritebit (Ko-fi)',
+    'mb.tour':      'Tour with Bitty',
+    'mb.hints':     'Hints from Bitty',
+    'imp.helpLink': 'Which formats work?',
+    'bitty.btn':    'Bitty — show a tip',
     'donate.title': 'spritebit stays free either way. Donations go towards a code-signing certificate so Windows stops warning about the desktop app.',
 
     'mod.bigHint': 'In the browser up to 1024 × 1024 pixels — the desktop app handles canvases up to 8192 × 8192.',
@@ -1297,6 +1327,60 @@ const MSG = {
     'imp.doneWithPal':  'Import fertig — Palette „{name}“ übernommen und zugewiesen.',
     'imp.donePlain':    'Import fertig. (Keine Palette im Text gefunden — Farben bleiben wie eingestellt.)',
     'imp.fallbackName': 'Import',
+    'start.ask':        'Dein Bild von der Startseite als neuen Sprite übernehmen?',
+    'start.take':       'Übernehmen',
+    'start.name':       'Von der Startseite',
+
+    // Bitty, der Helfer (js/helper.js)
+    'bitty.hello':      'Hi, ich bin Bitty! Soll ich dir kurz zeigen, wo hier was ist?',
+    'bitty.show':       'Zeig her',
+    'bitty.later':      'Nein danke',
+    'bitty.next':       'Weiter',
+    'bitty.back':       'Zurück',
+    'bitty.skip':       'Tour beenden',
+    'bitty.done':       'Los geht’s',
+    'bitty.close':      'Schließen',
+    'bitty.quiet':      'Nicht von selbst',
+    'bitty.stepOf':     'Schritt {n} von {total}',
+    'bitty.hintOff':    'Nicht mehr zeigen',
+    'bitty.h.locked':   'Die Ebene „{name}“ ist gesperrt — deshalb passiert beim Malen nichts.',
+    'bitty.h.unlock':   'Entsperren',
+    'bitty.h.hidden':   'Die Ebene „{name}“ ist ausgeblendet — du würdest blind malen.',
+    'bitty.h.show':     'Einblenden',
+    'bitty.h.opacity':  'Die Ebene „{name}“ hat 0 % Deckkraft — was du malst, bleibt unsichtbar.',
+    'bitty.h.opacityFull': 'Auf 100 % stellen',
+    'bitty.h.color0':   'Du malst mit Farbe 0 — die ist durchsichtig und wirkt wie ein Radierer.',
+    'bitty.h.color1':   'Farbe 1 nehmen',
+    'bitty.h.maskEdit': 'Du malst gerade in die Maske von „{name}“, nicht ins Bild. Absicht?',
+    'bitty.h.leaveMask': 'Zurück zum Bild',
+    'bitty.h.masked':   'Hier blendet die Maske von „{name}“ die Ebene aus — deshalb siehst du nichts.',
+    'bitty.h.maskOff':  'Maske ausschalten',
+    'bitty.searchPh':   'Wonach suchst du? (z. B. Lasso, Export)',
+    'bitty.noHits':     'Dazu finde ich nichts — versuch ein anderes Wort.',
+    'bitty.kind.help':  'Hilfe',
+    'bitty.kind.tool':  'Werkzeug',
+    'bitty.kind.panel': 'Panel',
+    'bitty.kind.menu':  'Menü',
+    'bitty.foundTool':  'Da ist es: {name}.',
+    'bitty.foundPanel': 'Hier findest du „{name}“.',
+    'bitty.use':        'Auswählen',
+    'bitty.ok':         'Danke',
+    'bitty.tour.tools':    'Das sind deine Werkzeuge: Stift, Pinsel, Füllen, Radierer und mehr. Fahr mit der Maus drüber, dann siehst du das Tastenkürzel.',
+    'bitty.tour.colors':   'Hier sind deine Farben. Ein Klick wählt die Farbe, mit der du malst.',
+    'bitty.tour.canvas':   'Und hier malst du. Rechtsklick löscht, Strg + Mausrad zoomt.',
+    'bitty.tour.timeline': 'Die Timeline: Frames für Animationen und Ebenen übereinander. ▶ spielt die Animation ab.',
+    'bitty.tour.export':   'Fertig? Unter „Code & Export“ speicherst du dein Bild als PNG, GIF, Spritesheet oder als Code.',
+    'bitty.tour.end':      'Das war’s! Klick mich an, wenn du einen Tipp willst. Alle Kürzel findest du unter Hilfe (F1).',
+    'bitty.tip.1':      'Leertaste halten und ziehen verschiebt das Bild — auch mit der mittleren Maustaste.',
+    'bitty.tip.2':      'Strg + Mausrad zoomt genau dorthin, wo dein Mauszeiger steht.',
+    'bitty.tip.3':      'Umschalt halten beim Malen: der Strich bleibt waagerecht, senkrecht oder im 45°-Winkel.',
+    'bitty.tip.4':      'Alt + rechte Maustaste ziehen verstellt die Pinselgröße direkt auf der Fläche.',
+    'bitty.tip.5':      'Dein Bild merkt sich Farbnummern, nicht Farben. Mit „Sprite umfärben“ im Palette-Panel bekommt es auf einen Schlag andere Farben.',
+    'bitty.tip.6':      'Onion Skin in der Timeline lässt die Nachbar-Frames durchscheinen — praktisch beim Animieren.',
+    'bitty.tip.7':      'Eine Auswahl mit Alt ziehen lässt das Original stehen — du verschiebst eine Kopie.',
+    'bitty.tip.8':      'G blendet die Hilfslinien ein und aus. In Exporten tauchen sie nie auf.',
+    'bitty.tip.9':      'Strg + S sichert dein ganzes Projekt als Datei — gut als Backup oder für einen anderen Rechner.',
+    'bitty.tip.10':     'F1 öffnet die Hilfe mit allen Tastenkürzeln.',
     'imp.errSvgNoRect':  'SVG erkannt, aber kein <rect> darin gefunden.',
     'imp.errSvgNoFill':  'SVG erkannt, aber kein <rect> mit Füllfarbe gefunden.',
     'imp.errSvgBig':     'SVG ist {w}×{h} groß — das Raster wäre zu fein.',
@@ -1784,6 +1868,59 @@ const MSG = {
     'imp.doneWithPal':  'Import done — palette “{name}” taken over and assigned.',
     'imp.donePlain':    'Import done. (No palette found in the text — the colors stay as they are.)',
     'imp.fallbackName': 'Import',
+    'start.ask':        'Take your drawing from the start page along as a new sprite?',
+    'start.take':       'Take it',
+    'start.name':       'From the start page',
+
+    'bitty.hello':      'Hi, I’m Bitty! Want me to show you around real quick?',
+    'bitty.show':       'Show me',
+    'bitty.later':      'No thanks',
+    'bitty.next':       'Next',
+    'bitty.back':       'Back',
+    'bitty.skip':       'End tour',
+    'bitty.done':       'Let’s go',
+    'bitty.close':      'Close',
+    'bitty.quiet':      'Not on your own',
+    'bitty.stepOf':     'Step {n} of {total}',
+    'bitty.hintOff':    'Don’t show again',
+    'bitty.h.locked':   'The layer “{name}” is locked — that’s why painting does nothing.',
+    'bitty.h.unlock':   'Unlock',
+    'bitty.h.hidden':   'The layer “{name}” is hidden — you’d be painting blind.',
+    'bitty.h.show':     'Show it',
+    'bitty.h.opacity':  'The layer “{name}” is at 0 % opacity — whatever you paint stays invisible.',
+    'bitty.h.opacityFull': 'Set to 100 %',
+    'bitty.h.color0':   'You’re painting with color 0 — it’s transparent and works like an eraser.',
+    'bitty.h.color1':   'Use color 1',
+    'bitty.h.maskEdit': 'You’re painting into the mask of “{name}”, not the picture. On purpose?',
+    'bitty.h.leaveMask': 'Back to the picture',
+    'bitty.h.masked':   'The mask of “{name}” hides the layer right here — that’s why you see nothing.',
+    'bitty.h.maskOff':  'Turn the mask off',
+    'bitty.searchPh':   'What are you looking for? (e.g. lasso, export)',
+    'bitty.noHits':     'I can’t find anything for that — try another word.',
+    'bitty.kind.help':  'Help',
+    'bitty.kind.tool':  'Tool',
+    'bitty.kind.panel': 'Panel',
+    'bitty.kind.menu':  'Menu',
+    'bitty.foundTool':  'There it is: {name}.',
+    'bitty.foundPanel': 'You’ll find “{name}” here.',
+    'bitty.use':        'Select it',
+    'bitty.ok':         'Thanks',
+    'bitty.tour.tools':    'These are your tools: pencil, brush, fill, eraser and more. Hover over one to see its shortcut.',
+    'bitty.tour.colors':   'Here are your colors. One click picks the color you paint with.',
+    'bitty.tour.canvas':   'And this is where you draw. Right-click erases, Ctrl + mouse wheel zooms.',
+    'bitty.tour.timeline': 'The timeline: frames for animations and layers on top of each other. ▶ plays the animation.',
+    'bitty.tour.export':   'Done? Under “Code & export” you save your picture as PNG, GIF, sprite sheet or code.',
+    'bitty.tour.end':      'That’s it! Click me whenever you want a tip. All shortcuts are under Help (F1).',
+    'bitty.tip.1':      'Hold Space and drag to move the picture — the middle mouse button works too.',
+    'bitty.tip.2':      'Ctrl + mouse wheel zooms right where your pointer is.',
+    'bitty.tip.3':      'Hold Shift while painting: the stroke stays horizontal, vertical or at 45°.',
+    'bitty.tip.4':      'Alt + dragging with the right mouse button changes the brush size right on the canvas.',
+    'bitty.tip.5':      'Your picture remembers color numbers, not colors. “Recolor sprite” in the palette panel gives it new colors in one go.',
+    'bitty.tip.6':      'Onion skin in the timeline shows the neighbouring frames through — handy when animating.',
+    'bitty.tip.7':      'Drag a selection with Alt held and the original stays put — you move a copy.',
+    'bitty.tip.8':      'G shows and hides the guides. They never end up in an export.',
+    'bitty.tip.9':      'Ctrl + S saves your whole project as a file — good as a backup or for another computer.',
+    'bitty.tip.10':     'F1 opens the help with every shortcut.',
     'imp.errSvgNoRect':  'SVG recognised, but no <rect> found inside it.',
     'imp.errSvgNoFill':  'SVG recognised, but no <rect> with a fill color.',
     'imp.errSvgBig':     'The SVG is {w}×{h} — that grid would be far too fine.',

@@ -35,12 +35,14 @@ export function enterFullscreen() {
   if (!document.fullscreenElement && el.requestFullscreen) {
     el.requestFullscreen({ navigationUI: 'hide' }).catch(() => {});
   }
+  moveBitty(true);
   showExitButton();
   onChange();
 }
 
 export function exitFullscreen() {
   document.body.classList.remove('editor-fullscreen');
+  moveBitty(false);
   peek(null);
   if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
   onChange();
@@ -83,6 +85,17 @@ function placeExitButton() {
   if (peeking() === 'right' && rail?.offsetWidth) right = Math.min(right, innerWidth - rail.offsetWidth);
   b.style.top = Math.round(area.top + 10) + 'px';
   b.style.right = Math.round(innerWidth - right + 10) + 'px';
+}
+
+// Bitty (js/helper.js) wohnt in der Kopfzeile. Die ist im Vollbild weg —
+// solange zieht er in die Werkzeugleiste, ans Ende ihrer ersten Zeile
+// (vor die Symmetrie), egal wo die Leiste angedockt ist.
+function moveBitty(full) {
+  const bitty = $('bitty-btn');
+  const bar = $('toolbar');
+  if (!bitty) return;
+  if (full && bar) bar.insertBefore(bitty, bar.querySelector('.tool-sep--mirror'));
+  else $('topbar')?.append(bitty);
 }
 
 function showExitButton() {
