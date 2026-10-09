@@ -603,12 +603,14 @@ function ellipseCells(x0, y0, x1, y1, filled) {
 }
 
 // Zellen der aktuell gezogenen Form — inklusive Spiegelbildern, ohne Duplikate.
+/** @returns {[number, number][]} */
 export function shapeCells(tool, a, b) {
   const base = tool === 'line' ? lineCells(a.x, a.y, b.x, b.y)
              : tool === 'rect' ? rectCells(a.x, a.y, b.x, b.y, state.shapeFill)
              : ellipseCells(a.x, a.y, b.x, b.y, state.shapeFill);
 
   const seen = new Set();
+  /** @type {[number, number][]} */
   const out = [];
   for (const [x, y] of base) {
     for (const [px, py] of mirrored(x, y)) {
