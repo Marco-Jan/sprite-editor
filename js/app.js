@@ -4,7 +4,7 @@
 import {
   state, sprites, paletteMaterials, selection, flatGrid, defaultLayer,
   getGrid, getSprite, getPal, getMaxIdx, getPaletteName, getPreviewName, listSprites,
-  createSprite, clearSelection, isInSelection,
+  createSprite, clearSelection, isInSelection, blankLike, editingMask,
 } from './state.js';
 import { DEFAULT_PALETTE, MAX_COLORS } from './data.js';
 import {
@@ -13,6 +13,7 @@ import {
 import { initDock } from './dock.js';
 import { initLayout, isMobileLayout, refreshToolOpts } from './layout.js';
 import { initTabs } from './tabs.js';
+import { draggedSize, SIZED_TOOLS } from './sizedrag.js';
 import { applyIcons, iconSvg } from './icons.js';
 import { showConfirmToast, showInfoToast } from './toast.js';
 import {
@@ -46,7 +47,7 @@ import {
   medianCut, nearestColor, rgbToHex, hexToRgb,
   despeckleGrid, outlineGrid, magicWandDelete, autoRemoveBackground,
 } from './spritefx.js';
-import { lightGrid, dropShadowGrid } from './light.js';
+import { normalizeFx, fxSource, fxFor, recomputeFx, fxStale, lightCel, shadowCel } from './light.js';
 import { initExport } from './export.js';
 import { openReduceModal, initReduceModal } from './reduce.js';
 import { zoomAt, fitZoomToArea, isPanMode, setPanTool, initPan, initPinch } from './view.js';
@@ -349,6 +350,17 @@ function updateBrushCursor(e) {
 // Startpunkt der gerade gezogenen Form (null = keine Form im Gange).
 let shapeStart = null;
 
+// Alt + rechte Maustaste ziehen: Größe von Pinsel, Radierer, Spray
+// (js/sizedrag.js). x = Startpunkt, size = Größe beim Start, at = das
+// Ereignis am Start — dort bleibt die Vorschau stehen.
+let sizeDrag = null;
+
+function setBrushSize(n) {
+  state.brushSize = n;
+  document.querySelectorAll('.brush-sz').forEach(b =>
+    b.classList.toggle('is-active', Number(b.dataset.size) === n));
+}
+
 const shapeLabel = tool => t(`shape.${tool}`);
 
 // Statuszeile unter dem Canvas.
@@ -364,7 +376,9 @@ function layerBlocked(toast = false) {
   const sp = getSprite();
   const L = sp?.layers[sp.layer];
   if (!L) return false;
-  const msg = L.locked ? t('ly.lockedInfo', { name: L.name })
+  // Die Maske einer gesperrten Ebene darf man bearbeiten — so nimmt man
+  // z. B. Licht stellenweise weg, ohne die Licht-Ebene zu entsperren.
+  const msg = L.locked && !editingMask() ? t('ly.lockedInfo', { name: L.name })
     : !L.visible ? t('ly.hiddenInfo', { name: L.name }) : null;
   if (!msg) return false;
   if (toast) showInfoToast(msg); else info(msg);
@@ -387,6 +401,13 @@ function initCanvasEvents() {
     // ── Rechtsklick ──
     if (e.button === 2) {
       e.preventDefault();
+      // Alt + Rechts ziehen: Größe verstellen statt radieren.
+      if (e.altKey && !e.shiftKey && SIZED_TOOLS.includes(state.tool)) {
+        sizeDrag = { x: e.clientX, size: state.brushSize, at: { clientX: e.clientX, clientY: e.clientY } };
+        updateBrushCursor(sizeDrag.at);
+        info(t('info.size', { n: state.brushSize }));
+        return;
+      }
       // Schablonen-Kürzel liegen auf Shift+Alt — Shift allein scrollt seitlich.
       if (e.shiftKey && e.altKey && tplLoaded() && tplHasOffscreen()) {
         const r = doTemplatePipette(e);
@@ -499,6 +520,14 @@ function initCanvasEvents() {
       return;
     }
 
+    if (sizeDrag) {
+      const n = draggedSize(sizeDrag.size, e.clientX - sizeDrag.x);
+      if (n !== state.brushSize) setBrushSize(n);
+      updateBrushCursor(sizeDrag.at);
+      info(t('info.size', { n }));
+      return;
+    }
+
     if (selection.mode === 'marquee') { updateMarquee(e); info(selectionInfo(t('info.marquee'))); return; }
     if (selection.mode === 'lasso')   { updateLasso(e);   info(selectionInfo()); return; }
     if (selection.mode === 'move')    { updateMove(e);    info(selectionInfo(t('info.move'))); return; }
@@ -533,6 +562,7 @@ function initCanvasEvents() {
   });
 
   const endPointer = () => {
+    if (sizeDrag) { sizeDrag = null; saveState(); }
     if (tplDragging()) endTplDrag();
     if (shapeStart) {
       shapeStart = null;
@@ -790,12 +820,7 @@ function initToolbar() {
   selAction('sel-none-btn',   () => { deselect(); info(t('sel.dropped')); }, false);
 
   document.querySelectorAll('.brush-sz').forEach(btn =>
-    btn.addEventListener('click', () => {
-      state.brushSize = Number(btn.dataset.size);
-      document.querySelectorAll('.brush-sz').forEach(b =>
-        b.classList.toggle('is-active', Number(b.dataset.size) === state.brushSize));
-      saveState();
-    }));
+    btn.addEventListener('click', () => { setBrushSize(Number(btn.dataset.size)); saveState(); }));
 
   const strength = $('strength-slider');
   strength.addEventListener('input', () => {
@@ -1095,50 +1120,189 @@ function initCleanupPanel() {
 // (Rechnung in js/light.js). Mit Auswahl wirkt beides nur darin.
 // ────────────────────────────────────────────────────────────────────
 function initLightPanel() {
+  // Licht und Schatten liegen als eigene Ebenen (light.js: layer.fx) — das
+  // Original bleibt unberührt. Basis ist die aktive Ebene; ist die aktive
+  // selbst eine Effekt-Ebene, ihre Quelle.
+  //
+  // Solange das Panel offen ist und es zur Basis noch keine Licht-Ebene
+  // gibt, zeigt die Zeichenfläche eine Vorschau (render.js fragt
+  // getLightPreview) — „Als Ebene übernehmen“ legt die Ebene(n) an. Gibt es
+  // sie schon, rechnet jede Änderung im Panel sie sofort neu.
   let dir = { dx: -1, dy: -1 };
   const dirBtns = [...document.querySelectorAll('#light-dirs .light-dir')];
-  dirBtns.forEach(b => b.addEventListener('click', () => {
-    dir = { dx: Number(b.dataset.dx), dy: Number(b.dataset.dy) };
-    dirBtns.forEach(o => {
-      o.classList.toggle('is-active', o === b);
-      o.setAttribute('aria-pressed', String(o === b));
-    });
-  }));
   const amount = $('light-amount');
-  amount.addEventListener('input', () => { $('light-amount-val').textContent = amount.value + '%'; });
+  const castOn = $('light-cast-on');
+  const panel = document.querySelector('[data-panel="light"]');
+  const showDir = () => dirBtns.forEach(o => {
+    const on = Number(o.dataset.dx) === dir.dx && Number(o.dataset.dy) === dir.dy;
+    o.classList.toggle('is-active', on);
+    o.setAttribute('aria-pressed', String(on));
+  });
+  // Offen = der Inhalt ist wirklich zu sehen (Schublade, angepinnt, schwebend).
+  // Nicht über offsetParent: als Schublade ist das Panel position: fixed,
+  // dann ist offsetParent immer null — und „collapsed“ behält es dort auch.
+  const panelBody = panel?.querySelector('.panel-body');
+  const panelOpen = () => !!panelBody && panelBody.getClientRects().length > 0;
 
-  // Schwebender Auswahl-Inhalt liegt nicht im Grid — erst absetzen.
-  const inside = () => {
-    commitFloat();
-    return selection.rect ? isInSelection : undefined;
-  };
-
-  $('light-btn').addEventListener('click', () => {
-    if (layerBlocked(true)) return;
-    const opts = {
+  const baseOf = sp => (sp.layers[sp.layer]?.fx ? fxSource(sp.layers, sp.layer) : sp.layer);
+  const fxValues = kind => normalizeFx(kind === 'light'
+    ? {
+      kind, dir,
       width: Number($('light-width').value) || 1,
       amount: Number(amount.value) / 100,
       highlight: $('light-highlight').checked,
       shadow: $('light-shadow').checked,
       allowHex: $('light-free').checked,
-      inside: inside(),
-    };
-    let r = { lit: 0, shaded: 0 };
-    recordOp(() => { r = lightGrid(getGrid(), getPal(), dir, opts); });
-    if (r.lit || r.shaded) renderAll();
-    showInfoToast(r.lit || r.shaded ? t('lgt.done', r) : t('lgt.none'));
-  });
+    }
+    : { kind, dir, color: $('light-cast-color').value, distance: Number($('light-cast-dist').value) || 1 });
 
-  $('light-cast-btn').addEventListener('click', () => {
-    if (layerBlocked(true)) return;
-    const col = $('light-cast-color').value;
-    const dist = Number($('light-cast-dist').value) || 1;
-    const within = inside();
-    let n = 0;
-    recordOp(() => { n = dropShadowGrid(getGrid(), dir, col, dist, within); });
-    if (n) renderAll();
-    showInfoToast(n ? t('lgt.castDone', { n }) : t('lgt.castNone'));
+  // Effekt-Ebene der Basis mit den Panel-Werten versehen — oder anlegen
+  // (create). Ohne recordOp; der Aufrufer fasst alles zu einem Schritt.
+  function upsertIn(sp, base, kind, create) {
+    let idx = fxFor(sp.layers, base, kind);
+    if (idx < 0 && !create) return false;
+    const fx = fxValues(kind);
+    if (idx < 0) {
+      idx = kind === 'light' ? base + 1 : base;
+      const name = t(kind === 'light' ? 'lgt.layerLight' : 'lgt.layerShadow', { name: sp.layers[base].name });
+      sp.layers.splice(idx, 0, { ...defaultLayer(), name, locked: true, fx });
+      sp.frames.forEach(f => f.cels.splice(idx, 0, blankLike(f.cels[0])));
+      if (sp.layer >= idx) sp.layer++;
+    } else {
+      sp.layers[idx].fx = fx;
+    }
+    recomputeFx(sp, idx, getPal());
+    return true;
+  }
+
+  function removeIn(sp, base, kind) {
+    const idx = fxFor(sp.layers, base, kind);
+    if (idx < 0) return;
+    sp.layers.splice(idx, 1);
+    sp.frames.forEach(f => f.cels.splice(idx, 1));
+    if (sp.layer > idx) sp.layer--;
+  }
+
+  // Ein Undo-Schritt für alles, was fn an der Basis ändert.
+  function change(fn) {
+    const sp = getSprite();
+    if (!sp) return;
+    const base = baseOf(sp);
+    if (base < 0) { showInfoToast(t('lgt.noBase')); return; }
+    commitFloat();
+    recordOp(() => fn(sp, base));
+    renderAll();
+    saveState();
+  }
+  const hasLayer = kind => {
+    const sp = getSprite();
+    return !!sp && fxFor(sp.layers, baseOf(sp), kind) >= 0;
+  };
+
+  // Eine Einstellung hat sich geändert: vorhandene Ebenen neu rechnen,
+  // sonst nur die Vorschau neu zeichnen.
+  function changed(kinds) {
+    const live = kinds.filter(hasLayer);
+    if (live.length) change((sp, base) => live.forEach(k => upsertIn(sp, base, k, false)));
+    else renderEditor();
+  }
+
+  function commit() {
+    change((sp, base) => {
+      upsertIn(sp, base, 'light', true);
+      if (castOn.checked) upsertIn(sp, base, 'shadow', true);
+    });
+  }
+
+  function recomputeAll() {
+    change((sp, base) => ['light', 'shadow'].forEach(k => upsertIn(sp, base, k, false)));
+  }
+
+  // Für render.js: die Vorschau-Zellen des aktuellen Frames — oder null.
+  renderCallbacks.getLightPreview = () => {
+    if (!panelOpen()) return null;
+    const sp = getSprite();
+    if (!sp) return null;
+    const base = baseOf(sp);
+    if (base < 0) return null;
+    const cel = sp.frames[sp.frame].cels[base];
+    const light = fxFor(sp.layers, base, 'light') < 0 ? lightCel(cel, getPal(), fxValues('light')) : null;
+    const shadow = castOn.checked && fxFor(sp.layers, base, 'shadow') < 0 ? shadowCel(cel, fxValues('shadow')) : null;
+    return light || shadow ? { base, light, shadow } : null;
+  };
+
+  // Panel an die Effekt-Ebenen der Basis angleichen.
+  function sync() {
+    const sp = getSprite();
+    if (!sp) return;
+    const base = baseOf(sp);
+    const li = fxFor(sp.layers, base, 'light');
+    const si = fxFor(sp.layers, base, 'shadow');
+    const lfx = li >= 0 ? sp.layers[li].fx : null;
+    const sfx = si >= 0 ? sp.layers[si].fx : null;
+    const own = lfx || sfx;
+    if (own) dir = { ...own.dir };
+    if (lfx) {
+      amount.value = String(Math.round(lfx.amount * 100));
+      $('light-amount-val').textContent = amount.value + '%';
+      $('light-width').value = String(lfx.width);
+      $('light-highlight').checked = lfx.highlight;
+      $('light-shadow').checked = lfx.shadow;
+      $('light-free').checked = lfx.allowHex;
+    }
+    if (sfx) {
+      if (typeof sfx.color === 'string') $('light-cast-color').value = sfx.color;
+      $('light-cast-dist').value = String(sfx.distance);
+    }
+    if (own) castOn.checked = !!sfx;
+    showDir();
+    $('light-btn').hidden = !!lfx;
+    $('light-preview-note').hidden = !!lfx || base < 0;
+    $('light-status').textContent = base >= 0 && own ? t('lgt.statusOn', { name: sp.layers[base].name }) : '';
+    $('light-stale').hidden = !((li >= 0 && fxStale(sp, li)) || (si >= 0 && fxStale(sp, si)));
+  }
+  let syncTimer = 0;
+  renderCallbacks.onLightPanel = () => { clearTimeout(syncTimer); syncTimer = setTimeout(sync, 250); };
+  // Panel auf- oder zugeklappt, als Schublade geöffnet, angepinnt …: die
+  // Vorschau kommt bzw. geht.
+  if (panel) {
+    let wasOpen = panelOpen();
+    const watch = () => { const o = panelOpen(); if (o !== wasOpen) { wasOpen = o; renderEditor(); sync(); } };
+    // Höchstens einmal je Bild prüfen — offsetParent erzwingt ein Layout.
+    let queued = false;
+    const later = () => { if (!queued) { queued = true; requestAnimationFrame(() => { queued = false; watch(); }); } };
+    new MutationObserver(later).observe(document.body, { attributes: true, subtree: true, attributeFilter: ['class', 'style', 'hidden'] });
+  }
+
+  dirBtns.forEach(b => b.addEventListener('click', () => {
+    dir = { dx: Number(b.dataset.dx), dy: Number(b.dataset.dy) };
+    showDir();
+    changed(['light', 'shadow']);
+  }));
+  // Stärke: Vorschau schon beim Ziehen, Ebene erst beim Loslassen (ein Undo-Schritt).
+  amount.addEventListener('input', () => {
+    $('light-amount-val').textContent = amount.value + '%';
+    if (!hasLayer('light')) renderEditor();
   });
+  for (const id of ['light-amount', 'light-width', 'light-highlight', 'light-shadow', 'light-free']) {
+    $(id).addEventListener('change', () => changed(['light']));
+  }
+  $('light-cast-color').addEventListener('input', () => { if (!hasLayer('shadow')) renderEditor(); });
+  for (const id of ['light-cast-color', 'light-cast-dist']) {
+    $(id).addEventListener('change', () => changed(['shadow']));
+  }
+  // Schlagschatten an/aus: gibt es schon Licht als Ebene, kommt bzw. geht
+  // die Schatten-Ebene gleich mit — sonst nur in der Vorschau.
+  castOn.addEventListener('change', () => {
+    if (!hasLayer('light') && !hasLayer('shadow')) { renderEditor(); return; }
+    change((sp, base) => {
+      if (castOn.checked) upsertIn(sp, base, 'shadow', true);
+      else removeIn(sp, base, 'shadow');
+    });
+  });
+  $('light-btn').addEventListener('click', commit);
+  $('light-redo').addEventListener('click', recomputeAll);
+  sync();
 }
 
 // ────────────────────────────────────────────────────────────────────

@@ -4,6 +4,8 @@
 // Alle anderen Module importieren von hier. Mutationen erfolgen über die
 // exportierten Objekte (state.curSprite = …, sprites[id] = …), NICHT über
 // lokale Re-Assignments — sonst sehen andere Module die Änderung nicht.
+import { normalizeFx } from './light.js';
+import { maskedCel, maskActive, copyMask, decodeMask } from './mask.js';
 import { BUILTIN_PALETTES, DEFAULT_PALETTE, paletteSize, cellToColor } from './data.js';
 import { t } from './i18n.js';
 import { normalizeTags } from './tags.js';
@@ -49,7 +51,7 @@ export const state = {
   cellSize:      16,
   tool:          'pencil', // 'pencil' | 'brush' | 'spray' | 'fill' | 'eraser' | 'wand' | 'select'
   brushSize:     1,        // Kantenlänge / Radius in Zellen
-  brushStrength: 80,       // 1–100 — Brush/Eraser: Dichte, Spray: Pixel/Event
+  brushStrength: 100,      // 1–100 — Brush/Eraser: Dichte, Spray: Pixel/Event
   wandTolerance: 25,       // 0–100 % — Zauberstab: Farb-Ähnlichkeitsschwelle
   isDrawing:     false,
   isErasing:     false,
@@ -57,7 +59,8 @@ export const state = {
   outputFormat:  'ts',     // Schlüssel aus CODE_FORMATS (codegen.js)
   mirror:        'off',    // 'off' | 'x' (senkrechte Achse) | 'y' | 'both'
   shapeFill:     false,    // Rechteck/Ellipse gefüllt statt nur Kontur
-  pixelPerfect:  false,    // Stift/Radierer 1 px: L-Ecken entfernen (js/pixelperfect.js)
+  pixelPerfect:  false,
+  maskEdit:      false,    // Werkzeuge malen in die Maske der aktiven Ebene (js/mask.js)    // Stift/Radierer 1 px: L-Ecken entfernen (js/pixelperfect.js)
   showColor:     false,    // aktuelle Farbe im Bild hervorheben (alles andere abgedunkelt)
   // Palette, die das Paletten-Panel gerade ZEIGT. null = die des Sprites.
   // Anschauen ändert nichts am Sprite — zugewiesen wird nur per Knopf.
@@ -169,8 +172,13 @@ export function attachGrid(sp) {
 // continuous: „durchgehende" Ebene — ein neuer Frame
 // bekommt hier keine leere Zelle, sondern teilt sich das Bild des vorigen.
 export function defaultLayer(n = 1) {
-  return { name: t('ly.name', { n }), visible: true, locked: false, opacity: 1, continuous: false };
+  return { name: t('ly.name', { n }), visible: true, locked: false, opacity: 1, continuous: false, fx: null, mask: null };
 }
+
+// Kopie einer Ebene samt Effekt-Einstellungen (light.js) — eine flache
+// Kopie teilte sich das fx-Objekt mit dem Original, und Undo-Schnappschüsse
+// würden beim nächsten Neuberechnen still mitgeändert.
+export const copyLayer = l => ({ ...l, fx: l.fx ? { ...l.fx, dir: { ...l.fx.dir } } : null, mask: copyMask(l.mask) });
 
 export function normalizeLayer(l, n) {
   const op = Number(l?.opacity);
@@ -180,6 +188,9 @@ export function normalizeLayer(l, n) {
     locked: !!l?.locked,
     opacity: Number.isFinite(op) ? Math.max(0, Math.min(1, op)) : 1,
     continuous: !!l?.continuous,
+    fx: normalizeFx(l?.fx),
+    // Roh — makeSprite prüft die Maske gegen die Größe (decodeMask).
+    mask: l?.mask ?? null,
   };
 }
 
@@ -208,6 +219,8 @@ export function makeSprite({ name, palette, frames, fps = DEFAULT_FPS, frame = 0
   const n = Math.max(...fr.map(f => f.cels.length));
   for (const f of fr) while (f.cels.length < n) f.cels.push(blankLike(f.cels[0]));
   const ly = Array.from({ length: n }, (_, i) => normalizeLayer(layers?.[i], i + 1));
+  const H0 = fr[0].cels[0].length, W0 = fr[0].cels[0][0].length;
+  ly.forEach(l => { l.mask = decodeMask(l.mask, W0, H0); });
   return attachGrid({
     name,
     palette,
@@ -240,6 +253,8 @@ export function mapFrames(sp, fn) {
       return done.get(g);
     });
   });
+  // Masken wandern mit (Größe, Drehen, Spiegeln …) — sie sind Raster wie die Bilder.
+  sp.layers?.forEach(l => { if (l.mask) l.mask.hide = fn(l.mask.hide); });
 }
 
 // ── Verknüpfte Zellen ───────────────────────────────────────────────
@@ -336,13 +351,13 @@ function mixHex(below, top, a) {
 export function flatGrid(sp, f = sp.frame) {
   const cels = sp.frames[f].cels;
   const L0 = sp.layers[0];
-  if (cels.length === 1 && L0.visible && L0.opacity >= 1) return cels[0];
+  if (cels.length === 1 && L0.visible && L0.opacity >= 1 && !maskActive(L0)) return cels[0];
   const H = cels[0].length, W = cels[0][0].length;
   const pal = getPaletteByName(sp.palette);
   const out = Array.from({ length: H }, () => Array(W).fill(0));
   sp.layers.forEach((L, li) => {
     if (!L.visible || L.opacity <= 0) return;
-    const g = cels[li];
+    const g = maskedCel(L, cels[li]);
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
       const v = g[y][x];
       if (v === 0) continue;
@@ -373,7 +388,9 @@ export function thumbGrid(sp, f = sp.frame, maxSide = 96) {
   const g0 = sp.frames[f].cels[0];
   if (Math.max(g0.length, g0[0].length) <= maxSide) return flatGrid(sp, f);
   const cels = sp.frames[f].cels.map(g => sampleGrid(g, maxSide));
-  return flatGrid({ frames: [{ cels }], layers: sp.layers, palette: sp.palette }, 0);
+  // Masken mit verkleinern — sonst passten sie nicht mehr aufs Bild.
+  const layers = sp.layers.map(l => (l.mask ? { ...l, mask: { on: l.mask.on, hide: sampleGrid(l.mask.hide, maxSide) } } : l));
+  return flatGrid({ frames: [{ cels }], layers, palette: sp.palette }, 0);
 }
 
 // Dauer eines Frames in ms (eigene Dauer oder nach den fps des Sprites).
@@ -406,7 +423,20 @@ export function getSprite() {
 // Aktuelles Grid. Fällt auf ein leeres 24×24-Grid zurück, damit Render-Code
 // nie gegen null läuft (passiert nur im Moment zwischen Löschen und Neuwahl).
 export function getGrid() {
-  return getSprite()?.grid || emptyGrid(24);
+  const sp = getSprite();
+  if (!sp) return emptyGrid(24);
+  // „Maske bearbeiten“: alle Werkzeuge malen in die Maske (mask.js).
+  if (state.maskEdit) {
+    const m = sp.layers[sp.layer]?.mask;
+    if (m) return m.hide;
+  }
+  return sp.grid;
+}
+
+/** Wird gerade die Maske der aktiven Ebene bearbeitet? */
+export function editingMask() {
+  const sp = getSprite();
+  return !!(state.maskEdit && sp?.layers[sp.layer]?.mask);
 }
 
 // Sortierte Liste aller Sprites für die Übersicht: [{ id, name, palette, grid, frames, … }]

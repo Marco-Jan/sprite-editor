@@ -318,8 +318,8 @@
 
         <label class="field field--inline" id="strength-group" hidden>
           <span class="field-label" data-i18n="tool.strength">Stärke</span>
-          <input type="range" id="strength-slider" min="1" max="100" value="80">
-          <span id="strength-val" class="field-value">80%</span>
+          <input type="range" id="strength-slider" min="1" max="100" value="100">
+          <span id="strength-val" class="field-value">100%</span>
         </label>
 
         <label class="field field--inline" id="tolerance-group" hidden>
@@ -455,7 +455,16 @@
             <button class="btn" id="ly-add" data-i18n-attr="title:ly.add" title="Neue Ebene über der aktiven"><span class="ico" data-icon="plus"></span></button>
             <button class="btn" id="ly-dup" data-i18n-attr="title:ly.dup" title="Ebene duplizieren"><span class="ico" data-icon="copy"></span></button>
             <button class="btn" id="ly-merge" data-i18n-attr="title:ly.merge" title="Nach unten zusammenführen — in jedem Frame"><span class="ico" data-icon="mergeDown"></span></button>
+            <button class="btn" id="ly-merge-all" data-i18n-attr="title:ly.mergeAll" title="Alle sichtbaren Ebenen zusammenführen — in jedem Frame, auch Licht und Schatten; ausgeblendete bleiben"><span class="ico" data-icon="mergeAll"></span></button>
             <button class="btn" id="ly-del" data-i18n-attr="title:ly.del" title="Ebene löschen"><span class="ico" data-icon="trash"></span></button>
+          </div>
+          <div class="ly-mask-actions">
+            <span class="field-label" data-i18n="mask.label">Maske</span>
+            <button class="btn btn--sm" id="ly-mask-add" data-i18n-attr="title:mask.addTitle" title="Maske hinzufügen — damit blendest du Teile der Ebene aus, ohne sie zu löschen"><span class="ico" data-icon="mask"></span><span data-i18n="mask.add">Hinzufügen</span></button>
+            <button class="btn btn--sm" id="ly-mask-edit" aria-pressed="false" hidden data-i18n-attr="title:mask.editTitle" title="Maske bearbeiten: Malen blendet aus, Radieren blendet wieder ein"><span class="ico" data-icon="brush"></span><span data-i18n="mask.edit">Bearbeiten</span></button>
+            <button class="btn btn--sm" id="ly-mask-on" hidden data-i18n-attr="title:mask.off" title="Maske ausschalten (alles sichtbar)"><span class="ico" data-icon="eye"></span></button>
+            <button class="btn btn--sm" id="ly-mask-apply" hidden data-i18n-attr="title:mask.applyTitle" title="Maske anwenden: ausgeblendete Pixel werden gelöscht, die Maske verschwindet"><span class="ico" data-icon="check"></span></button>
+            <button class="btn btn--sm" id="ly-mask-del" hidden data-i18n-attr="title:mask.delTitle" title="Maske löschen — alles wieder sichtbar"><span class="ico" data-icon="trash"></span></button>
           </div>
           <label class="field field--inline">
             <span class="field-label" data-i18n="ly.opacity">Deckkraft</span>
@@ -763,19 +772,27 @@
             <span data-i18n="lgt.free">Auch Farben außerhalb der Palette</span>
           </label>
 
-          <button class="btn btn--block btn--accent" id="light-btn" data-i18n="lgt.apply" data-i18n-attr="title:lgt.applyTitle"
-                  title="Kanten zur Lichtquelle hin aufhellen, abgewandte Kanten abdunkeln — auf der aktuellen Ebene, mit Auswahl nur darin">Licht anwenden</button>
-
-          <div class="field field--inline">
-            <span class="field-label" data-i18n="lgt.cast">Schlagschatten</span>
+          <label class="check">
+            <input type="checkbox" id="light-cast-on">
+            <span data-i18n="lgt.cast">Schlagschatten</span>
+          </label>
+          <div class="field field--inline light-cast-row">
             <input type="color" id="light-cast-color" value="#1a1a1a" data-i18n-attr="title:lgt.castColor" title="Schattenfarbe">
             <select id="light-cast-dist" class="input input--sm" data-i18n-attr="title:lgt.castDist" title="Wie weit der Schatten fällt">
               <option value="1">1 px</option>
               <option value="2">2 px</option>
               <option value="3">3 px</option>
             </select>
-            <button class="btn" id="light-cast-btn" data-i18n="lgt.castApply" data-i18n-attr="title:lgt.castApplyTitle"
-                    title="Silhouette von der Lichtquelle weg versetzt als Schatten in leere Pixel malen">Werfen</button>
+          </div>
+
+          <!-- Vorschau, solange das Panel offen ist und es noch keine Licht-Ebene gibt (app.js) -->
+          <p class="light-preview-note" id="light-preview-note" data-i18n="lgt.previewNote" hidden>Vorschau — im Bild ist noch nichts verändert.</p>
+          <button class="btn btn--block btn--accent" id="light-btn" data-i18n="lgt.commit" data-i18n-attr="title:lgt.commitTitle"
+                  title="Legt Licht (und, wenn angehakt, Schatten) als eigene Ebenen an — das Original bleibt unverändert. Danach rechnet jede Änderung hier die Ebenen sofort neu">Als Ebene übernehmen</button>
+          <p class="field-note" id="light-status"></p>
+          <div class="light-stale" id="light-stale" hidden>
+            <span data-i18n="lgt.stale">An der Figur wurde weitergemalt.</span>
+            <button class="btn btn--sm" id="light-redo" data-i18n="lgt.redo">Neu berechnen</button>
           </div>
         </div>
       </section>
@@ -1117,6 +1134,7 @@
       <div class="sc-row"><b>Klick</b><span>Malen</span></div>
       <div class="sc-row"><b>Rechtsklick</b><span>Löschen (gedrückt halten = durchgehend)</span></div>
       <div class="sc-row"><b>Alt + Klick</b><span>Pipette auf das Grid</span></div>
+      <div class="sc-row"><b>Alt + Rechts ziehen</b><span>Größe von Pinsel, Radierer und Spray</span></div>
       <div class="sc-row"><b>Shift + Alt halten</b><span>Schablone in den Vordergrund</span></div>
       <div class="sc-row"><b>Shift + Alt + Ziehen</b><span>Schablone verschieben</span></div>
       <div class="sc-row"><b>Shift + Alt + Rechtsklick</b><span>Schablonen-Pipette</span></div>

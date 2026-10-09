@@ -8,7 +8,7 @@
 // Persistenz: bewusst nur in-memory (wie bei jedem Design-Tool).
 // Mit im Eintrag steckt die Palette des Sprites — so ist auch "Sprite
 // umfärben" (andere Palette zuweisen) ein normaler Undo-Schritt.
-import { state, sprites, copyFrames, linkSignature } from './state.js';
+import { state, sprites, copyFrames, linkSignature, copyLayer } from './state.js';
 import { copyTags } from './tags.js';
 import { dc } from './data.js';
 
@@ -67,7 +67,7 @@ function snap(id) {
   lastFrames = { id, frames };
   return {
     frames,
-    layers: sp.layers.map(l => ({ ...l })),
+    layers: sp.layers.map(copyLayer),
     layer: sp.layer,
     frame: sp.frame,
     fps: sp.fps,
@@ -85,7 +85,7 @@ function snapAfter(id, before) {
   lastFrames = { id, frames };
   return {
     frames,
-    layers: sp.layers.map(l => ({ ...l })),
+    layers: sp.layers.map(copyLayer),
     layer: sp.layer,
     frame: sp.frame,
     fps: sp.fps,
@@ -172,7 +172,7 @@ export function recordCustom({ undo: undoFn, redo: redoFn }) {
 function apply(id, st) {
   const sp = sprites[id];
   sp.frames = copyFrames(st.frames);
-  sp.layers = st.layers.map(l => ({ ...l }));
+  sp.layers = st.layers.map(copyLayer);
   sp.layer = Math.min(st.layer, sp.layers.length - 1);
   sp.frame = Math.min(st.frame, sp.frames.length - 1);
   sp.fps = st.fps;

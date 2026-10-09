@@ -221,25 +221,38 @@ umnummeriert — das Bild bleibt gleich, und es ist ein einzelner Undo-Schritt.
 
 ## Licht
 
-Das Panel **Licht** setzt Licht und Schatten per Knopfdruck. Ein 2D-Sprite kennt seine Form
-nicht — darum wird nicht „echt“ beleuchtet, sondern so, wie man es in Pixel-Art von Hand macht.
+Das Panel **Licht** setzt Licht und Schatten per Knopfdruck — **nicht-destruktiv**, wie man es
+aus Grafikprogrammen kennt: das Original bleibt unberührt, Licht und Schatten liegen als eigene
+Ebenen darüber bzw. darunter. Ein 2D-Sprite kennt seine Form nicht — darum wird nicht „echt“
+beleuchtet, sondern so, wie man es in Pixel-Art von Hand macht.
+
+**Vorschau:** Solange das Panel offen ist, zeigt die Zeichenfläche Licht und Schatten sofort —
+jede Änderung im Panel ist direkt zu sehen, im Bild ist dabei noch nichts verändert.
 
 1. **Lichtquelle** im 3×3-Feld wählen: von wo das Licht kommt (8 Richtungen).
-2. **Licht anwenden:** Kanten zur Lampe hin werden heller, abgewandte Kanten dunkler.
-   - **Stärke** (5–40 %) — wie viel heller bzw. dunkler.
-   - **Breite** (1–3 px) — wie weit vom Rand her.
-   - **Lichtkante** / **Schattenkante** einzeln an- und abschaltbar.
-   - Die neuen Farben kommen aus **derselben Farbfamilie der Palette** — der Sprite bleibt
-     in seiner Palette. Fehlt eine passende Farbe, bleibt der Pixel, wie er ist; mit
-     **Auch Farben außerhalb der Palette** wird dann eine freie Farbe berechnet. Freie
-     Farben werden immer direkt umgerechnet: Licht etwas wärmer, Schatten etwas kühler.
-   - 1-Pixel-Linien (Leere auf beiden Seiten) bleiben unverändert.
-3. **Schlagschatten:** Farbe und Abstand (1–3 px) wählen, **Werfen** — die Silhouette
-   fällt von der Lampe weg in leere Pixel.
+2. **Licht** einstellen — Kanten zur Lampe hin werden heller, abgewandte dunkler.
+   - **Stärke** (5–40 %), **Breite** (1–3 px), **Lichtkante** / **Schattenkante** einzeln.
+   - Die neuen Farben kommen aus **derselben Farbfamilie der Palette**; fehlt eine passende,
+     bleibt der Pixel — mit **Auch Farben außerhalb der Palette** wird eine freie Farbe berechnet.
+3. **Schlagschatten** anhaken, Farbe und Abstand (1–3 px) wählen — die Silhouette fällt von
+   der Lampe weg.
+4. **Als Ebene übernehmen:** über der aktiven Ebene entsteht „Licht · *Name*“, darunter (wenn
+   angehakt) „Schatten · *Name*“ — in einem Undo-Schritt.
 
-Beides wirkt auf die aktive Ebene im aktuellen Frame, bei einer Auswahl nur darin, und ist
-ein einzelner Undo-Schritt. Zweimal anwenden verstärkt den Effekt — für eine andere
-Richtung erst `Strg+Z`.
+**Ändern statt neu malen:** Gibt es die Ebenen schon, rechnet **jede Änderung im Panel** sie
+sofort neu — Richtung, Stärke, Breite, Schattenfarbe. Die alten Verfärbungen verschwinden
+dabei; das Original war ja nie verändert. Jede Änderung ist ein Undo-Schritt.
+
+- Licht und Schatten werden für **alle Frames** berechnet.
+- Die Effekt-Ebenen sind **gesperrt** (beim Neuberechnen würde Gemaltes überschrieben) —
+  ausprobieren heißt: Ebene ein- und ausblenden; weg damit: Ebene löschen.
+- Eine Licht-Ebene gehört zur nächsten normalen Ebene **darunter**, eine Schatten-Ebene zur
+  nächsten normalen **darüber**. Ist die aktive Ebene eine Effekt-Ebene, wirkt das Panel auf
+  deren Figur.
+- **Weitergemalt?** Ändert sich die Figur, zeigt das Panel „An der Figur wurde weitergemalt“ —
+  **Neu berechnen** gleicht Licht und Schatten an.
+- **Fest übernehmen:** „Nach unten zusammenführen“ (Licht-Ebene aktiv) oder
+  „Alle sichtbaren Ebenen zusammenführen“ (siehe [Ebenen](#ebenen)).
 
 ---
 
@@ -338,7 +351,26 @@ Vorschaubild des aktuellen Frames.
 - **Deckkraft** per Regler (ein Undo-Schritt je Ziehen), **Name** per Doppelklick,
   **Reihenfolge** per Ziehen.
 - **+** neue leere Ebene über der aktiven, **duplizieren**, **nach unten zusammenführen**
-  (in jedem Frame), **löschen** (die letzte Ebene bleibt).
+  (in jedem Frame), **alle sichtbaren zusammenführen** (in jedem Frame, auch Licht und
+  Schatten; ausgeblendete Ebenen bleiben, wie sie sind), **löschen** (die letzte Ebene bleibt).
+
+### Ebenenmasken
+
+Eine **Maske** blendet Teile einer Ebene aus, ohne sie zu löschen — wie in Grafikprogrammen,
+für Pixel-Art auf „sichtbar / ausgeblendet“ verkürzt. Eine Maske gilt für alle Frames der Ebene.
+
+- **Maske → Hinzufügen** im Ebenen-Panel legt sie an und schaltet auf **Bearbeiten**: jetzt
+  malen alle Werkzeuge in die Maske — **Malen blendet aus, Radieren blendet wieder ein**
+  (auch Füllen, Formen und Auswahl). Ausgeblendetes erscheint rötlich, die Zeichenfläche hat
+  einen roten Rahmen.
+- Neben dem Ebenen-Bildchen steht das **Masken-Bildchen** (weiß = sichtbar, schwarz =
+  ausgeblendet) — ein Klick darauf schaltet Bearbeiten an und aus.
+- **Auge** schaltet die Maske vorübergehend aus, **✓ Anwenden** übernimmt sie fest (die
+  ausgeblendeten Pixel werden gelöscht), **Papierkorb** entfernt sie (alles wieder sichtbar).
+- Auch **gesperrte** Ebenen haben eine bearbeitbare Maske — so nimmt man z. B. das Licht
+  einer Licht-Ebene stellenweise weg, ohne sie zu entsperren.
+- Export, Vorschau, Code und Zusammenführen zeigen, was die Maske übrig lässt. Größe ändern,
+  drehen, spiegeln und skalieren nehmen die Maske mit.
 
 Jede Ebene hat in jedem Frame ihr eigenes Bild (`frames[].cels`). Größe ändern, drehen,
 spiegeln, skalieren, zuschneiden und Paletten umfärben wirken auf alle Ebenen.

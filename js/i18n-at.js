@@ -246,6 +246,11 @@ export const STATIC_AT = {
   'tabs.label':       'Offene Sprites',
   'tabs.new':         'A neicher Sprite',
 
+  // ── Maske ──
+  'mask.label':       'Maskn',
+  'mask.add':         'Dazua',
+  'mask.edit':        'Bearbeitn',
+
   // ── Licht ──
   'lgt.title':        'Liacht',
   'lgt.dir':          'Wo’s Liacht herkummt',
@@ -253,9 +258,9 @@ export const STATIC_AT = {
   'lgt.width':        'Wia broat',
   'lgt.highlight':    'Liachtkantn (heller)',
   'lgt.shadow':       'Schottnkantn (dunkler)',
-  'lgt.apply':        'Liacht drauf',
   'lgt.cast':         'Schlagschottn',
-  'lgt.castApply':    'Werfn',
+  'lgt.commit':       'Ois Ebene übernehma',
+  'lgt.previewNote':  'Vorschau — im Buidl is no nix gändert.',
 
   // ── Modale ──
   'mod.newTitle':      'A neicher Sprite',

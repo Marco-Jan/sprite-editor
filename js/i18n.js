@@ -296,6 +296,15 @@ const STATIC = {
     'ly.add': 'New layer above the active one',
     'ly.dup': 'Duplicate layer',
     'ly.merge': 'Merge down — in every frame',
+    'mask.label': 'Mask',
+    'mask.add': 'Add',
+    'mask.addTitle': 'Add a mask — hides parts of the layer without deleting them',
+    'mask.edit': 'Edit',
+    'mask.editTitle': 'Edit the mask: painting hides, erasing reveals again',
+    'mask.off': 'Turn the mask off (everything visible)',
+    'mask.applyTitle': 'Apply the mask: hidden pixels are deleted, the mask goes away',
+    'mask.delTitle': 'Delete the mask — everything visible again',
+    'ly.mergeAll': 'Merge all visible layers — in every frame, light and shadow too; hidden ones stay',
     'ly.del': 'Delete layer',
     'ly.opacity': 'Opacity',
     'ly.note': 'Double-click the name to rename, drag to reorder. Export and preview show all visible layers on top of each other.',
@@ -529,13 +538,14 @@ const STATIC = {
     'lgt.shadow':       'Shadow edge (darker)',
     'lgt.free':         'Allow colors outside the palette',
     'lgt.freeTitle':    'If the palette has no matching lighter or darker color, compute a free color — otherwise the pixel stays as it is',
-    'lgt.apply':        'Apply light',
-    'lgt.applyTitle':   'Brighten edges facing the light, darken edges facing away — on the current layer, only inside the selection if there is one',
+    'lgt.commit':       'Apply as layer',
+    'lgt.commitTitle':  'Adds light (and, if ticked, shadow) as separate layers — the original stays untouched. Afterwards every change here recomputes the layers right away',
+    'lgt.previewNote':  'Preview — nothing in the image has changed yet.',
+    'lgt.stale':        'The figure has changed since.',
+    'lgt.redo':         'Recompute',
     'lgt.cast':         'Drop shadow',
     'lgt.castColor':    'Shadow color',
     'lgt.castDist':     'How far the shadow falls',
-    'lgt.castApply':    'Cast',
-    'lgt.castApplyTitle': 'Paint the silhouette, offset away from the light, as a shadow into empty pixels',
 
     // ── Modal: neuer Sprite ──
     'mod.newTitle':     'New sprite',
@@ -702,6 +712,7 @@ const STATIC = {
       + '<div class="sc-row"><b>Click</b><span>Draw</span></div>'
       + '<div class="sc-row"><b>Right-click</b><span>Erase (hold for continuous)</span></div>'
       + '<div class="sc-row"><b>Alt + click</b><span>Eyedropper on the grid</span></div>'
+      + '<div class="sc-row"><b>Alt + right-drag</b><span>Size of brush, eraser and spray</span></div>'
       + '<div class="sc-row"><b>Hold Shift + Alt</b><span>Stencil to the front</span></div>'
       + '<div class="sc-row"><b>Shift + Alt + drag</b><span>Move the stencil</span></div>'
       + '<div class="sc-row"><b>Shift + Alt + right-click</b><span>Stencil eyedropper</span></div>'
@@ -1060,10 +1071,27 @@ const MSG = {
     'cln.outlined':    'Outline gezeichnet — {n} Pixel.',
     'cln.outlineNone': 'Keine Outline nötig — Sprite leer?',
 
+    'info.size':       'Größe {n}',
     // Reiter
     'tabs.close':      'Reiter schließen (Mittelklick) — der Sprite bleibt im Projekt',
 
     // Licht
+    'mask.editHint':   'Maske bearbeiten: Malen blendet aus, Radieren blendet wieder ein.',
+    'mask.editStart':  'Maske bearbeiten',
+    'mask.editStop':   'Maske fertig — wieder ins Bild malen',
+    'mask.on':         'Maske einschalten',
+    'mask.off':        'Maske ausschalten (alles sichtbar)',
+    'ly.nothingToMerge': 'Zum Zusammenführen braucht es mindestens zwei sichtbare Ebenen.',
+    'ly.mergedName':   'Zusammengeführt',
+    'lgt.applyNew':    'Licht-Ebene anlegen',
+    'lgt.applyUpdate': 'Licht neu berechnen',
+    'lgt.castNew':     'Werfen',
+    'lgt.castUpdate':  'Neu werfen',
+    'lgt.layerLight':  'Licht · {name}',
+    'lgt.layerShadow': 'Schatten · {name}',
+    'lgt.statusOff':   'Wirkt auf „{name}“ — als eigene Ebene, das Original bleibt.',
+    'lgt.statusOn':    'Licht für „{name}“ ist eine eigene Ebene — Änderungen hier rechnen sie neu.',
+    'lgt.noBase':      'Keine Ebene, auf die das Licht wirken kann.',
     'lgt.done':        'Licht gesetzt — {lit} Pixel heller, {shaded} dunkler.',
     'lgt.none':        'Nichts beleuchtet — keine Kanten oder keine passenden Palettenfarben (Häkchen „Auch Farben außerhalb der Palette“?).',
     'lgt.castDone':    'Schlagschatten gemalt — {n} Pixel.',
@@ -1502,8 +1530,25 @@ const MSG = {
     'cln.outlined':    'Outline drawn — {n} pixels.',
     'cln.outlineNone': 'No outline needed — is the sprite empty?',
 
+    'info.size':       'Size {n}',
     'tabs.close':      'Close tab (middle click) — the sprite stays in the project',
 
+    'mask.editHint':   'Editing the mask: painting hides, erasing reveals again.',
+    'mask.editStart':  'Edit mask',
+    'mask.editStop':   'Done with the mask — paint into the image again',
+    'mask.on':         'Turn the mask on',
+    'mask.off':        'Turn the mask off (everything visible)',
+    'ly.nothingToMerge': 'Merging needs at least two visible layers.',
+    'ly.mergedName':   'Merged',
+    'lgt.applyNew':    'Add light layer',
+    'lgt.applyUpdate': 'Recompute light',
+    'lgt.castNew':     'Cast',
+    'lgt.castUpdate':  'Cast again',
+    'lgt.layerLight':  'Light · {name}',
+    'lgt.layerShadow': 'Shadow · {name}',
+    'lgt.statusOff':   'Acts on “{name}” — as a separate layer, the original stays.',
+    'lgt.statusOn':    'Light for “{name}” is a separate layer — changes here recompute it.',
+    'lgt.noBase':      'No layer the light could act on.',
     'lgt.done':        'Light applied — {lit} pixels brighter, {shaded} darker.',
     'lgt.none':        'Nothing lit — no edges or no matching palette colors (tick “Allow colors outside the palette”?).',
     'lgt.castDone':    'Drop shadow painted — {n} pixels.',

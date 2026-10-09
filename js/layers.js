@@ -9,7 +9,8 @@
 // Die Liste im Panel zeigt die oberste Ebene oben. Alle Änderungen laufen
 // durch recordOp() und sind Undo-Schritte; nur das Wählen der aktiven Ebene
 // ist keine Änderung.
-import { getSprite, getPaletteByName, clearSelection, defaultLayer, blankLike, sampleGrid } from './state.js';
+import { state, getSprite, getPaletteByName, clearSelection, defaultLayer, blankLike, sampleGrid, copyLayer, flatGrid } from './state.js';
+import { blankMask, bakeMask, maskedCel } from './mask.js';
 import { dc, cellToColor } from './data.js';
 import { renderAll, renderEditor, renderCallbacks } from './render.js';
 import { recordOp, beginStroke, commitStroke } from './history.js';
@@ -63,6 +64,7 @@ export function setActiveLayer(i) {
   if (!sp || i === sp.layer || i < 0 || i >= sp.layers.length) return;
   leave();
   sp.layer = i;
+  if (!sp.layers[i].mask) state.maskEdit = false;
   renderAll();
   saveState();
 }
@@ -80,7 +82,7 @@ export function duplicateLayer() {
   edit(sp => {
     const at = sp.layer + 1;
     const src = sp.layers[sp.layer];
-    sp.layers.splice(at, 0, { ...src, name: t('ly.copyName', { name: src.name }) });
+    sp.layers.splice(at, 0, { ...copyLayer(src), name: t('ly.copyName', { name: src.name }) });
     // Verknüpfte Zellen der Vorlage sind in der Kopie wieder verknüpft.
     const memo = new Map();
     sp.frames.forEach(f => {
@@ -119,9 +121,10 @@ export function mergeDown() {
     // Frame etwas anderes liegt, wird dagegen je Frame eigenständig.
     const done = new Map();
     for (const f of s.frames) {
-      const src = f.cels[top];
-      const pair = done.get(src) || new Map();
-      done.set(src, pair);
+      const raw = f.cels[top];
+      const src = maskedCel(s.layers[top], raw); // was die Maske ausblendet, kommt nicht mit
+      const pair = done.get(raw) || new Map();
+      done.set(raw, pair);
       if (pair.has(f.cels[below])) { f.cels[below] = pair.get(f.cels[below]); f.cels.splice(top, 1); continue; }
       const dst = dc(f.cels[below]);
       pair.set(f.cels[below], dst);
@@ -140,6 +143,112 @@ export function mergeDown() {
     }
     s.layers.splice(top, 1);
     s.layer = below;
+    state.maskEdit = false;
+  });
+}
+
+// ── Ebenenmasken (mask.js) ───────────────────────────────────────────
+// Eine Maske je Ebene, für alle Frames. „Bearbeiten“ ist kein Undo-Schritt
+// (nur Ansicht); hinzufügen, an/aus, anwenden und löschen schon.
+export function addMask() {
+  const sp = getSprite();
+  if (!sp || sp.layers[sp.layer].mask) return;
+  edit(s => {
+    const g = s.frames[0].cels[s.layer];
+    s.layers[s.layer].mask = blankMask(g[0].length, g.length);
+  });
+  state.maskEdit = true;
+  showInfoToast(t('mask.editHint'));
+  renderAll();
+}
+
+export function toggleMaskEdit(i = getSprite()?.layer) {
+  const sp = getSprite();
+  if (!sp || !sp.layers[i]?.mask) return;
+  commitFloat(); // schwebender Inhalt gehört ins Raster, aus dem er kam
+  if (i !== sp.layer) { leave(); sp.layer = i; state.maskEdit = true; }
+  else state.maskEdit = !state.maskEdit;
+  if (state.maskEdit) showInfoToast(t('mask.editHint'));
+  renderAll();
+  saveState();
+}
+
+export function toggleMaskOn() {
+  meta(sp => { const m = sp.layers[sp.layer].mask; if (m) m.on = !m.on; });
+}
+
+export function applyMask() {
+  const sp = getSprite();
+  if (!sp?.layers[sp.layer].mask) return;
+  edit(s => {
+    const L = s.layers[s.layer];
+    const memo = new Map();
+    s.frames.forEach(f => {
+      const g = f.cels[s.layer];
+      if (!memo.has(g)) memo.set(g, L.mask.on ? bakeMask(g, L.mask.hide) : g);
+      f.cels[s.layer] = memo.get(g);
+    });
+    L.mask = null;
+  });
+  state.maskEdit = false;
+  renderAll();
+}
+
+export function deleteMask() {
+  const sp = getSprite();
+  if (!sp?.layers[sp.layer].mask) return;
+  edit(s => { s.layers[s.layer].mask = null; });
+  state.maskEdit = false;
+  renderAll();
+}
+
+// Masken-Bildchen: weiß = sichtbar, schwarz = ausgeblendet.
+function drawMaskThumb(cv, hide) {
+  const g = sampleGrid(hide, THUMB * 2);
+  const H = g.length, W = g[0].length;
+  if (cv.width !== W || cv.height !== H) {
+    cv.width = W; cv.height = H;
+    const k = THUMB / Math.max(W, H);
+    cv.style.width = Math.max(1, Math.round(W * k)) + 'px';
+    cv.style.height = Math.max(1, Math.round(H * k)) + 'px';
+  }
+  const ctx = cv.getContext('2d');
+  const img = ctx.createImageData(W, H);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const o = (y * W + x) * 4, v = g[y][x] ? 24 : 235;
+    img.data[o] = img.data[o + 1] = img.data[o + 2] = v; img.data[o + 3] = 255;
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+// Alle sichtbaren Ebenen in jedem Frame zu einer zusammenführen — auch
+// Licht und Schatten (die damit fest im Bild landen). Ausgeblendete bleiben,
+// wie sie sind. Die neue Ebene sitzt auf dem Platz der untersten sichtbaren.
+export function mergeVisible() {
+  const sp = getSprite();
+  if (!sp) return;
+  const vis = sp.layers.map((L, i) => (L.visible && L.opacity > 0 ? i : -1)).filter(i => i >= 0);
+  if (vis.length < 2) { showInfoToast(t('ly.nothingToMerge')); return; }
+  edit(s => {
+    const at = vis[0];
+    // Verknüpfte Zellen: dieselbe Kombination ergibt dasselbe, wieder geteilte Bild.
+    const ids = new Map();
+    const id = g => { if (!ids.has(g)) ids.set(g, ids.size); return ids.get(g); };
+    const memo = new Map();
+    const merged = s.frames.map((f, fi) => {
+      const key = vis.map(i => id(f.cels[i])).join(',');
+      if (!memo.has(key)) memo.set(key, dc(flatGrid(s, fi)));
+      return memo.get(key);
+    });
+    const keep = new Set(vis);
+    s.layers = s.layers.filter((_, i) => i === at || !keep.has(i));
+    // at ist die unterste sichtbare — darunter fällt nichts weg, der Platz bleibt at.
+    s.layers[at] = { ...defaultLayer(), name: t('ly.mergedName') };
+    s.frames.forEach((f, fi) => {
+      f.cels = f.cels.filter((_, i) => i === at || !keep.has(i));
+      f.cels[at] = merged[fi];
+    });
+    s.layer = at;
   });
 }
 
@@ -188,11 +297,13 @@ function makeRow() {
   row.innerHTML = '<button type="button" class="icon-btn ly-eye"></button>'
     + '<button type="button" class="icon-btn ly-lock"></button>'
     + '<span class="ly-thumb"><canvas></canvas></span>'
+    + '<button type="button" class="ly-mask" hidden><canvas></canvas></button>'
     + '<span class="ly-name"></span>'
     + '<span class="ly-op"></span>';
   row.querySelector('.ly-eye').addEventListener('click', e => { e.stopPropagation(); toggleVisible(Number(row.dataset.i)); });
   row.querySelector('.ly-lock').addEventListener('click', e => { e.stopPropagation(); toggleLocked(Number(row.dataset.i)); });
   row.querySelector('.ly-name').addEventListener('dblclick', e => { e.stopPropagation(); startRename(row); });
+  row.querySelector('.ly-mask').addEventListener('click', e => { e.stopPropagation(); toggleMaskEdit(Number(row.dataset.i)); });
   initRowDrag(row);
   return row;
 }
@@ -249,7 +360,17 @@ export function renderLayers() {
     row.querySelector('.ly-name').textContent = L.name;
     row.querySelector('.ly-op').textContent = L.opacity < 1 ? Math.round(L.opacity * 100) + '%' : '';
     row.title = t('ly.rowTitle', { name: L.name });
-    drawThumb(row.querySelector('canvas'), sp.frames[sp.frame].cels[i], pal);
+    drawThumb(row.querySelector('.ly-thumb canvas'), maskedCel(L, sp.frames[sp.frame].cels[i]), pal);
+    const mb = row.querySelector('.ly-mask');
+    mb.hidden = !L.mask;
+    if (L.mask) {
+      drawMaskThumb(mb.querySelector('canvas'), L.mask.hide);
+      const editing = state.maskEdit && i === sp.layer;
+      mb.classList.toggle('is-editing', editing);
+      mb.classList.toggle('is-off', !L.mask.on);
+      mb.setAttribute('aria-pressed', String(editing));
+      mb.title = t(editing ? 'mask.editStop' : 'mask.editStart');
+    }
     list.append(row);
   }
 
@@ -259,13 +380,28 @@ export function renderLayers() {
   $('ly-opacity-val').textContent = Math.round(L.opacity * 100) + '%';
   $('ly-del').disabled = n < 2;
   $('ly-merge').disabled = sp.layer === 0;
+  $('ly-merge-all').disabled = sp.layers.filter(L => L.visible && L.opacity > 0).length < 2;
+  const m = L.mask;
+  $('ly-mask-add').hidden = !!m;
+  for (const id of ['ly-mask-edit', 'ly-mask-on', 'ly-mask-apply', 'ly-mask-del']) $(id).hidden = !m;
+  if (m) {
+    const editing = !!state.maskEdit;
+    $('ly-mask-edit').classList.toggle('is-active', editing);
+    $('ly-mask-edit').setAttribute('aria-pressed', String(editing));
+    $('ly-mask-on').innerHTML = iconSvg(m.on ? 'eye' : 'eyeOff');
+    $('ly-mask-on').title = t(m.on ? 'mask.off' : 'mask.on');
+  }
 }
 
 // Beim Zeichnen nur das Vorschaubild der aktiven Ebene auffrischen.
 function refreshActiveThumb() {
   const sp = getSprite();
   const row = sp && $('layer-list')?.querySelector(`.ly-row[data-i="${sp.layer}"] canvas`);
-  if (row) drawThumb(row, sp.grid, getPaletteByName(sp.palette));
+  if (!row) return;
+  const L = sp.layers[sp.layer];
+  drawThumb(row, maskedCel(L, sp.grid), getPaletteByName(sp.palette));
+  const mc = state.maskEdit && L.mask ? $('layer-list')?.querySelector(`.ly-row[data-i="${sp.layer}"] .ly-mask canvas`) : null;
+  if (mc) drawMaskThumb(mc, L.mask.hide);
 }
 
 // Ziehen sortiert um, ein Klick wählt die Ebene. Die Liste steht auf dem
@@ -317,6 +453,12 @@ export function initLayers() {
   $('ly-dup').addEventListener('click', duplicateLayer);
   $('ly-del').addEventListener('click', deleteLayer);
   $('ly-merge').addEventListener('click', mergeDown);
+  $('ly-merge-all').addEventListener('click', mergeVisible);
+  $('ly-mask-add').addEventListener('click', addMask);
+  $('ly-mask-edit').addEventListener('click', () => toggleMaskEdit());
+  $('ly-mask-on').addEventListener('click', toggleMaskOn);
+  $('ly-mask-apply').addEventListener('click', applyMask);
+  $('ly-mask-del').addEventListener('click', deleteMask);
 
   // Deckkraft: live zeigen, als EIN Undo-Schritt festhalten.
   const op = $('ly-opacity');

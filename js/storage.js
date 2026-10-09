@@ -12,6 +12,7 @@
 // Notfall-Kopie, der alte localStorage-Stand —, ist immer derselbe JSON-
 // Payload (buildPayload). `version` darin erlaubt Migrationen, ohne alte
 // Saves zu zerschießen; geladen wird alles über applyPayload.
+import { layerForSave } from './mask.js';
 import { state, sprites, customPalettes, paletteMaterials, selectFirstSprite, paletteExists, makeSprite, flatGrid, framesForSave } from './state.js';
 import { normalizeTlOpts } from './onion.js';
 import { DEFAULT_PALETTE, completePalette } from './data.js';
@@ -103,7 +104,7 @@ function serializeSprites() {
       fps: sp.fps,
       frame: sp.frame,
       layer: sp.layer,
-      layers: sp.layers,
+      layers: sp.layers.map(layerForSave),
       guides: sp.guides,
       tags: sp.tags,
       // Verknüpfte Zellen als { link: k } (state.js framesForSave).

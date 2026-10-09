@@ -255,6 +255,26 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 .light-dirs .btn { min-width: 0; padding: 4px 0; justify-content: center; }
 .light-dirs .btn.is-active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); }
 .light-sun { display: grid; place-items: center; }
+.light-stale {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--r-md);
+  background: var(--accent-bg);
+  font-size: var(--fs-sm);
+}
+.light-stale[hidden] { display: none; }
+.light-preview-note {
+  margin: 0;
+  padding: var(--sp-1) var(--sp-2);
+  border-left: 2px solid var(--accent);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+.light-preview-note[hidden] { display: none; }
 .light-sun::before { content: ''; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
 .check.is-disabled { opacity: 0.45; cursor: not-allowed; }
 
@@ -1205,6 +1225,28 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 .ly-row.is-dragging { position: relative; z-index: 2; opacity: 0.85; box-shadow: var(--shadow-md); cursor: grabbing; }
 .ly-row .icon-btn { flex: none; }
 .ly-lock.is-on { color: var(--accent); }
+/* Masken-Bildchen neben dem Ebenen-Bildchen (js/layers.js). */
+.ly-mask {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  background: var(--surface-3);
+  cursor: pointer;
+}
+.ly-mask[hidden] { display: none; }
+.ly-mask canvas { image-rendering: pixelated; }
+.ly-mask.is-editing { border-color: #ff6b6b; box-shadow: 0 0 0 1px #ff6b6b; }
+.ly-mask.is-off canvas { opacity: 0.35; }
+.ly-mask-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-1); }
+.ly-mask-actions [hidden] { display: none; }
+#ly-mask-edit.is-active { border-color: #ff6b6b; color: #ff9b9b; }
+/* Maske bearbeiten: roter Rahmen um die Zeichenfläche. */
+#editor-canvas-wrap.is-mask-edit #editor-canvas { outline: 2px solid #ff6b6b; outline-offset: 2px; }
 .ly-thumb {
   display: grid;
   place-items: center;

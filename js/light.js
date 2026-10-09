@@ -193,3 +193,135 @@ export function dropShadowGrid(grid, dir, value, distance = 1, inside = () => tr
   }
   return n;
 }
+
+// ── Licht und Schatten als eigene Ebene ──────────────────────────────
+// Nicht-destruktiv: das Original bleibt, die Effekt-Ebene hält nur die
+// Pixel, die das Licht ändert (Licht-Ebene über der Figur) bzw. die der
+// Schatten belegt (Schatten-Ebene unter ihr). Richtung, Stärke usw. stehen
+// in layer.fx — ändert man sie, wird die Ebene aus dem Original neu
+// berechnet; die alten Verfärbungen sind damit weg.
+//
+//   layer.fx = { kind: 'light',  dir, width, amount, highlight, shadow, allowHex, src }
+//   layer.fx = { kind: 'shadow', dir, color, distance, src }
+//     src  Prüfsumme der Quell-Zellen beim letzten Berechnen — weicht sie
+//          ab, wurde an der Figur weitergemalt ("neu berechnen?")
+//
+// Eine Licht-Ebene gehört zur nächsten normalen Ebene darunter, eine
+// Schatten-Ebene zur nächsten normalen darüber.
+
+const DIRS = [-1, 0, 1];
+const clampInt = (v, lo, hi, d) => (Number.isInteger(v) ? Math.max(lo, Math.min(hi, v)) : d);
+
+/**
+ * Effekt-Einstellungen aus fremden Daten (Speicherstand, Datei) prüfen.
+ * @returns {object|null} null = keine Effekt-Ebene
+ */
+export function normalizeFx(fx) {
+  if (!fx || (fx.kind !== 'light' && fx.kind !== 'shadow')) return null;
+  const dx = DIRS.includes(fx.dir?.dx) ? fx.dir.dx : -1;
+  const dy = DIRS.includes(fx.dir?.dy) ? fx.dir.dy : -1;
+  const dir = dx || dy ? { dx, dy } : { dx: -1, dy: -1 };
+  const src = typeof fx.src === 'string' ? fx.src : '';
+  if (fx.kind === 'light') {
+    const amount = Number(fx.amount);
+    return {
+      kind: 'light', dir, src,
+      width: clampInt(fx.width, 1, 3, 1),
+      amount: Number.isFinite(amount) ? Math.max(0.01, Math.min(1, amount)) : 0.15,
+      highlight: fx.highlight !== false,
+      shadow: fx.shadow !== false,
+      allowHex: !!fx.allowHex,
+    };
+  }
+  return {
+    kind: 'shadow', dir, src,
+    color: isHex(fx.color) || Number.isInteger(fx.color) ? fx.color : '#1a1a1a',
+    distance: clampInt(fx.distance, 1, 3, 1),
+  };
+}
+
+/**
+ * Zu welcher Ebene gehört die Effekt-Ebene i? Licht: nächste normale
+ * darunter, Schatten: nächste normale darüber. -1 = keine.
+ * @param {{fx?: object|null}[]} layers  Index 0 = unterste
+ * @param {number} i
+ */
+export function fxSource(layers, i) {
+  const kind = layers[i]?.fx?.kind;
+  if (!kind) return -1;
+  const step = kind === 'light' ? -1 : 1;
+  for (let j = i + step; j >= 0 && j < layers.length; j += step) {
+    if (!layers[j].fx) return j;
+  }
+  return -1;
+}
+
+/**
+ * Die Effekt-Ebene einer Art zu Ebene `base` — oder -1.
+ * @param {{fx?: object|null}[]} layers
+ * @param {number} base
+ * @param {string} kind
+ */
+export function fxFor(layers, base, kind) {
+  for (let i = 0; i < layers.length; i++) {
+    if (layers[i].fx?.kind === kind && fxSource(layers, i) === base) return i;
+  }
+  return -1;
+}
+
+/** Zelle der Licht-Ebene: nur die Pixel, die das Licht ändert. */
+export function lightCel(base, pal, fx) {
+  const copy = base.map(r => r.slice());
+  lightGrid(copy, pal, fx.dir, fx);
+  return base.map((row, y) => row.map((v, x) => (copy[y][x] !== v ? copy[y][x] : 0)));
+}
+
+/** Zelle der Schatten-Ebene: nur die Pixel, die der Schatten belegt. */
+export function shadowCel(base, fx) {
+  const copy = base.map(r => r.slice());
+  dropShadowGrid(copy, fx.dir, fx.color, fx.distance);
+  return base.map((row, y) => row.map((v, x) => (!v && copy[y][x] ? copy[y][x] : 0)));
+}
+
+/**
+ * Prüfsumme über die Zellen einer Ebene in allen Frames — damit merkt der
+ * Editor, ob an der Figur seit dem Berechnen weitergemalt wurde.
+ * @param {any[][][]} cels  je Frame die Zelle der Ebene
+ */
+export function celsHash(cels) {
+  let h = 2166136261 >>> 0;
+  const mix = s => {
+    for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619) >>> 0;
+  };
+  for (const g of cels) {
+    mix(`${g.length}x${g[0]?.length || 0};`);
+    for (const row of g) for (const v of row) mix(v ? String(v) + ',' : ',');
+  }
+  return h.toString(36);
+}
+
+/**
+ * Effekt-Ebene i in allen Frames neu berechnen (mutiert sp, Aufrufer wrappt
+ * in recordOp). Verknüpfte Quell-Zellen ergeben dieselbe Effekt-Zelle.
+ * @returns {boolean} gab es eine Quelle?
+ */
+export function recomputeFx(sp, i, pal) {
+  const fx = sp.layers[i]?.fx;
+  const src = fxSource(sp.layers, i);
+  if (!fx || src < 0) return false;
+  const memo = new Map();
+  for (const f of sp.frames) {
+    const base = f.cels[src];
+    if (!memo.has(base)) memo.set(base, fx.kind === 'light' ? lightCel(base, pal, fx) : shadowCel(base, fx));
+    f.cels[i] = memo.get(base);
+  }
+  fx.src = celsHash(sp.frames.map(f => f.cels[src]));
+  return true;
+}
+
+/** Wurde an der Figur seit dem Berechnen weitergemalt? */
+export function fxStale(sp, i) {
+  const src = fxSource(sp.layers, i);
+  if (src < 0 || !sp.layers[i].fx) return false;
+  return sp.layers[i].fx.src !== celsHash(sp.frames.map(f => f.cels[src]));
+}
