@@ -48,6 +48,15 @@ test('alle Suchwörter müssen passen', () => {
   assert.deepEqual(labels('onion lasso'), []);
 });
 
+test('andere Sprache: findet über names, zeigt label', () => {
+  const entries = [
+    { label: 'Ebenen', names: 'Layers', text: 'Jede Ebene … Each layer …' },
+    { label: 'Hilfslinien', names: 'Guides', text: 'Nur zum Zeichnen' },
+  ];
+  assert.deepEqual(search('layer', entries).map(e => e.label), ['Ebenen']);
+  assert.deepEqual(search('guides', entries).map(e => e.label), ['Hilfslinien']);
+});
+
 test('leer oder Unsinn findet nichts', () => {
   assert.deepEqual(labels(''), []);
   assert.deepEqual(labels('   '), []);

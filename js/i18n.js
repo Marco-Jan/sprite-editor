@@ -121,6 +121,32 @@ function pick(key, fallback) {
   return table && table[key] !== undefined ? table[key] : fallback;
 }
 
+/**
+ * Alle Sprachfassungen eines übersetzten Elements — für Bittys Suche, die
+ * auf Deutsch auch „layer“ finden soll. Deutsch kommt aus dem Snapshot,
+ * die anderen aus STATIC. Ohne `attr` der Text (bzw. das HTML bei
+ * data-i18n-html), mit `attr` dieses Attribut.
+ * @param {HTMLElement} el
+ * @param {string} [attr]
+ * @returns {string[]}
+ */
+export function i18nVariants(el, attr) {
+  if (!el) return [];
+  const s = snapshot(el);
+  let key = null, de = null;
+  if (attr) {
+    for (const pair of (el.dataset.i18nAttr || '').split(';')) {
+      const i = pair.indexOf(':');
+      if (i > 0 && pair.slice(0, i).trim() === attr) { key = pair.slice(i + 1).trim(); de = s.attrs[attr]; }
+    }
+  } else if (el.dataset.i18nHtml) { key = el.dataset.i18nHtml; de = s.html; }
+  else if (el.dataset.i18n) { key = el.dataset.i18n; de = s.text; }
+  if (!key) return [];
+  const out = [de];
+  for (const table of Object.values(STATIC)) if (table[key] != null) out.push(table[key]);
+  return out.filter(v => typeof v === 'string' && v);
+}
+
 const I18N_SELECTOR = '[data-i18n],[data-i18n-html],[data-i18n-attr]';
 
 export function applyStatic(root = document) {

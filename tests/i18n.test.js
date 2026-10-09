@@ -102,6 +102,33 @@ test('jedes data-i18n im HTML hat einen englischen Text', () => {
   assert.deepEqual([...fehlend], [], 'englische Texte fehlen');
 });
 
+test('Hilfe: jeder Abschnitt hat auf Englisch gleich viele Absätze', () => {
+  // Bittys Suche (js/helper.js) ordnet Absatz k der deutschen Hilfe Absatz k
+  // der englischen zu — so findet „layer“ auf Deutsch die „Ebenen“. Passt
+  // die Anzahl nicht, fällt der Abschnitt dort still aus der Suche.
+  const html = read('editor.html');
+  const count = s => {
+    let depth = 0, n = 0;
+    for (const m of s.matchAll(/<(\/?)(div|li|ol|ul)\b[^>]*>/g)) {
+      if (m[1]) depth--; else { if (depth === 0) n++; depth++; }
+    }
+    return n;
+  };
+  const falsch = [];
+  let geprueft = 0;
+  for (const m of html.matchAll(/<(div|ol) class="(?:help-list|help-ol|help-shortcuts)" data-i18n-html="([\w.]+)">([\s\S]*?)\n    <\/\1>/g)) {
+    const key = m[2];
+    const lit = STATIC_BLOCK.match(new RegExp(`'${key.replace('.', '\\.')}':\\s*((?:'[^']*'|\`[^\`]*\`)(?:\\s*\\+\\s*(?:'[^']*'|\`[^\`]*\`))*)`));
+    if (!lit) continue; // fehlt ganz → meldet der Test oben
+    const en = count(new Function(`return ${lit[1]}`)());
+    const de = count(m[3]);
+    geprueft++;
+    if (de !== en) falsch.push(`${key}: ${de} deutsch, ${en} englisch`);
+  }
+  assert.ok(geprueft >= 10, `nur ${geprueft} Hilfe-Abschnitte gefunden — Muster veraltet?`);
+  assert.deepEqual(falsch, []);
+});
+
 test('die österreichische Fassung erfindet keine unbekannten Schlüssel', () => {
   // Fehlende Einträge sind dort Absicht (Rückfall auf Deutsch) — ein Eintrag
   // mit Tippfehler im Schlüssel wäre dagegen wirkungslos und unauffindbar.

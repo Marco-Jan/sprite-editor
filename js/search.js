@@ -1,8 +1,10 @@
 // ════════════════════════════════════════════════════════════════════
 // SEARCH — Stichwortsuche für Bitty (js/helper.js)
 // ════════════════════════════════════════════════════════════════════
-// Durchsucht kleine Einträge { label, text }: Hilfe-Absätze, Werkzeuge,
-// Panels, Menüpunkte. Ohne DOM, damit es sich testen lässt.
+// Durchsucht kleine Einträge { label, names, text }: Hilfe-Absätze,
+// Werkzeuge, Panels, Menüpunkte. `names` und `text` tragen alle Sprachen —
+// auf Deutsch findet „layer“ so auch „Ebenen“. Ohne DOM, damit es sich
+// testen lässt.
 //
 // Verzeiht, was beim schnellen Tippen passiert: Groß/klein, Umlaute
 // („farbe“ ↔ „Färben“), Wortanfänge („anim“ → „Animation“) und einen
@@ -62,7 +64,9 @@ function wordScore(q, list, typos) {
 
 /**
  * Einträge zur Suche bewerten und sortiert zurückgeben.
- * @template {{ label: string, text?: string }} T
+ * `names` sind weitere Namen desselben Eintrags (andere Sprachen): sie
+ * zählen wie `label`, angezeigt wird aber nur `label`.
+ * @template {{ label: string, names?: string, text?: string }} T
  * @param {string} query
  * @param {T[]} entries
  * @param {number} [limit]
@@ -73,7 +77,7 @@ export function search(query, entries, limit = 8) {
   if (!qs.length) return [];
   const scored = [];
   entries.forEach((e, idx) => {
-    const lw = words(normalize(e.label));
+    const lw = words(normalize(`${e.label} ${e.names || ''}`));
     const tw = words(normalize(e.text));
     let total = 0;
     for (const q of qs) {

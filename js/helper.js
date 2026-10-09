@@ -14,7 +14,7 @@
 //
 // Die Sprechblase blockiert nichts: man kann daneben weitermalen. Esc
 // oder ein Klick daneben schließt sie (die Tour nur über ihre Knöpfe).
-import { t } from './i18n.js';
+import { t, i18nVariants } from './i18n.js';
 import { search } from './search.js';
 
 const KEY = 'spritebit_bitty';
@@ -159,7 +159,11 @@ function showTip(auto = false, advance = true) {
 // Panels, die erst später angelegt wurden. Es sind nur ein paar hundert
 // kurze Texte.
 
-/** @typedef {{ kind: 'help'|'tool'|'panel'|'menu', label: string, sub: string, text: string, el: HTMLElement }} Entry */
+// Gesucht wird in allen Sprachen zugleich (i18nVariants): auf Deutsch
+// findet „layer“ die „Ebenen“ — angezeigt wird aber, was auf dem
+// Bildschirm steht.
+
+/** @typedef {{ kind: 'help'|'tool'|'panel'|'menu', label: string, names: string, sub: string, text: string, el: HTMLElement }} Entry */
 
 let query = null, results = null, none = null;
 /** @type {Entry[]} */
@@ -168,43 +172,73 @@ let sel = 0;
 
 const clean = s => (s || '').replace(/\s+/g, ' ').trim();
 
+/** HTML-Schnipsel → DOM-Fragment (nur zum Lesen, wird nie eingehängt). */
+function frag(html) {
+  const tpl = document.createElement('template');
+  tpl.innerHTML = html;
+  return tpl.content;
+}
+
+/** Text eines Elements in allen Sprachen, zu einem String verbunden. */
+function allLangs(el, attr) {
+  if (!el) return '';
+  return i18nVariants(el, attr).map(v => (attr ? v : frag(v).textContent)).map(clean).join(' ');
+}
+
+// Eintrag der Hilfe → Name (fett gesetztes Stichwort, bei Kürzeln die Aktion)
+function helpLabel(node) {
+  if (node.classList.contains('sc-row')) return clean(node.querySelector('span')?.textContent);
+  return clean(node.querySelector('b')?.textContent);
+}
+
 /** @returns {Entry[]} */
 function collect() {
   /** @type {Entry[]} */
   const out = [];
   // Werkzeuge: Name und Tooltip (dort steht auch das Kürzel)
   document.querySelectorAll('#toolbar [data-tool]').forEach(el => {
-    const label = clean(el.querySelector('.tool-name')?.textContent) || clean(el.title);
-    out.push({ kind: 'tool', label, sub: clean(el.title), text: el.title, el });
+    const nameEl = el.querySelector('.tool-name');
+    const label = clean(nameEl?.textContent) || clean(el.title);
+    out.push({ kind: 'tool', label, names: allLangs(nameEl), sub: clean(el.title), text: allLangs(el, 'title') || el.title, el });
   });
   // Panels
   document.querySelectorAll('.panel[data-panel]').forEach(el => {
-    const label = clean(el.querySelector('.panel-title')?.textContent);
-    if (label) out.push({ kind: 'panel', label, sub: '', text: '', el });
+    const titleEl = el.querySelector('.panel-title');
+    const label = clean(titleEl?.textContent);
+    if (label) out.push({ kind: 'panel', label, names: allLangs(titleEl), sub: '', text: '', el });
   });
   // Menü (ohne Sprachen und Links nach draußen)
   document.querySelectorAll('#menubar .mb-item').forEach(el => {
     if (el.tagName === 'A' || el.classList.contains('lang-btn') || el.hidden) return;
-    const label = clean(el.querySelector('span')?.textContent);
-    const menu = clean(el.closest('.mb-menu')?.querySelector('.mb-title')?.textContent);
-    if (label) out.push({ kind: 'menu', label, sub: menu, text: menu, el });
+    const span = el.querySelector('span');
+    const label = clean(span?.textContent);
+    const titleEl = el.closest('.mb-menu')?.querySelector('.mb-title');
+    if (label) out.push({ kind: 'menu', label, names: allLangs(span), sub: clean(titleEl?.textContent), text: allLangs(titleEl), el });
   });
-  // Hilfe: jeder Absatz und jede Kürzel-Zeile, mit Abschnitt
-  let section = '';
-  document.querySelectorAll('#help-modal-overlay .help-h, #help-modal-overlay .help-list > div, #help-modal-overlay .help-ol > li, #help-modal-overlay .sc-row')
-    .forEach(el => {
-      if (el.classList.contains('help-h')) { section = clean(el.textContent); return; }
-      const full = clean(el.textContent);
-      let label, sub;
-      if (el.classList.contains('sc-row')) {
-        label = clean(el.querySelector('span')?.textContent);
-        sub = `${section} · ${clean(el.querySelector('b')?.textContent)}`;
-      } else {
-        label = clean(el.querySelector('b')?.textContent) || full;
-        sub = section;
-      }
-      if (label.length > 60) label = label.slice(0, 57) + ' …';
-      out.push({ kind: 'help', label, sub, text: `${section} ${full}`, el });
+  // Hilfe: jeder Absatz und jede Kürzel-Zeile, mit Abschnitt. Die anderen
+  // Sprachen stehen je Block als HTML in STATIC — Absatz k dort gehört zu
+  // Absatz k hier (nur wenn beide gleich viele haben).
+  let section = '', sectionAll = '';
+  const isItem = n => n.tagName === 'DIV' || n.tagName === 'LI';
+  document.querySelectorAll('#help-modal-overlay .help-h, #help-modal-overlay .help-list, #help-modal-overlay .help-ol, #help-modal-overlay .help-shortcuts')
+    .forEach(block => {
+      if (block.classList.contains('help-h')) { section = clean(block.textContent); sectionAll = allLangs(block); return; }
+      const items = /** @type {HTMLElement[]} */ ([...block.children].filter(isItem));
+      const others = i18nVariants(block)
+        .map(html => [...frag(html).children].filter(isItem))
+        .filter(list => list.length === items.length);
+      items.forEach((el, k) => {
+        const full = clean(el.textContent);
+        let label = helpLabel(el) || full;
+        if (label.length > 60) label = label.slice(0, 57) + ' …';
+        const sub = el.classList.contains('sc-row') ? `${section} · ${clean(el.querySelector('b')?.textContent)}` : section;
+        const alt = others.map(list => list[k]);
+        out.push({
+          kind: 'help', label, sub, el,
+          names: alt.map(helpLabel).join(' '),
+          text: `${sectionAll || section} ${full} ${alt.map(a => clean(a.textContent)).join(' ')}`,
+        });
+      });
     });
   return out;
 }
