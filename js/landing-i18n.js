@@ -60,7 +60,6 @@
     'hero.eyebrow': 'spritebit · Start small.',
     'hero.h1':      'Pixel art editor for sprites',
     'hero.lead':    'An empty grid, a handful of colors, and off you go. The editor runs entirely in the browser — no build, no account, no cloud.',
-    'hero.note':    'Your pixels stay in your browser’s storage, on your own machine. Nothing is uploaded — and once opened, the editor works offline too.',
     'hero.chips':   '<li>Frames &amp; GIF</li><li>Layers</li><li>Tilemaps</li><li>9 code formats</li><li>Works offline</li><li>No account</li>',
 
     's1.eyebrow':   '<span class="st-num">01</span> The first pixel',
@@ -268,7 +267,6 @@
     'hero.chips':   '<li>Frames &amp; GIF</li><li>Ebenen</li><li>Tilemaps</li><li>9 Code-Formate</li><li>Rennt a offline</li><li>Ka Konto</li>',
     'hero.h1':      'Pixel Art Editor fia Sprites',
     'hero.lead':    'A laares Raster, a Handvoll Farben, und du moist los. Da Editor rennt komplett im Browser — ka Build, ka Konto, ka Cloud.',
-    'hero.note':    'Deine Pixel bleibn im Speicher vom Browser, auf deim Rechner. Es wird nix aufeglodn — und amoi offn, rennt da Editor a offline.',
 
     's1.eyebrow':   '<span class="st-num">01</span> Da erste Pixel',
     's1.h2':        'So entsteht a Sprite.',

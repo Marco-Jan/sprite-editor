@@ -627,8 +627,6 @@ kbd {
 /* Text auf der Kulisse: der Schleier allein reicht nicht, wenn dahinter die
    helle Skyline steht. Eine Stufe heller plus ein weicher Schatten haelt
    auch die Kleinschrift lesbar. */
-.hero-text .note, .hero-cta .note { color: var(--text-muted); }
-.hero-text .note code, .hero-cta .note code { color: var(--text); }
 .stage .eyebrow,
 .stage h1,
 .stage .lead,
