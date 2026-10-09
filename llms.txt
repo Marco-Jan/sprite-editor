@@ -12,9 +12,12 @@ Projektdateien.
 
 ## Seiten
 
-- [Startseite](https://spritebit.at/): Was der Editor kann, in fünf Stationen erzählt.
-- [Editor](https://spritebit.at/editor.html): Die Anwendung selbst.
-- [Desktop-App (Windows)](https://github.com/spritebit/spritebit-rs/releases/latest): Download.
+- [Startseite](https://spritebit.at/): Zum Ausprobieren: ein kleines Raster zum Malen und Paletten zum Umfärben, dazu der Weg zu Editor und Desktop-App.
+- [Editor](https://spritebit.at/editor.html): Die Anwendung selbst. Läuft ohne Anmeldung im Browser, speichert lokal.
+- [Funktionen](https://spritebit.at/funktionen.html): Alle Werkzeuge im Überblick und der Weg vom Foto zum Sprite.
+- [Export](https://spritebit.at/export.html): Bild, GIF, Spritesheet, Godot und neun Code-Formate.
+- [Desktop-App (Windows)](https://spritebit.at/desktop.html): Download, Installation in drei Schritten und der Vergleich Browser gegen Desktop.
+- [Download Desktop-App](https://github.com/spritebit/spritebit-rs/releases/latest): Neueste Version auf GitHub Releases.
 - [Quellcode Web](https://github.com/spritebit/sprite-editor) · [Quellcode Desktop](https://github.com/spritebit/spritebit-rs)
 - [Handbuch](https://github.com/spritebit/sprite-editor/blob/main/docs/handbuch.md)
 

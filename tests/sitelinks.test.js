@@ -26,8 +26,10 @@ test('Desktop-Version hat die Form 1.2.3', () => {
 });
 
 test('jeder Knopf zum Editor bzw. Download trägt ein Versions-Schild', () => {
-  const html = read('index.html');
-  const knoepfe = [...html.matchAll(/<a\b[^>]*(?:href="editor\.html"|data-link="download")[^>]*>[\s\S]*?<\/a>/g)].map(m => m[0]);
-  assert.ok(knoepfe.length >= 6, `nur ${knoepfe.length} Knöpfe gefunden`);
-  for (const k of knoepfe) assert.match(k, /data-version="(web|desktop)"/, k.slice(0, 80));
+  for (const page of ['index.html', 'funktionen.html', 'export.html', 'desktop.html']) {
+    const html = read(page);
+    const knoepfe = [...html.matchAll(/<a\b[^>]*(?:href="editor\.html"|data-link="download")[^>]*>[\s\S]*?<\/a>/g)].map(m => m[0]);
+    assert.ok(knoepfe.length >= 3, `${page}: nur ${knoepfe.length} Knöpfe gefunden`);
+    for (const k of knoepfe) assert.match(k, /data-version="(web|desktop)"/, `${page}: ${k.slice(0, 80)}`);
+  }
 });

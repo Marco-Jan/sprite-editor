@@ -27,31 +27,28 @@
 :root {
   color-scheme: dark;
 
-  /* Flaechen — aus dem Editor */
-  /* Flaechen — leicht ins Indigo gezogen, damit die Seite unter demselben
-     Abendhimmel steht wie die Kulisse. Neutrales Grau liess alles wie eine
-     beliebige dunkle Website aussehen. */
-  --bg:          #131222;
-  --surface-1:   #1a1830;
-  --surface-2:   #221f3a;
-  --surface-3:   #2b2746;
-  --surface-4:   #383253;
+  /* Farbthema „Nachtblau“ (2026-10): Mondlicht statt Sonnenuntergang.
+     Flächen tiefes Nachtblau, Hauptknopf das Minzgrün aus dem Logo,
+     Akzent das Blau vom oberen Ende der Logo-Rampe. */
+  --bg:          #0c1322;
+  --surface-1:   #111b30;
+  --surface-2:   #16233d;
+  --surface-3:   #1d2c4a;
+  --surface-4:   #283a5c;
 
-  --line:        #2e2a48;
-  --line-strong: #443e63;
+  --line:        #1f3152;
+  --line-strong: #2e4670;
 
-  --text:        #e6e6ea;
-  --text-muted:  #9a9aa6;
-  --text-dim:    #6c6c78;
+  --text:        #e6eef8;
+  --text-muted:  #91a5c2;
+  --text-dim:    #64799a;
 
   --accent:        #6ea8fe;
-  --accent-bg:     #17253c;
+  --accent-bg:     #13233f;
   --accent-line:   #2d4870;
-  /* Der Hauptknopf trug ein Neongruen, das nach Software-Werbung aussah.
-     Jetzt ein warmer Sandton, direkt aus der Pixel-Art abgenommen. */
-  --primary:       #e3c9a4;
-  --primary-bg:    #2a2436;
-  --primary-line:  #5a4d63;
+  --primary:       #6ed49a;
+  --primary-bg:    #10261f;
+  --primary-line:  #2d6b52;
 
   /* Marken-Rampe aus assets/icon.svg */
   --ramp-1: #6ed49a;
@@ -60,22 +57,21 @@
   --ramp-4: #6eb3e5;
   --ramp-5: #6ea8fe;
 
-  /* Warme Toene, abgenommen von der Pixel-Art in assets/landing/ */
+  /* Wiese und Nebenfarben der Kulisse */
   --warm:      #b07848;
   --warm-lift: #d8a860;
-  --leaf:      #5d9642;
-  --leaf-deep: #21492c;
+  --leaf:      #4fa684;
+  --leaf-deep: #1f4d44;
+  --ground:    #1a4038;   /* unterster Streifen der Wiese — auch die Farbe der aufgelösten Kante */
 
-  /* Himmel — Abenddaemmerung. Oben schliesst er an den Seitengrund an,
-     unten glueht der Horizont warm: das ist der Farbtraeger der Seite.
-     Vorher waren das entsaettigte Blaugraus, die wie Smog wirkten. */
-  --sky-top:     #171630;
-  --sky-mid:     #2e2557;
-  --sky-low:     #6b3f6a;
-  --sky-horizon: #c26b56;
-  --sky-glow:    #f0a35e;   /* Sonnenrest direkt ueber der Kante */
+  /* Himmel — Nacht mit Mondlicht am Horizont */
+  --sky-top:     #0a1020;
+  --sky-mid:     #132344;
+  --sky-low:     #1f3a66;
+  --sky-horizon: #35608f;
+  --sky-glow:    #7fb7e0;
 
-  --on-primary: #221a12;
+  --on-primary: #07231a;
 
   --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --pixel: 'Sprite Pixel', ui-monospace, monospace;
@@ -348,8 +344,8 @@ kbd {
 .band--warm {
   max-width: none;
   background:
-    radial-gradient(120% 140% at 12% 0%, rgba(216, 168, 96, 0.16) 0%, transparent 62%),
-    radial-gradient(90% 120% at 92% 100%, rgba(194, 107, 86, 0.12) 0%, transparent 60%),
+    radial-gradient(120% 140% at 12% 0%, rgba(110, 168, 254, 0.12) 0%, transparent 62%),
+    radial-gradient(90% 120% at 92% 100%, rgba(110, 212, 154, 0.08) 0%, transparent 60%),
     var(--surface-1);
   border-block: 1px solid var(--line);
 }
@@ -366,7 +362,7 @@ kbd {
   position: sticky;
   top: 0;
   z-index: 40;
-  background: rgba(19, 18, 34, 0.9);
+  background: rgba(12, 19, 34, 0.9);
   border-bottom: 1px solid var(--line);
   backdrop-filter: blur(10px);
 }
@@ -452,11 +448,10 @@ kbd {
   position: absolute;
   inset: 0;
   background:
-    /* Die untergehende Sonne — sitzt hinter der Skyline und gibt der
-       ganzen Kulisse ihr warmes Gegenlicht. */
+    /* Mondschein hinter der Skyline — kühles Gegenlicht (Thema Nachtblau). */
     radial-gradient(46% 34% at 72% 100%,
-      rgba(240, 163, 94, 0.55) 0%,
-      rgba(240, 163, 94, 0.22) 42%,
+      rgba(127, 183, 224, 0.45) 0%,
+      rgba(127, 183, 224, 0.16) 42%,
       transparent 72%),
     linear-gradient(
       to bottom,
@@ -474,8 +469,8 @@ kbd {
   inset: 0;
   z-index: 2;
   background:
-    linear-gradient(to right, rgba(16, 14, 26, 0.9) 0%, rgba(16, 14, 26, 0.5) 44%, rgba(16, 14, 26, 0) 76%),
-    linear-gradient(to bottom, rgba(16, 14, 26, 0.5) 0%, rgba(16, 14, 26, 0) 30%);
+    linear-gradient(to right, rgba(10, 16, 32, 0.9) 0%, rgba(10, 16, 32, 0.5) 44%, rgba(10, 16, 32, 0) 76%),
+    linear-gradient(to bottom, rgba(10, 16, 32, 0.5) 0%, rgba(10, 16, 32, 0) 30%);
 }
 
 /* Alle Kulissenbaender teilen diese Basis. Skyline und Baeume stehen
@@ -502,7 +497,7 @@ kbd {
   background-image: url("assets/landing/clouds.png");
   background-size: 900px 120px;
   opacity: 0.5;
-  filter: brightness(1.15) sepia(0.55) saturate(1.7) hue-rotate(-12deg);
+  filter: brightness(0.9) saturate(0.4) hue-rotate(160deg);
   animation-name: driftClouds;
   animation-duration: 620s;   /* gut zehn Minuten je Durchlauf: sichtbar
                                  nur, wenn man hinsieht */
@@ -515,7 +510,7 @@ kbd {
   background-image: url("assets/landing/skyline.png");
   background-size: 640px 204px;
   opacity: 0.85;
-  filter: brightness(0.42) saturate(0.5) sepia(0.4) hue-rotate(215deg);
+  filter: brightness(0.32) saturate(0.7) hue-rotate(170deg);
 }
 .layer--deco-far {
   bottom: 34px;
@@ -543,7 +538,7 @@ kbd {
     linear-gradient(to bottom,
       var(--leaf) 0 3px,
       var(--leaf-deep) 3px 14px,
-      #16281c 14px 100%);
+      var(--ground) 14px 100%);
 }
 
 /* --- Vogel: zwei PNG-Frames, per opacity umgeschaltet ------------ */
@@ -732,7 +727,7 @@ kbd {
   align-items: center;
   gap: 0.5em;
   padding: 0.3em 0.75em;
-  background: rgba(19, 18, 34, 0.6);
+  background: rgba(12, 19, 34, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: var(--r-sm);
   color: var(--text);
@@ -1294,7 +1289,7 @@ kbd {
   .brand { margin-inline-end: auto; }
   .scene-scrim {
     background: linear-gradient(to bottom,
-      rgba(18, 18, 20, 0.72) 0%, rgba(18, 18, 20, 0.5) 50%, rgba(18, 18, 20, 0.9) 100%);
+      rgba(10, 16, 32, 0.72) 0%, rgba(10, 16, 32, 0.5) 50%, rgba(10, 16, 32, 0.9) 100%);
   }
   .stage--closer .actor { display: none; }
   .layer--clouds { height: 84px; background-size: 630px 84px; }
@@ -1652,4 +1647,237 @@ a.brand { text-decoration: none; }
   line-height: 1.4;
   text-align: right;
   color: var(--text-dim);
+}
+
+
+/* ══ 17 · Neue Seiten (2026-10) ════════════════════════════════════
+   Mehrere Seiten statt einer langen: Startseite, Funktionen, Export,
+   Desktop-App. Jede hat oben eine Kulisse, deren Unterkante sich Pixel
+   für Pixel in die Seite auflöst (.drip, gezeichnet von js/landing-fx.js). */
+
+/* Sterne am Nachthimmel — nur ein paar, fest gesetzt. */
+.scene-sky::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 45% 0;
+  background-image:
+    radial-gradient(1.5px 1.5px at 8% 22%, #ffffffb0 50%, transparent 51%),
+    radial-gradient(1px 1px at 19% 9%, #ffffff90 50%, transparent 51%),
+    radial-gradient(1px 1px at 31% 31%, #ffffff80 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 47% 14%, #ffffffa0 50%, transparent 51%),
+    radial-gradient(1px 1px at 61% 27%, #ffffff80 50%, transparent 51%),
+    radial-gradient(1px 1px at 72% 8%, #ffffff90 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 84% 20%, #ffffffb0 50%, transparent 51%),
+    radial-gradient(1px 1px at 93% 33%, #ffffff70 50%, transparent 51%);
+  pointer-events: none;
+}
+
+/* Die aufgelöste Kante unter einer Kulisse. */
+.drip {
+  position: relative;
+  z-index: 2;
+  height: 84px;
+  margin-bottom: -56px;          /* der dünne Teil darf unter den Inhalt laufen */
+  pointer-events: none;
+}
+.drip canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+
+/* Logo als Link nach Hause, aktueller Menüpunkt hervorgehoben */
+a.brand { text-decoration: none; color: inherit; }
+a.brand:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 6px; }
+.topnav a[aria-current="page"] { color: var(--text); box-shadow: inset 0 -2px 0 var(--primary); padding-bottom: 2px; }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* Link unter den Knöpfen im Kopf */
+.hero-link {
+  display: inline-block;
+  margin: calc(-1 * var(--sp-2)) 0 var(--sp-5);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+.hero-link:hover { color: var(--text); }
+
+/* ── Kopf der Unterseiten: kleinere Kulisse ── */
+.stage--page { border-bottom: 0; }
+.stage--page .stage-inner { padding-block: clamp(3rem, 7vw, 5.5rem) clamp(4rem, 9vw, 6.5rem); }
+.page-head { display: grid; gap: var(--sp-4); justify-items: start; }
+.page-head h1 { margin: 0; font-family: var(--pixel); font-weight: 400; font-size: clamp(2rem, 1.2rem + 3.4vw, 3.4rem); line-height: 1.05; text-wrap: balance; text-shadow: 0 2px 14px rgba(0, 0, 0, 0.55); }
+.page-head .lead { margin: 0; max-width: 52ch; }
+.page-head .cta-row { margin-block: var(--sp-3) 0; }
+.stage--page .stage-inner.page-head { max-width: var(--page); }
+.stage--page .page-head > * { max-width: 46rem; }
+
+/* ── 01 · Raster zum Ausprobieren ── */
+.try {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: clamp(1.5rem, 4vw, 3.5rem);
+  align-items: center;
+  margin-top: var(--sp-6);
+}
+.try-board { display: grid; gap: var(--sp-3); justify-items: start; }
+.try-canvas {
+  width: min(384px, 82vw);
+  height: auto;
+  aspect-ratio: 1;
+  max-width: 100%;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  background: var(--surface-1);
+  image-rendering: pixelated;
+  cursor: crosshair;
+  touch-action: none;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+}
+.try-tools { display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: center; }
+.try-swatches { display: flex; gap: 6px; }
+.try-sw {
+  width: 30px; height: 30px;
+  border-radius: 6px;
+  border: 2px solid transparent;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+  padding: 0;
+}
+.try-sw[aria-pressed="true"] { border-color: var(--text); }
+.try-sw:focus-visible, .try-btn:focus-visible, .pal-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.try-btn {
+  font: inherit;
+  font-size: var(--fs-sm);
+  padding: 6px 11px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line-strong);
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+}
+.try-btn:hover { background: var(--surface-3); }
+.try-btn[aria-pressed="true"] { border-color: var(--primary); color: var(--primary); }
+.try-text { display: grid; gap: var(--sp-5); justify-items: start; }
+
+/* ── 02 · Palette umkippen ── */
+.try-preview {
+  width: 192px; height: 192px;
+  max-width: 100%;
+  image-rendering: pixelated;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line-strong);
+  background: var(--surface-2);
+}
+.pal-row { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.pal-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  font: inherit; font-size: var(--fs-sm);
+  padding: 6px 10px 6px 6px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line-strong);
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+}
+.pal-btn[aria-pressed="true"] { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
+.pal-chips { display: inline-flex; border-radius: 4px; overflow: hidden; }
+.pal-chips i { width: 10px; height: 18px; display: block; }
+
+/* ── 03 · Kacheln-Karte: ein kleines Muster aus einer Kachel ── */
+.tilestrip {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  margin-bottom: var(--sp-3);
+}
+.tilestrip span {
+  aspect-ratio: 1;
+  background:
+    linear-gradient(var(--leaf) 0 0) 0 0 / 50% 50% no-repeat,
+    linear-gradient(var(--sky-low) 0 0) 100% 100% / 50% 50% no-repeat,
+    linear-gradient(var(--leaf-deep) 0 0) 100% 0 / 50% 50% no-repeat,
+    var(--surface-3);
+  image-rendering: pixelated;
+  animation: tileGlow 6s steps(1) infinite;
+}
+.tilestrip span:nth-child(2n) { animation-delay: -3s; }
+@keyframes tileGlow { 50% { filter: brightness(1.35); } }
+
+/* ── Mehr entdecken ── */
+.teasers {
+  list-style: none; margin: var(--sp-6) 0 0; padding: 0;
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-4);
+}
+.teaser {
+  display: grid; gap: var(--sp-2);
+  height: 100%;
+  padding: var(--sp-5);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface-1);
+  color: var(--text);
+  text-decoration: none;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.teaser:hover { border-color: var(--primary-line); transform: translateY(-2px); }
+.teaser:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.teaser-ico { color: var(--primary); }
+.teaser-h { font-family: var(--pixel); font-size: 1.15rem; }
+.teaser-h::after { content: ' →'; color: var(--text-dim); }
+.teaser-p { color: var(--text-muted); font-size: var(--fs-sm); line-height: 1.55; }
+
+/* ── Unterseiten-Bausteine ── */
+.steps { margin: var(--sp-5) 0 0; padding-left: 1.3rem; display: grid; gap: var(--sp-3); max-width: 60ch; color: var(--text-muted); line-height: 1.6; }
+.steps b { color: var(--text); }
+.steps code { color: var(--text); }
+.steps--big { font-size: var(--fs-md); }
+
+/* In .band--warm sind alle Kinder auf die Seitenbreite zentriert — Tabelle und
+   Code-Kasten nehmen darum die volle Breite, ihr Inhalt bleibt schmal. */
+.compare { margin-top: var(--sp-5); border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; width: 100%; }
+.compare .cmp-row { max-width: none; }
+.cmp-row { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1fr); gap: var(--sp-3); padding: var(--sp-3) var(--sp-4); border-top: 1px solid var(--line); font-size: var(--fs-sm); color: var(--text-muted); }
+.cmp-row:first-child { border-top: 0; }
+.cmp-row > :first-child { color: var(--text); }
+.cmp-row b { color: var(--primary); }
+.cmp-head { background: var(--surface-2); font-weight: 600; color: var(--text); }
+
+.code-wrap { margin-top: var(--sp-5); width: 100%; }
+.code-wrap > .demo-code { max-width: 46rem; }
+
+@media (max-width: 940px) {
+  .try { grid-template-columns: minmax(0, 1fr); }
+  .teasers { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 560px) {
+  .cmp-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .cmp-row > :first-child { grid-column: 1 / -1; font-weight: 600; }
+  .cmp-head > :first-child { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tilestrip span { animation: none; }
+  .teaser { transition: none; }
+}
+
+/* Mit mehreren Seiten muss die Navigation auch am Handy da sein: unter
+   900px rutscht sie als eigene schmale Zeile unter Marke und Knöpfe. */
+@media (max-width: 900px) {
+  .topbar-inner { flex-wrap: wrap; row-gap: 0; }
+  .topnav {
+    display: flex;
+    order: 10;
+    flex-basis: 100%;
+    justify-content: center;
+    gap: var(--sp-5);
+    margin: 0;
+    padding: 0.45rem 0 0.1rem;
+    border-top: 1px solid var(--line);
+    margin-top: 0.6rem;
+    font-size: var(--fs-sm);
+  }
 }

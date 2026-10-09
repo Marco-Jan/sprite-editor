@@ -6,7 +6,7 @@
   <title data-i18n="meta.title">spritebit – Pixel Art Editor online: Sprites, Animation &amp; Tilemaps</title>
   <meta name="description" data-i18n-attr="content:meta.desc" content="Kostenloser Pixel-Art-Editor im Browser und für Windows: Sprites zeichnen, mit Ebenen und Timeline animieren, Tilemaps für Spiel-Levels bauen und als PNG, GIF, Spritesheet, Godot-Szene oder Code exportieren. Ohne Konto, alles bleibt lokal.">
   <meta name="color-scheme" content="dark">
-  <meta name="theme-color" content="#121214">
+  <meta name="theme-color" content="#0c1322">
 
   <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
   <link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png">
@@ -112,16 +112,14 @@
 <!-- ══ Kopfzeile — der Knopf ist ab der ersten Sekunde erreichbar ══ -->
 <header class="topbar">
   <div class="topbar-inner">
-    <span class="brand">
+    <a class="brand" href="./" data-i18n-attr="aria-label:nav.home" aria-label="spritebit — Startseite">
       <img class="brand-mark" src="assets/icon.svg" alt="" width="32" height="32">
       <span class="brand-name">sprite<span class="brand-bit">bit</span></span>
-    </span>
-    <nav class="topnav" data-i18n-attr="aria-label:nav.aria" aria-label="Stationen">
-      <a href="#pixel" data-i18n="nav.pixel">Pixel</a>
-      <a href="#farbe" data-i18n="nav.color">Farbe</a>
-      <a href="#werkzeug" data-i18n="nav.tools">Werkzeug</a>
-      <a href="#szene" data-i18n="nav.scene">Szene</a>
-      <a href="#export" data-i18n="nav.export">Export</a>
+    </a>
+    <nav class="topnav" data-i18n-attr="aria-label:nav.aria" aria-label="Seiten">
+      <a href="funktionen.html" data-i18n="nav.features">Funktionen</a>
+      <a href="export.html" data-i18n="nav.export">Export</a>
+      <a href="desktop.html" data-i18n="nav.desktop">Desktop-App</a>
     </nav>
     <a class="btn btn--primary btn--sm" href="editor.html"><span data-i18n="nav.open">Editor öffnen</span><span class="ver" data-version="web"></span></a>
   </div>
@@ -129,9 +127,6 @@
 
 <main id="inhalt">
 
-  <!-- ══════════════════════════════════════════════════════════════
-       HERO — leerer Himmel, leeres Raster
-       ═══════════════════════════════════════════════════════════ -->
   <section class="stage stage--hero">
 
     <div class="scene" aria-hidden="true">
@@ -167,7 +162,7 @@
           <li>Frames &amp; GIF</li>
           <li>Ebenen</li>
           <li>Tilemaps</li>
-          <li>9 Code-Formate</li>
+          <li>Für Spiele</li>
           <li>Läuft offline</li>
           <li>Kein Konto</li>
         </ul>
@@ -190,330 +185,53 @@
             <a class="btn btn--ghost btn--sm btn--donate" data-link="donate" href="https://ko-fi.com/baloou" rel="noopener" target="_blank" data-i18n-attr="title:donate.title" title="Kostenlos bleibt spritebit sowieso. Spenden fließen in ein Code-Signatur-Zertifikat, damit Windows bei der Desktop-App nicht mehr warnt."><svg class="btn-ico" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M17 11h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M8 3v3M12 3v3"/></svg><span data-i18n="donate.label">spritebit unterstützen</span></a>
           </span>
         </div>
-        <!-- Kurz erklärt: Desktop-App installieren und die Windows-Warnung (nicht signiert). -->
-        <details class="dl-help">
-          <summary data-i18n="dl.helpSummary">So installierst du die Desktop-App — und warum Windows warnt</summary>
-          <ol data-i18n-html="dl.helpSteps"><li><b>ZIP laden und entpacken</b> — Rechtsklick → „Alle extrahieren …“. Den Ordner z. B. auf den Desktop oder nach „Dokumente“ legen, nicht nach „Programme“: sonst kann sich die App nicht selbst aktualisieren.</li><li><b><code>spritebit.exe</code> doppelklicken</b> — eine Installation braucht es nicht.</li><li><b>Windows warnt beim ersten Start</b> („Der Computer wurde durch Windows geschützt“), weil die App noch nicht signiert ist. Auf <b>„Weitere Informationen“</b> und dann <b>„Trotzdem ausführen“</b> klicken — das ist nur einmal nötig. Der Quellcode liegt offen auf GitHub.</li><li><b>Updates</b> meldet die App selbst: „Jetzt aktualisieren“ lädt, prüft und tauscht sie mit einem Klick aus.</li></ol>
-        </details>
+        <a class="hero-link" href="desktop.html#installieren" data-i18n="hero.installLink">So installierst du die Desktop-App →</a>
         <p class="hero-platforms" data-i18n-html="hero.platforms">Kostenlos · kein Abo · kein Konto · Open Source (MIT-Lizenz)</p>
         <p class="hero-platforms" data-i18n-html="hero.sizes">Im Browser bis 1024 × 1024 Pixel · in der Desktop-App bis 8192 × 8192</p>
       </div>
 
     </div>
   </section>
+  <!-- Die Kulisse „tropft“ Pixel für Pixel in die Seite (js/landing-fx.js). -->
+  <div class="drip" aria-hidden="true" style="--drip: var(--ground)"><canvas></canvas></div>
   <!-- Gilt für alle Kulissen der Seite — steht einmal unter der ersten. -->
   <p class="scene-credit" data-i18n="scene.credit">* Die Pixel-Art in den Kulissen dieser Seite stammt aus eigener Produktion — handgepixelt, ohne Zusatzstoffe.</p>
 
   <!-- ══════════════════════════════════════════════════════════════
-       01 — Der erste Pixel
+       01 — Mal los · ein kleines Raster zum Ausprobieren (js/landing-demo.js)
        ═══════════════════════════════════════════════════════════ -->
-  <section class="band" id="pixel" aria-labelledby="h-pixel">
+  <section class="band" id="malen" aria-labelledby="h-malen">
     <p class="eyebrow" data-i18n-html="s1.eyebrow"><span class="st-num">01</span> Der erste Pixel</p>
-    <h2 id="h-pixel" class="h2--mono" data-i18n="s1.h2">So entsteht ein Sprite.</h2>
-    <p class="section-lead" data-i18n="s1.lead">
-      Erst die Kontur, dann das Fell, dann die Augen. Ein Sprite entsteht Feld für
-      Feld — und daneben wächst der Code mit, den du am Ende mitnimmst.
-    </p>
+    <h2 id="h-malen" class="h2--mono" data-i18n="s1.h2">Mal einfach los.</h2>
 
-    <div class="pixel-demo">
-
-      <figure class="demo-cell">
-        <div class="paint-canvas">
-        <svg class="paint-art" viewBox="0 0 18 17" role="img" data-i18n-attr="aria-label:s1.artAlt"
-             aria-label="Ein Pixel-Hundegesicht, das Feld für Feld entsteht: erst die Kontur, dann Fell, Augen und Schnauze.">
-          <rect style="--i:0" x="0" y="4" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:1" x="1" y="3" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:2" x="1" y="2" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:3" x="1" y="1" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:4" x="2" y="0" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:5" x="3" y="0" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:6" x="4" y="0" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:7" x="5" y="1" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:8" x="7" y="2" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:9" x="10" y="2" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:10" x="12" y="1" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:11" x="13" y="0" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:12" x="14" y="0" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:13" x="15" y="0" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:14" x="16" y="1" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:15" x="16" y="2" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:16" x="16" y="3" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:17" x="17" y="4" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:18" x="17" y="5" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:19" x="17" y="6" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:20" x="17" y="7" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:21" x="17" y="8" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:22" x="17" y="9" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:23" x="17" y="10" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:24" x="17" y="11" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:25" x="17" y="12" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:26" x="16" y="13" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:27" x="16" y="14" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:28" x="15" y="15" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:29" x="14" y="15" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:30" x="13" y="16" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:31" x="12" y="16" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:32" x="11" y="16" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:33" x="10" y="16" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:34" x="9" y="16" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:35" x="8" y="16" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:36" x="7" y="16" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:37" x="6" y="16" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:38" x="5" y="16" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:39" x="4" y="16" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:40" x="3" y="15" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:41" x="2" y="15" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:42" x="1" y="14" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:43" x="1" y="13" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:44" x="0" y="12" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:45" x="0" y="11" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:46" x="0" y="10" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:47" x="0" y="9" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:48" x="0" y="8" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:49" x="0" y="7" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:50" x="0" y="6" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:51" x="0" y="5" width="1" height="1" fill="#2b1a12"/>
-          <rect style="--i:52" x="2" y="1" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:53" x="3" y="1" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:54" x="4" y="1" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:55" x="13" y="1" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:56" x="14" y="1" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:57" x="15" y="1" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:58" x="2" y="2" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:59" x="3" y="2" width="1" height="1" fill="#8f6236"/>
-          <rect style="--i:60" x="4" y="2" width="1" height="1" fill="#8f6236"/>
-          <rect style="--i:61" x="5" y="2" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:62" x="6" y="2" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:63" x="11" y="2" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:64" x="12" y="2" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:65" x="13" y="2" width="1" height="1" fill="#8f6236"/>
-          <rect style="--i:66" x="14" y="2" width="1" height="1" fill="#8f6236"/>
-          <rect style="--i:67" x="15" y="2" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:68" x="2" y="3" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:69" x="3" y="3" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:70" x="4" y="3" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:71" x="5" y="3" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:72" x="6" y="3" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:73" x="7" y="3" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:74" x="8" y="3" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:75" x="9" y="3" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:76" x="10" y="3" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:77" x="11" y="3" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:78" x="12" y="3" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:79" x="13" y="3" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:80" x="14" y="3" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:81" x="15" y="3" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:82" x="1" y="4" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:83" x="2" y="4" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:84" x="3" y="4" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:85" x="4" y="4" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:86" x="5" y="4" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:87" x="6" y="4" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:88" x="7" y="4" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:89" x="8" y="4" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:90" x="9" y="4" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:91" x="10" y="4" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:92" x="11" y="4" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:93" x="12" y="4" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:94" x="13" y="4" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:95" x="14" y="4" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:96" x="15" y="4" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:97" x="16" y="4" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:98" x="1" y="5" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:99" x="2" y="5" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:100" x="3" y="5" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:101" x="4" y="5" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:102" x="5" y="5" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:103" x="6" y="5" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:104" x="7" y="5" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:105" x="8" y="5" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:106" x="9" y="5" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:107" x="10" y="5" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:108" x="11" y="5" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:109" x="12" y="5" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:110" x="13" y="5" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:111" x="14" y="5" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:112" x="15" y="5" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:113" x="16" y="5" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:114" x="1" y="6" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:115" x="2" y="6" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:116" x="3" y="6" width="1" height="1" fill="#1c1410"/>
-          <rect style="--i:117" x="4" y="6" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:118" x="5" y="6" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:119" x="6" y="6" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:120" x="7" y="6" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:121" x="8" y="6" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:122" x="9" y="6" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:123" x="10" y="6" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:124" x="11" y="6" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:125" x="12" y="6" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:126" x="13" y="6" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:127" x="14" y="6" width="1" height="1" fill="#1c1410"/>
-          <rect style="--i:128" x="15" y="6" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:129" x="16" y="6" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:130" x="1" y="7" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:131" x="2" y="7" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:132" x="3" y="7" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:133" x="4" y="7" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:134" x="5" y="7" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:135" x="6" y="7" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:136" x="7" y="7" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:137" x="8" y="7" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:138" x="9" y="7" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:139" x="10" y="7" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:140" x="11" y="7" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:141" x="12" y="7" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:142" x="13" y="7" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:143" x="14" y="7" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:144" x="15" y="7" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:145" x="16" y="7" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:146" x="1" y="8" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:147" x="2" y="8" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:148" x="3" y="8" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:149" x="4" y="8" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:150" x="5" y="8" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:151" x="6" y="8" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:152" x="7" y="8" width="1" height="1" fill="#e6c79c"/>
-          <rect style="--i:153" x="8" y="8" width="1" height="1" fill="#e6c79c"/>
-          <rect style="--i:154" x="9" y="8" width="1" height="1" fill="#e6c79c"/>
-          <rect style="--i:155" x="10" y="8" width="1" height="1" fill="#e6c79c"/>
-          <rect style="--i:156" x="11" y="8" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:157" x="12" y="8" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:158" x="13" y="8" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:159" x="14" y="8" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:160" x="15" y="8" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:161" x="16" y="8" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:162" x="1" y="9" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:163" x="2" y="9" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:164" x="3" y="9" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:165" x="4" y="9" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:166" x="5" y="9" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:167" x="6" y="9" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:168" x="7" y="9" width="1" height="1" fill="#e6c79c"/>
-          <rect style="--i:169" x="8" y="9" width="1" height="1" fill="#3d2418"/>
-          <rect style="--i:170" x="9" y="9" width="1" height="1" fill="#3d2418"/>
-          <rect style="--i:171" x="10" y="9" width="1" height="1" fill="#e6c79c"/>
-          <rect style="--i:172" x="11" y="9" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:173" x="12" y="9" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:174" x="13" y="9" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:175" x="14" y="9" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:176" x="15" y="9" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:177" x="16" y="9" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:178" x="1" y="10" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:179" x="2" y="10" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:180" x="3" y="10" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:181" x="4" y="10" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:182" x="5" y="10" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:183" x="6" y="10" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:184" x="7" y="10" width="1" height="1" fill="#e6c79c"/>
-          <rect style="--i:185" x="8" y="10" width="1" height="1" fill="#3d2418"/>
-          <rect style="--i:186" x="9" y="10" width="1" height="1" fill="#3d2418"/>
-          <rect style="--i:187" x="10" y="10" width="1" height="1" fill="#e6c79c"/>
-          <rect style="--i:188" x="11" y="10" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:189" x="12" y="10" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:190" x="13" y="10" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:191" x="14" y="10" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:192" x="15" y="10" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:193" x="16" y="10" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:194" x="1" y="11" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:195" x="2" y="11" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:196" x="3" y="11" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:197" x="4" y="11" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:198" x="5" y="11" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:199" x="6" y="11" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:200" x="7" y="11" width="1" height="1" fill="#e6c79c"/>
-          <rect style="--i:201" x="8" y="11" width="1" height="1" fill="#e6c79c"/>
-          <rect style="--i:202" x="9" y="11" width="1" height="1" fill="#e6c79c"/>
-          <rect style="--i:203" x="10" y="11" width="1" height="1" fill="#e6c79c"/>
-          <rect style="--i:204" x="11" y="11" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:205" x="12" y="11" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:206" x="13" y="11" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:207" x="14" y="11" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:208" x="15" y="11" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:209" x="16" y="11" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:210" x="1" y="12" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:211" x="2" y="12" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:212" x="3" y="12" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:213" x="4" y="12" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:214" x="5" y="12" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:215" x="6" y="12" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:216" x="7" y="12" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:217" x="8" y="12" width="1" height="1" fill="#e6c79c"/>
-          <rect style="--i:218" x="9" y="12" width="1" height="1" fill="#e6c79c"/>
-          <rect style="--i:219" x="10" y="12" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:220" x="11" y="12" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:221" x="12" y="12" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:222" x="13" y="12" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:223" x="14" y="12" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:224" x="15" y="12" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:225" x="16" y="12" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:226" x="2" y="13" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:227" x="3" y="13" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:228" x="4" y="13" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:229" x="5" y="13" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:230" x="6" y="13" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:231" x="7" y="13" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:232" x="8" y="13" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:233" x="9" y="13" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:234" x="10" y="13" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:235" x="11" y="13" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:236" x="12" y="13" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:237" x="13" y="13" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:238" x="14" y="13" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:239" x="15" y="13" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:240" x="2" y="14" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:241" x="3" y="14" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:242" x="4" y="14" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:243" x="5" y="14" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:244" x="6" y="14" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:245" x="7" y="14" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:246" x="8" y="14" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:247" x="9" y="14" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:248" x="10" y="14" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:249" x="11" y="14" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:250" x="12" y="14" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:251" x="13" y="14" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:252" x="14" y="14" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:253" x="15" y="14" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:254" x="4" y="15" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:255" x="5" y="15" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:256" x="6" y="15" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:257" x="7" y="15" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:258" x="8" y="15" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:259" x="9" y="15" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:260" x="10" y="15" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:261" x="11" y="15" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:262" x="12" y="15" width="1" height="1" fill="#c8965e"/>
-          <rect style="--i:263" x="13" y="15" width="1" height="1" fill="#c8965e"/>
-        </svg>
-          <span class="brush" aria-hidden="true"></span>
+    <div class="try">
+      <div class="try-board">
+        <canvas class="try-canvas" id="try-canvas" width="384" height="384" data-i18n-attr="aria-label:demo.canvasAlt"
+                aria-label="Ein kleines Pixel-Raster zum Ausprobieren: Farbe wählen, dann klicken oder ziehen."></canvas>
+        <div class="try-tools" role="group" data-i18n-attr="aria-label:demo.tools" aria-label="Farben und Werkzeuge">
+          <div class="try-swatches" id="try-swatches"></div>
+          <button type="button" class="try-btn" id="try-erase" aria-pressed="false" data-i18n="demo.erase">Radierer</button>
+          <button type="button" class="try-btn" id="try-clear" data-i18n="demo.clear">Leeren</button>
+          <button type="button" class="try-btn" id="try-sample" data-i18n="demo.sample">Beispiel</button>
         </div>
-        <figcaption data-i18n="s1.caption">Pixel für Pixel, wie im Editor</figcaption>
-      </figure>
-
-      <div class="demo-code">
-        <pre><code><span class="k">export const</span> <span class="v">SPRITE</span>: <span class="t">number</span>[][] = [
-  [0,0,0,0,0,<span class="n1">1</span>,<span class="n1">1</span>,0],
-  [0,0,0,0,<span class="n2">2</span>,<span class="n2">2</span>,0,0],
-  [0,0,0,<span class="n3">3</span>,<span class="n3">3</span>,0,0,0],
-  [0,0,<span class="n4">4</span>,<span class="n4">4</span>,0,0,0,0],
-  [0,<span class="n5">5</span>,<span class="n5">5</span>,0,0,0,0,0],
-];
-
-<span class="k">export const</span> <span class="v">PALETTE</span>: <span class="t">Record</span>&lt;<span class="t">number</span>, <span class="t">string</span>&gt; = {
-  <span class="n1">1</span>: <span class="s">'#6ed49a'</span>, <span class="n2">2</span>: <span class="s">'#6ec9b3'</span>, <span class="n3">3</span>: <span class="s">'#6ebecc'</span>,
-  <span class="n4">4</span>: <span class="s">'#6eb3e5'</span>, <span class="n5">5</span>: <span class="s">'#6ea8fe'</span>,
-};</code></pre>
-        <p class="demo-cap" data-i18n-html="s1.demoCap">
-          So verlässt der fertige Sprite den Editor.
-          <span class="fc-dim">Beispiel, auf fünf Zeilen gekürzt.</span>
+      </div>
+      <div class="try-text">
+        <p class="section-lead" data-i18n="s1.lead">
+          Farbe wählen, klicken, ziehen — genau so fühlt sich der Editor an. Nur mit mehr
+          Werkzeugen, Ebenen und einer Timeline für Animationen.
         </p>
+        <ul class="facts" data-i18n-html="s1.facts">
+          <li><span class="fact-key">Ziehen</span> malt durchgehend, <span class="fact-key">Rechtsklick</span> radiert.</li>
+          <li>Alles bleibt in deinem Browser — <span class="fact-key">kein Konto</span>, nichts wird hochgeladen.</li>
+          <li>Unten färbst du genau dieses Bild um.</li>
+        </ul>
+        <a class="btn btn--primary" href="editor.html"><span data-i18n="s1.cta">Im Editor weitermalen</span><span class="ver" data-version="web"></span></a>
       </div>
     </div>
   </section>
 
   <!-- ══════════════════════════════════════════════════════════════
-       02 — Farbe
+       02 — Farbe · dein Bild aus 01 mit anderen Paletten (js/landing-demo.js)
        ═══════════════════════════════════════════════════════════ -->
   <section class="band band--warm" id="farbe" aria-labelledby="h-farbe">
     <p class="eyebrow" data-i18n-html="s2.eyebrow"><span class="st-num">02</span> Farbe</p>
@@ -521,124 +239,39 @@
 
     <div class="swap">
       <div class="swap-demo">
-        <svg class="sprite recolor" viewBox="0 0 8 8" role="img" data-i18n-attr="aria-label:s2.artAlt"
-             aria-label="Dieselbe Treppe, die fortlaufend zwischen drei Farbpaletten wechselt: kühles Blaugrün, warme Brauntöne, Waldgrün.">
-          <rect class="c1" x="5" y="1" width="1" height="1"/>
-          <rect class="c1" x="6" y="1" width="1" height="1"/>
-          <rect class="c2" x="4" y="2" width="1" height="1"/>
-          <rect class="c2" x="5" y="2" width="1" height="1"/>
-          <rect class="c3" x="3" y="3" width="1" height="1"/>
-          <rect class="c3" x="4" y="3" width="1" height="1"/>
-          <rect class="c4" x="2" y="4" width="1" height="1"/>
-          <rect class="c4" x="3" y="4" width="1" height="1"/>
-          <rect class="c5" x="1" y="5" width="1" height="1"/>
-          <rect class="c5" x="2" y="5" width="1" height="1"/>
-        </svg>
-
-        <ol class="swatches" data-i18n-attr="aria-label:s2.swatchAria" aria-label="Die Paletten-Indizes 0 bis 5; Index 0 ist transparent.">
-          <li class="swatch swatch--transparent"><span class="chip"></span><span class="idx">0</span></li>
-          <li class="swatch"><span class="chip c1"></span><span class="idx">1</span></li>
-          <li class="swatch"><span class="chip c2"></span><span class="idx">2</span></li>
-          <li class="swatch"><span class="chip c3"></span><span class="idx">3</span></li>
-          <li class="swatch"><span class="chip c4"></span><span class="idx">4</span></li>
-          <li class="swatch"><span class="chip c5"></span><span class="idx">5</span></li>
-        </ol>
+        <canvas class="try-preview" id="try-preview" width="192" height="192" data-i18n-attr="aria-label:demo.previewAlt"
+                aria-label="Dein Bild von oben in der gewählten Palette."></canvas>
+        <div class="pal-row" role="group" data-i18n-attr="aria-label:demo.palettes" aria-label="Paletten">
+          <button type="button" class="pal-btn" data-pal="wald" aria-pressed="false"><span class="pal-chips" aria-hidden="true"></span><span data-i18n="demo.pal.forest">Wald</span></button>
+          <button type="button" class="pal-btn" data-pal="abend" aria-pressed="false"><span class="pal-chips" aria-hidden="true"></span><span data-i18n="demo.pal.dusk">Abend</span></button>
+          <button type="button" class="pal-btn" data-pal="eis" aria-pressed="false"><span class="pal-chips" aria-hidden="true"></span><span data-i18n="demo.pal.ice">Eis</span></button>
+          <button type="button" class="pal-btn" data-pal="grau" aria-pressed="false"><span class="pal-chips" aria-hidden="true"></span><span data-i18n="demo.pal.gray">Grau</span></button>
+        </div>
       </div>
-
       <div class="swap-text">
         <p class="section-lead" data-i18n="s2.lead">
-          Das Raster speichert nur die Zahlen. Änderst du eine Farbe, färben sich alle
-          Pixel mit diesem Index sofort mit um — ohne dass du ein Pixel anfasst.
+          Das Bild merkt sich nur, welche Farbe wohin gehört — nicht welcher Ton. Tausch die
+          Palette, und alles leuchtet sofort in neuen Farben, ohne ein Pixel anzufassen.
         </p>
         <ul class="facts" data-i18n-html="s2.facts">
-          <li><span class="fact-key">Index 0</span> ist immer transparent, bis zu <span class="fact-key">255 Farben</span> je Palette.</li>
           <li><span class="fact-key">17 Paletten</span> sind eingebaut, eigene legst du daneben an.</li>
-          <li><span class="fact-key">Jeder Sprite</span> merkt sich seine eigene Palette.</li>
+          <li>Aus einem <span class="fact-key">Foto</span> holt der Editor die passenden Farben.</li>
+          <li>Ideal für <span class="fact-key">Varianten</span>: dieselbe Figur in Rot, Blau, Grün.</li>
         </ul>
       </div>
     </div>
   </section>
 
   <!-- ══════════════════════════════════════════════════════════════
-       03 — Werkzeug
-       ═══════════════════════════════════════════════════════════ -->
-  <section class="band" id="werkzeug" aria-labelledby="h-werkzeug">
-    <p class="eyebrow" data-i18n-html="s3.eyebrow"><span class="st-num">03</span> Werkzeug</p>
-    <h2 id="h-werkzeug" data-i18n="s3.h2">Alles, was die Hand braucht.</h2>
-    <p class="section-lead" data-i18n="s3.lead">
-      Undo greift pro Strich, Auto-Save läuft nebenher, und für jedes Werkzeug gibt es
-      eine Taste. Die Maus muss die Leiste nicht suchen.
-    </p>
-
-    <ul class="tools" data-i18n-html="s3.tools">
-      <li class="tool">
-        <h3>Malen</h3>
-        <p class="keys-row"><kbd>P</kbd><kbd>B</kbd><kbd>S</kbd><kbd>F</kbd><kbd>E</kbd><kbd>W</kbd></p>
-        <p>Stift, Pinsel, Spray, Füllen, Radierer, Zauberstab.</p>
-      </li>
-      <li class="tool">
-        <h3>Formen</h3>
-        <p class="keys-row"><kbd>I</kbd><kbd>R</kbd><kbd>O</kbd></p>
-        <p>Linie, Rechteck, Ellipse — mit Live-Vorschau, wahlweise Kontur oder Fläche.</p>
-      </li>
-      <li class="tool">
-        <h3>Symmetrie</h3>
-        <p class="keys-row"><kbd>↔</kbd><kbd>↕</kbd></p>
-        <p>Zwei Achsen. Jeder Strich wird gespiegelt mitgezeichnet, beide zusammen ergeben vier.</p>
-      </li>
-      <li class="tool">
-        <h3>Auswahl</h3>
-        <p class="keys-row"><kbd>A</kbd><kbd>L</kbd><kbd>K</kbd></p>
-        <p>Rechteck, Lasso, Farbwahl. Der Bereich wird ausgeschnitten und schwebt, bis du ihn absetzt.</p>
-      </li>
-      <li class="tool">
-        <h3>Schweben</h3>
-        <p class="keys-row"><kbd>Alt</kbd><kbd>↑↓←→</kbd></p>
-        <p>Verschieben, frei drehen, spiegeln, kopieren — der Untergrund bleibt heil.</p>
-      </li>
-      <li class="tool">
-        <h3>Bild</h3>
-        <p class="keys-row"><kbd>Strg</kbd><kbd>Z</kbd></p>
-        <p>Spiegeln, drehen, auf den Inhalt zuschneiden, zentrieren, Fläche ändern, hart skalieren.</p>
-      </li>
-      <li class="tool">
-        <h3>Animation</h3>
-        <p class="keys-row"><kbd>,</kbd><kbd>.</kbd><kbd>Enter</kbd></p>
-        <p>Timeline als Raster aus Ebenen und Frames, Tags, verknüpfte Zellen, Onion Skin — eigenes Tempo je Frame.</p>
-      </li>
-      <li class="tool">
-        <h3>Ebenen</h3>
-        <p class="keys-row"><kbd>+</kbd><kbd>⧉</kbd><kbd>⤓</kbd></p>
-        <p>Übereinander malen, ausblenden, sperren, Deckkraft, Masken — exportiert wird, was du siehst.</p>
-      </li>
-      <li class="tool">
-        <h3>Hilfslinien</h3>
-        <p class="keys-row"><kbd>G</kbd></p>
-        <p>Freie Linien und Figuren-Proportionen von Chibi bis Held, als eigene Layouts speicherbar — nie im Export.</p>
-      </li>
-      <li class="tool">
-        <h3>Licht</h3>
-        <p class="keys-row"><kbd>↖</kbd><kbd>☀</kbd></p>
-        <p>Lichtquelle wählen — Kanten und Schlagschatten kommen als eigene Ebene und lassen sich jederzeit umstellen.</p>
-      </li>
-      <li class="tool">
-        <h3>Kacheln</h3>
-        <p class="keys-row"><kbd>▦</kbd></p>
-        <p>Tilemaps für Spiel-Levels: eine Kachel anmalen, überall geändert. Raus als Godot-Szene.</p>
-      </li>
-    </ul>
-  </section>
-
-  <!-- ══════════════════════════════════════════════════════════════
-       04 — Szene · die Bühne füllt sich
+       03 — Für Spiele · die Bühne füllt sich
        ═══════════════════════════════════════════════════════════ -->
   <section id="szene" aria-labelledby="h-szene">
     <div class="band band--flush">
-      <p class="eyebrow" data-i18n-html="s4.eyebrow"><span class="st-num">04</span> Szene</p>
+      <p class="eyebrow" data-i18n-html="s4.eyebrow"><span class="st-num">03</span> Für Spiele</p>
       <h2 id="h-szene" data-i18n="s4.h2">Ein Sprite kommt selten allein.</h2>
       <p class="section-lead" data-i18n="s4.lead">
-        Irgendwann sind es viele: eine Figur, ihr Hund, ein Vogel, ein Busch. Der Editor
-        hält sie alle nebeneinander und hilft, sie zusammenzubringen.
+        Eine Figur, ihr Hund, ein Vogel, ein ganzes Level: Animationen, Kacheln und eine
+        Vorlage aus einem Foto — alles für dein Spiel an einem Ort.
       </p>
     </div>
 
@@ -671,92 +304,48 @@
 
     <div class="band band--flush">
       <ul class="tools tools--three" data-i18n-html="s4.cards">
-        <li class="tool">
-          <h3>Foto als Vorlage</h3>
-          <p>
-            Foto laden, darüberlegen, auf wenige Farben eindampfen. Die Farben aus dem
-            Bild werden zu deiner Palette.
-          </p>
-          <p class="tool-meta">Dazu: Hintergrund entfernen, glätten, Outline ziehen.</p>
-        </li>
         <li class="tool tool--anim">
           <h3>Animation</h3>
           <div class="filmstrip" aria-hidden="true"><div class="film-frames"><span class="ff"><img src="assets/landing/bird-a.png" alt="" width="17" height="7"></span><span class="ff"><img src="assets/landing/bird-b.png" alt="" width="17" height="7"></span><span class="ff"><img src="assets/landing/bird-a.png" alt="" width="17" height="7"></span><span class="ff"><img src="assets/landing/bird-b.png" alt="" width="17" height="7"></span></div><div class="film-play"><img class="fp-a" src="assets/landing/bird-a.png" alt="" width="17" height="7"><img class="fp-b" src="assets/landing/bird-b.png" alt="" width="17" height="7"></div></div>
-          <p>Frames in einer Timeline, Onion Skin, eigenes Tempo je Frame.</p>
-          <p class="tool-meta">Raus als GIF, Spritesheet oder Code.</p>
+          <p>Frames, Ebenen und Tags in einer Timeline — mit Onion Skin und eigenem Tempo je Frame.</p>
+        </li>
+        <li class="tool tool--tiles">
+          <h3>Kacheln</h3>
+          <div class="tilestrip" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+          <p>Eine Kachel anmalen, überall geändert — so entstehen Levels und Muster. Raus direkt nach Godot.</p>
         </li>
         <li class="tool">
-          <h3>Alle zusammen</h3>
-          <p>
-            Alle Sprites wandern in ein Bild, gleich groß nebeneinander — plus eine
-            Liste, wo welcher sitzt.
-          </p>
-          <p class="tool-meta">Damit liest jede Engine sie direkt ein.</p>
+          <h3>Foto als Vorlage</h3>
+          <p>Foto laden, darüberlegen, auf wenige Farben eindampfen — die Farben aus dem Bild werden zu deiner Palette.</p>
         </li>
       </ul>
     </div>
   </section>
 
   <!-- ══════════════════════════════════════════════════════════════
-       05 — Export
+       Mehr entdecken — die Unterseiten
        ═══════════════════════════════════════════════════════════ -->
-  <section class="band" id="export" aria-labelledby="h-export">
-    <p class="eyebrow" data-i18n-html="s5.eyebrow"><span class="st-num">05</span> Export</p>
-    <h2 id="h-export" data-i18n="s5.h2">Und dann darf es gehen.</h2>
-    <p class="section-lead" data-i18n-html="s5.lead">
-      Speichern kannst du als <b>Bild</b> — oder als fertigen Code für dein Projekt.
-      Beides mit einem Klick, die Farben sind immer mit dabei.
-    </p>
-
-    <ul class="formats formats--image" data-i18n-html="s5.imageFormats">
-      <li class="fmt"><span class="fmt-ext">.png</span><h3>Bild</h3><p>Mit transparentem Hintergrund, 1× bis 32× vergrößert</p></li>
-      <li class="fmt"><span class="fmt-ext">.pdf</span><h3>PDF</h3><p>Zum Drucken oder Weitergeben</p></li>
-      <li class="fmt"><span class="fmt-ext">.gif</span><h3>Animation</h3><p>Alle Frames als GIF, läuft endlos</p></li>
-      <li class="fmt"><span class="fmt-ext">.png</span><h3>Spritesheet</h3><p>Alle Sprites und Frames in einem Bild, mit Liste wo welcher sitzt</p></li>
-      <li class="fmt"><span class="fmt-ext">.tscn</span><h3>Godot-Tilemap</h3><p>Kachelbild plus Szene mit TileMapLayer — direkt in Godot 4 öffnen</p></li>
+  <section class="band" aria-labelledby="h-more">
+    <h2 id="h-more" data-i18n="more.h2">Mehr entdecken</h2>
+    <ul class="teasers">
+      <li><a class="teaser" href="funktionen.html">
+        <span class="teaser-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></span>
+        <span class="teaser-h" data-i18n="more.fnH">Funktionen</span>
+        <span class="teaser-p" data-i18n="more.fnP">Werkzeuge, Ebenen, Licht, Hilfslinien — alles, was der Editor kann.</span>
+      </a></li>
+      <li><a class="teaser" href="export.html">
+        <span class="teaser-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 19h16"/></svg></span>
+        <span class="teaser-h" data-i18n="more.exH">Export</span>
+        <span class="teaser-p" data-i18n="more.exP">Bild, GIF, Spritesheet, Godot oder fertiger Code für dein Projekt.</span>
+      </a></li>
+      <li><a class="teaser" href="desktop.html">
+        <span class="teaser-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></span>
+        <span class="teaser-h" data-i18n="more.dkH">Desktop-App</span>
+        <span class="teaser-p" data-i18n="more.dkP">spritebit für Windows — größere Flächen, aktualisiert sich selbst.</span>
+      </a></li>
     </ul>
-
-    <p class="section-lead section-lead--sub" data-i18n="s5.subLead">
-      Für Entwickler kommt der Sprite auch als Code heraus — neun Formate, jedes
-      für sich allein benutzbar.
-    </p>
-
-    <ul class="formats" data-i18n-html="s5.codeFormats">
-      <li class="fmt"><span class="fmt-ext">.ts</span><h3>TypeScript</h3><p>Zahlenraster plus Farbliste, fertig getypt</p></li>
-      <li class="fmt"><span class="fmt-ext">.js</span><h3>JavaScript</h3><p>Dasselbe ohne Typen, direkt importierbar</p></li>
-      <li class="fmt"><span class="fmt-ext">.json</span><h3>JSON</h3><p>Liest jede Sprache und jede Engine</p></li>
-      <li class="fmt"><span class="fmt-ext">.json</span><h3>JSON (Spiel)</h3><p>Flaches Raster mit Material je Farbe — für Spiele-Engines</p></li>
-      <li class="fmt"><span class="fmt-ext">.svg</span><h3>SVG</h3><p>Bleibt in jeder Größe scharf, direkt einbindbar</p></li>
-      <li class="fmt"><span class="fmt-ext">.css</span><h3>CSS</h3><p>Der Sprite als reines CSS, ganz ohne Bilddatei</p></li>
-      <li class="fmt"><span class="fmt-ext">.h</span><h3>C-Header</h3><p>Für Mikrocontroller und LED-Matrix</p></li>
-      <li class="fmt"><span class="fmt-ext">.py</span><h3>Python</h3><p>Für Pygame, Pillow und eigene Skripte</p></li>
-      <li class="fmt"><span class="fmt-ext">.txt</span><h3>Text-Raster</h3><p>Ein Zeichen pro Pixel — zum Draufschauen</p></li>
-    </ul>
-
-    <div class="export-extras">
-      <div class="extra">
-        <h3 data-i18n="s5.backH3">Und wieder zurück</h3>
-        <p class="chips" data-i18n-html="s5.backChips">
-          <span class="chip-tag chip-tag--in">TypeScript</span>
-          <span class="chip-tag chip-tag--in">JavaScript</span>
-          <span class="chip-tag chip-tag--in">JSON</span>
-          <span class="chip-tag chip-tag--in">JSON (Spiel)</span>
-          <span class="chip-tag chip-tag--in">SVG</span>
-          <span class="chip-tag chip-tag--in">CSS</span>
-          <span class="chip-tag chip-tag--in">C-Header</span>
-          <span class="chip-tag chip-tag--in">Python</span>
-          <span class="chip-tag chip-tag--in">Text-Raster</span>
-        </p>
-        <p class="tool-meta" data-i18n="s5.backNote">
-          Alle neun kannst du auch wieder einlesen — das Bild kommt unverändert zurück.
-        </p>
-      </div>
-    </div>
   </section>
 
-  <!-- ══════════════════════════════════════════════════════════════
-       Abschluss — zurück zum leeren Raster
-       ═══════════════════════════════════════════════════════════ -->
   <section class="stage stage--closer" aria-labelledby="h-closer">
     <div class="scene" aria-hidden="true">
       <div class="scene-sky"></div>
@@ -846,6 +435,7 @@
 <script src="js/site-links.js"></script>
 <script src="js/landing-i18n.js"></script>
 <script src="js/landing-fx.js"></script>
+<script src="js/landing-demo.js"></script>
 <script src="js/pwa.js"></script>
 
 </body>
