@@ -18,6 +18,7 @@ import { MATERIALS, DEFAULT_MATERIAL, GameJsonError } from './gamejson.js';
 import { iconSvg } from './icons.js';
 import { showInfoToast } from './toast.js';
 import { createPalettePicker } from './palpicker.js';
+import { createPixelPerfect, ppAdd } from './pixelperfect.js';
 
 // Weiterreichen, damit bestehende Importe aus render.js gültig bleiben.
 export { cellToColor, tsIdentifier };
@@ -456,6 +457,33 @@ export function paintCell(x, y) {
   const g = getGrid();
   let changed = false;
   for (const [px, py] of mirrored(x, y)) changed = setCell(g, px, py, state.curColor) || changed;
+  if (changed) afterPaint();
+}
+
+// ── Pixel-perfect (wie in Aseprite) ──────────────────────────────────
+// Stift und Radierer mit 1 px: L-Ecken an Treppenstufen werden während des
+// Strichs wieder entfernt (js/pixelperfect.js). Die Punkte zwischen zwei
+// Mausereignissen werden dafür mit einer Linie verbunden — sonst hätte der
+// Pfad Lücken und es gäbe keine Ecken zu erkennen.
+let ppStroke = null; // { pp, last } während eines Strichs
+
+/** Gilt Pixel-perfect für das aktuelle Werkzeug? */
+export function ppActive() {
+  return !!state.pixelPerfect && (state.tool === 'pencil' || (state.tool === 'eraser' && state.brushSize === 1));
+}
+
+export function ppBegin() { ppStroke = { pp: createPixelPerfect(), last: null }; }
+export function ppEnd() { ppStroke = null; }
+
+export function paintPixelPerfect(x, y, value) {
+  if (!ppStroke) ppBegin();
+  const g = getGrid();
+  const from = ppStroke.last || [x, y];
+  let changed = false;
+  for (const [px, py] of lineCells(from[0], from[1], x, y)) {
+    changed = ppAdd(ppStroke.pp, g, px, py, value, mirrored) || changed;
+  }
+  ppStroke.last = [x, y];
   if (changed) afterPaint();
 }
 

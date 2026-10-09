@@ -73,6 +73,7 @@ const PRECACHE = [
   'js/palettes.js',
   'js/palorder.js',
   'js/palpicker.js',
+  'js/pixelperfect.js',
   'js/place.js',
   'js/preview.js',
   'js/pwa.js',

@@ -56,6 +56,7 @@ export const state = {
   outputFormat:  'ts',     // Schlüssel aus CODE_FORMATS (codegen.js)
   mirror:        'off',    // 'off' | 'x' (senkrechte Achse) | 'y' | 'both'
   shapeFill:     false,    // Rechteck/Ellipse gefüllt statt nur Kontur
+  pixelPerfect:  false,    // Stift/Radierer 1 px: L-Ecken entfernen (js/pixelperfect.js)
   showColor:     false,    // aktuelle Farbe im Bild hervorheben (alles andere abgedunkelt)
   // Palette, die das Paletten-Panel gerade ZEIGT. null = die des Sprites.
   // Anschauen ändert nichts am Sprite — zugewiesen wird nur per Knopf.
