@@ -70,6 +70,7 @@ const PRECACHE = [
   'js/layout.js',
   'js/legal.js',
   'js/light.js',
+  'js/lock.js',
   'js/mask.js',
   'js/menubar.js',
   'js/migrate.js',

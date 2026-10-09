@@ -693,7 +693,8 @@ const STATIC = {
       + '<div><b>Fill</b> — the connected area of the same value. With <b>Edges: all layers</b> the area ends wherever something changes in the visible image — the paint still goes into the active layer. That way you colour in a template (e.g. outlines on a layer of their own) area by area without touching it.</div>'
       + '<div><b>Eraser</b> — sets pixels back to transparent.</div>'
       + '<div><b>Magic wand</b> — erases a connected <i>similar</i> area; <i>tolerance</i> decides how much deviation still counts.</div>'
-      + '<div><b>Line · Rectangle · Ellipse</b> — drag it open, the preview shows the result, letting go draws it. <i>Filled</i> switches between outline and area.</div>'
+      + '<div><b>Line · Rectangle · Ellipse</b> — drag it open, the preview shows the result, letting go draws it. <i>Filled</i> switches between outline and area. With <span class="kbd">Shift</span> the line snaps to 0°, 45° and 90°, rectangle and ellipse become square and circle.</div>'
+      + '<div><b>Straight strokes</b>: hold <span class="kbd">Shift</span> and paint — the stroke goes only horizontal, vertical or at 45°. The direction locks after a few pixels and stays until you let go; pressed mid-stroke, the straight line starts there.</div>'
       + '<div><b>Marquee · Lasso · Color select</b> — three ways to the same thing: an area you move as a whole.</div>'
       + '<div><b>Hand</b> — moves the view only and changes nothing in the image; on a guide it drags the line. The same panning works any time by holding <span class="kbd">Space</span>.</div>',
 
@@ -798,6 +799,7 @@ const STATIC = {
       + '<div class="sc-row"><b>Click</b><span>Draw</span></div>'
       + '<div class="sc-row"><b>Right-click</b><span>Erase (hold for continuous)</span></div>'
       + '<div class="sc-row"><b>Alt + click</b><span>Eyedropper on the grid</span></div>'
+      + '<div class="sc-row"><b>Shift + paint</b><span>Only horizontal, vertical or 45° · for shapes: snap, square, circle</span></div>'
       + '<div class="sc-row"><b>Alt + right-drag</b><span>Size of brush, eraser and spray</span></div>'
       + '<div class="sc-row"><b>Hold Shift + Alt</b><span>Stencil to the front</span></div>'
       + '<div class="sc-row"><b>Alt + click (place tiles)</b><span>Pick a tile</span></div>'

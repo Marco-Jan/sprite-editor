@@ -97,6 +97,11 @@ Reiterzeile erst ab zwei offenen Sprites, damit sie keine Höhe kostet.
   Radierer. Die Stärke ist beim Pinsel die Dichte, beim Spray die Menge. `Alt` + rechte
   Maustaste ziehen verstellt die Größe direkt auf der Zeichenfläche (nach rechts größer, 6 px
   Mausweg je Stufe); ein Umriss zeigt, was der Pinsel gleich trifft.
+- **Umschalt beim Malen**: der Strich geht nur waagerecht, senkrecht oder im 45°-Winkel
+  (wie in Photoshop). Die Richtung rastet ein, sobald der Strich 3 Pixel weit ist, und bleibt
+  bis zum Loslassen; drückt man Umschalt erst mitten im Strich, beginnt die gerade Linie dort.
+  Bei den Formen rastet die **Linie** auf 0°/45°/90° ein, **Rechteck** und **Ellipse** werden
+  Quadrat und Kreis.
 - **Toleranz** steuert, wie ähnlich Farben für Zauberstab und Farbwahl sein dürfen.
 - **Füllen → „Grenzen: alle Ebenen“**: die Fläche endet dort, wo sich im *sichtbaren* Bild
   etwas ändert (alle sichtbaren Ebenen zusammen), gemalt wird aber in die aktive Ebene. Damit
@@ -654,6 +659,7 @@ geprüft und mit `JSON.parse` gelesen.
 | Linksklick | Malen (ziehen = durchgehend) |
 | Rechtsklick | Löschen (ziehen = durchgehend) |
 | `Alt` + Klick | Pipette auf das Grid · im Modus „Kacheln setzen“: Kachel aufnehmen |
+| `Umschalt` + Malen | nur waagerecht, senkrecht oder 45° · Formen: einrasten, Quadrat, Kreis |
 | `Alt` + Rechts ziehen | Größe von Pinsel, Radierer und Spray |
 | `Shift` + `Alt` halten | Schablone in den Vordergrund |
 | `Shift` + `Alt` + Links + Ziehen | Schablone verschieben |
