@@ -200,7 +200,6 @@
     'hero.ctaDownload': 'Desktop app for Windows',
     'hero.ctaDesktop':  'Desktop app',
     'hero.ctaGithub':   'Open source on GitHub',
-    'dl.update':        'Update for your desktop app:',
     'hero.platforms':   'Free · no subscription · no account · open source (MIT license)',
     'hero.sizes':       'In the browser up to 1024 × 1024 pixels · in the desktop app up to 8192 × 8192',
     'donate.label':     'Support spritebit',
@@ -322,7 +321,6 @@
 
     'hero.ctaWeb':      'Im Browser aufmochn',
     'hero.ctaDownload': 'Desktop-App fia Windows',
-    'dl.update':        'A Update fia dei Desktop-App:',
     'hero.platforms':   'Gratis · ka Abo · ka Konto · Open Source (MIT-Lizenz)',
     'hero.sizes':       'Im Browser bis 1024 × 1024 Pixel · in da Desktop-App bis 8192 × 8192',
     'donate.label':     'spritebit unterstützn',
