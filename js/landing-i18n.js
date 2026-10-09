@@ -188,15 +188,16 @@
 
     'end.h2':       'The grid is still empty.',
     'end.lead':     'No account, no server, no cost. The editor opens and waits for your first pixel.',
-    'end.note':     'Once opened, everything works without internet — even the PDF export. Installed as an app, spritebit starts like a program of its own.',
-    'end.install':  'Install as app',
+    'end.note':     'Once opened, everything works without internet — even the PDF export. Installed as a browser app, spritebit starts like a program of its own.',
+    'end.install':  'Install as browser app',
+    'end.installTitle': 'Installs the web version through your browser: its own window, an icon in the start menu, works offline. This is not the desktop app.',
 
     'scene.credit': '* The pixel art in the backdrops on this page is homemade — hand-pixeled, no additives.',
     'foot.imprint': 'Legal notice',
     'foot.privacy': 'Privacy',
 
     'hero.ctaWeb':      'Open in browser',
-    'hero.ctaDownload': 'Download desktop app',
+    'hero.ctaDownload': 'Desktop app for Windows',
     'hero.ctaDesktop':  'Desktop app',
     'hero.ctaGithub':   'Open source on GitHub',
     'dl.update':        'Update for your desktop app:',
@@ -307,13 +308,13 @@
 
     'end.h2':       'S’Raster is no laar.',
     'end.lead':     'Ka Konto, ka Server, kane Kostn. Da Editor geht auf und wart auf dein erstn Pixel.',
-    'end.note':     'Amoi offn, rennt ois a ohne Internet — sogar da PDF-Export. Ois App installiert, startet spritebit wia a eigns Programm.',
-    'end.install':  'Ois App installiern',
+    'end.note':     'Amoi offn, rennt ois a ohne Internet — sogar da PDF-Export. Ois Browser-App installiert, startet spritebit wia a eigns Programm.',
+    'end.install':  'Ois Browser-App installiern',
 
     'scene.credit': '* D’Pixel-Art in de Kulissn do is hausgmocht — händisch pixlt, ohne Zuasatzstoffe.',
 
     'hero.ctaWeb':      'Im Browser aufmochn',
-    'hero.ctaDownload': 'Desktop-App owalodn',
+    'hero.ctaDownload': 'Desktop-App fia Windows',
     'dl.update':        'A Update fia dei Desktop-App:',
     'hero.platforms':   'Gratis · ka Abo · ka Konto · Open Source (MIT-Lizenz)',
     'foot.tag':         'Pixel-Art-Editor fia Sprites — im Browser und ois Desktop-App. Open Source unta MIT-Lizenz.',
