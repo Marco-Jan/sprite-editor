@@ -1836,6 +1836,10 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 }
 .bitty-none { margin: var(--sp-2) 0 0; font-size: var(--fs-md); color: var(--text-muted); }
 
+/* „Welche Formate gehen?“ unter einem Import-Fehler */
+.bitty-help-link { margin-top: var(--sp-2); }
+.bitty-help-link[hidden] { display: none; }
+
 /* Tour und Suche: Markierung und Blase im Blau von Bitty */
 .bitty-bubble.is-tour { border-color: var(--accent); }
 .bitty-flash,

@@ -31,8 +31,8 @@ const TOUR = [
   { sel: [], key: 'bitty.tour.end' },
 ];
 
-/** @type {{ tour: boolean, tip: number, quiet: boolean }} */
-let prefs = { tour: false, tip: 0, quiet: false };
+/** @type {{ tour: boolean, tip: number, quiet: boolean, hints?: boolean, off?: Record<string, boolean> }} */
+let prefs = { tour: false, tip: 0, quiet: false, hints: true, off: {} };
 function loadPrefs() {
   try { prefs = { ...prefs, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch { /* privates Fenster */ }
 }
@@ -294,15 +294,18 @@ function flash(el) {
   window.setTimeout(() => el.classList.remove('bitty-flash'), 2600);
 }
 
+/** Hilfe öffnen, zur Stelle scrollen und sie kurz blau umranden. */
+export function openHelpAt(target) {
+  const el = typeof target === 'string' ? document.querySelector(`#help-modal-overlay ${target}`) : target;
+  hide();
+  document.getElementById('help-btn')?.click();
+  if (el) requestAnimationFrame(() => { el.scrollIntoView({ block: 'center' }); flash(el); });
+}
+
 // Zum Treffer hinführen.
 function go(h) {
   const back = query.value;
-  if (h.kind === 'help') {
-    hide();
-    document.getElementById('help-btn')?.click();
-    requestAnimationFrame(() => { h.el.scrollIntoView({ block: 'center' }); flash(h.el); });
-    return;
-  }
+  if (h.kind === 'help') { openHelpAt(h.el); return; }
   if (h.kind === 'menu') {
     hide();
     const menu = h.el.closest('.mb-menu');
@@ -331,6 +334,41 @@ function onSearchKey(e) {
   if (e.key === 'ArrowDown' && hits.length) { e.preventDefault(); sel = (sel + 1) % hits.length; markSel(); }
   else if (e.key === 'ArrowUp' && hits.length) { e.preventDefault(); sel = (sel - 1 + hits.length) % hits.length; markSel(); }
   else if (e.key === 'Enter' && hits[sel]) { e.preventDefault(); go(hits[sel]); }
+}
+
+// ── Hinweise in Sackgassen ─────────────────────────────────────────
+// Man malt und sieht nichts — weil die Ebene ausgeblendet ist, die Farbe
+// durchsichtig, die Maske dran … Dann meldet sich Bitty mit dem Grund und
+// einem Knopf, der es behebt. Jeder Hinweis höchstens einmal pro Besuch;
+// „Nicht mehr zeigen“ schaltet ihn für immer ab, Hilfe → „Hinweise von
+// Bitty“ alle. Die Statuszeile sagt es weiterhin jedes Mal.
+const shownHints = new Set();
+
+/**
+ * @param {string} id      fester Name des Hinweises (für „nicht mehr zeigen“)
+ * @param {string} text
+ * @param {{ label: string, run: () => void } | null} [fix]
+ * @param {HTMLElement | null} [spot]  was blau umrandet wird (z. B. die Ebene)
+ */
+export function hint(id, text, fix = null, spot = null) {
+  if (!bubble || prefs.hints === false || prefs.off?.[id] || shownHints.has(id)) return;
+  if (inTour() || (isOpen() && document.activeElement === query)) return; // nicht dazwischenreden
+  shownHints.add(id);
+  /** @type {{ label: string, primary?: boolean, onClick: () => void }[]} */
+  const actions = [];
+  if (fix) actions.push({ label: fix.label, primary: true, onClick: () => { hide(); fix.run(); } });
+  actions.push({ label: t('bitty.hintOff'), onClick: () => { prefs.off = { ...prefs.off, [id]: true }; savePrefs(); hide(); } });
+  setTarget(spot && visible(spot) ? spot : null);
+  say(text, actions, { autoClose: true });
+  // Ausgelöst von einem Klick auf die Fläche — derselbe Klick kommt gleich
+  // noch beim Dokument an und darf die Blase nicht als „daneben“ schließen.
+  justShown = true;
+  window.setTimeout(() => { justShown = false; }, 0);
+}
+let justShown = false;
+
+function syncHintsItem() {
+  document.getElementById('bitty-hints-btn')?.setAttribute('aria-checked', String(prefs.hints !== false));
 }
 
 // ── Tour ───────────────────────────────────────────────────────────
@@ -407,9 +445,16 @@ export function initHelper() {
     if (isOpen()) hide(); else showTip();
   });
   document.getElementById('bitty-tour-btn')?.addEventListener('click', startTour);
+  document.getElementById('bitty-hints-btn')?.addEventListener('click', () => {
+    prefs.hints = prefs.hints === false;
+    if (prefs.hints) prefs.off = {}; // wieder an = alle wieder an
+    savePrefs();
+    syncHintsItem();
+  });
+  syncHintsItem();
 
   document.addEventListener('pointerdown', e => {
-    if (!isOpen() || inTour()) return;
+    if (!isOpen() || inTour() || justShown) return;
     const el = /** @type {HTMLElement} */ (e.target);
     if (!el.closest('#bitty-bubble, #bitty-btn')) hide();
   });

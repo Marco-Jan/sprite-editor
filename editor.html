@@ -121,6 +121,7 @@
         <div class="mb-drop" role="menu" hidden>
           <button type="button" class="mb-item" role="menuitem" id="help-btn"><span data-i18n="mb.helpOpen">Hilfe und Tastenkürzel</span><kbd>F1</kbd></button>
           <button type="button" class="mb-item" role="menuitem" id="bitty-tour-btn"><span data-i18n="mb.tour">Tour mit Bitty</span></button>
+          <button type="button" class="mb-item" role="menuitemcheckbox" aria-checked="true" id="bitty-hints-btn"><span data-i18n="mb.hints">Hinweise von Bitty</span></button>
           <div class="mb-sep" role="separator"></div>
           <a class="mb-item" role="menuitem" href="https://ko-fi.com/baloou" target="_blank" rel="noopener" data-i18n-attr="title:donate.title" title="Kostenlos bleibt spritebit sowieso. Spenden fließen in ein Code-Signatur-Zertifikat, damit Windows bei der Desktop-App nicht mehr warnt."><span data-i18n="donate.menu">spritebit unterstützen (Ko-fi)</span></a>
           <div class="mb-sep" role="separator"></div>
@@ -1049,6 +1050,8 @@
 
     <p id="import-preview" class="msg msg--ok" hidden></p>
     <p id="import-error" class="msg msg--error" hidden></p>
+    <!-- Bitty: bei einem Fehler die Hilfe zu den Formaten aufschlagen (js/helper.js) -->
+    <button type="button" class="btn bitty-help-link" id="import-help" data-i18n="imp.helpLink" hidden>Welche Formate gehen?</button>
 
     <label class="check" id="import-use-palette-label">
       <input type="checkbox" id="import-use-palette" checked>

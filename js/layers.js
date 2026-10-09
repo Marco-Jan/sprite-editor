@@ -266,6 +266,7 @@ export function moveLayer(from, to) {
 export function toggleVisible(i) { meta(sp => { sp.layers[i].visible = !sp.layers[i].visible; }); }
 export function toggleLocked(i) { meta(sp => { sp.layers[i].locked = !sp.layers[i].locked; }); }
 // Durchgehend: neue Frames verknüpfen hier mit dem vorigen (state.js newFrameCels).
+export function setOpacity(i, v) { meta(sp => { sp.layers[i].opacity = Math.max(0, Math.min(1, v)); }); }
 export function toggleContinuous(i) { meta(sp => { sp.layers[i].continuous = !sp.layers[i].continuous; }); }
 
 export function renameLayer(i, name) {
