@@ -705,8 +705,8 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   gap: 4px;
   flex: none;
   max-width: 200px;
-  height: 32px;
-  padding: 0 6px 0 12px;
+  height: 26px;
+  padding: 0 4px 0 10px;
   border: 1px solid var(--line);
   border-bottom-color: var(--line-strong);
   border-radius: var(--r-md) var(--r-md) 0 0;
@@ -718,7 +718,7 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 }
 .sprite-tab:hover { color: var(--text); background: var(--surface-3); }
 .sprite-tab.is-active {
-  height: 35px;
+  height: 28px;
   border-color: var(--line-strong);
   border-top: 2px solid var(--accent);
   border-bottom-color: var(--tab-below);
@@ -726,7 +726,7 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   color: var(--text);
   font-weight: 600;
 }
-.sprite-tab:not(:has(.tab-close)) { padding-right: 12px; }
+.sprite-tab:not(:has(.tab-close)) { padding-right: 10px; }
 .sprite-tab.is-dragging { opacity: 0.4; }
 .sprite-tab.is-drop-before { box-shadow: inset 2px 0 0 var(--accent); }
 .sprite-tab.is-drop-after  { box-shadow: inset -2px 0 0 var(--accent); }
@@ -734,8 +734,8 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 .tab-close {
   display: inline-grid;
   place-items: center;
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   padding: 0;
   border: 0;
   border-radius: var(--r-sm);
@@ -747,11 +747,11 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 .tab-close:hover { opacity: 1; background: var(--surface-4); }
 .tab-close .ui-ico { width: 12px; height: 12px; }
 .tab-new { flex: none; align-self: center; }
-/* Finger: größere Schließ-Knöpfe. */
+/* Finger: etwas mehr Fläche, aber die Reiter sollen sich nicht vordrängen. */
 @media (pointer: coarse) {
-  .sprite-tab { height: 38px; padding-left: 14px; }
-  .sprite-tab.is-active { height: 41px; }
-  .tab-close { width: 28px; height: 28px; }
+  .sprite-tab { height: 30px; padding-left: 12px; }
+  .sprite-tab.is-active { height: 32px; }
+  .tab-close { width: 24px; height: 24px; }
 }
 .stage-title {
   overflow: hidden;
@@ -2376,6 +2376,8 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
   #stage-head .icon-btn,
   .rail-dock .dock-btn,
   #color-bar .current-color { min-width: 44px; min-height: 44px; }
+  /* Das + bei den Reitern bleibt so flach wie sie (sonst hielte es die Zeile hoch). */
+  #stage-head .icon-btn.tab-new { min-width: 32px; min-height: 30px; }
   /* Die Timeline-Knoepfe duerfen etwas kleiner sein: sie stehen in zwei
      ruhigen Zeilen und nicht in einer scrollenden Reihe — dafuer passt die
      zweite Zeile am Stueck aufs Display. */
