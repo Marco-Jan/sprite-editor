@@ -23,6 +23,62 @@ export function normalize(s) {
 
 const words = s => (s ? s.split(' ') : []);
 
+// Wörter, die Leute tippen, die aber nirgends so in der Oberfläche stehen.
+// Schlüssel normalisiert (klein, ohne Umlaute); Werte = Wörter, die dort
+// tatsächlich vorkommen (Deutsch und Englisch). Ein Suchwort passt, wenn es
+// selbst oder eins seiner Synonyme passt.
+export const SYNONYMS = {
+  radiergummi: ['radierer', 'eraser'],
+  gummi: ['radierer', 'eraser'],
+  loschen: ['radierer', 'eraser', 'entf', 'delete'],
+  delete: ['eraser', 'entf', 'loschen'],
+  speichern: ['sichern', 'export', 'exportieren'],
+  save: ['export', 'sichern'],
+  eimer: ['fullen', 'fill'],
+  farbeimer: ['fullen', 'fill'],
+  bucket: ['fill', 'fullen'],
+  pipette: ['farbwahl', 'pipette', 'eyedropper'],
+  eyedropper: ['pipette', 'farbwahl'],
+  spiegeln: ['symmetrie', 'flip', 'mirror', 'spiegeln'],
+  mirror: ['symmetrie', 'spiegeln'],
+  drehen: ['rotate', 'drehen'],
+  vergrossern: ['zoom', 'skalieren', 'scale'],
+  grosse: ['skalieren', 'scale', 'leinwand', 'canvas', 'resize'],
+  resize: ['skalieren', 'leinwand', 'grosse'],
+  layer: ['ebene', 'ebenen'],
+  ebene: ['layer', 'layers'],
+  animation: ['frames', 'frame', 'timeline'],
+  animieren: ['frames', 'animation', 'timeline'],
+  bild: ['frame', 'frames'],
+  gif: ['gif', 'animation'],
+  png: ['png', 'export'],
+  rueckgangig: ['undo'],
+  ruckgangig: ['undo'],
+  undo: ['ruckgangig'],
+  hintergrund: ['transparent', 'background'],
+  durchsichtig: ['transparent'],
+  kachel: ['tiles', 'kacheln', 'tilemap'],
+  tile: ['kacheln', 'tilemap'],
+  foto: ['schablone', 'photo', 'template'],
+  photo: ['schablone', 'foto', 'template'],
+  vorlage: ['schablone', 'template'],
+  linie: ['line', 'linie', 'hilfslinien'],
+  raster: ['grid', 'hilfslinien', 'guides'],
+  grid: ['raster', 'hilfslinien'],
+  farbe: ['palette', 'farben', 'color'],
+  colour: ['color', 'palette'],
+};
+
+/** Ein Suchwort samt Synonymen (bekanntes Wort oder dessen Anfang ab 6
+ *  Zeichen — kürzer würde „anim“ über „animation“ schon alle Frames finden). */
+function variants(q) {
+  const out = [q];
+  for (const [k, vs] of Object.entries(SYNONYMS)) {
+    if (k === q || (q.length >= 6 && k.startsWith(q))) out.push(...vs);
+  }
+  return [...new Set(out)];
+}
+
 /** Höchstens ein Tippfehler (ersetzt, fehlt, zu viel, zwei vertauscht)? */
 function oneEdit(a, b) {
   if (a === b) return true;
@@ -81,10 +137,14 @@ export function search(query, entries, limit = 8) {
     const tw = words(normalize(e.text));
     let total = 0;
     for (const q of qs) {
-      const inLabel = wordScore(q, lw, true);
-      const inText = wordScore(q, tw, false);
-      if (!inLabel && !inText) return; // ein Suchwort passt nirgends → raus
-      total += inLabel * 3 + inText;
+      // Das Wort selbst zählt voll, ein Synonym einen Hauch weniger.
+      let best = 0;
+      for (const v of variants(q)) {
+        const s = wordScore(v, lw, v === q) * 3 + wordScore(v, tw, false);
+        best = Math.max(best, v === q ? s : s * 0.9);
+      }
+      if (!best) return; // ein Suchwort passt nirgends → raus
+      total += best;
     }
     scored.push({ e, total, idx });
   });

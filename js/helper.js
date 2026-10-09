@@ -18,7 +18,7 @@ import { t, i18nVariants } from './i18n.js';
 import { search } from './search.js';
 
 const KEY = 'spritebit_bitty';
-const TIP_COUNT = 10;
+const TIP_COUNT = 11;
 
 // Tour: Ziel (erstes sichtbares gewinnt) und Text. Ohne Ziel zeigt die
 // Blase auf Bitty selbst.
@@ -163,7 +163,11 @@ function showTip(auto = false, advance = true) {
 // findet „layer“ die „Ebenen“ — angezeigt wird aber, was auf dem
 // Bildschirm steht.
 
-/** @typedef {{ kind: 'help'|'tool'|'panel'|'menu', label: string, names: string, sub: string, text: string, el: HTMLElement }} Entry */
+/** @typedef {{ kind: 'help'|'tool'|'panel'|'menu'|'action', label: string, names: string, sub: string, text: string, el: HTMLElement, danger?: boolean }} Entry */
+
+// Was Bitty nie selbst drückt, sondern nur zeigt: alles, was löscht oder
+// zurücksetzt. Lieber einmal zu vorsichtig.
+const DANGER = /del|clear|reset|remove|delete/i;
 
 let query = null, results = null, none = null;
 /** @type {Entry[]} */
@@ -213,7 +217,22 @@ function collect() {
     const span = el.querySelector('span');
     const label = clean(span?.textContent);
     const titleEl = el.closest('.mb-menu')?.querySelector('.mb-title');
-    if (label) out.push({ kind: 'menu', label, names: allLangs(span), sub: clean(titleEl?.textContent), text: allLangs(titleEl), el });
+    if (label) out.push({ kind: 'menu', label, names: allLangs(span), sub: clean(titleEl?.textContent), text: allLangs(titleEl), el, danger: DANGER.test(el.id) });
+  });
+  // Knöpfe in Panels, Timeline, Werkzeugleiste und über der Fläche — als
+  // Befehle: Enter drückt sie (außer den gefährlichen).
+  document.querySelectorAll('.panel button[id], #timeline button[id], #stage-head button[id], #toolbar button[id]').forEach(el => {
+    if (el.dataset.tool || el.id === 'bitty-btn') return;
+    const label = clean(el.querySelector('.btn-label')?.textContent || el.textContent) || clean(el.title || el.getAttribute('aria-label'));
+    if (label.length < 2) return;
+    const where = el.closest('.panel')?.querySelector('.panel-title');
+    const names = [el, ...el.querySelectorAll('[data-i18n]')].map(n => allLangs(n)).join(' ');
+    out.push({
+      kind: 'action', label, el, danger: DANGER.test(el.id),
+      names: `${names} ${allLangs(el, 'title')} ${allLangs(el, 'aria-label')}`,
+      sub: clean(where?.textContent) || (label !== clean(el.title) ? clean(el.title) : ''),
+      text: el.title || '',
+    });
   });
   // Hilfe: jeder Absatz und jede Kürzel-Zeile, mit Abschnitt. Die anderen
   // Sprachen stehen je Block als HTML in STATIC — Absatz k dort gehört zu
@@ -250,7 +269,11 @@ function renderResults() {
   body.hidden = searching;
   if (!searching) { results.hidden = true; none.hidden = true; hits = []; return; }
   clearTimeout(closeTimer); // wer tippt, liest — nicht mehr von selbst schließen
-  hits = /** @type {Entry[]} */ (search(q, collect(), 8));
+  // Dasselbe gibt es oft zweimal (Menüpunkt und Knopf „Rückgängig“) — einmal reicht.
+  const seen = new Set();
+  hits = /** @type {Entry[]} */ (search(q, collect(), 20))
+    .filter(h => { const k = h.label.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; })
+    .slice(0, 8);
   sel = 0;
   none.hidden = hits.length > 0;
   none.textContent = t('bitty.noHits');
@@ -306,7 +329,16 @@ export function openHelpAt(target) {
 function go(h) {
   const back = query.value;
   if (h.kind === 'help') { openHelpAt(h.el); return; }
+  const disabled = /** @type {HTMLButtonElement} */ (h.el).disabled;
+  // Befehl ausführen: Werkzeug wählen, Knopf drücken, Menüpunkt auslösen.
+  if ((h.kind === 'tool' || h.kind === 'action' || h.kind === 'menu') && !h.danger && !disabled) {
+    hide();
+    h.el.click();
+    if (visible(h.el)) flash(h.el);
+    return;
+  }
   if (h.kind === 'menu') {
+    // Gefährlich (z. B. „Alles zurücksetzen“): nur das Menü aufklappen und zeigen.
     hide();
     const menu = h.el.closest('.mb-menu');
     const title = menu?.querySelector('.mb-title');
@@ -314,20 +346,29 @@ function go(h) {
     requestAnimationFrame(() => { h.el.focus(); flash(h.el); });
     return;
   }
-  // Werkzeug oder Panel: Bitty zeigt darauf, ein Knopf führt es aus.
-  /** @type {{ label: string, primary?: boolean, onClick: () => void }[]} */
-  const actions = [];
-  if (h.kind === 'panel' && !visible(h.el)) {
+  // Panel oder ein Knopf, den Bitty nicht drückt: hinführen und zeigen.
+  const panel = h.kind === 'panel' ? h.el : h.el.closest('.panel');
+  if (panel && !visible(panel)) {
     // Panel liegt im Dock: Schublade aufmachen
-    document.querySelector(`.dock-btn[data-target="${h.el.dataset.dock || h.el.dataset.panel}"]`)?.click();
+    document.querySelector(`.dock-btn[data-target="${panel.dataset.dock || panel.dataset.panel}"]`)?.click();
   }
-  if (h.kind === 'tool') actions.push({ label: t('bitty.use'), primary: true, onClick: () => { h.el.click(); hide(); } });
-  else actions.push({ label: t('bitty.ok'), primary: true, onClick: hide });
-  actions.push({ label: t('bitty.back'), onClick: () => { showTip(false, false); query.value = back; renderResults(); } });
+  const msg = h.kind === 'panel' ? t('bitty.foundPanel', { name: h.label })
+    : disabled ? t('bitty.disabled', { name: h.label })
+    : t('bitty.danger', { name: h.label });
   requestAnimationFrame(() => {
     setTarget(visible(h.el) ? h.el : null);
-    say(t(h.kind === 'tool' ? 'bitty.foundTool' : 'bitty.foundPanel', { name: h.label }), actions);
+    say(msg, [
+      { label: t('bitty.ok'), primary: true, onClick: hide },
+      { label: t('bitty.back'), onClick: () => { showTip(false, false); query.value = back; renderResults(); } },
+    ]);
   });
+}
+
+/** Strg+K: Bitty mit Suchfeld öffnen, von überall. */
+export function openSearch() {
+  if (!bubble || inTour()) return;
+  if (isOpen() && !bubble.querySelector('.bitty-search').hidden) { query.focus(); query.select(); return; }
+  showTip(false, false);
 }
 
 function onSearchKey(e) {
