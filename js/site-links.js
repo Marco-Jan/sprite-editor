@@ -29,7 +29,7 @@
   // Schreibt tools/deploy.py: web = package.json, desktop = neueste
   // veröffentlichte Release (höchster v…-Tag von spritebit-rs).
   var VERSIONS = {
-    web:     '3.1.11',
+    web:     '3.1.12',
     desktop: '1.0.5',
   };
 

@@ -355,8 +355,10 @@ function render(id, geom) {
       break;
 
     case 'zone':
+      // Seitlich (links/rechts der Zeichenfläche) liegen die Leisten wie
+      // Panels untereinander in einer Spalte (styles.css .bar-zone--side) —
+      // nicht mehr als schmale senkrechte Säulen.
       placeBar(id, p.zone);
-      if (p.zone === 'left' || p.zone === 'right') el.classList.add('is-vertical');
       break;
 
     default:   // 'dock' — Icon im Dock, Inhalt als Schublade daneben
@@ -412,8 +414,8 @@ function syncButtons(el, id) {
     fl.title = t(isFloat(p) ? 'lay.dockBar' : 'lay.float');
     fl.setAttribute('aria-label', fl.title);
   }
-  const grip = el.querySelector('.bar-grip');
-  if (grip) grip.title = t('lay.grip');
+  const title = el.querySelector('.bar-title');
+  if (title && BAR_DOCK[id]) title.textContent = t(BAR_DOCK[id][1]);
 }
 
 function headButton(cls, icon) {
@@ -727,15 +729,17 @@ function initPanel(el) {
 function initBar(id) {
   const el = $(id);
   KIND[id] = 'bar';
+  // Kopf wie bei einem Panel: Titel (nur in der Panel-Spalte und schwebend
+  // zu sehen), Fenster und Pin. Angefasst wird am ganzen Kopf — ein eigenes
+  // Griffstück braucht es dafür nicht.
   const handle = document.createElement('div');
   handle.className = 'bar-handle';
-  const grip = document.createElement('span');
-  grip.className = 'bar-grip';
-  grip.innerHTML = iconSvg('grip');
+  const title = document.createElement('span');
+  title.className = 'bar-title';
   // Dieselben zwei Knöpfe wie im Panel-Kopf — und dieselbe Bedeutung.
   const fl = headButton('bar-float', 'float');
   const pin = headButton('bar-pin', 'pin');
-  handle.append(grip, fl, pin);
+  handle.append(title, fl, pin);
   el.prepend(handle);
 
   fl.addEventListener('click', () => doToggleFloat(id));
@@ -743,7 +747,7 @@ function initBar(id) {
   el.addEventListener('pointerdown', () => { if (isFloat(placeOf(id))) bringToFront(el); });
   el.addEventListener('panel-focus', () => { if (isFloat(placeOf(id))) bringToFront(el); });
 
-  initDrag(id, grip);
+  initDrag(id, handle);
 
   // Dock-Icon (nur sichtbar, solange die Leiste im Dock wohnt).
   const [icon, label] = BAR_DOCK[id];

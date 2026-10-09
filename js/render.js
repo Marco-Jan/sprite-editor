@@ -47,6 +47,9 @@ export const renderCallbacks = {
   onRenderLayers:    () => {},
   // Hilfslinien (guides.js) — zeichnet über Gitter und Auswahl.
   onDrawOverlay:     (_ctx, _W, _H, _cs) => {},
+  // Tilemap-Ebenen (tilemap.js): Kachelraster und Vorschau; Panel „Kacheln“.
+  onDrawTiles:       (_ctx, _W, _H, _cs) => {},
+  onRenderTiles:     () => {},
   onGuideInfo:       (_msg) => {},
   onRenderGuides:    () => {},
   onEditorRendered:  () => {},
@@ -268,6 +271,7 @@ export function renderEditor() {
   if (selection.rect) drawSelectionFrame(ctx, selection.rect, selection.mask, r);
   if (selection.path) drawLassoPath(ctx, selection.path, r);
   if (state.mirror !== 'off') drawMirrorGuides(ctx, W, H, r);
+  renderCallbacks.onDrawTiles(ctx, W, H, r);
   renderCallbacks.onDrawOverlay(ctx, W, H, r);
 
   updateStageTitle();
@@ -1127,4 +1131,5 @@ export function renderAll() {
   renderCallbacks.onRenderLayers();
   renderCallbacks.onRenderGuides();
   renderCallbacks.onLightPanel();
+  renderCallbacks.onRenderTiles();
 }

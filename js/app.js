@@ -13,7 +13,8 @@ import {
 import { initDock } from './dock.js';
 import { initLayout, isMobileLayout, refreshToolOpts } from './layout.js';
 import { initTabs } from './tabs.js';
-import { draggedSize, SIZED_TOOLS } from './sizedrag.js';
+import { draggedSize, clampSize, SIZED_TOOLS } from './sizedrag.js';
+import { calcInput } from './calc.js';
 import { applyIcons, iconSvg } from './icons.js';
 import { showConfirmToast, showInfoToast } from './toast.js';
 import {
@@ -60,7 +61,8 @@ import { initMenubar } from './menubar.js';
 import { initFullscreen, enterFullscreen, exitFullscreen } from './fullscreen.js';
 import { normalizeTags } from './tags.js';
 import { initPreview, renderPreview } from './preview.js';
-import { initGuides, guidePointerDown, toggleEdit as toggleGuideEdit, toggleShow as toggleGuides } from './guides.js';
+import { initTilemap, tileModeOn, tilePointerDown } from './tilemap.js';
+import { initGuides, guidePointerDown, guideAt, toggleEdit as toggleGuideEdit, toggleShow as toggleGuides } from './guides.js';
 import { parseTsSprite } from './tsimport.js';
 import { CODE_FORMATS, getFormat, codeFilename } from './codegen.js';
 import {
@@ -356,9 +358,9 @@ let shapeStart = null;
 let sizeDrag = null;
 
 function setBrushSize(n) {
-  state.brushSize = n;
-  document.querySelectorAll('.brush-sz').forEach(b =>
-    b.classList.toggle('is-active', Number(b.dataset.size) === n));
+  state.brushSize = clampSize(n);
+  $('brush-size').value = String(state.brushSize);
+  if (document.activeElement !== $('brush-size-num')) $('brush-size-num').value = String(state.brushSize);
 }
 
 const shapeLabel = tool => t(`shape.${tool}`);
@@ -389,12 +391,22 @@ function initCanvasEvents() {
   const canvas = $('editor-canvas');
 
   canvas.addEventListener('pointerdown', e => {
+    // Hand-Werkzeug auf einer Hilfslinie: die Linie ziehen statt die Ansicht
+    // verschieben (stopPropagation hält das Verschieben in view.js ab).
+    if (state.tool === 'pan' && e.button === 0 && guideAt(e)) { e.stopPropagation(); guidePointerDown(e); return; }
     // Leertaste, Hand-Werkzeug oder mittlere Taste: verschieben, nicht malen (view.js).
     if (isPanMode() || e.button === 1) return;
     // Beim Abspielen wird nicht gemalt — der Tipp hält an.
     if (isPlaying()) { e.preventDefault(); stopPlayback(); return; }
     // Hilfslinien verschieben: die Zeichenfläche gehört den Linien.
     if (state.guideEdit) { guidePointerDown(e); return; }
+    // Tilemap im Modus „Kacheln“: setzen, leeren, füllen, aufnehmen (tilemap.js).
+    if (tileModeOn() && (e.button === 0 || e.button === 2)) {
+      if (!e.altKey && layerBlocked()) return;
+      try { canvas.setPointerCapture(e.pointerId); } catch {}
+      tilePointerDown(e);
+      return;
+    }
     // Pointer einfangen → move/up feuern weiter, auch außerhalb des Canvas.
     try { canvas.setPointerCapture(e.pointerId); } catch {}
 
@@ -819,8 +831,11 @@ function initToolbar() {
   selAction('sel-fill-btn',   () => { info(t('sel.filled',      { n: fillSelection() })); });
   selAction('sel-none-btn',   () => { deselect(); info(t('sel.dropped')); }, false);
 
-  document.querySelectorAll('.brush-sz').forEach(btn =>
-    btn.addEventListener('click', () => { setBrushSize(Number(btn.dataset.size)); saveState(); }));
+  // Größe: Regler und Zahlenfeld zeigen dasselbe (1–64).
+  $('brush-size').addEventListener('input', e => setBrushSize(e.target.value));
+  $('brush-size-num').addEventListener('input', e => { if (e.target.value !== '') setBrushSize(e.target.value); });
+  $('brush-size-num').addEventListener('change', e => { setBrushSize(e.target.value); e.target.value = String(state.brushSize); });
+  for (const id of ['brush-size', 'brush-size-num']) $(id).addEventListener('change', saveState);
 
   const strength = $('strength-slider');
   strength.addEventListener('input', () => {
@@ -1049,8 +1064,8 @@ function initImagePanel() {
   });
 
   $('resize-btn').addEventListener('click', () => {
-    const w = Number($('resize-w').value);
-    const h = Number($('resize-h').value);
+    const w = calcInput($('resize-w'));
+    const h = calcInput($('resize-h'));
     const anchor = $('resize-anchor').value;
     const apply = () => {
       const r = resizeCanvas(w, h, anchor);
@@ -1119,6 +1134,15 @@ function initCleanupPanel() {
 // Licht-Panel — Lichtquelle wählen, Kanten beleuchten, Schatten werfen
 // (Rechnung in js/light.js). Mit Auswahl wirkt beides nur darin.
 // ────────────────────────────────────────────────────────────────────
+// Felder mit data-calc (Sprite-Größen) rechnen: „24 * 4“ wird beim
+// Verlassen des Felds zu 96 (js/calc.js). Enter löst in den Dialogen
+// „Erstellen“ bzw. „OK“ aus — die rechnen dann selbst mit calcInput.
+function initCalcFields() {
+  document.querySelectorAll('input[data-calc]').forEach(inp => {
+    inp.addEventListener('change', () => { calcInput(/** @type {HTMLInputElement} */ (inp)); });
+  });
+}
+
 function initLightPanel() {
   // Licht und Schatten liegen als eigene Ebenen (light.js: layer.fx) — das
   // Original bleibt unberührt. Basis ist die aktive Ebene; ist die aktive
@@ -1607,8 +1631,7 @@ function syncUiFromState() {
   $('tolerance-val').textContent = state.wandTolerance + '%';
   $('bg-dark-btn').classList.toggle('is-active', state.editorBg === 'dark');
   $('bg-bw-btn').classList.toggle('is-active', state.editorBg === 'bw');
-  document.querySelectorAll('.brush-sz').forEach(b =>
-    b.classList.toggle('is-active', Number(b.dataset.size) === state.brushSize));
+  setBrushSize(state.brushSize);
   const fmtSel = $('output-format');
   if (fmtSel) { fmtSel.value = state.outputFormat; syncFormatUI(); }
   $('shape-fill-btn').classList.toggle('is-active', state.shapeFill);
@@ -1671,6 +1694,8 @@ async function init() {
   initCleanupPanel();
   initTabs();
   initLightPanel();
+  initTilemap();
+  initCalcFields();
   initTemplate();
   initTemplatePanel();
   initNewSpriteModal();

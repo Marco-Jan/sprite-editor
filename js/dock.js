@@ -17,6 +17,7 @@ import { iconSvg } from './icons.js';
 
 
 let openPanel = null;
+const MOBILE_Q = window.matchMedia('(max-width: 1100px)');
 const docks = [];
 
 export function closeDrawer() { show(null); }
@@ -40,6 +41,8 @@ function show(panel) {
   document.querySelectorAll('[data-dock].is-guest').forEach(p => {
     p.classList.remove('is-guest', 'is-shown');
     p.closest('.rail').append(p);
+    // Zurück in die Schublade: Leisten stehen dort wieder senkrecht.
+    if (p.classList.contains('is-bar-drawer') && !MOBILE_Q.matches) p.classList.add('is-vertical');
   });
   openPanel = panel;
   document.querySelectorAll('.rail > [data-dock]').forEach(p => p.classList.toggle('is-shown', p === panel));
@@ -50,6 +53,8 @@ function show(panel) {
   if (pins && rail.classList.contains('has-pins')) {
     pins.append(panel);
     panel.classList.add('is-guest');
+    // In der breiten Panel-Spalte liegt eine Leiste wie ein Panel, nicht senkrecht.
+    panel.classList.remove('is-vertical');
     panel.scrollIntoView({ block: 'nearest' });
   }
   document.querySelectorAll('.dock-btn').forEach(b => {

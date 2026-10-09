@@ -130,6 +130,9 @@ function hitTest(e) {
   return best;
 }
 
+/** Liegt der Zeiger auf einer Hilfslinie? (Hand-Werkzeug: Linie ziehen statt verschieben) */
+export const guideAt = e => !!hitTest(e);
+
 // Vom Canvas aufgerufen (app.js), solange der Verschieben-Modus läuft.
 // Gibt immer true zurück: im Modus wird nicht gemalt. Ein Tipp neben die
 // Linien beendet den Modus — auf dem Handy gibt es kein Esc.
@@ -181,8 +184,11 @@ export function guidePointerDown(e) {
 // Zeiger-Form im Verschieben-Modus: zeigt, was sich ziehen lässt.
 function hoverCursor(e) {
   const wrap = $('editor-canvas-wrap');
-  if (!state.guideEdit) { wrap.style.cursor = ''; return; }
+  // Mit dem Hand-Werkzeug lassen sich Linien auch ohne den Modus greifen.
+  const hand = state.tool === 'pan';
+  if (!state.guideEdit && !hand) { wrap.style.cursor = ''; return; }
   const hit = hitTest(e);
+  if (!state.guideEdit) { wrap.style.cursor = hit ? (hit.kind === 'v' ? 'ew-resize' : 'ns-resize') : ''; return; }
   wrap.style.cursor = !hit ? 'default' : (hit.kind === 'v' ? 'ew-resize' : 'ns-resize');
 }
 

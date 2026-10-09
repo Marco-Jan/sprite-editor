@@ -5,6 +5,7 @@
 // exportierten Objekte (state.curSprite = …, sprites[id] = …), NICHT über
 // lokale Re-Assignments — sonst sehen andere Module die Änderung nicht.
 import { normalizeFx } from './light.js';
+import { copyTileset, normalizeTileset } from './tiles.js';
 import { maskedCel, maskActive, copyMask, decodeMask } from './mask.js';
 import { BUILTIN_PALETTES, DEFAULT_PALETTE, paletteSize, cellToColor } from './data.js';
 import { t } from './i18n.js';
@@ -59,8 +60,14 @@ export const state = {
   outputFormat:  'ts',     // Schlüssel aus CODE_FORMATS (codegen.js)
   mirror:        'off',    // 'off' | 'x' (senkrechte Achse) | 'y' | 'both'
   shapeFill:     false,    // Rechteck/Ellipse gefüllt statt nur Kontur
-  pixelPerfect:  false,
-  maskEdit:      false,    // Werkzeuge malen in die Maske der aktiven Ebene (js/mask.js)    // Stift/Radierer 1 px: L-Ecken entfernen (js/pixelperfect.js)
+  pixelPerfect:  false,    // Stift/Radierer 1 px: L-Ecken entfernen (js/pixelperfect.js)
+  maskEdit:      false,    // Werkzeuge malen in die Maske der aktiven Ebene (js/mask.js)
+  // Tilemap-Ebenen (js/tiles.js, js/tilemap.js): 'pixel' = Kacheln bemalen,
+  // 'tiles' = Kacheln setzen; Auto legt beim Malen in leere Zellen neue an.
+  tileMode:      'pixel',
+  /** @type {'auto'|'manual'} */
+  tileAuto:      'auto',
+  tile:          1,        // gewählte Kachel zum Setzen (1 …)
   showColor:     false,    // aktuelle Farbe im Bild hervorheben (alles andere abgedunkelt)
   // Palette, die das Paletten-Panel gerade ZEIGT. null = die des Sprites.
   // Anschauen ändert nichts am Sprite — zugewiesen wird nur per Knopf.
@@ -172,13 +179,13 @@ export function attachGrid(sp) {
 // continuous: „durchgehende" Ebene — ein neuer Frame
 // bekommt hier keine leere Zelle, sondern teilt sich das Bild des vorigen.
 export function defaultLayer(n = 1) {
-  return { name: t('ly.name', { n }), visible: true, locked: false, opacity: 1, continuous: false, fx: null, mask: null };
+  return { name: t('ly.name', { n }), visible: true, locked: false, opacity: 1, continuous: false, fx: null, mask: null, tileset: null };
 }
 
 // Kopie einer Ebene samt Effekt-Einstellungen (light.js) — eine flache
 // Kopie teilte sich das fx-Objekt mit dem Original, und Undo-Schnappschüsse
 // würden beim nächsten Neuberechnen still mitgeändert.
-export const copyLayer = l => ({ ...l, fx: l.fx ? { ...l.fx, dir: { ...l.fx.dir } } : null, mask: copyMask(l.mask) });
+export const copyLayer = l => ({ ...l, fx: l.fx ? { ...l.fx, dir: { ...l.fx.dir } } : null, mask: copyMask(l.mask), tileset: copyTileset(l.tileset) });
 
 export function normalizeLayer(l, n) {
   const op = Number(l?.opacity);
@@ -191,6 +198,8 @@ export function normalizeLayer(l, n) {
     fx: normalizeFx(l?.fx),
     // Roh — makeSprite prüft die Maske gegen die Größe (decodeMask).
     mask: l?.mask ?? null,
+    // Tilemap-Ebene: Kachelsatz (js/tiles.js), sonst null.
+    tileset: normalizeTileset(l?.tileset),
   };
 }
 

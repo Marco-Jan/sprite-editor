@@ -55,7 +55,7 @@ test('die Tabellen wurden überhaupt gefunden', () => {
 test('jeder t()-Aufruf im Code hat einen deutschen Text', () => {
   const files = ['app', 'layout', 'frames', 'export', 'layers', 'palettes', 'sprites',
     'storage', 'render', 'toast', 'guides', 'template', 'transform', 'codegen',
-    'tsimport', 'selection', 'state', 'migrate', 'palpicker', 'dock', 'tabs'];
+    'tsimport', 'selection', 'state', 'migrate', 'palpicker', 'dock', 'tabs', 'tilemap'];
   const fehlend = new Set();
   for (const f of files) {
     const src = read(`js/${f}.js`);

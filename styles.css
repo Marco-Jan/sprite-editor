@@ -1172,7 +1172,8 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 #qp-sort { padding: 5px 8px; flex: none; }
 
 /* Hilfslinien: im Verschieben-Modus kein Pinsel-Umriss */
-#editor-canvas-wrap.is-guide-edit #brush-cursor { display: none; }
+#editor-canvas-wrap.is-guide-edit #brush-cursor,
+#editor-canvas-wrap.is-tile-mode #brush-cursor { display: none; }
 #gd-show.is-active, #gd-edit.is-active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent-line); }
 
 /* Vorschau-Panel (js/preview.js) — der ganze Sprite, ohne Gitter.
@@ -1998,17 +1999,65 @@ body.editor-fullscreen .fs-exit.is-visible { opacity: 1; pointer-events: auto; }
 
 /* Griff + Pin vorn an Werkzeugleiste und Farbzeile. */
 .bar-handle { display: flex; align-items: center; gap: 2px; margin-inline-end: var(--sp-1); }
-.bar-grip {
-  display: grid;
-  place-items: center;
-  width: 18px;
-  height: 26px;
-  color: var(--text-dim);
-  cursor: grab;
-  touch-action: none;
+.bar-handle { cursor: grab; touch-action: none; }
+.bar-title { display: none; }
+
+/* Leisten in der Panel-Spalte (angepinnt oder als Gast) sehen aus wie ein
+   Panel: Kopf mit Titel links und Fenster/Pin rechts, darunter der Inhalt,
+   der in der Breite umbricht — nicht eine schmale senkrechte Leiste mitten
+   in der breiten Spalte. */
+.rail-pins > #toolbar,
+.rail-pins > #color-bar,
+.rail-pins > #timeline,
+.bar-zone--side > #toolbar,
+.bar-zone--side > #color-bar,
+.bar-zone--side > #timeline {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 0 var(--sp-3) var(--sp-3);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-1);
 }
-.bar-grip:hover { color: var(--text); }
-.bar-grip .ui-ico { width: 12px; height: 12px; }
+.rail-pins > #toolbar > .bar-handle,
+.rail-pins > #color-bar > .bar-handle,
+.rail-pins > #timeline > .bar-handle,
+.bar-zone--side > #toolbar > .bar-handle,
+.bar-zone--side > #color-bar > .bar-handle,
+.bar-zone--side > #timeline > .bar-handle {
+  flex: 1 1 100%;
+  order: -1;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  margin: 0 calc(-1 * var(--sp-3));
+  padding: var(--sp-3);
+}
+.rail-pins .bar-title,
+.bar-zone--side .bar-title,
+.is-floating > .bar-handle .bar-title {
+  display: block;
+  flex: 1;
+  margin-inline-end: auto;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.is-floating > .bar-handle { flex: 1 1 100%; justify-content: flex-end; }
+.rail-pins .tool-group,
+.rail-pins #quick-palette,
+.bar-zone--side .tool-group,
+.bar-zone--side #quick-palette { flex-wrap: wrap; }
+.rail-pins > #timeline > .tl-frames,
+.bar-zone--side > #timeline > .tl-frames { flex: 1 1 100%; min-width: 0; }
+/* In der Spalte als Icon-Raster — mit Namen stünde je Zeile nur ein Werkzeug. */
+.rail-pins > #toolbar .tool-name,
+.bar-zone--side > #toolbar .tool-name { display: none; }
+.rail-pins > #toolbar .tool-sep,
+.bar-zone--side > #toolbar .tool-sep { display: none; }
 .bar-pin[aria-pressed="true"] { color: var(--accent); }
 
 body.is-dragging-ui, body.is-dragging-ui * { cursor: grabbing !important; user-select: none; }
@@ -2043,10 +2092,12 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
 
 /* Senkrecht: links/rechts der Zeichenfläche und als Schublade im Dock.
    js/layout.js setzt dafür .is-vertical an die Leiste. */
-.bar-zone--side { flex-direction: row; overflow-y: auto; background: var(--surface-1); }
+/* Seitliche Zone: eine Spalte wie die Panel-Spalte, die Leisten darin
+   untereinander und panelartig (Regeln unten bei .rail-pins). */
+.bar-zone--side { flex-direction: column; width: 17rem; overflow-y: auto; background: var(--surface-1); }
 .bar-zone[data-zone="left"]  { border-right: 1px solid var(--line); }
 .bar-zone[data-zone="right"] { border-left: 1px solid var(--line); }
-.bar-zone--side > * + * { border-left: 1px solid var(--line); }
+.bar-zone--side > * + * { border-top: 1px solid var(--line); }
 #toolbar.is-vertical,
 #color-bar.is-vertical,
 #timeline.is-vertical {
@@ -2066,7 +2117,33 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
 .is-vertical .btn-group { flex-direction: column; }
 .is-vertical .btn-group .btn { border-radius: var(--r-md); }
 .is-vertical .field--inline { flex-direction: column; }
-.is-vertical .size-btns { flex-wrap: wrap; justify-content: center; max-width: 64px; }
+#brush-size { width: 110px; }
+/* Kacheln (js/tilemap.js) */
+#tile-on:not([hidden]), #tile-off:not([hidden]) { display: flex; flex-direction: column; gap: var(--sp-2); }
+#tile-on .field-note, #tile-off .field-note { margin: 0; }
+.tile-list { display: flex; flex-wrap: wrap; gap: 4px; max-height: 260px; overflow-y: auto; padding: 2px; }
+.tile-item {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm, 6px);
+  background: repeating-conic-gradient(var(--surface-2) 0 25%, var(--surface-3) 0 50%) 0 0 / 8px 8px;
+  cursor: pointer;
+}
+.tile-item canvas { image-rendering: pixelated; display: block; }
+.tile-item span {
+  position: absolute; right: 1px; bottom: 0;
+  font-size: 9px; line-height: 1; padding: 1px 2px; border-radius: 3px;
+  background: rgba(0, 0, 0, 0.55); color: #fff;
+}
+.tile-item:hover { border-color: var(--text-dim); }
+.tile-item.is-active { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-line); }
+.tile-info { font-variant-numeric: tabular-nums; }
+.input--calc { width: 5.5rem; font-variant-numeric: tabular-nums; }
+#brush-size-num { width: 3.5rem; }
+.is-vertical #brush-size { width: 100%; }
 .is-vertical #quick-palette { flex-direction: column; flex-wrap: nowrap; }
 .is-vertical .qp-sep { width: 22px; height: 1px; }
 /* Timeline in der schmalen Spalte: die Gruppen sind kurz (drei Knoepfe) und
@@ -2306,7 +2383,7 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
   #workspace > .rail > #color-bar.is-shown,
   #workspace > .rail > #timeline.is-shown { padding: var(--sp-3); }
   /* Panels werden hier nicht angepinnt; Leisten schon — nur der Griff fehlt. */
-  .panel-pin, .panel-float, .bar-float, .bar-grip { display: none !important; }
+  .panel-pin, .panel-float, .bar-float { display: none !important; }
   .bar-handle { margin-inline-end: 0; }
 
   /* Kopf der Bühne in einer Zeile. */
@@ -2547,7 +2624,7 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
     border-radius: var(--r-lg) var(--r-lg) 0 0;
   }
   #tool-opts[hidden], #tool-opts > [hidden] { display: none; }
-  #tool-opts .size-btns { flex-wrap: wrap; }
+  #tool-opts #brush-size { width: 120px; }
   #tool-opts .brush-sz { min-width: 32px; padding: 7px 6px; }
   #tool-opts input[type="range"] { width: 120px; }
 }

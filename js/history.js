@@ -22,6 +22,9 @@ let pendingSnapshot = null;
 export const historyCallbacks = {
   onChange:  () => {},
   onRestore: () => {},
+  // Kurz vor dem Eintrag: Tilemap-Ebenen mit ihren Kachelsätzen abgleichen
+  // (js/tilemap.js) — die Änderung am Kachelsatz gehört in denselben Schritt.
+  beforeCommit: (_id, _before) => {},
 };
 
 // Ein Eintrag sichert den GANZEN Sprite: alle Frames samt Dauer, die fps,
@@ -137,6 +140,7 @@ export function commitStroke() {
   if (!pendingSnapshot) return;
   const { id, before } = pendingSnapshot;
   pendingSnapshot = null;
+  if (sprites[id]) historyCallbacks.beforeCommit(id, before);
   const after = snapAfter(id, before);
   if (after && !snapsEqual(before, after)) push({ id, before, after });
 }
@@ -155,6 +159,7 @@ export function recordOpOn(id, fn) {
   const before = snap(id);
   if (!before) { fn(); return; }
   fn();
+  historyCallbacks.beforeCommit(id, before);
   const after = snapAfter(id, before);
   if (after && !snapsEqual(before, after)) push({ id, before, after });
 }
