@@ -702,6 +702,7 @@ const STATIC = {
       + '<div class="sc-row"><b>Click</b><span>Draw</span></div>'
       + '<div class="sc-row"><b>Right-click</b><span>Erase (hold for continuous)</span></div>'
       + '<div class="sc-row"><b>Alt + click</b><span>Eyedropper on the grid</span></div>'
+      + '<div class="sc-row"><b>Alt + right-drag</b><span>Size of brush, eraser and spray</span></div>'
       + '<div class="sc-row"><b>Hold Shift + Alt</b><span>Stencil to the front</span></div>'
       + '<div class="sc-row"><b>Shift + Alt + drag</b><span>Move the stencil</span></div>'
       + '<div class="sc-row"><b>Shift + Alt + right-click</b><span>Stencil eyedropper</span></div>'
@@ -1060,6 +1061,7 @@ const MSG = {
     'cln.outlined':    'Outline gezeichnet — {n} Pixel.',
     'cln.outlineNone': 'Keine Outline nötig — Sprite leer?',
 
+    'info.size':       'Größe {n}',
     // Reiter
     'tabs.close':      'Reiter schließen (Mittelklick) — der Sprite bleibt im Projekt',
 
@@ -1502,6 +1504,7 @@ const MSG = {
     'cln.outlined':    'Outline drawn — {n} pixels.',
     'cln.outlineNone': 'No outline needed — is the sprite empty?',
 
+    'info.size':       'Size {n}',
     'tabs.close':      'Close tab (middle click) — the sprite stays in the project',
 
     'lgt.done':        'Light applied — {lit} pixels brighter, {shaded} darker.',

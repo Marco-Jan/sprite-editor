@@ -49,7 +49,7 @@ export const state = {
   cellSize:      16,
   tool:          'pencil', // 'pencil' | 'brush' | 'spray' | 'fill' | 'eraser' | 'wand' | 'select'
   brushSize:     1,        // Kantenlänge / Radius in Zellen
-  brushStrength: 80,       // 1–100 — Brush/Eraser: Dichte, Spray: Pixel/Event
+  brushStrength: 100,      // 1–100 — Brush/Eraser: Dichte, Spray: Pixel/Event
   wandTolerance: 25,       // 0–100 % — Zauberstab: Farb-Ähnlichkeitsschwelle
   isDrawing:     false,
   isErasing:     false,

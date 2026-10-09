@@ -13,6 +13,7 @@ import {
 import { initDock } from './dock.js';
 import { initLayout, isMobileLayout, refreshToolOpts } from './layout.js';
 import { initTabs } from './tabs.js';
+import { draggedSize, SIZED_TOOLS } from './sizedrag.js';
 import { applyIcons, iconSvg } from './icons.js';
 import { showConfirmToast, showInfoToast } from './toast.js';
 import {
@@ -349,6 +350,17 @@ function updateBrushCursor(e) {
 // Startpunkt der gerade gezogenen Form (null = keine Form im Gange).
 let shapeStart = null;
 
+// Alt + rechte Maustaste ziehen: Größe von Pinsel, Radierer, Spray
+// (js/sizedrag.js). x = Startpunkt, size = Größe beim Start, at = das
+// Ereignis am Start — dort bleibt die Vorschau stehen.
+let sizeDrag = null;
+
+function setBrushSize(n) {
+  state.brushSize = n;
+  document.querySelectorAll('.brush-sz').forEach(b =>
+    b.classList.toggle('is-active', Number(b.dataset.size) === n));
+}
+
 const shapeLabel = tool => t(`shape.${tool}`);
 
 // Statuszeile unter dem Canvas.
@@ -387,6 +399,13 @@ function initCanvasEvents() {
     // ── Rechtsklick ──
     if (e.button === 2) {
       e.preventDefault();
+      // Alt + Rechts ziehen: Größe verstellen statt radieren.
+      if (e.altKey && !e.shiftKey && SIZED_TOOLS.includes(state.tool)) {
+        sizeDrag = { x: e.clientX, size: state.brushSize, at: { clientX: e.clientX, clientY: e.clientY } };
+        updateBrushCursor(sizeDrag.at);
+        info(t('info.size', { n: state.brushSize }));
+        return;
+      }
       // Schablonen-Kürzel liegen auf Shift+Alt — Shift allein scrollt seitlich.
       if (e.shiftKey && e.altKey && tplLoaded() && tplHasOffscreen()) {
         const r = doTemplatePipette(e);
@@ -499,6 +518,14 @@ function initCanvasEvents() {
       return;
     }
 
+    if (sizeDrag) {
+      const n = draggedSize(sizeDrag.size, e.clientX - sizeDrag.x);
+      if (n !== state.brushSize) setBrushSize(n);
+      updateBrushCursor(sizeDrag.at);
+      info(t('info.size', { n }));
+      return;
+    }
+
     if (selection.mode === 'marquee') { updateMarquee(e); info(selectionInfo(t('info.marquee'))); return; }
     if (selection.mode === 'lasso')   { updateLasso(e);   info(selectionInfo()); return; }
     if (selection.mode === 'move')    { updateMove(e);    info(selectionInfo(t('info.move'))); return; }
@@ -533,6 +560,7 @@ function initCanvasEvents() {
   });
 
   const endPointer = () => {
+    if (sizeDrag) { sizeDrag = null; saveState(); }
     if (tplDragging()) endTplDrag();
     if (shapeStart) {
       shapeStart = null;
@@ -790,12 +818,7 @@ function initToolbar() {
   selAction('sel-none-btn',   () => { deselect(); info(t('sel.dropped')); }, false);
 
   document.querySelectorAll('.brush-sz').forEach(btn =>
-    btn.addEventListener('click', () => {
-      state.brushSize = Number(btn.dataset.size);
-      document.querySelectorAll('.brush-sz').forEach(b =>
-        b.classList.toggle('is-active', Number(b.dataset.size) === state.brushSize));
-      saveState();
-    }));
+    btn.addEventListener('click', () => { setBrushSize(Number(btn.dataset.size)); saveState(); }));
 
   const strength = $('strength-slider');
   strength.addEventListener('input', () => {

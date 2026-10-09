@@ -84,6 +84,7 @@ const PRECACHE = [
   'js/render.js',
   'js/selection.js',
   'js/site-links.js',
+  'js/sizedrag.js',
   'js/spritefx.js',
   'js/sprites.js',
   'js/state.js',
