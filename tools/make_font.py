@@ -30,7 +30,12 @@ CELL_W, CELL_H = 5, 8
 BASELINE_ROW = 7          # Zeilen 0..6 stehen über der Grundlinie
 ASCENT = 7 * PX           # 896
 DESCENT = 1 * PX          # 128
-ADVANCE = 6 * PX          # 5 breit + 1 Feld Abstand
+ADVANCE = 6 * PX          # .notdef: 5 breit + 1 Feld Abstand
+# Proportional: jedes Zeichen ist so breit, wie seine Pixel reichen, plus
+# 1 Feld Abstand. Mit fester Breite (monospace) bekam das schmale „i“ links
+# und rechts Luft und wirkte in „Pixel“ wie „Pi xel“.
+GAP = 1 * PX
+SPACE_ADVANCE = 4 * PX    # Wortabstand
 
 # ── Glyphen ─────────────────────────────────────────────────────────
 # Sieben Zeilen je Zeichen, '#' = gesetzt. Unterlängen bekommen acht.
@@ -134,9 +139,25 @@ G['“'] = '.#.#./#.#../...../...../...../...../.....'
 G['…'] = '...../...../...../...../...../...../#.#.#'
 
 
+# ── Breite eines Zeichens ───────────────────────────────────────────
+def span(bitmap):
+    """(erste, letzte) belegte Spalte oder None für leere Glyphen."""
+    cols = [x for row in bitmap.split('/') for x, c in enumerate(row) if c == '#']
+    return (min(cols), max(cols)) if cols else None
+
+
+def advance_of(ch):
+    if ch is None:
+        return ADVANCE
+    sp = span(G[ch])
+    return SPACE_ADVANCE if sp is None else (sp[1] - sp[0] + 1) * PX + GAP
+
+
 # ── Bitmap → Rechtecke (waagerechte Läufe zusammenfassen) ───────────
 def rects(bitmap):
     rows = bitmap.split('/')
+    sp = span(bitmap)
+    shift = sp[0] if sp else 0   # an den linken Rand rücken
     out = []
     for r, row in enumerate(rows):
         x = 0
@@ -150,7 +171,7 @@ def rects(bitmap):
             # y-Achse zeigt in TrueType nach oben; Zeile BASELINE_ROW-1
             # sitzt direkt auf der Grundlinie.
             y0 = (BASELINE_ROW - 1 - r) * PX
-            out.append((x * PX, y0, w * PX, PX))
+            out.append(((x - shift) * PX, y0, w * PX, PX))
             x += w
     return out
 
@@ -198,6 +219,7 @@ def build():
         loca.append(len(glyf))
 
     n = len(order)
+    adv = [advance_of(ch) for ch in order]
     head = struct.pack(
         '>IIIIHHQQhhhhHHhhh',
         0x00010000, 0x00010000, 0, 0x5F0F3CF5,
@@ -207,7 +229,7 @@ def build():
         1, 0)                                # indexToLocFormat=1 (long), glyphDataFormat
     hhea = struct.pack('>IhhhHhhhhhhhhhhhH',
                        0x00010000, ASCENT, -DESCENT, 0,
-                       ADVANCE, 0, 0, CELL_W * PX,
+                       max(adv), 0, 0, CELL_W * PX,
                        1, 0, 0, 0, 0, 0, 0, 0, n)
     # version, numGlyphs, dann 13 weitere Felder bis maxComponentDepth.
     # maxPoints/maxContours aus den echten Glyphen ableiten, nicht raten -
@@ -215,7 +237,7 @@ def build():
     max_c = max(len(rects('...../.....' if c is None else G[c])) for c in order)
     maxp = struct.pack('>IH13H', 0x00010000, n,
                        max_c * 4, max_c, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0)
-    hmtx = b''.join(struct.pack('>Hh', ADVANCE, 0) for _ in order)
+    hmtx = b''.join(struct.pack('>Hh', a, 0) for a in adv)
 
     # cmap Format 4, ein Segment je zusammenhängendem Bereich
     codes = [ord(c) for c in chars]
@@ -277,11 +299,11 @@ def build():
         'II'              # ulCodePageRange 1-2
         'hh'              # sxHeight, sCapHeight
         'HHH',            # usDefaultChar, usBreakChar, usMaxContext
-        4, ADVANCE, 400, 5, 0,
+        4, sum(adv) // len(adv), 400, 5, 0,
         PX * 3, PX * 3, 0, 0, PX * 3, PX * 3, 0, 0,
         PX, PX * 2,
         0,
-        bytes((2, 0, 5, 9, 0, 0, 0, 0, 0, 0)),   # panose: monospaced
+        bytes((2, 0, 5, 3, 0, 0, 0, 0, 0, 0)),   # panose: proportional
         1, 0, 0, 0,
         b'PXSE',
         0x0040, first, min(last, 0xFFFF),
@@ -290,7 +312,7 @@ def build():
         1, 0,
         PX * 5, PX * 7,
         0, 32, 1)
-    post = struct.pack('>IIhhIIIII', 0x00030000, 0, 0, 0, 1, 0, 0, 0, 0)
+    post = struct.pack('>IIhhIIIII', 0x00030000, 0, 0, 0, 0, 0, 0, 0, 0)  # isFixedPitch = 0
     loca_b = b''.join(struct.pack('>I', o) for o in loca)
 
     tables = {b'OS/2': os2, b'cmap': cmap, b'glyf': glyf, b'head': head,
