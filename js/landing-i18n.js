@@ -183,6 +183,27 @@
     'scene.credit': '* The pixel art in the backdrops on this page is homemade — hand-pixeled, no additives.',
     'foot.imprint': 'Legal notice',
     'foot.privacy': 'Privacy',
+
+    'hero.ctaWeb':      'Open in browser',
+    'hero.ctaDownload': 'Download desktop app',
+    'hero.ctaDesktop':  'Desktop app',
+    'hero.ctaGithub':   'Open source on GitHub',
+    'hero.platforms':   'Free · no subscription · no account · open source (MIT license)',
+    'soon':             'soon',
+    'foot.tag':         'Pixel art editor for sprites — in the browser and as a desktop app. Open source under the MIT license.',
+    'foot.aria':        'More pages',
+    'foot.product':     'Product',
+    'foot.download':    'Desktop app (Windows)',
+    'foot.releases':    'All versions',
+    'foot.oss':         'Open source',
+    'foot.srcWeb':      'Source code (web)',
+    'foot.srcDesktop':  'Source code (desktop)',
+    'foot.license':     'MIT license',
+    'foot.issues':      'Report a bug',
+    'foot.community':   'Community',
+    'foot.communitySoon': 'Channels coming soon.',
+    'foot.legal':       'Legal',
+    'foot.mit':         'Free software under the MIT license',
   };
 
   // ── Snapshot + Anwenden ───────────────────────────────────────────
@@ -278,6 +299,15 @@
     'end.install':  'Ois App installiern',
 
     'scene.credit': '* D’Pixel-Art in de Kulissn do is hausgmocht — händisch pixlt, ohne Zuasatzstoffe.',
+
+    'hero.ctaWeb':      'Im Browser aufmochn',
+    'hero.ctaDownload': 'Desktop-App owalodn',
+    'hero.platforms':   'Gratis · ka Abo · ka Konto · Open Source (MIT-Lizenz)',
+    'foot.tag':         'Pixel-Art-Editor fia Sprites — im Browser und ois Desktop-App. Open Source unta MIT-Lizenz.',
+    'foot.releases':    'Olle Versionen',
+    'foot.issues':      'Föhla meldn',
+    'foot.communitySoon': 'De Kanäle kumman boid.',
+    'foot.legal':       'Rechtlichs',
   };
 
   function pick(key, fallback) {

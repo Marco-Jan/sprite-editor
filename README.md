@@ -807,6 +807,8 @@ maskierbar) sowie ein OG-Vorschaubild in `assets/`. Wer das Motiv ändert, ände
 
 ## Lizenz
 
-© 2026 Marco Jan — alle Rechte vorbehalten. Das Repository ist privat; Code und
-Gestaltung dürfen ohne Erlaubnis nicht weiterverwendet werden. Was Nutzer mit
-spritebit zeichnen, gehört ihnen.
+© 2026 Marco Jan — freie Software unter der [MIT-Lizenz](LICENSE): Nutzen,
+ändern und weitergeben ist erlaubt, auch kommerziell, solange der
+Lizenzhinweis mitkommt. Was Nutzer mit spritebit zeichnen, gehört ihnen.
+
+Die Desktop-Version (Rust) steht ebenfalls unter MIT.
