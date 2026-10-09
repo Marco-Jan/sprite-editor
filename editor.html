@@ -661,9 +661,9 @@
           <div class="field">
             <span class="field-label" data-i18n="img.size">Größe</span>
             <div class="field-controls">
-              <input type="number" id="resize-w" class="input input--num" min="1" max="1024" data-i18n-attr="title:img.width" title="Breite in Pixeln">
+              <input type="text" id="resize-w" class="input input--num input--calc" data-calc autocomplete="off" spellcheck="false" data-i18n-attr="title:img.width" title="Breite in Pixeln — auch Rechnen geht, z. B. 24 * 4">
               <span class="field-unit">×</span>
-              <input type="number" id="resize-h" class="input input--num" min="1" max="1024" data-i18n-attr="title:img.height" title="Höhe in Pixeln">
+              <input type="text" id="resize-h" class="input input--num input--calc" data-calc autocomplete="off" spellcheck="false" data-i18n-attr="title:img.height" title="Höhe in Pixeln — auch Rechnen geht, z. B. 24 * 4">
               <span class="field-unit">px</span>
             </div>
             <div class="field-controls">
@@ -831,9 +831,9 @@
     <div class="form-row" id="new-size-custom" hidden>
       <span class="form-label" data-i18n="mod.sizeCustomLabel">Breite × Höhe</span>
       <div class="field-controls">
-        <input type="number" id="new-w" class="input input--num" min="1" max="1024" value="24" data-i18n-attr="title:img.width" title="Breite in Pixeln">
+        <input type="text" id="new-w" class="input input--num input--calc" data-calc autocomplete="off" spellcheck="false" value="24" data-i18n-attr="title:img.width" title="Breite in Pixeln — auch Rechnen geht, z. B. 24 * 4">
         <span class="field-unit">×</span>
-        <input type="number" id="new-h" class="input input--num" min="1" max="1024" value="24" data-i18n-attr="title:img.height" title="Höhe in Pixeln">
+        <input type="text" id="new-h" class="input input--num input--calc" data-calc autocomplete="off" spellcheck="false" value="24" data-i18n-attr="title:img.height" title="Höhe in Pixeln — auch Rechnen geht, z. B. 24 * 4">
         <span class="field-unit">px</span>
       </div>
     </div>
@@ -872,11 +872,11 @@
     <p class="field-note" id="size-modal-current"></p>
     <label class="form-row">
       <span class="form-label" data-i18n="mod.sizeWidth">Breite</span>
-      <input type="number" id="size-w" class="input input--num" min="1" max="1024">
+      <input type="text" id="size-w" class="input input--num input--calc" data-calc autocomplete="off" spellcheck="false" data-i18n-attr="title:img.width" title="Breite in Pixeln — auch Rechnen geht, z. B. 24 * 4">
     </label>
     <label class="form-row">
       <span class="form-label" data-i18n="mod.sizeHeight">Höhe</span>
-      <input type="number" id="size-h" class="input input--num" min="1" max="1024">
+      <input type="text" id="size-h" class="input input--num input--calc" data-calc autocomplete="off" spellcheck="false" data-i18n-attr="title:img.height" title="Höhe in Pixeln — auch Rechnen geht, z. B. 24 * 4">
     </label>
     <label class="form-row">
       <span class="form-label" data-i18n="mod.sizeAnchor">Anker</span>

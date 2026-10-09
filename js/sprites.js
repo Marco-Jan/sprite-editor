@@ -13,6 +13,7 @@ import { showInfoToast, showConfirmToast } from './toast.js';
 import { clearHistory } from './history.js';
 import { commitFloat } from './selection.js';
 import { resizeSpriteCanvas } from './transform.js';
+import { calcInput } from './calc.js';
 import { t } from './i18n.js';
 
 // ────────────────────────────────────────────────────────────────────
@@ -135,8 +136,8 @@ export function initNewSpriteModal() {
     // Eigene Maße dürfen rechteckig sein; das Dropdown liefert nur Quadrate.
     let w, h;
     if (sizeSel.value === 'custom') {
-      w = clampSize(wInp.value);
-      h = clampSize(hInp.value);
+      w = clampSize(calcInput(wInp));
+      h = clampSize(calcInput(hInp));
       if (!w || !h) { showInfoToast(t('sprite.needSize')); wInp.focus(); return; }
     } else {
       w = h = Number(sizeSel.value) || 24;
@@ -277,7 +278,7 @@ export function initSizeModal() {
     const id = _sizeId;
     const sp = sprites[id];
     if (!sp) { close(); return; }
-    const w = Number(wInp.value), h = Number(hInp.value);
+    const w = calcInput(wInp), h = calcInput(hInp);
     if (!(w >= 1 && w <= MAX_SIDE && h >= 1 && h <= MAX_SIDE)) {
       showInfoToast(t('mod.sizeInvalid'));
       return;

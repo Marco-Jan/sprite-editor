@@ -14,6 +14,7 @@ import { initDock } from './dock.js';
 import { initLayout, isMobileLayout, refreshToolOpts } from './layout.js';
 import { initTabs } from './tabs.js';
 import { draggedSize, clampSize, SIZED_TOOLS } from './sizedrag.js';
+import { calcInput } from './calc.js';
 import { applyIcons, iconSvg } from './icons.js';
 import { showConfirmToast, showInfoToast } from './toast.js';
 import {
@@ -1052,8 +1053,8 @@ function initImagePanel() {
   });
 
   $('resize-btn').addEventListener('click', () => {
-    const w = Number($('resize-w').value);
-    const h = Number($('resize-h').value);
+    const w = calcInput($('resize-w'));
+    const h = calcInput($('resize-h'));
     const anchor = $('resize-anchor').value;
     const apply = () => {
       const r = resizeCanvas(w, h, anchor);
@@ -1122,6 +1123,15 @@ function initCleanupPanel() {
 // Licht-Panel — Lichtquelle wählen, Kanten beleuchten, Schatten werfen
 // (Rechnung in js/light.js). Mit Auswahl wirkt beides nur darin.
 // ────────────────────────────────────────────────────────────────────
+// Felder mit data-calc (Sprite-Größen) rechnen: „24 * 4“ wird beim
+// Verlassen des Felds zu 96 (js/calc.js). Enter löst in den Dialogen
+// „Erstellen“ bzw. „OK“ aus — die rechnen dann selbst mit calcInput.
+function initCalcFields() {
+  document.querySelectorAll('input[data-calc]').forEach(inp => {
+    inp.addEventListener('change', () => { calcInput(/** @type {HTMLInputElement} */ (inp)); });
+  });
+}
+
 function initLightPanel() {
   // Licht und Schatten liegen als eigene Ebenen (light.js: layer.fx) — das
   // Original bleibt unberührt. Basis ist die aktive Ebene; ist die aktive
@@ -1673,6 +1683,7 @@ async function init() {
   initCleanupPanel();
   initTabs();
   initLightPanel();
+  initCalcFields();
   initTemplate();
   initTemplatePanel();
   initNewSpriteModal();

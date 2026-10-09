@@ -2117,6 +2117,7 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
 .is-vertical .btn-group .btn { border-radius: var(--r-md); }
 .is-vertical .field--inline { flex-direction: column; }
 #brush-size { width: 110px; }
+.input--calc { width: 5.5rem; font-variant-numeric: tabular-nums; }
 #brush-size-num { width: 3.5rem; }
 .is-vertical #brush-size { width: 100%; }
 .is-vertical #quick-palette { flex-direction: column; flex-wrap: nowrap; }
