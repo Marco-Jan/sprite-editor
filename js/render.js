@@ -4,6 +4,7 @@
 // Liest aus state, schreibt ins DOM. Event-Bindings für statische Elemente
 // leben in app.js; nur Handler an dynamisch erzeugten Elementen (Sprite-Karten,
 // Farb-Swatches) werden hier gesetzt und rufen dann renderCallbacks auf.
+import { maskedCel } from './mask.js';
 import {
   state, sprites, customPalettes, paletteMaterials, selection,
   getGrid, getSprite, getPal, getPaletteName, getMaxIdx, getPreviewName,
@@ -210,7 +211,7 @@ export function renderEditor() {
     const pv = renderCallbacks.getLightPreview();
     sp.layers.forEach((L, li) => {
       if (!L.visible || L.opacity <= 0) return;
-      const g = sp.frames[sp.frame].cels[li];
+      const g = maskedCel(L, sp.frames[sp.frame].cels[li]);
       if (pv?.shadow && li === pv.base) paintGrid(ctx, pv.shadow, pal, 0, 0, r, { alpha: L.opacity, key: 'pv-shadow' });
       if (big && li !== sp.layer) paintCanvas(ctx, cachedLayer(g, pal), r, L.opacity);
       else paintGrid(ctx, g, pal, 0, 0, r, { alpha: L.opacity, key: 'layer' });
@@ -247,6 +248,11 @@ export function renderEditor() {
 
   if (state.showColor) drawColorSpotlight(ctx, grid, pal, W, H, r);
 
+  // Maske bearbeiten: Ausgeblendetes rötlich über allem.
+  const maskL = sp && state.maskEdit ? sp.layers[sp.layer]?.mask : null;
+  document.getElementById('editor-canvas-wrap')?.classList.toggle('is-mask-edit', !!maskL);
+  if (maskL) paintMask(ctx, W, H, r, (x, y) => !!maskL.hide[y][x], [255, 70, 70, 120]);
+
   // Grid-Linien liegen als CSS-Ebene über dem Canvas (#editor-gridlines):
   // so bleiben sie 1 px dünn, auch wenn der Canvas gröber gezeichnet ist.
   // Bei sehr kleinen Zellen weg, sonst wird alles Raster.
@@ -279,7 +285,7 @@ function drawOnion(ctx, W, H, cs) {
   const o = state.tlOpts.onion;
   const pal = getPal();
   for (const { frame, side, alpha } of onionFrames(sp, sp.frame, state.tlOpts).reverse()) {
-    const g = o.layerOnly ? sp.frames[frame].cels[sp.layer] : flatGrid(sp, frame);
+    const g = o.layerOnly ? maskedCel(sp.layers[sp.layer], sp.frames[frame].cels[sp.layer]) : flatGrid(sp, frame);
     if (!g) continue;
     const tint = o.mode === 'color' ? null : side === 'before' ? [255, 96, 96] : [96, 156, 255];
     paintGrid(ctx, g, pal, 0, 0, cs, { alpha, tint, key: 'onion' });

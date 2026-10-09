@@ -246,6 +246,11 @@ export const STATIC_AT = {
   'tabs.label':       'Offene Sprites',
   'tabs.new':         'A neicher Sprite',
 
+  // ── Maske ──
+  'mask.label':       'Maskn',
+  'mask.add':         'Dazua',
+  'mask.edit':        'Bearbeitn',
+
   // ── Licht ──
   'lgt.title':        'Liacht',
   'lgt.dir':          'Wo’s Liacht herkummt',

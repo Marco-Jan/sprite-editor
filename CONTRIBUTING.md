@@ -70,6 +70,9 @@ Texte gefunden, die auf Deutsch nur den Schlüsselnamen anzeigten.
 | `tests/pixelperfect.test.js` | Clean Stroke: keine L-Ecken, Untergrund kommt zurück |
 | `tests/light.test.js` | Kantenlicht und Schlagschatten |
 | `tests/tablist.test.js` | Reiter: öffnen, schließen, ordnen |
+| `tests/mask.test.js` | Ebenenmasken: ausblenden, Lauflängen, anwenden |
+| `tests/sitelinks.test.js` | Versionen auf der Startseite, Schilder an den Knöpfen |
+| `tests/sizedrag.test.js` | Werkzeuggröße per Alt + rechter Maustaste |
 | `tests/pack.test.js` | Kompaktes Speicherformat (Bytes, Prüfsumme) |
 | `tests/migrate.test.js` | Alte Projektstände überleben die Migration |
 | `tests/gif.test.js` | Der GIF-Encoder erzeugt gültige Dateien |
@@ -146,6 +149,7 @@ sprite-editor/
     │   ── Animation
     ├── frames.js        ← Animation: Frames anlegen, wechseln, abspielen, Timeline
     ├── layers.js        ← Ebenen: anlegen, ordnen, ein-/ausblenden, sperren, Deckkraft
+    ├── mask.js          ← Ebenenmasken: Teile einer Ebene ausblenden, ohne sie zu löschen
     ├── cels.js          ← Zellen der Timeline: verschieben, kopieren, leeren, verknüpfen
     ├── tags.js          ← benannte Abschnitte der Animation
     ├── onion.js         ← Einstellungen der Timeline und welche Frames durchscheinen

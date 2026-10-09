@@ -458,6 +458,14 @@
             <button class="btn" id="ly-merge-all" data-i18n-attr="title:ly.mergeAll" title="Alle sichtbaren Ebenen zusammenführen — in jedem Frame, auch Licht und Schatten; ausgeblendete bleiben"><span class="ico" data-icon="mergeAll"></span></button>
             <button class="btn" id="ly-del" data-i18n-attr="title:ly.del" title="Ebene löschen"><span class="ico" data-icon="trash"></span></button>
           </div>
+          <div class="ly-mask-actions">
+            <span class="field-label" data-i18n="mask.label">Maske</span>
+            <button class="btn btn--sm" id="ly-mask-add" data-i18n-attr="title:mask.addTitle" title="Maske hinzufügen — damit blendest du Teile der Ebene aus, ohne sie zu löschen"><span class="ico" data-icon="mask"></span><span data-i18n="mask.add">Hinzufügen</span></button>
+            <button class="btn btn--sm" id="ly-mask-edit" aria-pressed="false" hidden data-i18n-attr="title:mask.editTitle" title="Maske bearbeiten: Malen blendet aus, Radieren blendet wieder ein"><span class="ico" data-icon="brush"></span><span data-i18n="mask.edit">Bearbeiten</span></button>
+            <button class="btn btn--sm" id="ly-mask-on" hidden data-i18n-attr="title:mask.off" title="Maske ausschalten (alles sichtbar)"><span class="ico" data-icon="eye"></span></button>
+            <button class="btn btn--sm" id="ly-mask-apply" hidden data-i18n-attr="title:mask.applyTitle" title="Maske anwenden: ausgeblendete Pixel werden gelöscht, die Maske verschwindet"><span class="ico" data-icon="check"></span></button>
+            <button class="btn btn--sm" id="ly-mask-del" hidden data-i18n-attr="title:mask.delTitle" title="Maske löschen — alles wieder sichtbar"><span class="ico" data-icon="trash"></span></button>
+          </div>
           <label class="field field--inline">
             <span class="field-label" data-i18n="ly.opacity">Deckkraft</span>
             <input type="range" id="ly-opacity" min="0" max="100" step="5" value="100">

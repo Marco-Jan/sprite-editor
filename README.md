@@ -77,7 +77,7 @@ Zeichnen, animieren, Paletten bauen und als Bild, GIF oder Code exportieren.
 **🧰 Arbeitsplatz**
 - **Reiter** für geöffnete Sprites, wie man es aus Grafikprogrammen kennt
 - Panels anpinnen, lösen, frei verschieben — die Anordnung bleibt
-- Ebenen mit Deckkraft, Sperre und Sichtbarkeit
+- Ebenen mit Deckkraft, Sperre, Sichtbarkeit und **Masken**
 - Schablone: Foto als Vorlage zum Abpausen
 - Hilfslinien und Figuren-Proportionen (2–8 Kopfhöhen)
 

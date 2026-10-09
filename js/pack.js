@@ -14,6 +14,8 @@
 // Format, das auch die Projektdatei hat (framesForSave: { link: f }) — so
 // läuft das Laden durch dieselbe Prüfung wie jede Datei (storage.js).
 
+import { layerForSave } from './mask.js';
+
 export const PACK_VERSION = 1;
 const FREE_BASE = 256;
 
@@ -56,7 +58,7 @@ export function packSprite(sp) {
   return {
     v: PACK_VERSION,
     name: sp.name, palette: sp.palette, fps: sp.fps, frame: sp.frame, layer: sp.layer,
-    layers: sp.layers, guides: sp.guides, tags: sp.tags,
+    layers: sp.layers.map(layerForSave), guides: sp.guides, tags: sp.tags,
     w: W, h: H, free, images, frames,
   };
 }

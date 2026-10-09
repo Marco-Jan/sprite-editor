@@ -354,6 +354,24 @@ Vorschaubild des aktuellen Frames.
   (in jedem Frame), **alle sichtbaren zusammenführen** (in jedem Frame, auch Licht und
   Schatten; ausgeblendete Ebenen bleiben, wie sie sind), **löschen** (die letzte Ebene bleibt).
 
+### Ebenenmasken
+
+Eine **Maske** blendet Teile einer Ebene aus, ohne sie zu löschen — wie in Grafikprogrammen,
+für Pixel-Art auf „sichtbar / ausgeblendet“ verkürzt. Eine Maske gilt für alle Frames der Ebene.
+
+- **Maske → Hinzufügen** im Ebenen-Panel legt sie an und schaltet auf **Bearbeiten**: jetzt
+  malen alle Werkzeuge in die Maske — **Malen blendet aus, Radieren blendet wieder ein**
+  (auch Füllen, Formen und Auswahl). Ausgeblendetes erscheint rötlich, die Zeichenfläche hat
+  einen roten Rahmen.
+- Neben dem Ebenen-Bildchen steht das **Masken-Bildchen** (weiß = sichtbar, schwarz =
+  ausgeblendet) — ein Klick darauf schaltet Bearbeiten an und aus.
+- **Auge** schaltet die Maske vorübergehend aus, **✓ Anwenden** übernimmt sie fest (die
+  ausgeblendeten Pixel werden gelöscht), **Papierkorb** entfernt sie (alles wieder sichtbar).
+- Auch **gesperrte** Ebenen haben eine bearbeitbare Maske — so nimmt man z. B. das Licht
+  einer Licht-Ebene stellenweise weg, ohne sie zu entsperren.
+- Export, Vorschau, Code und Zusammenführen zeigen, was die Maske übrig lässt. Größe ändern,
+  drehen, spiegeln und skalieren nehmen die Maske mit.
+
 Jede Ebene hat in jedem Frame ihr eigenes Bild (`frames[].cels`). Größe ändern, drehen,
 spiegeln, skalieren, zuschneiden und Paletten umfärben wirken auf alle Ebenen.
 

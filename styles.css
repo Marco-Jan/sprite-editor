@@ -1225,6 +1225,28 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 .ly-row.is-dragging { position: relative; z-index: 2; opacity: 0.85; box-shadow: var(--shadow-md); cursor: grabbing; }
 .ly-row .icon-btn { flex: none; }
 .ly-lock.is-on { color: var(--accent); }
+/* Masken-Bildchen neben dem Ebenen-Bildchen (js/layers.js). */
+.ly-mask {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  background: var(--surface-3);
+  cursor: pointer;
+}
+.ly-mask[hidden] { display: none; }
+.ly-mask canvas { image-rendering: pixelated; }
+.ly-mask.is-editing { border-color: #ff6b6b; box-shadow: 0 0 0 1px #ff6b6b; }
+.ly-mask.is-off canvas { opacity: 0.35; }
+.ly-mask-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-1); }
+.ly-mask-actions [hidden] { display: none; }
+#ly-mask-edit.is-active { border-color: #ff6b6b; color: #ff9b9b; }
+/* Maske bearbeiten: roter Rahmen um die Zeichenfläche. */
+#editor-canvas-wrap.is-mask-edit #editor-canvas { outline: 2px solid #ff6b6b; outline-offset: 2px; }
 .ly-thumb {
   display: grid;
   place-items: center;

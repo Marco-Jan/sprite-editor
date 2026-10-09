@@ -4,7 +4,7 @@
 import {
   state, sprites, paletteMaterials, selection, flatGrid, defaultLayer,
   getGrid, getSprite, getPal, getMaxIdx, getPaletteName, getPreviewName, listSprites,
-  createSprite, clearSelection, isInSelection, blankLike,
+  createSprite, clearSelection, isInSelection, blankLike, editingMask,
 } from './state.js';
 import { DEFAULT_PALETTE, MAX_COLORS } from './data.js';
 import {
@@ -376,7 +376,9 @@ function layerBlocked(toast = false) {
   const sp = getSprite();
   const L = sp?.layers[sp.layer];
   if (!L) return false;
-  const msg = L.locked ? t('ly.lockedInfo', { name: L.name })
+  // Die Maske einer gesperrten Ebene darf man bearbeiten — so nimmt man
+  // z. B. Licht stellenweise weg, ohne die Licht-Ebene zu entsperren.
+  const msg = L.locked && !editingMask() ? t('ly.lockedInfo', { name: L.name })
     : !L.visible ? t('ly.hiddenInfo', { name: L.name }) : null;
   if (!msg) return false;
   if (toast) showInfoToast(msg); else info(msg);
