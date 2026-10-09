@@ -244,6 +244,14 @@ German. [Open the editor →](https://spritebit.at/editor.html)
 
 ---
 
+## Unterstützen
+
+spritebit ist und bleibt kostenlos. Wer mag, kann auf [Ko-fi](https://ko-fi.com/baloou) einen Kaffee
+spendieren — das Geld fließt in ein Code-Signatur-Zertifikat, damit Windows bei der
+Desktop-App nicht mehr warnt.
+
+---
+
 ## Lizenz
 
 [MIT](LICENSE) © 2026 Marco Jan — nutzen, ändern und weitergeben ist erlaubt, auch kommerziell,

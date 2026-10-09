@@ -674,6 +674,9 @@ kbd {
 .hero-cta .dl-help { margin-top: 0; }
 .cta-sub .btn { color: var(--text-muted); }
 .cta-sub .btn:hover { color: var(--text); }
+/* Unterstützen: dieselbe ruhige Form, nur mit warmem Akzent. */
+.cta-sub .btn--donate { color: #f2c48d; border-color: rgba(242, 196, 141, 0.45); }
+.cta-sub .btn--donate:hover { color: #ffd9a8; border-color: #f2c48d; }
 
 /* Stichworte unter dem Lead — kleine Pixel-Punkte in den Farben der Rampe. */
 /* Unter den Knoepfen: was es kostet und unter welcher Lizenz. */

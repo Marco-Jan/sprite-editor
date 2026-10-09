@@ -19,6 +19,8 @@
     githubRs:  'https://github.com/spritebit/spritebit-rs',   // Quellcode der Desktop-App
     download:  'https://github.com/spritebit/spritebit-rs/releases/latest/download/spritebit-windows-x64.zip',
     releases:  'https://github.com/spritebit/spritebit-rs/releases',
+    // Unterstützen: fließt in ein Code-Signatur-Zertifikat (Windows warnt dann nicht mehr).
+    donate:    'https://ko-fi.com/baloou',
     discord:   '',
     youtube:   '',
     instagram: '',

@@ -173,6 +173,9 @@ export function initLangSwitch() {
 // Deutsch kommt aus dem HTML selbst (Snapshot), hier steht nur Englisch.
 const STATIC = {
   en: {
+    'donate.menu':  'Support spritebit (Ko-fi)',
+    'donate.title': 'spritebit stays free either way. Donations go towards a code-signing certificate so Windows stops warning about the desktop app.',
+
     'mod.bigHint': 'In the browser up to 1024 × 1024 pixels — the desktop app handles canvases up to 8192 × 8192.',
 
     'gd.even':      'Evenly',
