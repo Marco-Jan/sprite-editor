@@ -1035,6 +1035,7 @@ const MSG = {
     // Timeline (js/frames.js) — die Knopf-Titel stehen in STATIC
     'pv.info':      '{w}×{h} Pixel · {scale}× dargestellt',
     'tl.frameTitle': 'Frame {i} · {ms} ms — antippen zum Wählen, ziehen zum Verschieben, Strg/Shift wählt mehrere',
+    'tl.gripTitle':  'Ziehen: Timeline höher oder flacher — die Vorschaubilder wachsen mit. Doppelklick: wieder passend zur Breite',
     'tl.frameOf':   'Frame {i}/{n}',
     'tl.lastFrame': 'Der letzte Frame bleibt — ein Sprite braucht mindestens einen.',
     'tl.multi':     'Mehrere Frames wählen — antippen markiert, statt zu wechseln',
@@ -1683,6 +1684,7 @@ const MSG = {
 
     'pv.info':      '{w}×{h} pixels · shown at {scale}×',
     'tl.frameTitle': 'Frame {i} · {ms} ms — tap to select, drag to move, Ctrl/Shift picks several',
+    'tl.gripTitle':  'Drag: make the timeline taller or flatter — the thumbnails grow with it. Double-click: fit to width again',
     'tl.frameOf':   'frame {i}/{n}',
     'tl.lastFrame': 'The last frame stays — a sprite needs at least one.',
     'tl.multi':     'Select several frames — tapping marks instead of switching',

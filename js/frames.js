@@ -26,7 +26,7 @@ import {
   rangeOf, rangeSize, inRange, clampRange, canShift, shiftCels, clearCels, copyCels, pasteCels,
   linkCels, unlinkCels,
 } from './cels.js';
-import { frameLabel } from './onion.js';
+import { frameLabel, THUMB_SIZE_MIN, THUMB_SIZE_MAX } from './onion.js';
 import { TAG_COLORS, TAG_DIRS, tagsInsert, tagsDelete, tagAt, tagLanes, nextPlayFrame } from './tags.js';
 import {
   setActiveLayer, toggleVisible, toggleLocked, toggleContinuous, addLayer, duplicateLayer, deleteLayer,
@@ -375,6 +375,9 @@ function drawThumb(cv, grid, pal) {
 // bis zwanzig nebeneinander stehen. Ab dem einundzwanzigsten Frame bleibt die
 // Größe, wie sie ist, und das Raster scrollt — sonst würde eine lange
 // Animation die Vorschau zu Briefmarken zusammenquetschen.
+//
+// Hat man die Größe am Griff der Timeline gezogen (tlOpts.thumbSize), gilt
+// die — dann scrollt die Reihe eben früher.
 function fitThumbs() {
   const box = $('tl-frames');
   const sp = getSprite();
@@ -386,7 +389,8 @@ function fitThumbs() {
   const gap = 2;
   const room = Math.floor((w - gap * k) / k);
   const min = mobile ? CELL_MIN_TOUCH : CELL_MIN;
-  const next = Math.max(min, Math.min(CELL_MAX, room));
+  const fixed = !mobile && state.tlOpts.thumbSize;
+  const next = fixed || Math.max(min, Math.min(CELL_MAX, room));
   if (next === cell) return;
   cell = next;
   box.style.setProperty('--tl-cell', cell + 'px');
@@ -1230,6 +1234,46 @@ function closeTagEditor() {
   tagEdIndex = -1;
 }
 
+// Griff am Rand der Timeline (oben, wenn sie unten liegt — und umgekehrt):
+// Ziehen macht die Leiste höher oder flacher, und die Vorschaubilder wachsen
+// mit. Doppelklick stellt wieder „passend zur Breite“ ein.
+function initThumbGrip() {
+  const tl = $('timeline');
+  if (!tl) return;
+  const grip = document.createElement('div');
+  grip.className = 'tl-grip';
+  grip.setAttribute('role', 'separator');
+  grip.setAttribute('aria-orientation', 'horizontal');
+  grip.title = t('tl.gripTitle');
+  tl.prepend(grip);
+  grip.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    const atTop = !!tl.closest('[data-zone="top"]');
+    const sy = e.clientY, s0 = cell;
+    document.body.classList.add('is-dragging-ui', 'is-resizing-ui');
+    const move = ev => {
+      const dy = ev.clientY - sy;
+      const size = Math.round(Math.min(THUMB_SIZE_MAX, Math.max(THUMB_SIZE_MIN, s0 + (atTop ? dy : -dy))));
+      if (size === state.tlOpts.thumbSize) return;
+      state.tlOpts.thumbSize = size;
+      fitThumbs();
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      document.body.classList.remove('is-dragging-ui', 'is-resizing-ui');
+      saveState();
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  });
+  grip.addEventListener('dblclick', () => {
+    state.tlOpts.thumbSize = 0;
+    fitThumbs();
+    saveState();
+  });
+}
+
 export function initFrames() {
   $('tl-first').addEventListener('click', firstFrame);
   $('tl-prev').addEventListener('click', prevFrame);
@@ -1261,6 +1305,7 @@ export function initFrames() {
   // Anordnung), bekommen die Bildchen die neue Größe.
   const box = $('tl-frames');
   if (box && window.ResizeObserver) new ResizeObserver(() => fitThumbs()).observe(box);
+  initThumbGrip();
 
   renderCallbacks.onRenderTimeline = renderTimeline;
   renderCallbacks.onEditorRendered = refreshCurrentThumb;
