@@ -76,17 +76,29 @@
       <div class="mb-menu">
         <button type="button" class="mb-title" role="menuitem" aria-haspopup="menu" aria-expanded="false" data-i18n="mb.file">Datei</button>
         <div class="mb-drop" role="menu" hidden>
-          <button type="button" class="mb-item" role="menuitem" id="new-project-btn"><span data-i18n="mb.newProject">Neues Projekt …</span></button>
+          <!-- Untermenü: .mb-sub mit Kopf (.mb-subtitle) und eigener Liste (.mb-subdrop) -->
+          <div class="mb-sub">
+            <button type="button" class="mb-item mb-subtitle" role="menuitem" aria-haspopup="menu" aria-expanded="false"><span data-i18n="mb.newMenu">Neu</span></button>
+            <div class="mb-subdrop" role="menu">
+              <button type="button" class="mb-item" role="menuitem" id="new-project-btn"><span data-i18n="mb.newProjectSub">Projekt …</span></button>
+              <button type="button" class="mb-item" role="menuitem" data-click="#new-sprite-btn"><span data-i18n="mb.newSpriteSub">Sprite …</span><kbd data-i18n="mb.kNew">Strg+Alt+N</kbd></button>
+            </div>
+          </div>
+          <!-- Öffnen nimmt alles: ein Projekt wird ein eigenes, Sprites kommen dazu -->
+          <button type="button" class="mb-item" role="menuitem" id="load-file-btn" data-i18n-attr="title:mb.openTitle" title="Projekt-, Sprite- oder Aseprite-Datei: ein Projekt öffnet sich als eigenes Projekt, ein Sprite kommt ins offene dazu"><span data-i18n="mb.open">Öffnen …</span><kbd data-i18n="mb.kOpen">Strg+O</kbd></button>
+          <button type="button" class="mb-item" role="menuitem" id="add-sprite-btn" data-i18n-attr="title:mb.addSpriteTitle" title="Die Sprites einer Projektdatei ins offene Projekt übernehmen — statt das Projekt für sich zu öffnen"><span data-i18n="mb.addSprite">Sprites aus Projekt holen …</span></button>
           <button type="button" class="mb-item" role="menuitem" id="projects-btn"><span data-i18n="mb.projects">Projekte …</span></button>
-          <button type="button" class="mb-item" role="menuitem" data-click="#new-sprite-btn"><span data-i18n="mb.new">Neuer Sprite …</span><kbd data-i18n="mb.kNew">Strg+Alt+N</kbd></button>
-          <button type="button" class="mb-item" role="menuitem" id="load-file-btn"><span data-i18n="mb.open">Öffnen …</span><kbd data-i18n="mb.kOpen">Strg+O</kbd></button>
-          <button type="button" class="mb-item" role="menuitem" id="save-file-btn"><span data-i18n="mb.save">Projekt sichern</span><kbd data-i18n="mb.kSave">Strg+S</kbd></button>
-          <button type="button" class="mb-item" role="menuitem" id="save-dir-btn"><span data-i18n="mb.dir">Speicherort wählen …</span></button>
           <div class="mb-sep" role="separator"></div>
+          <button type="button" class="mb-item" role="menuitem" id="save-file-btn"><span data-i18n="mb.save">Projekt sichern</span><kbd data-i18n="mb.kSave">Strg+S</kbd></button>
           <!-- Einzelne Sprites statt des ganzen Projekts (js/storage.js) -->
-          <button type="button" class="mb-item" role="menuitem" id="save-sprite-btn"><span data-i18n="mb.saveSprite">Sprite sichern …</span></button>
-          <button type="button" class="mb-item" role="menuitem" id="add-sprite-btn"><span data-i18n="mb.addSprite">Sprite hinzufügen …</span></button>
-          <button type="button" class="mb-item" role="menuitem" id="save-ase-btn" data-i18n-attr="title:mb.saveAseTitle" title="Den aktuellen Sprite als .aseprite-Datei — Ebenen, Frames, Tags, Palette und Tilemaps bleiben; Masken werden eingerechnet"><span data-i18n="mb.saveAse">Als Aseprite speichern …</span></button>
+          <div class="mb-sub">
+            <button type="button" class="mb-item mb-subtitle" role="menuitem" aria-haspopup="menu" aria-expanded="false"><span data-i18n="mb.saveSprite">Sprite sichern</span></button>
+            <div class="mb-subdrop" role="menu">
+              <button type="button" class="mb-item" role="menuitem" id="save-sprite-btn" data-i18n-attr="title:mb.saveBittyTitle" title="Nur den aktuellen Sprite — zum Weitergeben oder für ein anderes Projekt"><span data-i18n="mb.saveBitty">als spritebit-Datei (.bitty) …</span></button>
+              <button type="button" class="mb-item" role="menuitem" id="save-ase-btn" data-i18n-attr="title:mb.saveAseTitle" title="Den aktuellen Sprite als .aseprite-Datei — Ebenen, Frames, Tags, Palette und Tilemaps bleiben; Masken werden eingerechnet"><span data-i18n="mb.saveAse">als Aseprite-Datei (.aseprite) …</span></button>
+            </div>
+          </div>
+          <button type="button" class="mb-item" role="menuitem" id="save-dir-btn"><span data-i18n="mb.dir">Speicherort wählen …</span></button>
           <div class="mb-sep" role="separator"></div>
           <button type="button" class="mb-item" role="menuitem" data-open="output"><span data-i18n="mb.export">Exportieren …</span></button>
           <!-- Nur sichtbar, wenn der Browser die Installation anbietet (js/pwa.js). -->

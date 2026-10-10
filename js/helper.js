@@ -298,11 +298,14 @@ function collect() {
   });
   // Menü (ohne Sprachen und Links nach draußen)
   document.querySelectorAll('#menubar .mb-item').forEach(el => {
-    if (el.tagName === 'A' || el.classList.contains('lang-btn') || el.hidden) return;
+    if (el.tagName === 'A' || el.classList.contains('lang-btn') || el.hidden || el.classList.contains('mb-subtitle')) return;
     const span = el.querySelector('span');
     const label = clean(span?.textContent);
     const titleEl = el.closest('.mb-menu')?.querySelector('.mb-title');
-    if (label) out.push({ kind: 'menu', label, names: allLangs(span), sub: clean(titleEl?.textContent), text: allLangs(titleEl), el, danger: DANGER.test(el.id) });
+    // Im Untermenü: „Datei › Neu“ — sonst hieße der Eintrag nur „Projekt …“.
+    const subEl = el.closest('.mb-sub')?.querySelector('.mb-subtitle span');
+    const where = clean(titleEl?.textContent) + (subEl ? ' › ' + clean(subEl.textContent) : '');
+    if (label) out.push({ kind: 'menu', label, names: allLangs(span), sub: where, text: allLangs(titleEl) + (subEl ? ' ' + allLangs(subEl) : ''), el, danger: DANGER.test(el.id) });
   });
   // Knöpfe in Panels, Timeline, Werkzeugleiste und über der Fläche — als
   // Befehle: Enter drückt sie (außer den gefährlichen).

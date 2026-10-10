@@ -11,6 +11,8 @@
 //   data-click="#x" klickt einen vorhandenen Knopf (Undo, Vollbild, …)
 //   data-open="p"   öffnet das Panel p (Dock-Knopf)
 //   data-mirror="#x" Häkchen spiegelt den Zustand des Knopfs #x (.is-active)
+// Untermenüs: .mb-sub mit Kopf (.mb-subtitle) und Liste (.mb-subdrop); sie
+// gehen beim Überfahren auf, per Klick (Touch) oder mit Pfeil rechts.
 // Die Sprachen hängen an i18n.js (.lang-switch [data-lang]).
 
 /** @type {(sel: string) => any} */
@@ -20,7 +22,10 @@ let openMenu = null;   // das .mb-menu, das gerade offen ist
 
 const titleOf = m => m.querySelector('.mb-title');
 const dropOf = m => m.querySelector('.mb-drop');
-const itemsOf = m => [...dropOf(m).querySelectorAll('.mb-item')].filter(i => !i.hidden && !i.disabled);
+const usable = i => !i.hidden && !i.disabled;
+// Einträge der obersten Ebene — die in Untermenüs zählen nicht mit.
+const itemsOf = m => [...dropOf(m).querySelectorAll('.mb-item')].filter(i => usable(i) && !i.closest('.mb-subdrop'));
+const subItemsOf = sub => [...sub.querySelectorAll('.mb-subdrop .mb-item')].filter(usable);
 const menus = () => [...document.querySelectorAll('#menubar .mb-menu')];
 
 function syncChecks(m) {
@@ -47,6 +52,25 @@ function keepInView(drop) {
   if (dx) drop.style.transform = `translateX(${Math.round(dx)}px)`;
 }
 
+function openSub(sub, focus = false) {
+  closeSubs(sub);
+  sub.classList.add('is-open');
+  sub.querySelector('.mb-subtitle').setAttribute('aria-expanded', 'true');
+  // Rechts kein Platz: nach links aufklappen.
+  const list = sub.querySelector('.mb-subdrop');
+  list.classList.remove('mb-subdrop--left');
+  if (list.getBoundingClientRect().right > document.documentElement.clientWidth - 8) list.classList.add('mb-subdrop--left');
+  if (focus) subItemsOf(sub)[0]?.focus();
+}
+
+function closeSubs(except = null) {
+  document.querySelectorAll('#menubar .mb-sub.is-open').forEach(sub => {
+    if (sub === except) return;
+    sub.classList.remove('is-open');
+    sub.querySelector('.mb-subtitle').setAttribute('aria-expanded', 'false');
+  });
+}
+
 function open(m, focus = false) {
   if (openMenu && openMenu !== m) close();
   openMenu = m;
@@ -60,6 +84,7 @@ function open(m, focus = false) {
 
 export function close() {
   if (!openMenu) return;
+  closeSubs();
   dropOf(openMenu).hidden = true;
   titleOf(openMenu).setAttribute('aria-expanded', 'false');
   titleOf(openMenu).classList.remove('is-open');
@@ -107,10 +132,36 @@ export function initMenubar() {
     drop.addEventListener('click', e => {
       const item = /** @type {HTMLButtonElement} */ (/** @type {HTMLElement} */ (e.target).closest('.mb-item'));
       if (!item || item.disabled) return;
+      // Kopf eines Untermenüs: auf- und zuklappen (Touch), Menü bleibt offen.
+      if (item.classList.contains('mb-subtitle')) {
+        const sub = item.closest('.mb-sub');
+        if (sub.classList.contains('is-open')) closeSubs(); else openSub(sub, e.detail === 0);
+        return;
+      }
       if (item.dataset.click || item.dataset.open) run(item);
       else close();
     });
+    // Maus: Untermenü folgt dem Zeiger; ein anderer Eintrag schließt es.
+    drop.addEventListener('pointerover', e => {
+      if (e.pointerType !== 'mouse') return;
+      const el = /** @type {HTMLElement} */ (e.target);
+      const sub = el.closest('.mb-sub');
+      if (sub) { if (!sub.classList.contains('is-open')) openSub(sub); }
+      else if (el.closest('.mb-item')) closeSubs();
+    });
     drop.addEventListener('keydown', e => {
+      const active = /** @type {HTMLElement} */ (document.activeElement);
+      const sub = active?.closest('.mb-sub');
+      if (sub && active.closest('.mb-subdrop')) {
+        // Im Untermenü: hoch/runter darin, links zurück zum Kopf.
+        const items = subItemsOf(sub);
+        const k = items.indexOf(/** @type {any} */ (active));
+        if (e.key === 'ArrowDown') { e.preventDefault(); items[(k + 1) % items.length]?.focus(); return; }
+        if (e.key === 'ArrowUp') { e.preventDefault(); items[(k - 1 + items.length) % items.length]?.focus(); return; }
+        if (e.key === 'ArrowLeft') { e.preventDefault(); closeSubs(); sub.querySelector('.mb-subtitle').focus(); return; }
+      } else if (sub && e.key === 'ArrowRight') {
+        e.preventDefault(); openSub(sub, true); return;
+      }
       const items = itemsOf(m);
       const k = items.indexOf(/** @type {any} */ (document.activeElement));
       if (e.key === 'ArrowDown') { e.preventDefault(); items[(k + 1) % items.length]?.focus(); }
@@ -128,6 +179,9 @@ export function initMenubar() {
     if (e.key !== 'Escape' || !openMenu) return;
     e.stopPropagation();
     e.preventDefault();
+    // Erst ein offenes Untermenü schließen, dann das Menü.
+    const sub = document.querySelector('#menubar .mb-sub.is-open');
+    if (sub) { closeSubs(); sub.querySelector('.mb-subtitle').focus(); return; }
     const t = titleOf(openMenu);
     close();
     t.focus();
