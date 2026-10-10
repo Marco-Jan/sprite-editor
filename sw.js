@@ -90,6 +90,8 @@ const PRECACHE = [
   'js/pixelperfect.js',
   'js/place.js',
   'js/preview.js',
+  'js/projects.js',
+  'js/projectsui.js',
   'js/pwa.js',
   'js/qpdrag.js',
   'js/raster.js',

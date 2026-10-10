@@ -85,9 +85,9 @@ export const state = {
   // (js/onion.js, Menü in js/tlmenu.js).
   tlOpts:        defaultTlOpts(),
 
-  // Hilfslinien (js/guides.js): anzeigen; Verschieben-Modus (nicht gespeichert).
+  // Hilfslinien (js/guides.js): anzeigen; gesperrt (nicht verschiebbar).
   showGuides:    true,
-  guideEdit:     false,
+  lockGuides:    false,
 
   // Vorschau der Formen-Werkzeuge zwischen pointerdown und pointerup.
   // Liegt hier, damit renderEditor sie ohne Umweg zeichnen kann.

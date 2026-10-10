@@ -45,6 +45,8 @@ export const STATIC_AT = {
 
   // ── Menüleiste (js/menubar.js) — nur, was im Dialekt anders klingt ──
   'mb.file':      'Datei',
+  'mb.newProject': 'A neichs Projekt …',
+  'mb.projects':  'Projekte …',
   'mb.new':       'A neicher Sprite …',
   'mb.open':      'Aufmochn …',
   'mb.dir':       'Speicherort aussuachn …',
@@ -311,8 +313,7 @@ export const STATIC_AT = {
 
   // ── Hilfslinien ──
   'gd.showTitle': 'Olle Hilfslinien herzagn oder wegtuan (G)',
-  'gd.edit':      'Vaschiabn',
-  'gd.editTitle': 'Linien auf da Zeichenflächn ziagn — dawei wird ned gmoit (Tipp danebn oder Esc hört auf)',
+  'gd.lockTitle': 'Zuagsperrt kau ma d’Linien ned vaschiabn — a ned mit da Hand',
   'gd.addH':      '+ Waagrecht',
   'gd.addHTitle': 'A waagrechte Linie in d’Mittn setzn',
   'gd.addVTitle': 'A senkrechte Linie in d’Mittn setzn',
@@ -324,14 +325,14 @@ export const STATIC_AT = {
   'gd.h4':        '4 Köpf — kompakte Spüfigur',
   'gd.h6':        '6 Köpf — Comic, Jugendliche',
   'gd.h8':        '8 Köpf — klassisch, heldnhoft',
-  'gd.fit':       'An d’Figur anpassn',
-  'gd.fitTitle':  'Obn und untn von da Einteilung aufs Gmoite setzn',
-  'gd.note':      'Nur zum Zeichnen — d’Linien kemman in kan Export. Bei „Vaschiabn“ d’Linien ziagn; a freie Linie außem Buidl ziagn haut s’ weg, a Tipp danebn hört auf.',
+  'gd.note':      'Nur zum Zeichnen — d’Linien kemman in kan Export. Linien mit da Hand (H) ziagn: a Kopfhöh ziagt de ganze Figur, a freie Linie außem Buidl ziagn haut s’ weg. „Zuasperrn“ hoit olle fest.',
 };
 
 // ── Laufzeit-Texte ──────────────────────────────────────────────────
 export const MSG_AT = {
   'gd.hideBtn':   'Wegtuan',
+  'proj.unnamed': 'Projekt ohne Nam',
+  'proj.opened':  'offn',
   'gd.showBtn':   'Herzagn',
   // Palette-Beschriftungen
   'color.label.0': 'Durchsichtig',
@@ -505,7 +506,8 @@ export const MSG_AT = {
   'gd.navel':          'Nabl',
   'gd.hip':            'Hüftn',
   'gd.knee':           'Knia',
-  'gd.editInfo':       'Hilfslinien vaschiabn: Linie packn und ziagn, außem Buidl ziagn haut s’ weg. Tipp danebn oder Esc hört auf.',
+  'gd.lockBtn':         'Zuasperrn',
+  'gd.unlockBtn':       'Aufsperrn',
   'gd.removed':        'Hilfslinie is weg.',
 
   // Export / Import
