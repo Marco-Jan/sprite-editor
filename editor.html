@@ -388,6 +388,11 @@
           <span class="cc-pick ico" data-icon="picker" aria-hidden="true"></span>
           <input type="color" id="free-color-picker" class="hidden-color-input" data-i18n-attr="aria-label:pal.freePicker" aria-label="Freie Farbe wählen">
         </button>
+        <!-- Hex eintippen: liegt die Farbe in der Palette, wird sie gewählt, sonst eine freie (js/app.js) -->
+        <input type="text" id="cc-hex-input" class="cc-hex-input" maxlength="7" spellcheck="false" autocomplete="off" placeholder="#rrggbb"
+               data-i18n-attr="title:pal.hexTitle;aria-label:pal.hexAria" title="Hex-Wert eingeben, z. B. #6fa211 — liegt die Farbe schon in der Palette, wird sie gewählt" aria-label="Hex-Wert der aktuellen Farbe">
+        <!-- Nur bei einer freien Farbe: als neue Nummer in die Palette (js/palettes.js) -->
+        <button type="button" class="btn" id="cc-add-btn" hidden data-i18n-attr="title:pal.addCurrentTitle" title="Diese Farbe als neue Nummer in die Palette aufnehmen"><span class="btn-label" data-i18n="pal.addCurrent">+ In Palette</span></button>
         <button type="button" class="btn" id="show-color-btn" aria-pressed="false"
                 data-i18n-attr="title:pal.showTitle" title="Zeigt, wo die aktuelle Farbe im Bild vorkommt — alles andere wird abgedunkelt"><span class="ico" data-icon="spot"></span><span class="btn-label" data-i18n="pal.show">Zeigen</span></button>
         <div id="quick-palette" role="group" data-i18n-attr="aria-label:tool.quickPal" aria-label="Farb-Schnellwahl"></div>

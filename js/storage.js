@@ -727,19 +727,31 @@ export async function saveToFile() {
 // eingebaute hat) samt Materialien. Die Desktop-App schreibt und liest
 // dasselbe (spritebit-rs, io.rs export_sprite).
 
+/**
+ * Inhalt einer Sprite-Datei (.bitty) für Sprite `id`: der Sprite samt seiner
+ * eigenen Palette, ihren Materialien und Farbnamen. Die Desktop-App liest und
+ * schreibt dasselbe (tests/interop/).
+ */
+export function spritePayload(id) {
+  const sp = sprites[id];
+  if (!sp) return null;
+  const only = store => (store[sp.palette] ? { [sp.palette]: store[sp.palette] } : {});
+  return {
+    version: SCHEMA_VERSION,
+    kind: 'sprite',
+    sprites: { [id]: serializeSprite(sp) },
+    customPalettes: only(customPalettes),
+    paletteMaterials: only(paletteMaterials),
+    paletteColorNames: only(paletteColorNames),
+    ui: { curSprite: id },
+  };
+}
+
 /** Nur den aktuellen Sprite als Datei sichern. */
 export async function saveSpriteToFile() {
   const sp = sprites[state.curSprite];
   if (!sp) return;
-  const payload = {
-    version: SCHEMA_VERSION,
-    kind: 'sprite',
-    sprites: { [state.curSprite]: serializeSprite(sp) },
-    customPalettes: customPalettes[sp.palette] ? { [sp.palette]: customPalettes[sp.palette] } : {},
-    paletteMaterials: paletteMaterials[sp.palette] ? { [sp.palette]: paletteMaterials[sp.palette] } : {},
-    paletteColorNames: paletteColorNames[sp.palette] ? { [sp.palette]: paletteColorNames[sp.palette] } : {},
-    ui: { curSprite: state.curSprite },
-  };
+  const payload = spritePayload(state.curSprite);
   // .bitty: innen JSON wie eine Projektdatei — die Desktop-App liest sie genauso.
   const filename = `${(sp.name || 'sprite').replace(/[^a-zA-Z0-9_-]/g, '_')}.bitty`;
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
