@@ -45,9 +45,9 @@ export const STATIC_AT = {
 
   // ── Menüleiste (js/menubar.js) — nur, was im Dialekt anders klingt ──
   'mb.file':      'Datei',
-  'mb.newProject': 'A neichs Projekt …',
+  'mb.newMenu':   'Nei',
+  'mb.addSprite': 'Sprites aus an Projekt hoin …',
   'mb.projects':  'Projekte …',
-  'mb.new':       'A neicher Sprite …',
   'mb.open':      'Aufmochn …',
   'mb.dir':       'Speicherort aussuachn …',
   'mb.export':    'Exportiern …',

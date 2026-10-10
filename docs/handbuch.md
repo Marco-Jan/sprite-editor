@@ -729,6 +729,14 @@ UI-Zustand in eine JSON-Datei. Mit **Speicherort** lässt sich einmalig ein Ziel
 wählen (File System Access API); Browser ohne diese API fallen auf den normalen
 Download zurück.
 
+Das Menü **Datei** im Überblick:
+- **Neu ▸ Projekt / Sprite** — ein leeres Projekt oder ein neuer Sprite im offenen.
+- **Öffnen** nimmt Projekt-, Sprite- (`.bitty`) und Aseprite-Dateien: Ein Projekt öffnet
+  sich als eigenes Projekt, ein Sprite kommt ins offene dazu.
+- **Sprites aus Projekt holen** übernimmt die Sprites einer Projektdatei ins offene Projekt.
+- **Projekt sichern** schreibt das ganze Projekt, **Sprite sichern ▸** nur den aktuellen
+  Sprite — als spritebit-Datei (`.bitty`) oder als `.aseprite`.
+
 ---
 
 ## Offline und als App
