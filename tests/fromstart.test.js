@@ -21,6 +21,14 @@ test('16×16 mit Palette wird gelesen', () => {
   assert.deepEqual(r.grid[0].slice(0, 7), [0, 1, 2, 3, 4, 5, 0]);
 });
 
+test('aus der Skizzen-Demo: Kennzeichen „.skizze“', () => {
+  const r = parseStartHash('#start=eis.' + PAL + '.' + cells(32, i => i % 6) + '.skizze');
+  assert.ok(r);
+  assert.equal(r.sketch, true);
+  assert.equal(r.grid.length, 32);
+  assert.equal(parseStartHash('#start=eis.' + PAL + '.' + cells(4, () => 1))?.sketch, false);
+});
+
 test('ohne # geht auch', () => {
   assert.ok(parseStartHash('start=eis.' + PAL + '.' + cells(4, () => 1)));
 });

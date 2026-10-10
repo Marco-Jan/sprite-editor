@@ -1377,6 +1377,7 @@ const MSG = {
     'start.ask':        'Dein Bild von der Startseite als neuen Sprite übernehmen?',
     'start.take':       'Übernehmen',
     'start.name':       'bitty',
+    'start.nameSketch': 'Skizze',
 
     // Bitty, der Helfer (js/helper.js)
     'bitty.hello':      'Hi, ich bin Bitty! Soll ich dir kurz zeigen, wo hier was ist?',
@@ -2009,6 +2010,7 @@ const MSG = {
     'start.ask':        'Take your drawing from the start page along as a new sprite?',
     'start.take':       'Take it',
     'start.name':       'bitty',
+    'start.nameSketch': 'Sketch',
 
     'bitty.hello':      'Hi, I’m Bitty! Want me to show you around real quick?',
     'bitty.show':       'Show me',

@@ -1917,7 +1917,7 @@ function offerStartDrawing() {
     const same = paletteExists(base) && JSON.stringify(getPaletteByName(base)) === JSON.stringify(r.palette);
     const palName = same ? base : createPaletteFromImport(r.palette, base);
     stopPlayback();
-    const id = createSprite({ name: t('start.name'), palette: palName || DEFAULT_PALETTE, grid: r.grid });
+    const id = createSprite({ name: t(r.sketch ? 'start.nameSketch' : 'start.name'), palette: palName || DEFAULT_PALETTE, grid: r.grid });
     renderCallbacks.onSelectSprite(id); // zeichnet und speichert
   }, t('start.take'));
 }

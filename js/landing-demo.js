@@ -162,9 +162,9 @@
   // Im Hash, nicht im Speicher: editor.html#start=eis.14213d,…,f2f8ff.0011…
   // (Palettenname, ihre 5 Farben, dann N×N Ziffern 0–5 Zeile für Zeile).
   // Der Editor legt daraus einen Sprite an (app.js, takeStartDrawing).
-  function linkFor(px) {
+  function linkFor(px, tag) {
     for (var i = 0; i < px.length; i++) {
-      if (px[i]) return 'editor.html#start=' + pal + '.' + PALETTES[pal].join(',').replace(/#/g, '') + '.' + Array.prototype.join.call(px, '');
+      if (px[i]) return 'editor.html#start=' + pal + '.' + PALETTES[pal].join(',').replace(/#/g, '') + '.' + Array.prototype.join.call(px, '') + (tag || '');
     }
     return 'editor.html';
   }
@@ -420,7 +420,7 @@
       ctx.fillStyle = PALETTES[pal][result[i] - 1];
       ctx.fillRect(i % N, (i / N) | 0, 1, 1);
     }
-    if (sketchCta) sketchCta.href = linkFor(result);
+    if (sketchCta) sketchCta.href = linkFor(result, '.skizze');
   }
 
   function loadSketchSample() {

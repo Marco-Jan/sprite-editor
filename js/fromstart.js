@@ -4,16 +4,17 @@
 // „Im Editor weitermalen“ (js/landing-demo.js) hängt das Bild an den Link:
 //   editor.html#start=eis.14213d,2d4870,6ea8fe,a9d1ff,f2f8ff.0000…0123…
 // Palettenname · ihre Farben (ohne #) · N×N Ziffern Zeile für Zeile
-// (0 = transparent, sonst Index in die Palette). Hier nur das Lesen —
+// (0 = transparent, sonst Index in die Palette) · optional „.skizze“, wenn
+// das Bild aus der Skizzen-Demo kommt (der Sprite heißt dann so). Hier nur das Lesen —
 // ohne DOM und ohne Zustand, damit es sich testen lässt.
 
 /**
  * Hash lesen. Gibt null zurück, wenn er nicht passt.
  * @param {string} hash  location.hash, mit oder ohne '#'
- * @returns {{ name: string, palette: Record<number, string>, grid: number[][] } | null}
+ * @returns {{ name: string, palette: Record<number, string>, grid: number[][], sketch: boolean } | null}
  */
 export function parseStartHash(hash) {
-  const m = /^#?start=([a-z0-9_-]{1,24})\.((?:[0-9a-f]{6},){0,8}[0-9a-f]{6})\.([0-9]+)$/i.exec(hash || '');
+  const m = /^#?start=([a-z0-9_-]{1,24})\.((?:[0-9a-f]{6},){0,8}[0-9a-f]{6})\.([0-9]+)(\.skizze)?$/i.exec(hash || '');
   if (!m) return null;
   const colors = m[2].split(',');
   const digits = m[3];
@@ -34,5 +35,5 @@ export function parseStartHash(hash) {
     }
     grid.push(row);
   }
-  return { name: m[1].toLowerCase(), palette, grid };
+  return { name: m[1].toLowerCase(), palette, grid, sketch: !!m[4] };
 }
