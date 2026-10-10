@@ -379,11 +379,6 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   background: var(--surface-1);
 }
 .brand { display: flex; align-items: center; gap: var(--sp-2); }
-.brand-mark {
-  width: 18px; height: 18px;
-  border-radius: 4px;
-  display: block;
-}
 .brand-link {
   display: flex;
   align-items: center;
