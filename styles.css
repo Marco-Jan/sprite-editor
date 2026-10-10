@@ -983,21 +983,22 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   background: var(--surface-1);
 }
 #timeline .btn { padding: 5px 8px; }
-#timeline { position: relative; }
-/* Griff am Rand (js/frames.js initThumbGrip): Höhe = Größe der Vorschaubilder.
-   Oben, wenn die Timeline unten liegt — unten, wenn sie oben liegt. */
+/* Trennlinie unter den Vorschaubildern (js/frames.js makeThumbGrip):
+   ziehen = Größe der Bilder. Liegt im Raster in der Zeile der Bilder, unten
+   bündig, und klebt mit ihnen oben, wenn die Ebenen scrollen. */
 .tl-grip {
-  position: absolute;
-  left: 0; right: 0; top: -3px;
+  grid-column: 1 / -1;
+  align-self: end;
+  position: sticky;
+  top: calc(var(--tl-tagh, 0px) + var(--tl-cell, 44px) - 4px);
+  z-index: 3;
   height: 7px;
-  z-index: 6;
+  margin-bottom: -5px;
   cursor: row-resize;
+  background: linear-gradient(var(--line-strong), var(--line-strong)) center / 100% 1px no-repeat;
 }
-.bar-zone[data-zone="top"] .tl-grip { top: auto; bottom: -3px; }
-.tl-grip:hover, .is-resizing-ui .tl-grip { background: var(--accent-line); }
-#timeline.is-vertical .tl-grip,
-#timeline:has(.tl-frames.no-thumbs) .tl-grip { display: none; }
-@media (max-width: 1100px) { .tl-grip { display: none; } }
+.tl-grip:hover, .is-resizing-ui .tl-grip { background: linear-gradient(var(--accent), var(--accent)) center / 100% 2px no-repeat; }
+.tl-grip[hidden] { display: none; }
 /* Das Raster (js/frames.js): links je Ebene eine Beschriftung, oben je
    Frame ein Bildchen, darunter je Ebene und Frame eine Zelle. Es steht in
    einer eigenen Zeile unter den Knöpfen und nimmt die ganze Breite.

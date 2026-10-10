@@ -688,11 +688,11 @@ geprüft und mit `JSON.parse` gelesen.
 | Ziehen in der Auswahl | Bereich ausschneiden und verschieben |
 | `Alt` + Ziehen | Kopie verschieben, Original bleibt |
 | Anfasser ziehen | Auswahl skalieren (`Umschalt`: Seitenverhältnis halten) |
-| Pfeiltasten | Auswahl pixelweise verschieben |
+| Pfeiltasten | Mit Auswahl: sie pixelweise verschieben · ohne: `←` `→` voriger / nächster Frame, `↑` `↓` Ebene darüber / darunter |
 | `Strg+A` / `C` / `X` / `V` | Alles wählen · Kopieren · Ausschneiden · Einfügen |
 | `Entf` | Auswahl leeren |
 | `Enter` | Drehung übernehmen · sonst Animation abspielen / anhalten |
-| `,` / `.` | Voriger / nächster Frame |
+| `,` / `.` oder `←` / `→` | Voriger / nächster Frame |
 | `Pos1` / `Ende` | Zum ersten / letzten Frame |
 | `G` | Hilfslinien ein / aus |
 | Zwei Finger (Touch) | Zoomen und verschieben |

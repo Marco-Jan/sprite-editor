@@ -451,8 +451,8 @@ const STATIC = {
     'tl.cunlink': 'Unlink — every cel gets its own image',
     // Timeline (frames.js) und GIF-Export
     'tl.first': 'First frame (Home)',
-    'tl.prev': 'Previous frame (,)',
-    'tl.next': 'Next frame (.)',
+    'tl.prev': 'Previous frame (, or ←)',
+    'tl.next': 'Next frame (. or →)',
     'tl.last': 'Last frame (End)',
     'tl.multi': 'Select several frames — tapping marks instead of switching',
     'tl.play': 'Play / pause (Enter)',
@@ -873,13 +873,13 @@ const STATIC = {
       + '<div class="sc-row"><b>Drag inside the selection</b><span>Cut the area out and move it</span></div>'
       + '<div class="sc-row"><b>Alt + drag</b><span>Move a copy (the original stays)</span></div>'
       + '<div class="sc-row"><b>Drag a handle</b><span>Scale the selection (Shift: keep aspect ratio)</span></div>'
-      + '<div class="sc-row"><b>Arrow keys</b><span>Nudge the selection pixel by pixel</span></div>'
+      + '<div class="sc-row"><b>Arrow keys</b><span>With a selection: nudge it pixel by pixel · without: ← → frame, ↑ ↓ layer</span></div>'
       + '<div class="sc-row"><b>Ctrl + A / C / X / V / D</b><span>All · Copy · Cut · Paste · Deselect</span></div>'
       + '<div class="sc-row"><b>Ctrl + Shift + V</b><span>Paste with the numbers instead of the colours (other palette)</span></div>'
       + '<div class="sc-row"><b>Del</b><span>Erase the selection</span></div>'
       + '<div class="sc-row"><b>Enter</b><span>Apply the rotation · otherwise play / pause the animation</span></div>'
       + '<div class="sc-row"><b>Home / End</b><span>First / last frame</span></div>'
-      + '<div class="sc-row"><b>, / .</b><span>Previous / next frame</span></div>'
+      + '<div class="sc-row"><b>, / . or ← / →</b><span>Previous / next frame</span></div>'
       + '<div class="sc-row"><b>G</b><span>Guides on / off</span></div>'
       + '<div class="sc-row"><b>Two fingers</b><span>Zoom and pan (touch)</span></div>'
       + '<div class="sc-row"><b>Ctrl + Z</b><span>Undo</span></div>'
@@ -1035,7 +1035,7 @@ const MSG = {
     // Timeline (js/frames.js) — die Knopf-Titel stehen in STATIC
     'pv.info':      '{w}×{h} Pixel · {scale}× dargestellt',
     'tl.frameTitle': 'Frame {i} · {ms} ms — antippen zum Wählen, ziehen zum Verschieben, Strg/Shift wählt mehrere',
-    'tl.gripTitle':  'Ziehen: Timeline höher oder flacher — die Vorschaubilder wachsen mit. Doppelklick: wieder passend zur Breite',
+    'tl.gripTitle':  'Ziehen: Vorschaubilder größer (nach unten) oder kleiner (nach oben). Doppelklick: wieder passend zur Breite',
     'tl.frameOf':   'Frame {i}/{n}',
     'tl.lastFrame': 'Der letzte Frame bleibt — ein Sprite braucht mindestens einen.',
     'tl.multi':     'Mehrere Frames wählen — antippen markiert, statt zu wechseln',
@@ -1377,6 +1377,7 @@ const MSG = {
     'start.ask':        'Dein Bild von der Startseite als neuen Sprite übernehmen?',
     'start.take':       'Übernehmen',
     'start.name':       'bitty',
+    'start.nameSketch': 'Skizze',
 
     // Bitty, der Helfer (js/helper.js)
     'bitty.hello':      'Hi, ich bin Bitty! Soll ich dir kurz zeigen, wo hier was ist?',
@@ -1684,7 +1685,7 @@ const MSG = {
 
     'pv.info':      '{w}×{h} pixels · shown at {scale}×',
     'tl.frameTitle': 'Frame {i} · {ms} ms — tap to select, drag to move, Ctrl/Shift picks several',
-    'tl.gripTitle':  'Drag: make the timeline taller or flatter — the thumbnails grow with it. Double-click: fit to width again',
+    'tl.gripTitle':  'Drag: thumbnails larger (down) or smaller (up). Double-click: fit to width again',
     'tl.frameOf':   'frame {i}/{n}',
     'tl.lastFrame': 'The last frame stays — a sprite needs at least one.',
     'tl.multi':     'Select several frames — tapping marks instead of switching',
@@ -2009,6 +2010,7 @@ const MSG = {
     'start.ask':        'Take your drawing from the start page along as a new sprite?',
     'start.take':       'Take it',
     'start.name':       'bitty',
+    'start.nameSketch': 'Sketch',
 
     'bitty.hello':      'Hi, I’m Bitty! Want me to show you around real quick?',
     'bitty.show':       'Show me',

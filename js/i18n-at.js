@@ -296,8 +296,8 @@ export const STATIC_AT = {
   'mod.impCurrentTitle': 'Ersetzt den aktivn Sprite mit olle Frames und Ebenen — Strg+Z hoit’n zruck',
 
   // ── Timeline ──
-  'tl.prev':      'Da Frame davor (,)',
-  'tl.next':      'Da nächste Frame (.)',
+  'tl.prev':      'Da Frame davor (, oder ←)',
+  'tl.next':      'Da nächste Frame (. oder →)',
   'tl.play':      'Obspün / Anhoitn (Enter)',
   'tl.add':       'An laarn Frame dahinter einischiabn',
   'tl.dup':       'Frame verdoppln',
@@ -488,7 +488,7 @@ export const MSG_AT = {
 
   // Timeline
   'tl.frameTitle':     'Frame {i} · {ms} ms — antippn zum Wöhln, ziagn zum Vaschiabn',
-  'tl.gripTitle':      'Ziagn: Timeline höcha oder flocha — de Vorschaubuidln wochsn mit. Doppelklick: wieda passend zur Breitn',
+  'tl.gripTitle':      'Ziagn: Vorschaubuidln größa (noch untn) oder klana (noch obn). Doppelklick: wieda passend zur Breitn',
   'tl.delOne':         'Frame weghaun',
   'tl.delMany':        '{n} markierte Frames weghaun',
   'tl.lastFrame':      'Da letzte Frame bleibt — a Sprite braucht mindestens oan.',

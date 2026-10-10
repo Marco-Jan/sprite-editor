@@ -156,7 +156,7 @@
         <h1 data-i18n="hero.h1">Pixel Art Editor für Sprites</h1>
         <p class="lead" data-i18n="hero.lead">
           Ein leeres Raster, eine Handvoll Farben, und du malst los. Der Editor läuft
-          komplett im Browser — kein Build, kein Konto, keine Cloud.
+          komplett im Browser — kein Konto, keine Cloud.
         </p>
         <ul class="hero-chips" data-i18n-html="hero.chips">
           <li>Frames &amp; GIF</li>
@@ -227,7 +227,7 @@
         <ul class="facts" data-i18n-html="s1.facts">
           <li><span class="fact-key">Ziehen</span> malt durchgehend, <span class="fact-key">Rechtsklick</span> radiert.</li>
           <li>Alles bleibt in deinem Browser — <span class="fact-key">kein Konto</span>, nichts wird hochgeladen.</li>
-          <li>Unten färbst du genau dieses Bild um.</li>
+          <li>Weiter unten wird aus einer <span class="fact-key">Skizze</span> Pixel-Art.</li>
         </ul>
         <a class="btn btn--primary" href="editor.html"><span data-i18n="s1.cta">Im Editor weitermalen</span><span class="ver" data-version="web"></span></a>
       </div>
@@ -235,16 +235,39 @@
   </section>
 
   <!-- ══════════════════════════════════════════════════════════════
-       02 — Farbe · dein Bild aus 01 mit anderen Paletten (js/landing-demo.js)
+       02 — Skizze · aus einer Zeichnung wird Pixel-Art (js/landing-demo.js)
        ═══════════════════════════════════════════════════════════ -->
   <section class="band band--warm" id="farbe" aria-labelledby="h-farbe">
-    <p class="eyebrow" data-i18n-html="s2.eyebrow"><span class="st-num">02</span> Farbe</p>
-    <h2 id="h-farbe" data-i18n="s2.h2">Und dann kippst du die Palette um.</h2>
+    <p class="eyebrow" data-i18n-html="s2.eyebrow"><span class="st-num">02</span> Skizze</p>
+    <h2 id="h-farbe" data-i18n="s2.h2">Aus deiner Skizze wird Pixel-Art.</h2>
 
-    <div class="swap">
-      <div class="swap-demo">
-        <canvas class="try-preview" id="try-preview" width="192" height="192" data-i18n-attr="aria-label:demo.previewAlt"
-                aria-label="Dein Bild von oben in der gewählten Palette."></canvas>
+    <div class="sketch">
+      <div class="sketch-demo">
+        <div class="sketch-pair">
+          <figure class="sketch-fig">
+            <canvas class="sketch-src" id="sketch-src" width="240" height="240" data-i18n-attr="aria-label:demo.sketchAlt"
+                    aria-label="Die Vorlage: eine gezeichnete Skizze oder dein eigenes Bild."></canvas>
+            <figcaption data-i18n="demo.sketchCap">Vorlage</figcaption>
+          </figure>
+          <span class="sketch-arrow" aria-hidden="true">→</span>
+          <figure class="sketch-fig">
+            <canvas class="sketch-out" id="sketch-out" width="32" height="32" data-i18n-attr="aria-label:demo.resultAlt"
+                    aria-label="Das Ergebnis: dieselbe Vorlage als Pixel-Art."></canvas>
+            <figcaption data-i18n="demo.resultCap">Pixel-Art</figcaption>
+          </figure>
+        </div>
+        <div class="sketch-tools">
+          <label class="try-btn sketch-upload">
+            <input type="file" id="sketch-file" accept="image/*" hidden>
+            <span data-i18n="demo.upload">Eigene Skizze laden …</span>
+          </label>
+          <button type="button" class="try-btn" id="sketch-sample" data-i18n="demo.sketchSample">Beispiel</button>
+          <div class="sketch-sizes" role="group" data-i18n-attr="aria-label:demo.size" aria-label="Größe">
+            <button type="button" class="try-btn" data-size="16" aria-pressed="false">16</button>
+            <button type="button" class="try-btn" data-size="24" aria-pressed="false">24</button>
+            <button type="button" class="try-btn" data-size="32" aria-pressed="true">32</button>
+          </div>
+        </div>
         <div class="pal-row" role="group" data-i18n-attr="aria-label:demo.palettes" aria-label="Paletten">
           <button type="button" class="pal-btn" data-pal="wald" aria-pressed="false"><span class="pal-chips" aria-hidden="true"></span><span data-i18n="demo.pal.forest">Wald</span></button>
           <button type="button" class="pal-btn" data-pal="abend" aria-pressed="false"><span class="pal-chips" aria-hidden="true"></span><span data-i18n="demo.pal.dusk">Abend</span></button>
@@ -254,14 +277,15 @@
       </div>
       <div class="swap-text">
         <p class="section-lead" data-i18n="s2.lead">
-          Das Bild merkt sich nur, welche Farbe wohin gehört — nicht welcher Ton. Tausch die
-          Palette, und alles leuchtet sofort in neuen Farben, ohne ein Pixel anzufassen.
+          Zeichne auf Papier, mach ein Foto davon und lade es hier — die Striche werden zur
+          Kontur, geschlossene Flächen füllen sich, und die Palette bestimmst du selbst.
         </p>
         <ul class="facts" data-i18n-html="s2.facts">
-          <li><span class="fact-key">17 Paletten</span> sind eingebaut, eigene legst du daneben an.</li>
-          <li>Aus einem <span class="fact-key">Foto</span> holt der Editor die passenden Farben.</li>
-          <li>Ideal für <span class="fact-key">Varianten</span>: dieselbe Figur in Rot, Blau, Grün.</li>
+          <li>Dein Bild bleibt <span class="fact-key">in deinem Browser</span> — nichts wird hochgeladen.</li>
+          <li>Im Editor geht das genauso mit der <span class="fact-key">Schablone</span>, samt Feinschliff und Licht.</li>
+          <li>Das Bild merkt sich nur Nummern: <span class="fact-key">Palette tauschen</span> färbt alles um.</li>
         </ul>
+        <a class="btn btn--primary" id="sketch-cta" href="editor.html"><span data-i18n="s2.cta">Im Editor weitermalen</span><span class="ver" data-version="web"></span></a>
       </div>
     </div>
   </section>
