@@ -14,7 +14,6 @@ Zeichnen, animieren, Tilemaps für Spiel-Levels bauen und als Bild, GIF, Godot-S
 [Mitmachen](CONTRIBUTING.md)
 
 ![MIT-Lizenz](https://img.shields.io/badge/Lizenz-MIT-6ed49a)
-![Kein Build](https://img.shields.io/badge/Build-keiner-6ed49a)
 ![Offline](https://img.shields.io/badge/PWA-offline-6ed49a)
 ![Sprachen](https://img.shields.io/badge/Sprachen-DE%20·%20EN%20·%20AT-6ed49a)
 

@@ -610,6 +610,9 @@ export function renderTimeline() {
   corner.style.gridRow = `1 / ${nl + 2}`;
   corner.style.gridColumn = '1';
   thumbs.forEach((b, i) => { b.style.gridRow = String(nl + 1); b.style.gridColumn = String(i + 2); });
+  if (!thumbGrip) thumbGrip = makeThumbGrip();
+  thumbGrip.style.gridRow = String(nl + 1);
+  thumbGrip.hidden = !state.tlOpts.thumbs || isMobileLayout();
 
   // Zeilen von oben nach unten: oberste Ebene zuerst.
   rowEls = [];
@@ -640,7 +643,7 @@ export function renderTimeline() {
     }
   }
   // Vorhandene Knöpfe werden dabei nur umgehängt, nicht neu gebaut.
-  box.replaceChildren(corner, ...tagEls, ...thumbs, ...body);
+  box.replaceChildren(corner, ...tagEls, ...thumbs, thumbGrip, ...body);
   box.style.setProperty('--tl-n', String(n));
   box.style.setProperty('--tl-l', String(L));
   box.style.setProperty('--tl-tagh', nl * (TAG_ROW + 2) + 'px');
@@ -1234,26 +1237,25 @@ function closeTagEditor() {
   tagEdIndex = -1;
 }
 
-// Griff am Rand der Timeline (oben, wenn sie unten liegt — und umgekehrt):
-// Ziehen macht die Leiste höher oder flacher, und die Vorschaubilder wachsen
-// mit. Doppelklick stellt wieder „passend zur Breite“ ein.
-function initThumbGrip() {
-  const tl = $('timeline');
-  if (!tl) return;
+// Trennlinie direkt unter den Vorschaubildern (ein Element im Raster, klebt
+// mit der Kopfzeile oben): nach unten ziehen macht die Bilder größer, nach
+// oben kleiner. Mehr Ebenen ändern daran nichts — die scrollen darunter.
+// Doppelklick stellt wieder „passend zur Breite“ ein.
+let thumbGrip = null;
+function makeThumbGrip() {
   const grip = document.createElement('div');
   grip.className = 'tl-grip';
   grip.setAttribute('role', 'separator');
   grip.setAttribute('aria-orientation', 'horizontal');
   grip.title = t('tl.gripTitle');
-  tl.prepend(grip);
   grip.addEventListener('pointerdown', e => {
     e.preventDefault();
-    const atTop = !!tl.closest('[data-zone="top"]');
+    e.stopPropagation();
     const sy = e.clientY, s0 = cell;
     document.body.classList.add('is-dragging-ui', 'is-resizing-ui');
     const move = ev => {
       const dy = ev.clientY - sy;
-      const size = Math.round(Math.min(THUMB_SIZE_MAX, Math.max(THUMB_SIZE_MIN, s0 + (atTop ? dy : -dy))));
+      const size = Math.round(Math.min(THUMB_SIZE_MAX, Math.max(THUMB_SIZE_MIN, s0 + dy)));
       if (size === state.tlOpts.thumbSize) return;
       state.tlOpts.thumbSize = size;
       fitThumbs();
@@ -1272,6 +1274,7 @@ function initThumbGrip() {
     fitThumbs();
     saveState();
   });
+  return grip;
 }
 
 export function initFrames() {
@@ -1305,7 +1308,6 @@ export function initFrames() {
   // Anordnung), bekommen die Bildchen die neue Größe.
   const box = $('tl-frames');
   if (box && window.ResizeObserver) new ResizeObserver(() => fitThumbs()).observe(box);
-  initThumbGrip();
 
   renderCallbacks.onRenderTimeline = renderTimeline;
   renderCallbacks.onEditorRendered = refreshCurrentThumb;

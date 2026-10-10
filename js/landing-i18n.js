@@ -59,7 +59,7 @@
 
     'hero.eyebrow': 'spritebit · Start small.',
     'hero.h1':      'Pixel art editor for sprites',
-    'hero.lead':    'An empty grid, a handful of colors, and off you go. The editor runs entirely in the browser — no build, no account, no cloud.',
+    'hero.lead':    'An empty grid, a handful of colors, and off you go. The editor runs entirely in the browser — no account, no cloud.',
     'hero.chips': '<li>Frames &amp; GIF</li><li>Layers</li><li>Tilemaps</li><li>Made for games</li><li>Works offline</li><li>No account</li>',
 
     's1.eyebrow':   '<span class="st-num">01</span> The first pixel',
@@ -325,7 +325,7 @@
     'hero.eyebrow': 'spritebit · Fang kloa an.',
     'hero.chips': '<li>Frames &amp; GIF</li><li>Ebenen</li><li>Tilemaps</li><li>Fia Spü</li><li>Rennt a offline</li><li>Ka Konto</li>',
     'hero.h1':      'Pixel Art Editor fia Sprites',
-    'hero.lead':    'A laares Raster, a Handvoll Farben, und du moist los. Da Editor rennt komplett im Browser — ka Build, ka Konto, ka Cloud.',
+    'hero.lead':    'A laares Raster, a Handvoll Farben, und du moist los. Da Editor rennt komplett im Browser — ka Konto, ka Cloud.',
 
     's1.eyebrow':   '<span class="st-num">01</span> Da erste Pixel',
     's1.h2': 'Moi afoch los.',
