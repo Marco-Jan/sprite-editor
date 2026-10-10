@@ -766,12 +766,15 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 }
 .tab-close:hover { opacity: 1; background: var(--surface-4); }
 .tab-close .ui-ico { width: 12px; height: 12px; }
-.tab-new { flex: none; align-self: center; }
+/* Unten wie die Reiter und mittig auf ihrer Höhe (26 px Reiter, 22 px Knopf)
+   — mittig in der ganzen Leiste stand es höher als die Reiter. */
+.tab-new { flex: none; align-self: flex-end; margin-bottom: 2px; }
 /* Finger: etwas mehr Fläche, aber die Reiter sollen sich nicht vordrängen. */
 @media (pointer: coarse) {
   .sprite-tab { height: 30px; padding-left: 12px; }
   .sprite-tab.is-active { height: 32px; }
   .tab-close { width: 24px; height: 24px; }
+  .tab-new { margin-bottom: 0; }
 }
 .stage-title {
   overflow: hidden;
