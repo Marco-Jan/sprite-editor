@@ -2508,6 +2508,12 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
   #editor-canvas-area { touch-action: none; }
 }
 
+/* Sehr schmale Handys: Schriftzug weg, damit die vier Menütitel und Bitty
+   in eine Zeile passen (siehe Handy-Abschnitt unten). */
+@media (max-width: 359.98px) {
+  .brand-name { display: none; }
+}
+
 /* ── 17 · Handy (js/layout.js MOBILE) ─────────────────────────────────
    Die Zeichenfläche bekommt den ganzen Rest. Beide Docks liegen als eine
    Leiste ganz unten, Panels öffnen sich als Blatt von unten. Werkzeugleiste
@@ -2518,9 +2524,11 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
   :root { --mbar-h: 48px; }
 
   #topbar { gap: var(--sp-2); padding: var(--sp-1) var(--sp-3); }
-  /* Am Handy: nur das Logo, die vier Menütitel passen dann daneben.
-     Die Menüs werden fingerfreundlich hoch und bleiben im Bild. */
-  .brand-name, .doc-title, .save-indicator { display: none; }
+  /* Am Handy: der Schriftzug, die vier Menütitel daneben — kein Sprite-Name,
+     kein Speicher-Hinweis. Die Menüs werden fingerfreundlich hoch und
+     bleiben im Bild. Nur wo selbst das nicht passt, fällt der Schriftzug
+     weg (unten, schmaler als 360 px). */
+  .doc-title, .save-indicator { display: none; }
   .menubar { margin-left: 0; gap: 0; }
   .mb-title { padding: 8px 9px; }
   .mb-item { padding-top: 11px; padding-bottom: 11px; }
