@@ -441,6 +441,15 @@ def rs(args):
             run(['cargo', 'update', '--workspace'], root, quiet=True)  # nur die eigenen Pakete im Lockfile
             commit_if_changed(root, ['Cargo.toml', APP_TOML, 'Cargo.lock'], f'Version {args.rs_new}')
 
+    # Einheitlich formatiert (rustfmt.toml) — was abweicht, wird gerichtet
+    # und als eigener Commit festgehalten.
+    info('Formatierung (cargo fmt) …')
+    run(['cargo', 'fmt', '--all'], root, quiet=True)
+    if git(root, 'status', '--porcelain', 'crates'):
+        commit_if_changed(root, ['crates'], 'Formatiert (cargo fmt)', args.dry_run)
+    else:
+        ok('Formatierung sauber')
+
     if args.no_update:
         info('cargo update übersprungen (--no-update)')
     else:
