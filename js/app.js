@@ -1846,7 +1846,10 @@ async function init() {
   if (isMobileLayout()) fitZoomToArea();
   syncHistoryButtons();
 
-  if (loaded.fullscreen) enterFullscreen();
+  // Vollbild wird nach dem Neuladen bewusst NICHT wiederhergestellt: der
+  // Browser erlaubt echtes Vollbild nur nach einem Klick. Übrig bliebe ein
+  // halbes Vollbild — Kopfzeile weg, Seitenleisten eingefahren, „Vollbild
+  // beenden“ sichtbar, obwohl der Browser gar nicht im Vollbild ist.
   if (loaded.note) showInfoToast(loaded.note);
   // Gespeicherter Stand war unlesbar: er liegt gesichert daneben und wird
   // nicht überschrieben. Gleich zum Herunterladen anbieten.

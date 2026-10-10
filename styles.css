@@ -2203,6 +2203,22 @@ body.editor-fullscreen .fs-exit.is-visible { opacity: 1; pointer-events: auto; }
 .bar-zone--side > #toolbar .tool-name { display: none; }
 .rail-pins > #toolbar .tool-sep,
 .bar-zone--side > #toolbar .tool-sep { display: none; }
+/* Werkzeuge in der Spalte: ein gleichmäßiges Raster aus gleich großen
+   Zellen. Vorher brach jede Gruppe für sich um — Hand oder Zauberstab
+   standen allein in einer Zeile. Die Werkzeug-Gruppen lösen sich dafür auf
+   (display: contents), alles andere (Kopf, Symmetrie, Optionen) bekommt
+   eine ganze Zeile. */
+.rail-pins > #toolbar,
+.rail-pins > #toolbar.is-guest,
+.bar-zone--side > #toolbar,
+.bar-zone--side > #toolbar.is-guest {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+  align-items: center;
+}
+:is(.rail-pins, .bar-zone--side) > #toolbar > .tool-group:has(> .tool-btn) { display: contents; }
+:is(.rail-pins, .bar-zone--side) > #toolbar > :not(.tool-group:has(> .tool-btn), .bitty-btn) { grid-column: 1 / -1; }
+:is(.rail-pins, .bar-zone--side) > #toolbar .tool-btn { justify-content: center; width: 100%; }
 .bar-pin[aria-pressed="true"] { color: var(--accent); }
 
 body.is-dragging-ui, body.is-dragging-ui * { cursor: grabbing !important; user-select: none; }
@@ -2248,6 +2264,20 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
 /* Seitliche Zone: eine Spalte wie die Panel-Spalte, die Leisten darin
    untereinander und panelartig (Regeln unten bei .rail-pins). */
 .bar-zone--side { flex-direction: column; width: 17rem; overflow-y: auto; background: var(--surface-1); }
+/* Griff für die Breite (js/layout.js) — schmal, über dem Rand, nimmt keinen
+   Platz; weg, solange die Zone leer ist. Am Handy gibt es keine Seitenzonen. */
+.zone-resizer {
+  flex: none;
+  position: relative;
+  z-index: 6;
+  width: 7px;
+  margin: 0 -3px;
+  cursor: col-resize;
+}
+.zone-resizer:hover,
+.is-resizing-ui .zone-resizer { background: var(--accent-line); }
+.bar-zone:not(:has(> *)) + .zone-resizer,
+.zone-resizer:has(+ .bar-zone:not(:has(> *))) { display: none; }
 .bar-zone[data-zone="left"]  { border-right: 1px solid var(--line); }
 .bar-zone[data-zone="right"] { border-left: 1px solid var(--line); }
 .bar-zone--side > * + * { border-top: 1px solid var(--line); }

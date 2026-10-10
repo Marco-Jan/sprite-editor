@@ -29,8 +29,8 @@ export const isFullscreen = () => document.body.classList.contains('editor-fulls
 
 export function enterFullscreen() {
   document.body.classList.add('editor-fullscreen');
-  // Browser-Vollbild braucht einen Klick als Auslöser; beim Wiederherstellen
-  // nach einem Neuladen gibt es den nicht — dann eben nur die Leisten.
+  // Browser-Vollbild braucht einen Klick als Auslöser. Deshalb stellt app.js
+  // das Vollbild nach dem Neuladen auch nicht wieder her.
   const el = document.documentElement;
   if (!document.fullscreenElement && el.requestFullscreen) {
     el.requestFullscreen({ navigationUI: 'hide' }).catch(() => {});
