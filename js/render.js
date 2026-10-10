@@ -9,7 +9,7 @@ import { fillRegion } from './fill.js';
 import { maskedCel } from './mask.js';
 import {
   state, sprites, customPalettes, paletteMaterials, selection,
-  getGrid, getSprite, getPal, getPaletteName, getMaxIdx, getPreviewName,
+  getGrid, getSprite, getPal, getPaletteName, getMaxIdx, getPreviewName, colorName,
   getAllPaletteOptions, isCustomPalette, listSprites, getPaletteByName, allGrids, flatGrid, thumbGrid,
   editingMask,
 } from './state.js';
@@ -44,6 +44,7 @@ export const renderCallbacks = {
   // Farben direkt im Paletten-Raster (palettes.js) — „+“, Duplizieren, Einfügen.
   onAppendColor:     (_hex) => /** @type {{name: string, idx: number} | null} */ (null),
   onSetColor:        (_idx, _hex) => {},
+  onRemoveColor:     (_idx) => {},
   // Felder im Bild-Panel an die Maße des aktiven Sprites angleichen.
   onSyncImagePanel:  () => {},
   // Timeline (frames.js): ganz neu zeichnen bzw. nur den aktuellen Frame.
@@ -691,7 +692,7 @@ export function renderQuickPalette() {
     el.type = 'button';
     el.dataset.idx = String(i);
     el.className = 'qp-swatch' + (i === state.curColor ? ' is-active' : '') + (i === 0 ? ' is-transparent' : '');
-    el.title = t('pal.quickTitle', { i, label: colorLabelShort(i), extra: color && i !== 0 ? ' · ' + color : '' });
+    el.title = t('pal.quickTitle', { i, label: colorLabelShort(i, colorName(i)), extra: color && i !== 0 ? ' · ' + color : '' });
     if (i !== 0) el.style.background = color || 'var(--surface-3)';
 
     const idx = document.createElement('span');
@@ -768,7 +769,7 @@ export function updateCurrentColorIndicator() {
     const color = getPal()[state.curColor] || '#888888';
     sw.style.background = color;
     hex.textContent = color;
-    if (lbl) lbl.textContent = t('pal.currentIndex', { i: state.curColor, label: colorLabelShort(state.curColor) });
+    if (lbl) lbl.textContent = t('pal.currentIndex', { i: state.curColor, label: colorLabelShort(state.curColor, colorName(state.curColor)) });
   }
 }
 
@@ -966,7 +967,7 @@ export function renderPalette() {
     sw.dataset.idx = String(i);
     if (i !== 0) sw.style.background = color || 'var(--surface-3)';
     sw.title = i === 0 ? colorLabel(0)
-      : t('pal.swInfo', { i, hex: color || '—' }) + '\n' + t('pal.swEdit');
+      : swInfo(i, name, color) + '\n' + t('pal.swEdit');
     if (i === PALETTE_GROUP_SPLIT + 1 && size > PALETTE_GROUP_SPLIT) sw.classList.add('is-group');
 
     // Klick: damit malen. Aus der Sprite-Palette als Index, aus einer
@@ -1050,6 +1051,8 @@ function openSwatchMenu(x, y, i, color) {
   item(_copiedColor ? t('pal.menu.pasteHex', { hex: _copiedColor }) : t('pal.menu.paste'),
     () => renderCallbacks.onSetColor(i, _copiedColor), !_copiedColor);
   item(t('pal.menu.edit'), () => editAnyPaletteColor(i));
+  item(t('pal.menu.remove'), () => renderCallbacks.onRemoveColor(i),
+    paletteSize(getPaletteByName(getPreviewName())) <= 1);
   document.body.appendChild(menu);
   // Im Fenster halten.
   const r = menu.getBoundingClientRect();
@@ -1131,7 +1134,13 @@ function syncPaletteGridActive() {
   const info = document.getElementById('palette-pick-info');
   if (!info) return;
   if (hit === null || hit === 0) { info.textContent = hit === 0 ? colorLabel(0) : ''; return; }
-  info.textContent = t('pal.swInfo', { i: hit, hex: pal[hit] || '—' });
+  info.textContent = swInfo(hit, name, pal[hit]);
+}
+
+// „5 · #6ea8fe“ bzw. mit eigenem Namen „5 · Haut · #6ea8fe“.
+function swInfo(i, palName, hex) {
+  const name = colorName(i, palName);
+  return name ? t('pal.swInfoNamed', { i, name, hex: hex || '—' }) : t('pal.swInfo', { i, hex: hex || '—' });
 }
 
 // ────────────────────────────────────────────────────────────────────

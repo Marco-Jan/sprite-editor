@@ -42,6 +42,17 @@ export const customPalettes = {};
 // Fehlende Einträge bedeuten "none" (siehe MATERIALS in gamejson.js).
 export const paletteMaterials = {};
 
+// Eigene Namen je Palettenfarbe — aus dem Palette-Bearbeiten-Fenster.
+// Ebenfalls neben den Paletten, wie paletteMaterials:
+//   paletteColorNames['meine'] = { 3: 'Haut', 5: 'Kontur' }
+// Fehlt ein Eintrag, heißt die Farbe schlicht „Farbe 3“.
+export const paletteColorNames = {};
+
+// Eigener Name der Farbe `i` (leer, wenn keiner vergeben ist).
+export function colorName(i, palName = getPaletteName()) {
+  return paletteColorNames[palName]?.[i] || '';
+}
+
 // UI-Zustand (alles veränderlich)
 export const state = {
   /** @type {string|null} id in `sprites`, null solange keiner existiert */

@@ -1686,7 +1686,21 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   font-weight: 700;
   color: var(--text-dim);
 }
-.pal-name { flex: 1; font-size: var(--fs-sm); color: var(--text-muted); }
+/* Name der Farbe — sieht aus wie Text, bis man hineinklickt. */
+.pal-name {
+  flex: 1;
+  min-width: 0;
+  padding: 3px 6px;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-sm);
+}
+.pal-name::placeholder { color: var(--text-muted); }
+.pal-name:hover { border-color: var(--line); }
+.pal-name:focus { border-color: var(--accent-line); background: var(--surface-1); outline: none; }
 .pal-hex { font-family: var(--mono); font-size: var(--fs-xs); color: var(--text-dim); }
 
 /* Material je Palettenfarbe (nur bei „JSON (Spiel)“) */

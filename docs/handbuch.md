@@ -239,8 +239,15 @@ Größe bis 255) oder mit `Kopie bearbeiten` aus einer eingebauten ableiten. Dir
 Raster geht es auch ohne Fenster: das leere **+**-Feld am Ende hängt eine Farbe an und
 öffnet gleich den Farbwähler, ein **Doppelklick** auf ein Feld ändert die Farbe — alle
 Pixel mit diesem Index färben sich mit —, und der **Rechtsklick** dupliziert ein Feld
-(die Kopie kommt ans Ende), kopiert seine Farbe oder fügt eine kopierte ein. Bei einer
-eingebauten Palette legt das automatisch eine eigene Kopie an.
+(die Kopie kommt ans Ende), kopiert seine Farbe, fügt eine kopierte ein oder **entfernt**
+sie. Beim Entfernen rücken die Nummern dahinter auf; Pixel in der entfernten Farbe
+behalten ihr Aussehen (als dieselbe Farbe an anderer Nummer oder als freie Farbe), und
+Strg+Z holt die Farbe zurück. Bei einer eingebauten Palette legt das automatisch eine
+eigene Kopie an.
+
+Im Fenster **Bearbeiten** lässt sich jeder Farbe ein **Name** geben („Haut“, „Kontur“ …).
+Leer heißt sie einfach „Farbe 3“. Der Name steht dann im Tooltip, in der Farbzeile und
+bei der Pipette.
 
 Jeder Sprite merkt sich seine eigene Palette.
 

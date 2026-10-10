@@ -428,6 +428,7 @@ export const MSG_AT = {
   'pal.optCurrent':     '— aktuelle Palettn —',
   'pal.optCustomSuffix': '{name} (eigene)',
   'pal.colorAria':      'Farb {i}',
+  'pal.nameAria':       'Nam vo da Farb {i}',
   'pal.modalEdit':      'Palettn „{name}“ bearbeitn',
   'pal.modalNew':       'Neie Palettn',
   'pal.modalSave':      'Sichern',
