@@ -22,6 +22,7 @@ import { migrateV1 } from './migrate.js';
 import { openDb, readAll, writeBatch, useDb, deleteDb, copyDb, seedDb } from './idb.js';
 import { MAIN, readRegistry, writeRegistry, newProjectId, freeName, dbNameOf, storageKeyOf, emergencyKeyOf } from './projects.js';
 import { packSprite, unpackSprite, packSum } from './pack.js';
+import { readAse, writeAse } from './aseprite.js';
 import { t } from './i18n.js';
 import { MATERIALS } from './gamejson.js';
 
@@ -730,6 +731,36 @@ export async function saveSpriteToFile() {
                   : t('file.saved', { name: filename })));
 }
 
+/** Den aktuellen Sprite als Aseprite-Datei (js/aseprite.js) sichern. */
+export async function saveAseToFile() {
+  const sp = sprites[state.curSprite];
+  if (!sp) return;
+  const bytes = await writeAse(sp, getPaletteByName(sp.palette));
+  const filename = `${(sp.name || 'sprite').replace(/[^a-zA-Z0-9_-]/g, '_')}.aseprite`;
+  const result = await saveBlob(new Blob([/** @type {BlobPart} */ (bytes)], { type: 'application/octet-stream' }), filename);
+  showInfoToast(result.fallback
+    ? t('file.downloadedTip', { name: filename })
+    : (result.dir ? t('file.savedIn', { name: filename, dir: result.dir })
+                  : t('file.saved', { name: filename })));
+}
+
+const isAse = file => /\.(aseprite|ase)$/i.test(file.name);
+
+/** Aseprite-Datei lesen und als Sprite dazunehmen. onDone(ids), onError(text). */
+function addAseFile(file, onDone, onError) {
+  file.arrayBuffer()
+    .then(buf => readAse(buf, file.name.replace(/\.[^.]+$/, '')))
+    .then(p => {
+      const ids = addSpritesFromPayload(p);
+      if (ids.length) onDone(ids); else if (onError) onError(t('file.badProject'));
+    }, e => {
+      if (!onError) return;
+      onError(e?.code === 'tooBig' ? t('file.aseBig', { size: e.message })
+        : e?.code === 'notAse' ? t('file.aseNot')
+        : t('file.aseBad', { why: e?.message || '' }));
+    });
+}
+
 const samePal = (a, b) => JSON.stringify(completePalette(a)) === JSON.stringify(completePalette(b));
 
 /**
@@ -787,6 +818,7 @@ export function addSpritesFromPayload(p) {
 
 /** Datei lesen und ihre Sprites hinzufügen. onDone(ids), onError(text). */
 export function addSpritesFromFile(file, onDone, onError) {
+  if (isAse(file)) { addAseFile(file, onDone, onError); return; }
   const reader = new FileReader();
   reader.onload = () => {
     let ids = [];
@@ -802,6 +834,8 @@ export function addSpritesFromFile(file, onDone, onError) {
 // Eine Sprite-Datei (kind: 'sprite') ersetzt das Projekt nicht, sie kommt
 // dazu — onAdded(ids) übernimmt dann das Anzeigen.
 export function loadFromFile(file, onError, onAdded = null) {
+  // Aseprite: ein Sprite — kommt dazu wie eine .bitty-Datei.
+  if (isAse(file) && onAdded) { addAseFile(file, onAdded, onError); return; }
   const reader = new FileReader();
   reader.onload = () => {
     // readAsText (unten) liefert immer einen String, nie einen ArrayBuffer.
