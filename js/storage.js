@@ -13,7 +13,7 @@
 // Payload (buildPayload). `version` darin erlaubt Migrationen, ohne alte
 // Saves zu zerschießen; geladen wird alles über applyPayload.
 import { layerForSave } from './mask.js';
-import { state, sprites, customPalettes, paletteMaterials, selectFirstSprite, paletteExists, makeSprite, flatGrid, framesForSave } from './state.js';
+import { state, sprites, customPalettes, paletteMaterials, selectFirstSprite, paletteExists, makeSprite, flatGrid, framesForSave, makeSpriteId, getPaletteByName } from './state.js';
 import { normalizeTlOpts } from './onion.js';
 import { DEFAULT_PALETTE, completePalette } from './data.js';
 import { saveBlob } from './filesystem.js';
@@ -95,23 +95,25 @@ function applyPanelStates(panels) {
 // zusammengefügt) steht zusätzlich drin: eine ältere, noch
 // zwischengespeicherte Version des Editors kennt weder Frames noch Ebenen —
 // sie liest dann wenigstens das Bild statt gar nichts.
+function serializeSprite(sp) {
+  return {
+    name: sp.name,
+    palette: sp.palette,
+    fps: sp.fps,
+    frame: sp.frame,
+    layer: sp.layer,
+    layers: sp.layers.map(layerForSave),
+    guides: sp.guides,
+    tags: sp.tags,
+    // Verknüpfte Zellen als { link: k } (state.js framesForSave).
+    frames: framesForSave(sp),
+    grid: flatGrid(sp, 0),
+  };
+}
+
 function serializeSprites() {
   const out = {};
-  for (const [id, sp] of Object.entries(sprites)) {
-    out[id] = {
-      name: sp.name,
-      palette: sp.palette,
-      fps: sp.fps,
-      frame: sp.frame,
-      layer: sp.layer,
-      layers: sp.layers.map(layerForSave),
-      guides: sp.guides,
-      tags: sp.tags,
-      // Verknüpfte Zellen als { link: k } (state.js framesForSave).
-      frames: framesForSave(sp),
-      grid: flatGrid(sp, 0),
-    };
-  }
+  for (const [id, sp] of Object.entries(sprites)) out[id] = serializeSprite(sp);
   return out;
 }
 
@@ -556,9 +558,108 @@ export async function saveToFile() {
                   : t('file.saved', { name: filename })));
 }
 
+// ────────────────────────────────────────────────────────────────────
+// Einzelne Sprites speichern / zum Projekt hinzufügen
+// ────────────────────────────────────────────────────────────────────
+// Eine Sprite-Datei (.bitty) ist eine Projektdatei mit genau einem Sprite
+// und `kind: 'sprite'` — dazu seine eigene Palette (falls er keine
+// eingebaute hat) samt Materialien. Die Desktop-App schreibt und liest
+// dasselbe (spritebit-rs, io.rs export_sprite).
+
+/** Nur den aktuellen Sprite als Datei sichern. */
+export async function saveSpriteToFile() {
+  const sp = sprites[state.curSprite];
+  if (!sp) return;
+  const payload = {
+    version: SCHEMA_VERSION,
+    kind: 'sprite',
+    sprites: { [state.curSprite]: serializeSprite(sp) },
+    customPalettes: customPalettes[sp.palette] ? { [sp.palette]: customPalettes[sp.palette] } : {},
+    paletteMaterials: paletteMaterials[sp.palette] ? { [sp.palette]: paletteMaterials[sp.palette] } : {},
+    ui: { curSprite: state.curSprite },
+  };
+  // .bitty: innen JSON wie eine Projektdatei — die Desktop-App liest sie genauso.
+  const filename = `${(sp.name || 'sprite').replace(/[^a-zA-Z0-9_-]/g, '_')}.bitty`;
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const result = await saveBlob(blob, filename);
+  showInfoToast(result.fallback
+    ? t('file.downloadedTip', { name: filename })
+    : (result.dir ? t('file.savedIn', { name: filename, dir: result.dir })
+                  : t('file.saved', { name: filename })));
+}
+
+const samePal = (a, b) => JSON.stringify(completePalette(a)) === JSON.stringify(completePalette(b));
+
+/**
+ * Sprites aus einer gelesenen Datei (Sprite- oder Projektdatei) zum Projekt
+ * hinzufügen — ohne etwas zu ersetzen. Gleiche Namen bekommen eine Nummer
+ * (makeSpriteId); eine gleichnamige, aber andere eigene Palette bekommt
+ * einen neuen Namen, und die Sprites zeigen auf ihn.
+ * @returns {string[]} die neuen Sprite-IDs (leer = nichts Brauchbares darin)
+ */
+export function addSpritesFromPayload(p) {
+  if (!p || typeof p !== 'object' || !p.sprites || typeof p.sprites !== 'object') return [];
+  // Paletten zuerst: alter Name → Name im Projekt
+  const rename = {};
+  for (const [name, pal] of Object.entries(p.customPalettes || {})) {
+    if (!pal || typeof pal !== 'object') continue;
+    let target = name;
+    // Auch eine eingebaute Palette gleichen Namens nicht überschreiben —
+    // sonst änderten sich alle Sprites, die sie benutzen.
+    if (paletteExists(name) && !samePal(getPaletteByName(name), pal)) {
+      let i = 2;
+      while (paletteExists(`${name}_${i}`)) i++;
+      target = `${name}_${i}`;
+    }
+    if (!customPalettes[target]) customPalettes[target] = completePalette(pal);
+    rename[name] = target;
+    const mats = p.paletteMaterials?.[name];
+    if (mats && typeof mats === 'object' && !paletteMaterials[target]) {
+      const clean = {};
+      for (const [i, m] of Object.entries(mats)) if (MATERIALS.includes(m)) clean[i] = m;
+      if (Object.keys(clean).length) paletteMaterials[target] = clean;
+    }
+  }
+  const ids = [];
+  for (const [key, sp] of Object.entries(p.sprites)) {
+    const frames = sp && readFrames(sp);
+    if (!frames) continue;
+    const name = typeof sp.name === 'string' && sp.name ? sp.name : key;
+    const pal = rename[sp.palette] || sp.palette;
+    const id = makeSpriteId(name);
+    sprites[id] = makeSprite({
+      name,
+      palette: typeof pal === 'string' && paletteExists(pal) ? pal : DEFAULT_PALETTE,
+      frames,
+      fps: sp.fps,
+      frame: sp.frame,
+      layers: Array.isArray(sp.layers) ? sp.layers : null,
+      layer: sp.layer,
+      guides: sp.guides,
+      tags: sp.tags,
+    });
+    ids.push(id);
+  }
+  return ids;
+}
+
+/** Datei lesen und ihre Sprites hinzufügen. onDone(ids), onError(text). */
+export function addSpritesFromFile(file, onDone, onError) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    let ids = [];
+    try { ids = addSpritesFromPayload(JSON.parse(/** @type {string} */ (reader.result))); } catch { ids = []; }
+    if (ids.length) onDone(ids); else if (onError) onError(t('file.badProject'));
+  };
+  reader.onerror = () => { if (onError) onError(t('file.readFailed')); };
+  reader.readAsText(file);
+}
+
 // JSON-Projektdatei einlesen. Wird validiert und (nach Migration beim nächsten
 // Load) in den Storage geschrieben; danach Reload für einen sauberen Start.
-export function loadFromFile(file, onError) {
+// Eine Sprite-Datei (kind: 'sprite') ersetzt das Projekt nicht, sie kommt
+// dazu — onAdded(ids) übernimmt dann das Anzeigen.
+export function loadFromFile(file, onError, onAdded = null) {
   const reader = new FileReader();
   reader.onload = () => {
     // readAsText (unten) liefert immer einen String, nie einen ArrayBuffer.
@@ -567,6 +668,12 @@ export function loadFromFile(file, onError) {
       const p = JSON.parse(text);
       if (!p || typeof p !== 'object' || (!p.sprites && !p.grids)) {
         throw new Error('kein Sprite-Projekt');
+      }
+      if (p.kind === 'sprite' && onAdded) {
+        const ids = addSpritesFromPayload(p);
+        if (!ids.length) throw new Error('kein Sprite darin');
+        onAdded(ids);
+        return;
       }
       disableSaving(); // sonst überschreibt beforeunload die frisch geladene Datei
       // IndexedDB: als wartender Import ablegen, der Start übernimmt ihn
