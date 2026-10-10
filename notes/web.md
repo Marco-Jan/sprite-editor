@@ -1,3 +1,17 @@
+# 3.2.24
+
+## Deutsch
+
+- Palette direkt im Raster bearbeiten: Am Ende steht ein leeres Feld mit **+** — ein Klick hängt eine Farbe an und öffnet gleich den Farbwähler. **Rechtsklick** auf ein Farbfeld dupliziert es, kopiert seine Farbe oder fügt eine kopierte ein; **Doppelklick** ändert die Farbe. Das geht auch bei eingebauten Paletten — dann entsteht automatisch eine eigene Kopie.
+- Der Farbwähler öffnet sich jetzt am angeklickten Farbfeld statt in einer Ecke.
+- Die Farben heißen nur noch „Farbe 1“, „Farbe 2“ … — Zusätze wie „hellster“, „dunkelster“ oder „Outline / Kontur“ sind weg.
+
+## English
+
+- Edit the palette right in the grid: at the end there is an empty **+** swatch — clicking it adds a color and opens the color picker right away. **Right-click** a swatch to duplicate it, copy its color or paste a copied one; **double-click** changes the color. This works for built-in palettes too — you get your own copy automatically.
+- The color picker now opens at the swatch you clicked instead of in a corner.
+- Colors are now simply called “Color 1”, “Color 2” … — extras like “lightest”, “darkest” or “Outline” are gone.
+
 # 3.2.23
 
 ## Deutsch

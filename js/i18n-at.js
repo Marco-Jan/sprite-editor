@@ -340,11 +340,7 @@ export const MSG_AT = {
   'gd.showBtn':   'Herzagn',
   // Palette-Beschriftungen
   'color.label.0': 'Durchsichtig',
-  'color.label.1': 'Ton 1 — da höllste',
-  'color.label.4': 'Ton 4 — da dunklaste',
-  'color.label.5': 'Umrandung / Kontur',
   'color.short.0': 'Durchsichtig',
-  'color.short.5': 'Umrandung',
 
   // Sprite-Liste
   'list.rename':      'Umbenenna',
@@ -406,8 +402,8 @@ export const MSG_AT = {
   // Paletten
   'pal.origin.custom':  'eigene',
   'pal.origin.builtin': 'eingebaut',
-  'pal.hint.custom':    'Doppelklick auf a Farb ändert’s — Buidln mit dera Palettn färbn si mit.',
-  'pal.hint.builtin':   'Eingebaute Palettn san schreibgschützt. „Kopie bearbeitn“ mocht’s änderbar.',
+  'pal.hint.custom':    '„+“ fügt a Farb dazua, Doppelklick ändert’s, Rechtsklick dupliziert oder kopiert’s. Buidln mit dera Palettn färbn si mit.',
+  'pal.hint.builtin':   'Eingebaute Palettn bleibn, wia s’ san — wer do a Farb dazuagibt oder ändert, kriagt automatisch a eigene Kopie.',
   'pal.swatchTitle':    'Farb ändern',
   'pal.groupBuiltin':   'Eingebaut',
   'pal.groupCustom':    'Eigene',
