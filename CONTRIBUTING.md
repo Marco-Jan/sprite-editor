@@ -309,6 +309,12 @@ blenden ihn aus, der Download-Knopf zeigt „bald“.
 `…/releases/latest/download/spritebit-windows-x64.zip` zeigt immer auf die neueste
 Version und gehört in `js/site-links.js` (`download`).
 
+**Web führt, Desktop zieht nach.** Neue Funktionen entstehen zuerst in dieser Web-Version;
+was der Desktop-App noch fehlt oder dort anders läuft, steht in
+[docs/unterschiede.md](docs/unterschiede.md) — beim Fertigstellen einer Funktion dort
+eintragen. Das gemeinsame Dateiformat sichern die Beispieldateien in `tests/interop/`
+(beide Repos, abgleichen mit `python tools/sync_interop.py`; `deploy.py` prüft es).
+
 ### itch.io
 
 itch spielt statische Web-Projekte im iframe ab: ein ZIP hochladen, `index.html`
