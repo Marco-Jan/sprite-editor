@@ -1,3 +1,15 @@
+# 3.2.23
+
+## Deutsch
+
+- Neues Datei-Menü, aufgebaut wie in anderen Programmen: „Neu ▸“ bietet Projekt oder Sprite an, „Öffnen …“ nimmt Projekt-, Sprite- und Aseprite-Dateien (ein Projekt öffnet sich als eigenes, ein Sprite kommt ins offene dazu). „Projekt sichern“ und „Sprite sichern ▸“ sind getrennt; einen Sprite sicherst du als spritebit-Datei (.bitty) oder als Aseprite-Datei. „Sprite hinzufügen“ heißt jetzt „Sprites aus Projekt holen …“.
+- Kleinere Verbesserungen an der Oberfläche.
+
+## English
+
+- New File menu, laid out like in other programs: “New ▸” offers project or sprite, “Open …” takes project, sprite and Aseprite files (a project opens as a project of its own, a sprite joins the open one). “Save project” and “Save sprite ▸” are separate; a sprite saves as a spritebit file (.bitty) or as an Aseprite file. “Add sprite” is now “Take sprites from project …”.
+- Small improvements to the interface.
+
 # 3.2.22
 
 ## Deutsch
