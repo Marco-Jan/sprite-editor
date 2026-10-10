@@ -1,3 +1,15 @@
+# 3.2.27
+
+## Deutsch
+
+- Größere Pinsel: Pinsel, Radierer und Spray gehen jetzt bis 300 px. Der Regler läuft logarithmisch, kleine Größen bleiben gut zu treffen; mit Alt + rechter Maustaste wachsen große Größen schneller.
+- Kleinere Verbesserungen und Fehlerbehebungen.
+
+## English
+
+- Bigger brushes: brush, eraser and spray now go up to 300 px. The slider is logarithmic so small sizes stay easy to hit; with Alt + right-drag large sizes grow faster.
+- Small improvements and fixes.
+
 # 3.2.26
 
 ## Deutsch
@@ -7,7 +19,6 @@
 - Pfeiltasten in der Animation: Ohne Auswahl blättert `←` / `→` durch die Frames, `↑` / `↓` wechselt die Ebene. Mit Auswahl verschieben die Pfeile sie wie bisher.
 - Paletten lassen sich jetzt komplett rückgängig machen: Farbe ändern, anhängen, duplizieren, einfügen, der Dialog „Bearbeiten“, Kopie anlegen und Löschen sind je ein Undo-Schritt.
 - Neben der aktuellen Farbe gibt es ein Hex-Feld: `#6fa211` eintippen wählt die Farbe aus der Palette oder macht sie zur freien Farbe. Eine freie Farbe nimmt **+ In Palette** direkt als neue Nummer auf.
-- Größere Pinsel: Pinsel, Radierer und Spray gehen jetzt bis 300 px. Der Regler läuft logarithmisch, kleine Größen bleiben gut zu treffen; mit Alt + rechter Maustaste wachsen große Größen schneller.
 
 ## English
 
@@ -16,7 +27,6 @@
 - Arrow keys for animation: without a selection, `←` / `→` step through the frames and `↑` / `↓` switch the layer. With a selection the arrows still nudge it.
 - Palettes can now be fully undone: changing, adding, duplicating and pasting a color, the “Edit” dialog, making a copy and deleting are one undo step each.
 - Next to the current color there is a hex field: type `#6fa211` to pick that color from the palette or make it a free color. **+ To palette** adds a free color as a new number right away.
-- Bigger brushes: brush, eraser and spray now go up to 300 px. The slider is logarithmic so small sizes stay easy to hit; with Alt + right-drag large sizes grow faster.
 
 # 3.2.25
 
