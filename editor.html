@@ -123,6 +123,7 @@
         <button type="button" class="mb-title" role="menuitem" aria-haspopup="menu" aria-expanded="false" data-i18n="mb.help">Hilfe</button>
         <div class="mb-drop" role="menu" hidden>
           <button type="button" class="mb-item" role="menuitem" id="help-btn"><span data-i18n="mb.helpOpen">Hilfe und Tastenkürzel</span><kbd>F1</kbd></button>
+          <button type="button" class="mb-item" role="menuitem" id="news-btn"><span data-i18n="mb.news">Was ist neu?</span></button>
           <button type="button" class="mb-item" role="menuitem" id="bitty-tour-btn"><span data-i18n="mb.tour">Touren mit Bitty</span></button>
           <button type="button" class="mb-item" role="menuitemcheckbox" aria-checked="true" id="bitty-hints-btn"><span data-i18n="mb.hints">Hinweise von Bitty</span></button>
           <div class="mb-sep" role="separator"></div>
@@ -1071,6 +1072,20 @@
 </div>
 
 <!-- Hilfe -->
+<!-- Hilfe → „Was ist neu?“: die letzten Versionen aus notes/web.md (js/whatsnew.js) -->
+<div id="news-modal-overlay" class="modal-overlay">
+  <div class="modal modal--scroll" role="dialog" aria-modal="true" aria-labelledby="news-title">
+    <div class="modal-head">
+      <h2 class="modal-title" id="news-title" data-i18n="news.title">Was ist neu?</h2>
+      <button class="icon-btn" id="news-close" data-i18n-attr="title:help.close" title="Schließen"><span class="ico" data-icon="close"></span></button>
+    </div>
+    <div class="news-body" id="news-body" aria-live="polite"></div>
+    <div class="modal-actions">
+      <button class="btn btn--primary" id="news-ok">OK</button>
+    </div>
+  </div>
+</div>
+
 <div id="help-modal-overlay" class="modal-overlay">
   <div class="modal modal--lg modal--scroll" role="dialog" aria-modal="true" aria-labelledby="help-title">
     <div class="modal-head">
