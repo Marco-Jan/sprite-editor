@@ -542,8 +542,23 @@ export function paintBrush(x, y) {
   const hi =  Math.floor(state.brushSize / 2);
   const threshold = state.brushStrength / 100;
   let changed = false;
-  for (let dy = lo; dy <= hi; dy++) {
-    for (let dx = lo; dx <= hi; dx++) {
+  // Ohne Symmetrie direkt und nur im Bild — bei großen Pinseln (bis 300 px,
+  // also 90 000 Zellen je Tupfer) spart das den Umweg über mirrored().
+  if (!state.mirror || state.mirror === 'off') {
+    const value = state.curColor;
+    for (let py = Math.max(0, y + lo); py <= Math.min(H - 1, y + hi); py++) {
+      const row = grid[py];
+      for (let px = Math.max(0, x + lo); px <= Math.min(W - 1, x + hi); px++) {
+        if (threshold < 1 && Math.random() > threshold) continue;
+        if (row[px] !== value) { row[px] = value; changed = true; }
+      }
+    }
+    if (changed) afterPaint();
+    return;
+  }
+  // Mit Symmetrie: nur Zellen im Bild — außerhalb liegt auch kein Spiegelbild.
+  for (let dy = Math.max(lo, -y); dy <= Math.min(hi, H - 1 - y); dy++) {
+    for (let dx = Math.max(lo, -x); dx <= Math.min(hi, W - 1 - x); dx++) {
       if (threshold < 1 && Math.random() > threshold) continue;
       for (const [px, py] of mirrored(x + dx, y + dy)) {
         changed = setCell(grid, px, py, state.curColor) || changed;

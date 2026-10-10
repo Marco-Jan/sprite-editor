@@ -19,7 +19,7 @@ import { initTabs } from './tabs.js';
 import { initWhatsNew } from './whatsnew.js';
 import { initToolWrap } from './toolwrap.js';
 import { initProjectsUi } from './projectsui.js';
-import { draggedSize, clampSize, SIZED_TOOLS } from './sizedrag.js';
+import { draggedSize, clampSize, SIZED_TOOLS, sliderToSize, sizeToSlider } from './sizedrag.js';
 import { calcInput } from './calc.js';
 import { snapDir, project, snapEnd } from './lock.js';
 import { applyIcons, iconSvg } from './icons.js';
@@ -416,7 +416,7 @@ function syncFillVisible() {
 
 function setBrushSize(n) {
   state.brushSize = clampSize(n);
-  $('brush-size').value = String(state.brushSize);
+  $('brush-size').value = String(sizeToSlider(state.brushSize));
   if (document.activeElement !== $('brush-size-num')) $('brush-size-num').value = String(state.brushSize);
 }
 
@@ -970,8 +970,8 @@ function initToolbar() {
   selAction('sel-fill-btn',   () => { info(t('sel.filled',      { n: fillSelection() })); });
   selAction('sel-none-btn',   () => { deselect(); info(t('sel.dropped')); }, false);
 
-  // Größe: Regler und Zahlenfeld zeigen dasselbe (1–64).
-  $('brush-size').addEventListener('input', e => setBrushSize(e.target.value));
+  // Größe: Regler (logarithmisch, js/sizedrag.js) und Zahlenfeld zeigen dasselbe (1–300).
+  $('brush-size').addEventListener('input', e => setBrushSize(sliderToSize(e.target.value)));
   $('brush-size-num').addEventListener('input', e => { if (e.target.value !== '') setBrushSize(e.target.value); });
   $('brush-size-num').addEventListener('change', e => { setBrushSize(e.target.value); e.target.value = String(state.brushSize); });
   for (const id of ['brush-size', 'brush-size-num']) $(id).addEventListener('change', saveState);

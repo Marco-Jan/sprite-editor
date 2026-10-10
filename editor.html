@@ -331,9 +331,9 @@
 
         <div class="tool-group" id="brush-size-group" hidden>
           <span class="field-label" data-i18n="tool.size">Größe</span>
-          <!-- 1–64 Pixel; Alt + rechte Maustaste ziehen geht auch (js/sizedrag.js) -->
-          <input type="range" id="brush-size" min="1" max="64" value="1" data-i18n-attr="title:tool.sizeTitle" title="Größe von Pinsel, Radierer und Spray — auch mit Alt + rechter Maustaste ziehen">
-          <input type="number" id="brush-size-num" class="input input--num" min="1" max="64" value="1" data-i18n-attr="title:tool.sizeTitle" title="Größe von Pinsel, Radierer und Spray — auch mit Alt + rechter Maustaste ziehen">
+          <!-- 1–300 Pixel, Regler logarithmisch; Alt + rechte Maustaste ziehen geht auch (js/sizedrag.js) -->
+          <input type="range" id="brush-size" min="0" max="1000" value="0" data-i18n-attr="title:tool.sizeTitle" title="Größe von Pinsel, Radierer und Spray — auch mit Alt + rechter Maustaste ziehen">
+          <input type="number" id="brush-size-num" class="input input--num" min="1" max="300" value="1" data-i18n-attr="title:tool.sizeTitle" title="Größe von Pinsel, Radierer und Spray — auch mit Alt + rechter Maustaste ziehen">
         </div>
 
         <label class="field field--inline" id="strength-group" hidden>
@@ -1183,7 +1183,7 @@
       <div><b>Stift</b> — einzelne Pixel.</div>
       <div><b>Pinsel</b> — Fläche; <i>Stärke</i> = Dichte, <i>Größe</i> = Kantenlänge.</div>
       <div><b>Spray</b> — zufällige Pixel; <i>Stärke</i> = Menge pro Ereignis.</div>
-      <div><b>Größe</b> 1–64 per Regler oder Zahlenfeld; <span class="kbd">Alt</span> + rechte Maustaste ziehen verstellt sie direkt auf der Zeichenfläche. Ein Umriss zeigt, was Pinsel, Radierer und Spray gleich treffen.</div>
+      <div><b>Größe</b> 1–300 per Regler oder Zahlenfeld; <span class="kbd">Alt</span> + rechte Maustaste ziehen verstellt sie direkt auf der Zeichenfläche. Ein Umriss zeigt, was Pinsel, Radierer und Spray gleich treffen.</div>
       <div><b>Clean Stroke</b> — beim Stift (und beim Radierer mit Größe 1) verschwinden die L-Ecken einer freihändigen Linie: saubere 1-Pixel-Linien wie von Hand gesetzt.</div>
       <div><b>Füllen</b> — zusammenhängende gleiche Fläche. Mit <b>Grenzen: alle Ebenen</b> endet die Fläche dort, wo sich im sichtbaren Bild etwas ändert — gemalt wird trotzdem in die aktive Ebene. So malst du eine Vorlage (z. B. Umrisse auf einer eigenen Ebene) Fläche für Fläche aus, ohne sie anzufassen.</div>
       <div><b>Radierer</b> — setzt auf transparent.</div>
