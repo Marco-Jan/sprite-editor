@@ -921,6 +921,19 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 /* Farb-Schnellwahl */
 /* Aktuelle Farbe + Schnellwahl in einer Zeile. Die aktuelle Farbe gehört
    hierher und nicht in die Farben-Schublade — man muss sie immer sehen. */
+/* Hex-Feld neben der aktuellen Farbe */
+.cc-hex-input {
+  width: 6.5rem;
+  padding: 5px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  background: var(--surface-1);
+  color: var(--text);
+  font: inherit;
+  font-family: var(--mono);
+  font-size: var(--fs-sm);
+}
+.cc-hex-input:focus { border-color: var(--accent-line); outline: none; }
 #color-bar {
   display: flex;
   flex-wrap: wrap;

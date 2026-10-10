@@ -8,7 +8,7 @@
 // Persistenz: bewusst nur in-memory (wie bei jedem Design-Tool).
 // Mit im Eintrag steckt die Palette des Sprites — so ist auch "Sprite
 // umfärben" (andere Palette zuweisen) ein normaler Undo-Schritt.
-import { state, sprites, copyFrames, linkSignature, copyLayer } from './state.js';
+import { state, sprites, copyFrames, linkSignature, copyLayer, customPalettes, paletteMaterials, paletteColorNames } from './state.js';
 import { copyTags } from './tags.js';
 import { dc } from './data.js';
 
@@ -174,6 +174,68 @@ export function recordCustom({ undo: undoFn, redo: redoFn }) {
   push({ custom: { undo: undoFn, redo: redoFn } });
 }
 
+// ── Paletten ────────────────────────────────────────────────────────
+// Eigene Paletten, ihre Materialien und Farbnamen, welche Palette jeder
+// Sprite nutzt und welche gerade angezeigt wird. Das ist wenig (höchstens
+// 255 Farben je Palette) — darum wird es einfach ganz kopiert.
+function palSnap() {
+  const copy = store => JSON.parse(JSON.stringify(store));
+  const uses = {};
+  for (const [id, sp] of Object.entries(sprites)) uses[id] = sp.palette;
+  return { pals: copy(customPalettes), mats: copy(paletteMaterials), names: copy(paletteColorNames), uses, preview: state.palPreview };
+}
+
+function palApply(st) {
+  const put = (store, from) => {
+    for (const k of Object.keys(store)) delete store[k];
+    Object.assign(store, JSON.parse(JSON.stringify(from)));
+  };
+  put(customPalettes, st.pals);
+  put(paletteMaterials, st.mats);
+  put(paletteColorNames, st.names);
+  for (const [id, name] of Object.entries(st.uses)) if (sprites[id]) sprites[id].palette = name;
+  state.palPreview = st.preview;
+}
+
+const palEqual = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
+/**
+ * Ein Undo-Schritt für eine Änderung an Paletten: Farbe ändern, anhängen,
+ * duplizieren, Dialog „Bearbeiten“, Kopie anlegen, löschen … Ändert `fn`
+ * dabei auch Pixel des aktuellen Sprites (Farbe in die Palette aufnehmen),
+ * gehören die in denselben Schritt.
+ */
+export function recordPalettes(fn) {
+  const step = startPaletteEdit();
+  fn();
+  endPaletteEdit(step);
+}
+
+/**
+ * Für Änderungen über mehrere Ereignisse — der Farbwähler meldet beim Ziehen
+ * jede Zwischenfarbe. Vorher-Stand jetzt, Eintrag erst bei endPaletteEdit;
+ * ein Schritt je Öffnen des Wählers, nicht je Zug.
+ */
+export function startPaletteEdit() {
+  pendingSnapshot = null;
+  const id = state.curSprite;
+  return { id, pals: palSnap(), sprite: snap(id) };
+}
+
+// `pixels: false` — nur die Paletten zählen (der Farbwähler ändert keine
+// Pixel; was in der Zwischenzeit gemalt wurde, hat seinen eigenen Schritt).
+export function endPaletteEdit(step, { pixels: withPixels = true } = {}) {
+  if (!step) return;
+  const { id, pals, sprite } = step;
+  const live = withPixels && sprite && sprites[id];
+  if (live) historyCallbacks.beforeCommit(id, sprite);
+  const after = live ? snapAfter(id, sprite) : null;
+  const pixels = !!after && !snapsEqual(sprite, after);
+  const palsAfter = palSnap();
+  if (!pixels && palEqual(pals, palsAfter)) return;
+  push({ id, before: sprite, after, pixels, pals: { before: pals, after: palsAfter } });
+}
+
 function apply(id, st) {
   const sp = sprites[id];
   sp.frames = copyFrames(st.frames);
@@ -188,6 +250,15 @@ function apply(id, st) {
 function restore(entry, which) {
   // Eigener Schritt (recordCustom): er weiß selbst, was zu tun ist.
   if (entry.custom) return entry.custom[which === 'before' ? 'undo' : 'redo']() !== false;
+  // Palettenschritt: die Paletten immer, die Pixel nur, wenn sie sich geändert hatten.
+  if (entry.pals) {
+    palApply(entry.pals[which]);
+    if (entry.pixels && sprites[entry.id]) {
+      apply(entry.id, entry[which]);
+      lastFrames = { id: entry.id, frames: entry[which].frames };
+    }
+    return true;
+  }
   // Der Sprite kann inzwischen gelöscht worden sein — Eintrag dann verwerfen.
   if (!sprites[entry.id]) return false;
   apply(entry.id, entry[which]);

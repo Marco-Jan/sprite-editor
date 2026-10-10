@@ -23,6 +23,7 @@ import { iconSvg } from './icons.js';
 import { showInfoToast } from './toast.js';
 import { createPalettePicker } from './palpicker.js';
 import { createPixelPerfect, ppAdd } from './pixelperfect.js';
+import { recordPalettes, startPaletteEdit, endPaletteEdit } from './history.js';
 
 // Weiterreichen, damit bestehende Importe aus render.js gültig bleiben.
 export { cellToColor, tsIdentifier };
@@ -751,6 +752,7 @@ export function updateCurrentColorIndicator() {
   const hex = document.querySelector('#current-color .cc-hex');
   const lbl = document.querySelector('#current-color .cc-label');
   if (!sw || !hex) return;
+  syncHexInput();
 
   if (state.curColor === 0) {
     sw.style.background = '';
@@ -771,6 +773,16 @@ export function updateCurrentColorIndicator() {
     hex.textContent = color;
     if (lbl) lbl.textContent = t('pal.currentIndex', { i: state.curColor, label: colorLabelShort(state.curColor, colorName(state.curColor)) });
   }
+}
+
+// Hex-Feld und „+ In Palette“ neben der aktuellen Farbe — beim Tippen
+// nicht überschreiben.
+function syncHexInput() {
+  const inp = /** @type {HTMLInputElement|null} */ (document.getElementById('cc-hex-input'));
+  const c = state.curColor;
+  const free = typeof c === 'string' && c[0] === '#';
+  if (inp && document.activeElement !== inp) inp.value = c === 0 ? '' : free ? c : (getPal()[c] || '');
+  document.getElementById('cc-add-btn')?.toggleAttribute('hidden', !free);
 }
 
 // Aktiv-Markierung ohne Full-Re-Render.
@@ -1073,13 +1085,20 @@ function onSwatchMenuOutside(e) { if (!_swatchMenu?.contains(e.target)) closeSwa
 function onSwatchMenuKey(e) { if (e.key === 'Escape') { e.stopPropagation(); closeSwatchMenu(); } }
 
 // Ein unsichtbarer Farbwähler für alle Felder des Rasters.
+// Ein Undo-Schritt je Öffnen — der Wähler meldet beim Ziehen jede
+// Zwischenfarbe, abgeschlossen wird beim Schließen (change).
 let _palPicker = null;
+let _pickStep = null;
 function editPaletteColor(name, i) {
   if (!_palPicker) {
     _palPicker = document.createElement('input');
     _palPicker.type = 'color';
     _palPicker.className = 'hidden-color-input';
     document.body.appendChild(_palPicker);
+    _palPicker.addEventListener('change', () => {
+      endPaletteEdit(_pickStep, { pixels: false });
+      _pickStep = null;
+    });
     _palPicker.addEventListener('input', () => {
       const { name: n, idx } = _palPicker.dataset;
       const target = customPalettes[n];
@@ -1095,6 +1114,8 @@ function editPaletteColor(name, i) {
       renderCallbacks.onSave();
     });
   }
+  endPaletteEdit(_pickStep, { pixels: false });   // falls der letzte ohne change zuging
+  _pickStep = startPaletteEdit();
   _palPicker.dataset.name = name;
   _palPicker.dataset.idx = i;
   _palPicker.value = customPalettes[name]?.[i] || '#888888';
@@ -1219,13 +1240,13 @@ export function renderMaterials() {
       sel.appendChild(opt);
     }
     sel.value = mats[i] || DEFAULT_MATERIAL;
-    sel.addEventListener('change', () => {
+    sel.addEventListener('change', () => recordPalettes(() => {
       const target = paletteMaterials[palName] || (paletteMaterials[palName] = {});
       if (sel.value === DEFAULT_MATERIAL) delete target[i]; else target[i] = sel.value;
       if (!Object.keys(target).length) delete paletteMaterials[palName];
       updateOutput();
       renderCallbacks.onSave();
-    });
+    }));
     row.appendChild(sel);
     list.appendChild(row);
   }

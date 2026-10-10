@@ -15,7 +15,7 @@ Das gemeinsame Dateiformat (`.bitty`, Projektdateien) prüfen die Tests mit den
 Beispieldateien in `tests/interop/` — siehe `tools/sync_interop.py`. Hier geht es nur
 um Bedienung und Verhalten.
 
-*Stand: 2026-10-10 (Web 3.2.26, Desktop 1.2.1). Erhoben per Durchsicht von Handbuch und
+*Stand: 2026-10-11 (Web 3.2.26, Desktop 1.2.1). Erhoben per Durchsicht von Handbuch und
 Code beider Apps, nicht durch Durchklicken jeder Funktion — Zeilen mit „prüfen“ sind
 nicht sicher.*
 
@@ -42,11 +42,8 @@ nicht sicher.*
 
 Hier ist der Desktop weiter. Weil das Web führt, gehören diese Punkte **ins Web**.
 
-| Bereich | Am Desktop | Im Web | Aufwand |
-|---|---|---|---|
-| Palette | **Jede** Änderung an einer Palette ist ein Undo-Schritt (Farbe ändern, anhängen, duplizieren, einfügen, Dialog „Bearbeiten“, Kopie anlegen) | nur Zuweisen, Umsortieren, Bildfarben aufnehmen und Entfernen lassen sich rückgängig machen; Farbe ändern, „+“, Duplizieren, Einfügen und der Dialog nicht | mittel |
-| Farben | **Hex-Feld** unter der aktuellen Farbe — eintippen wählt die Farbe oder macht eine freie | nur der Farbwähler | klein |
-| Farben | **„+ In Palette“** nimmt die aktuelle freie Farbe einzeln als neue Nummer auf | nur alle Bildfarben auf einmal („In Palette aufnehmen“) | klein |
+*Zurzeit nichts offen.* Nachgezogen in Web 3.2.26: Undo für jede Paletten-Änderung,
+Hex-Feld neben der aktuellen Farbe, „+ In Palette“ für eine einzelne freie Farbe.
 
 ## 4. Bewusst verschieden (Plattform)
 

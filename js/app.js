@@ -9,7 +9,7 @@ import {
 } from './state.js';
 import { parseStartHash } from './fromstart.js';
 import { initHelper, relabelHelper, hint, openHelpAt, openSearch } from './helper.js';
-import { DEFAULT_PALETTE, MAX_COLORS } from './data.js';
+import { DEFAULT_PALETTE, MAX_COLORS, paletteSize } from './data.js';
 import {
   t, tn, colorLabelShort, applyStatic, initLangSwitch, onLangChange, getLang,
 } from './i18n.js';
@@ -29,7 +29,7 @@ import {
   renderFreeColorsList, countCurrentColor,
   cellFromEvent, cellFromEventClamped, cellToColor, paintCell, paintBrush, paintSpray, floodFill,
   ppActive, ppBegin, ppEnd, paintPixelPerfect,
-  renderCallbacks, shapeCells, commitShape, placeHiddenPicker,
+  renderCallbacks, shapeCells, commitShape, placeHiddenPicker, updateCurrentColorIndicator,
 } from './render.js';
 import {
   saveState, loadState, clearStorage, forceSaveBeforeUnload, saveToFile, loadFromFile,
@@ -45,6 +45,7 @@ import {
   openPaletteModal, initPaletteModal, deleteCustomPalette,
   previewPalette, assignPalette, forkPreviewPalette, addFreeColorsToPalette,
   createPaletteFromImport, appendPaletteColor, setPaletteColor, removePaletteColor,
+  addCurrentColorToPalette,
 } from './palettes.js';
 import {
   initTemplate, tplLoaded, tplHasOffscreen,
@@ -136,7 +137,14 @@ function syncHistoryButtons() {
 historyCallbacks.onChange = syncHistoryButtons;
 // Nach einem Undo passt eine Auswahl nicht mehr zum Bild — weg damit. Ein
 // schwebender Inhalt wurde vorher schon abgesetzt (siehe Undo-Bindings).
-historyCallbacks.onRestore = () => { stopPlayback(); clearSelection(); renderAll(); saveState(); };
+historyCallbacks.onRestore = () => {
+  stopPlayback();
+  clearSelection();
+  // Nach Undo einer Paletten-Änderung kann die gewählte Nummer fehlen.
+  if (typeof state.curColor === 'number' && state.curColor > paletteSize(getPal())) state.curColor = 1;
+  renderAll();
+  saveState();
+};
 
 // ────────────────────────────────────────────────────────────────────
 // SCHABLONE ÜBERNEHMEN — Auto-Trace ins Grid
@@ -1084,6 +1092,27 @@ function initPalettePanel() {
     state.curColor = picker.value;
     syncColorActive();
   });
+
+  // Hex eintippen: sofort bei sechs Stellen, sonst beim Verlassen (#rgb geht
+  // auch, das # darf fehlen). Liegt die Farbe in der Palette, wird es deren
+  // Nummer, sonst eine freie Farbe — wie in der Desktop-App.
+  const hexInp = /** @type {HTMLInputElement} */ ($('cc-hex-input'));
+  const takeHex = (/** @type {boolean} */ final) => {
+    const d = hexInp.value.trim().replace(/^#/, '').toLowerCase();
+    if (!/^[0-9a-f]{6}$/.test(d) && !(final && /^[0-9a-f]{3}$/.test(d))) return;
+    const hex = '#' + (d.length === 3 ? [...d].map(c => c + c).join('') : d);
+    const pal = getPal();
+    let idx = 0;
+    for (let i = 1; i <= paletteSize(pal); i++) if (pal[i]?.toLowerCase() === hex) { idx = i; break; }
+    state.curColor = idx || hex;
+    syncColorActive();
+  };
+  hexInp.addEventListener('input', () => takeHex(false));
+  hexInp.addEventListener('change', () => { takeHex(true); hexInp.blur(); });
+  hexInp.addEventListener('focus', () => hexInp.select());
+  hexInp.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === 'Escape') hexInp.blur(); });
+  hexInp.addEventListener('blur', () => updateCurrentColorIndicator());
+  $('cc-add-btn').addEventListener('click', addCurrentColorToPalette);
 }
 
 // ────────────────────────────────────────────────────────────────────

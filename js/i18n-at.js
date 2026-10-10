@@ -182,6 +182,9 @@ export const STATIC_AT = {
   'pal.current':        'Aktuelle Farb',
   'pal.currentTitle':   'Anklickn — freier Farbwöhler geht auf',
   'pal.freePicker':     'A freie Farb aussuachn',
+  'pal.hexTitle':       'An Hex-Wert eingebn, z. B. #6fa211 — is de Farb scho in da Palettn, wird s’ ausgwählt',
+  'pal.addCurrent':     '+ In d’Palettn',
+  'pal.addCurrentTitle': 'De Farb ois neiche Nummer in d’Palettn aufnehma',
   'pal.select':         'A Palettn aussuachn',
   'pal.edit':           'Palettn bearbeitn',
   'pal.del':            'Palettn weghaun',
@@ -402,6 +405,7 @@ export const MSG_AT = {
   // Paletten
   'pal.origin.custom':  'eigene',
   'pal.origin.builtin': 'eingebaut',
+  'pal.addedCurrent':   '{hex} is jetzt Nr. {n} in da Palettn.',
   'pal.hint.custom':    '„+“ fügt a Farb dazua, Doppelklick ändert’s, Rechtsklick dupliziert oder kopiert’s. Buidln mit dera Palettn färbn si mit.',
   'pal.hint.builtin':   'Eingebaute Palettn bleibn, wia s’ san — wer do a Farb dazuagibt oder ändert, kriagt automatisch a eigene Kopie.',
   'pal.swatchTitle':    'Farb ändern',

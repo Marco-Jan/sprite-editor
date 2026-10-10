@@ -5,12 +5,16 @@
 - Größere Vorschaubilder in der Timeline: Direkt unter den Vorschaubildern liegt jetzt eine Trennlinie. Zieh sie nach unten, und die Bilder werden größer (bis 128 px) — mehr Ebenen machen sie nicht kleiner, die scrollen darunter, während die Bilder oben stehen bleiben. Ein Doppelklick auf die Linie stellt wieder „passend zur Breite“ ein. Die Größe wird mit der Oberfläche gespeichert.
 - Neu auf der Startseite: Aus einer Skizze wird Pixel-Art. Lade ein Foto deiner Zeichnung (oder nimm die Beispiel-Skizze) — die Striche werden zur Kontur, geschlossene Flächen füllen sich mit Licht und Schatten. Größe (16, 24, 32) und Palette wählst du, „Im Editor weitermalen“ nimmt das Ergebnis mit. Das Bild bleibt in deinem Browser.
 - Pfeiltasten in der Animation: Ohne Auswahl blättert `←` / `→` durch die Frames, `↑` / `↓` wechselt die Ebene. Mit Auswahl verschieben die Pfeile sie wie bisher.
+- Paletten lassen sich jetzt komplett rückgängig machen: Farbe ändern, anhängen, duplizieren, einfügen, der Dialog „Bearbeiten“, Kopie anlegen und Löschen sind je ein Undo-Schritt.
+- Neben der aktuellen Farbe gibt es ein Hex-Feld: `#6fa211` eintippen wählt die Farbe aus der Palette oder macht sie zur freien Farbe. Eine freie Farbe nimmt **+ In Palette** direkt als neue Nummer auf.
 
 ## English
 
 - Larger thumbnails in the timeline: there is now a divider right below the thumbnails. Drag it down and the pictures grow (up to 128 px) — more layers don't shrink them, the layers scroll underneath while the thumbnails stay on top. Double-clicking the divider goes back to “fit to width”. The size is saved with the interface.
 - New on the start page: a sketch turns into pixel art. Load a photo of your drawing (or take the example sketch) — the strokes become the outline, closed shapes fill in with light and shadow. Pick the size (16, 24, 32) and palette; “Keep painting in the editor” takes the result along. The picture stays in your browser.
 - Arrow keys for animation: without a selection, `←` / `→` step through the frames and `↑` / `↓` switch the layer. With a selection the arrows still nudge it.
+- Palettes can now be fully undone: changing, adding, duplicating and pasting a color, the “Edit” dialog, making a copy and deleting are one undo step each.
+- Next to the current color there is a hex field: type `#6fa211` to pick that color from the palette or make it a free color. **+ To palette** adds a free color as a new number right away.
 
 # 3.2.25
 

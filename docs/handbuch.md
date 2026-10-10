@@ -251,6 +251,16 @@ bei der Pipette.
 
 Jeder Sprite merkt sich seine eigene Palette.
 
+**Rückgängig:** Jede Änderung an einer Palette ist ein Undo-Schritt — Farbe ändern (ein
+Schritt je Öffnen des Farbwählers, nicht je Zwischenfarbe), anhängen, duplizieren,
+einfügen, entfernen, der Dialog „Bearbeiten“, Kopie anlegen, löschen und das Material.
+
+**Aktuelle Farbe per Hex:** Neben der aktuellen Farbe steht ein Hex-Feld. `#6fa211`
+eintippen (das `#` darf fehlen, `#rgb` geht auch) — liegt die Farbe schon in der Palette,
+wird ihre Nummer gewählt, sonst wird sie eine freie Farbe. Ist die aktuelle Farbe frei,
+nimmt **+ In Palette** sie als neue Nummer auf; Pixel in dieser Farbe bekommen die Nummer
+mit, das Bild bleibt gleich.
+
 **Farbzeile umsortieren.** Eine Farbe in der Farbzeile auf einen anderen Platz ziehen gibt
 ihr eine andere Nummer. Der Knopf **Nach Farbstufen** sortiert automatisch: erst die
 Grautöne, dann je Farbton von dunkel nach hell. In beiden Fällen werden alle Pixel mit

@@ -19,7 +19,7 @@ import {
 import { t, tn, colorLabel } from './i18n.js';
 import { renderAll } from './render.js';
 import { saveState } from './storage.js';
-import { recordOp, recordCustom } from './history.js';
+import { recordOp, recordCustom, recordPalettes } from './history.js';
 import { commitFloat } from './selection.js';
 import {
   permFromOrder, invertPerm, isIdentity, permutePalette, permuteMaterials, remapGrid, shadeOrder,
@@ -90,7 +90,8 @@ export function assignPalette(name, { keepLook }) {
 // Kopiert die angezeigte Palette. War es die des Sprites, nutzt der Sprite
 // danach die Kopie — die Farben sind identisch, das Bild ändert sich nicht.
 export function forkPreviewPalette() {
-  const name = forkSilently();
+  let name = '';
+  recordPalettes(() => { name = forkSilently(); });
   renderAll();
   saveState();
   showInfoToast(t('pal.forked', { name }));
@@ -129,10 +130,13 @@ export function appendPaletteColor(hex) {
     showInfoToast(t('pal.full', { max: MAX_COLORS }));
     return null;
   }
-  const name = editablePreviewPalette();
-  const pal = customPalettes[name];
-  const idx = paletteSize(pal) + 1;
-  pal[idx] = hex;
+  let name = '', idx = 0;
+  recordPalettes(() => {
+    name = editablePreviewPalette();
+    const pal = customPalettes[name];
+    idx = paletteSize(pal) + 1;
+    pal[idx] = hex;
+  });
   renderAll();
   saveState();
   return { name, idx };
@@ -147,7 +151,9 @@ export function removePaletteColor(idx) {
   const size = paletteSize(getPaletteByName(getPreviewName()));
   if (size <= 1 || idx < 1 || idx > size) return;
   commitFloat();
-  const name = editablePreviewPalette();
+  // Eine eingebaute Palette wird erst kopiert — eigener Schritt, wenn nötig.
+  let name = '';
+  recordPalettes(() => { name = editablePreviewPalette(); });
   const pal = customPalettes[name];
   const hex = pal[idx];
   let twin = 0;
@@ -238,8 +244,10 @@ export function removePaletteColor(idx) {
 }
 
 export function setPaletteColor(idx, hex) {
-  const name = editablePreviewPalette();
-  customPalettes[name][idx] = hex;
+  recordPalettes(() => {
+    const name = editablePreviewPalette();
+    customPalettes[name][idx] = hex;
+  });
   renderAll();
   saveState();
 }
@@ -271,22 +279,15 @@ export function addFreeColorsToPalette() {
     return;
   }
 
-  if (!isCustomPalette(name)) {
-    const copy = uniquePaletteName(name + '_kopie');
-    customPalettes[copy] = { ...base };
-    if (paletteMaterials[name]) paletteMaterials[copy] = { ...paletteMaterials[name] };
-    if (paletteColorNames[name]) paletteColorNames[copy] = { ...paletteColorNames[name] };
-    name = copy;
-  }
-  const pal = customPalettes[name];
-  fresh.forEach((hex, k) => { pal[size + 1 + k] = hex; have.set(hex, size + 1 + k); });
-
-  recordOp(() => {
+  // Palette und Pixel zusammen — ein Undo-Schritt.
+  recordPalettes(() => {
+    name = ownPaletteOf(sp);
+    const pal = customPalettes[name];
+    fresh.forEach((hex, k) => { pal[size + 1 + k] = hex; have.set(hex, size + 1 + k); });
     for (const row of allGrids(sp).flat()) for (let x = 0; x < row.length; x++) {
       const c = row[x];
       if (typeof c === 'string' && c[0] === '#') row[x] = have.get(c.toLowerCase());
     }
-    sp.palette = name;
   });
   if (typeof state.curColor === 'string' && have.has(state.curColor.toLowerCase())) {
     state.curColor = have.get(state.curColor.toLowerCase());
@@ -297,21 +298,63 @@ export function addFreeColorsToPalette() {
   showInfoToast(tn('fc.added', fresh.length, { name }));
 }
 
+// Eigene Palette des Sprites — eine eingebaute wird kopiert und ihm
+// zugewiesen (wie own_palette in der Desktop-App). Gibt den Namen zurück.
+function ownPaletteOf(sp) {
+  const name = sp.palette;
+  if (isCustomPalette(name)) return name;
+  const copy = uniquePaletteName(name + '_kopie');
+  customPalettes[copy] = { ...getPaletteByName(name) };
+  if (paletteMaterials[name]) paletteMaterials[copy] = { ...paletteMaterials[name] };
+  if (paletteColorNames[name]) paletteColorNames[copy] = { ...paletteColorNames[name] };
+  sp.palette = copy;
+  return copy;
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Die aktuelle (freie) Farbe als neue Nummer in die Palette
+// ────────────────────────────────────────────────────────────────────
+// Pixel, die schon in dieser Farbe gemalt sind, bekommen die neue Nummer
+// mit — das Bild sieht danach gleich aus. Ein Undo-Schritt.
+export function addCurrentColorToPalette() {
+  const sp = getSprite();
+  const hex = typeof state.curColor === 'string' ? state.curColor.toLowerCase() : null;
+  if (!sp || !hex) return;
+  const size = paletteSize(getPal());
+  if (size >= MAX_COLORS) { showInfoToast(t('pal.full', { max: MAX_COLORS })); return; }
+  commitFloat();
+  const idx = size + 1;
+  recordPalettes(() => {
+    const name = ownPaletteOf(sp);
+    customPalettes[name][idx] = hex;
+    for (const row of allGrids(sp).flat()) for (let x = 0; x < row.length; x++) {
+      const c = row[x];
+      if (typeof c === 'string' && c.toLowerCase() === hex) row[x] = idx;
+    }
+  });
+  state.curColor = idx;
+  state.palPreview = null;
+  renderAll();
+  saveState();
+  showInfoToast(t('pal.addedCurrent', { hex, n: idx }));
+}
+
 // ────────────────────────────────────────────────────────────────────
 // Löschen
 // ────────────────────────────────────────────────────────────────────
 export function deleteCustomPalette(name) {
   if (!customPalettes[name]) return;
-  delete customPalettes[name];
-  delete paletteMaterials[name];
-  delete paletteColorNames[name];
-  if (state.palPreview === name) state.palPreview = null;
-
   // Sprites, die auf die gelöschte Palette zeigten, auf den Default setzen.
   let affected = 0;
-  for (const sp of Object.values(sprites)) {
-    if (sp.palette === name) { sp.palette = DEFAULT_PALETTE; affected++; }
-  }
+  recordPalettes(() => {
+    delete customPalettes[name];
+    delete paletteMaterials[name];
+    delete paletteColorNames[name];
+    if (state.palPreview === name) state.palPreview = null;
+    for (const sp of Object.values(sprites)) {
+      if (sp.palette === name) { sp.palette = DEFAULT_PALETTE; affected++; }
+    }
+  });
   renderAll();
   saveState();
   if (affected) {
@@ -459,7 +502,7 @@ export function initPaletteModal() {
       if (v) names[Number(/** @type {HTMLInputElement} */ (inp).dataset.idx)] = v;
     });
 
-    const commit = (finalName, oldName) => {
+    const commit = (finalName, oldName) => recordPalettes(() => {
       if (oldName && oldName !== finalName) {
         delete customPalettes[oldName];
         if (paletteMaterials[oldName]) {
@@ -481,7 +524,7 @@ export function initPaletteModal() {
       close();
       renderAll();
       saveState();
-    };
+    });
 
     // Kollision mit einer anderen bestehenden eigenen Palette?
     if (customPalettes[name] && name !== _editName) {
