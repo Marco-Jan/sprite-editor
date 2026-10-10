@@ -98,6 +98,9 @@ export const ICONS = {
   // Alle sichtbaren zusammenführen: zwei Pfeile in eine Linie.
   mergeAll: '<path d="M8 2l4 4 4-4M8 8l4 4 4-4"/><path d="M4 17h16M4 21h16"/>',
   mergeDown:'<path d="M12 3v10M8 9l4 4 4-4"/><path d="M4 17h16M4 21h16"/>',
+  // Ebene nach oben / unten (wie in der Desktop-App)
+  up:      '<path d="M12 19V5"/><path d="M6 11l6-6 6 6"/>',
+  down:    '<path d="M12 5v14"/><path d="M6 13l6 6 6-6"/>',
   // Export, nicht Code: Pfeil, der aus einer Ablage heraus zeigt. Die
   // Chevrons davor liessen das Panel wie einen Code-Editor aussehen.
   output:  '<path d="M12 3v11M8.5 6.5L12 3l3.5 3.5"/><path d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/>',

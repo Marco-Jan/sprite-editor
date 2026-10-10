@@ -780,6 +780,14 @@ function initKeyboardEvents() {
     // Auswahl auf der Zeichenfläche (js/frames.js).
     if (celKeyDown(e)) return;
 
+    // Strg+Alt+N: neuer Sprite (Strg+N gehört dem Browser — und in der
+    // Desktop-App dem neuen Projekt). e.code: auch bei AltGr und anderem Layout.
+    if ((e.ctrlKey || e.metaKey) && e.altKey && !e.shiftKey && e.code === 'KeyN') {
+      e.preventDefault();
+      $('new-sprite-btn').click();
+      return;
+    }
+
     // ── Auswahl: Zwischenablage ──
     if ((e.ctrlKey || e.metaKey) && !e.altKey) {
       const k = e.key.toLowerCase();
@@ -787,6 +795,11 @@ function initKeyboardEvents() {
         e.preventDefault();
         setTool('select'); selectAll(); updateSelectionUI();
         info(selectionInfo(t('sel.all')));
+      } else if (k === 'd' && !e.shiftKey) {
+        // Strg+D: Auswahl aufheben (wie in Grafikprogrammen) — nicht das
+        // Lesezeichen des Browsers.
+        e.preventDefault();
+        if (deselect()) { updateSelectionUI(); info(t('sel.dropped')); }
       } else if (k === 'c' && selection.rect) {
         e.preventDefault();
         info(t('sel.copied', { n: copySelection() }));
