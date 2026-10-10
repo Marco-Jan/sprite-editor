@@ -184,7 +184,7 @@
     'hero.platforms':   'Free · no subscription · no account · open source (MIT license)',
     'hero.sizes':       'In the browser up to 1024 × 1024 pixels · in the desktop app up to 8192 × 8192',
     'donate.label':     'Support spritebit',
-    'donate.foot':      '☕ Support spritebit (Ko-fi)',
+    'donate.foot':      '☕ Support spritebit',
     'donate.title':     'spritebit stays free either way. Donations go towards a code-signing certificate so Windows stops warning about the desktop app.',
     'dl.helpSummary':  'How to install the desktop app — and why Windows warns',
     'dl.helpSteps':    '<li><b>Download and unpack the ZIP</b> — right-click → “Extract all …”. Put the folder on your desktop or in “Documents”, not in “Program Files”: otherwise the app cannot update itself.</li><li><b>Double-click <code>spritebit.exe</code></b> — no installation needed.</li><li><b>Windows warns on the first start</b> (“Windows protected your PC”) because the app is not signed yet. Click <b>“More info”</b> and then <b>“Run anyway”</b> — you only need to do this once. The source code is open on GitHub.</li><li><b>Updates</b> are announced by the app itself: “Update now” downloads, checks and swaps it in one click.</li>',
@@ -273,7 +273,7 @@
     'dk.warnEyebrow': 'Why Windows warns',
     'dk.warnH': '“Windows protected your PC”',
     'dk.warnP': 'Windows warns about programs that do not (yet) have a purchased signing certificate. spritebit is open source — the source code is public on GitHub. Click <b>“More info”</b> and then <b>“Run anyway”</b>; you only need to do this once.',
-    'dk.donate': 'Support the certificate (Ko-fi)',
+    'dk.donate': 'Support the certificate',
   };
 
   // ── Snapshot + Anwenden ───────────────────────────────────────────
@@ -359,7 +359,7 @@
     'hero.platforms':   'Gratis · ka Abo · ka Konto · Open Source (MIT-Lizenz)',
     'hero.sizes':       'Im Browser bis 1024 × 1024 Pixel · in da Desktop-App bis 8192 × 8192',
     'donate.label':     'spritebit unterstützn',
-    'donate.foot':      '☕ spritebit unterstützn (Ko-fi)',
+    'donate.foot':      '☕ spritebit unterstützn',
     'donate.title':     'Gratis bleibt spritebit eh. Spendn gengan in a Code-Signatur-Zertifikat, damit Windows bei da Desktop-App nimma warnt.',
     'dl.helpSummary':  'So installierst de Desktop-App — und warum Windows warnt',
     'dl.helpSteps':    '<li><b>ZIP owalodn und auspackn</b> — Rechtsklick → „Alle extrahieren …“. Den Ordner z. B. aufn Desktop oder nach „Dokumente“ legn, ned nach „Programme“: sunst ko si de App ned söwa aktualisiern.</li><li><b><code>spritebit.exe</code> doppelklickn</b> — installiern muasst nix.</li><li><b>Windows warnt beim erstn Start</b> („Der Computer wurde durch Windows geschützt“), weil de App no ned signiert is. Auf <b>„Weitere Informationen“</b> und dann <b>„Trotzdem ausführen“</b> klickn — des braucht ma nur oamoi. Da Quellcode liegt offn auf GitHub.</li><li><b>Updates</b> meldet de App söwa: „Jetzt aktualisieren“ lodt, prüft und tauscht s’ mit oam Klick aus.</li>',

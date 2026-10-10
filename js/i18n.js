@@ -202,7 +202,7 @@ const STATIC = {
     'tool.fillVisible':      'Edges: all layers',
     'tool.fillVisibleTitle': 'The edges of the fill come from all visible layers — the paint goes into the active one. That way you colour in a template that sits on a layer of its own, area by area.',
 
-    'donate.menu':  'Support spritebit (Ko-fi)',
+    'donate.menu':  'Support spritebit',
     'mb.tour':      'Tours with Bitty',
     'mb.saveSprite': 'Save sprite …',
     'mb.addSprite':  'Add sprite …',
