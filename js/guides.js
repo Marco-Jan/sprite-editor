@@ -353,6 +353,8 @@ export function renderGuides() {
   if (!show) return;
   show.classList.toggle('is-active', state.showGuides);
   show.setAttribute('aria-pressed', String(state.showGuides));
+  // Sagt, was ein Klick tut — „Anzeigen“ las sich, als wären sie gerade aus.
+  show.textContent = t(state.showGuides ? 'gd.hideBtn' : 'gd.showBtn');
   edit.classList.toggle('is-active', state.guideEdit);
   edit.setAttribute('aria-pressed', String(state.guideEdit));
   const sel = $('gd-heads');
@@ -387,6 +389,7 @@ export function initGuides() {
   $('gd-layout-apply').addEventListener('click', applyLayout);
   $('gd-layout-del').addEventListener('click', deleteLayout);
   onLangChange(renderLayouts);
+  onLangChange(renderGuides);
   $('editor-canvas').addEventListener('pointermove', hoverCursor);
   renderCallbacks.onDrawOverlay = drawOverlay;
   renderCallbacks.onRenderGuides = renderGuides;

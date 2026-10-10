@@ -310,7 +310,6 @@ export const STATIC_AT = {
   'ly.note':      'Doppelklick aufn Nom benennt um, ziagn sortiert. Export und Vorschau zeign olle sichtbarn Ebenen übereinand.',
 
   // ── Hilfslinien ──
-  'gd.show':      'Herzagn',
   'gd.showTitle': 'Olle Hilfslinien herzagn oder wegtuan (G)',
   'gd.edit':      'Vaschiabn',
   'gd.editTitle': 'Linien auf da Zeichenflächn ziagn — dawei wird ned gmoit (Tipp danebn oder Esc hört auf)',
@@ -332,6 +331,8 @@ export const STATIC_AT = {
 
 // ── Laufzeit-Texte ──────────────────────────────────────────────────
 export const MSG_AT = {
+  'gd.hideBtn':   'Wegtuan',
+  'gd.showBtn':   'Herzagn',
   // Palette-Beschriftungen
   'color.label.0': 'Durchsichtig',
   'color.label.1': 'Ton 1 — da höllste',
