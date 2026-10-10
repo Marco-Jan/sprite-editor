@@ -498,6 +498,21 @@ def release(root, dry):
 
 
 # ── Ablauf ───────────────────────────────────────────────────────────
+def require_interop(args):
+    """Beispieldateien für den Austausch Web ↔ Desktop (tests/interop/) müssen
+    in beiden Repos gleich sein — sonst testet jede Seite gegen einen alten
+    Stand der anderen. Abgleichen: python tools/sync_interop.py"""
+    if not os.path.isdir(args.rs):
+        return
+    sys.path.insert(0, os.path.join(WEB, 'tools'))
+    from sync_interop import differing
+    bad = differing(args.rs)
+    if bad:
+        fail('tests/interop/ ist in den beiden Repos verschieden (' + ', '.join(bad)
+             + ') — python tools/sync_interop.py gleicht ab, dann beide Tests laufen lassen.')
+    ok('Beispieldateien Web ↔ Desktop gleich')
+
+
 def main():
     ap = argparse.ArgumentParser(description='Beide spritebit-Repos prüfen, pflegen und pushen.')
     ap.add_argument('--dry-run', action='store_true', help='Probelauf: prüfen, nichts committen, nichts pushen')
@@ -514,6 +529,7 @@ def main():
     if args.dry_run:
         print(color('33', 'Probelauf — es wird nichts gepusht.'))
     try:
+        require_interop(args)
         ask_versions(args)
         # Erst der Desktop: ein neuer Release-Tag steht danach schon auf GitHub
         # und landet im selben Durchgang als Versionsnummer auf der Website.
