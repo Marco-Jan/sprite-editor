@@ -1,0 +1,11 @@
+# 3.2.14
+
+## Deutsch
+
+- Hilfe → „Was ist neu?“ zeigt, was sich in den letzten Versionen geändert hat. Der Editor aktualisiert sich im Browser von selbst — hier siehst du, was dazugekommen ist.
+- Kleinere Verbesserungen an der Oberfläche.
+
+## English
+
+- Help → “What's new?” shows what changed in the latest versions. The editor updates itself in the browser — this is where you see what's been added.
+- Small improvements to the interface.

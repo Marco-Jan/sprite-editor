@@ -714,6 +714,11 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   scrollbar-width: none;
 }
 .tab-list::-webkit-scrollbar { display: none; }
+/* Passen nicht alle Reiter hin (js/tabs.js), laufen sie am Rand aus — so
+   sieht man, dass die Reihe weitergeht, und kein Reiter endet hart am +. */
+.tab-list.is-cut-end { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); }
+.tab-list.is-cut-start { -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to left, #000 calc(100% - 28px), transparent); }
+.tab-list.is-cut-start.is-cut-end { -webkit-mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent); }
 .sprite-tab {
   display: inline-flex;
   align-items: center;
@@ -1330,8 +1335,10 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
    Vorher haengten die Einstellungen hinten an der ersten Zeile und rutschten
    je nach Fensterbreite hin und her; ein Umbruch nur vor ihnen machte
    dagegen eine dritte Zeile auf, sobald Symmetrie aus Platzmangel schon in
-   Zeile zwei stand. Jetzt beginnt Zeile zwei immer mit Symmetrie — eine
-   dritte gibt es nur, wenn Zeile zwei wirklich voll ist.
+   Zeile zwei stand. Jetzt beginnt Zeile zwei mit Symmetrie — eine
+   dritte gibt es nur, wenn Zeile zwei wirklich voll ist. Brechen schon die
+   Werkzeuge um, entfällt der Umbruch (js/toolwrap.js, .is-tools-wrapped):
+   Symmetrie läuft dann in Zeile zwei hinter ihnen weiter.
    Der Umbruch ist ein leeres Element, eine ganze Zeile breit; der
    Trennstrich davor waere das letzte in Zeile eins und faellt weg.
    Am Handy (bis 1100 px) stecken die Einstellungen in einer eigenen Zeile
@@ -1341,8 +1348,10 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   #toolbar > .tool-break { display: block; flex-basis: 100%; height: 0; }
   #toolbar > .tool-sep--mirror { display: none; }
   /* Senkrecht angedockt ist alles eine Spalte — kein Umbruch. */
-  #toolbar.is-vertical > .tool-break { display: none; }
-  #toolbar.is-vertical > .tool-sep--mirror { display: block; }
+  #toolbar.is-vertical > .tool-break,
+  #toolbar.is-tools-wrapped > .tool-break { display: none; }
+  #toolbar.is-vertical > .tool-sep--mirror,
+  #toolbar.is-tools-wrapped > .tool-sep--mirror { display: block; }
   /* Ohne Einstellung (Hand, Fuellen) stuende der Strich allein am Ende. */
   #toolbar:not(:has(> #brush-size-group:not([hidden]), > #strength-group:not([hidden]),
                > #tolerance-group:not([hidden]), > #pixel-perfect-group:not([hidden]),
@@ -1552,6 +1561,11 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 
 .modal-head { display: flex; align-items: center; gap: var(--sp-2); }
 .modal-head .modal-title { flex: 1; }
+/* Hilfe → „Was ist neu?“ (js/whatsnew.js) */
+.news-body { display: grid; gap: var(--sp-2); max-width: 52ch; }
+.news-version { margin: var(--sp-2) 0 0; font-size: var(--fs-sm); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.news-version:first-child { margin-top: 0; }
+.news-list { margin: 0; padding-left: 1.2em; display: grid; gap: var(--sp-1); line-height: 1.45; }
 .modal-title { font-size: var(--fs-xl); font-weight: 700; }
 .modal-intro--sub {
   margin-top: calc(var(--sp-2) * -1);

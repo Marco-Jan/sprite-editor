@@ -19,7 +19,8 @@ SW = os.path.join(ROOT, 'sw.js')
 # Einzelne Dateien im Hauptordner
 FILES = ['./', 'index.html', 'editor.html', 'funktionen.html', 'export.html',
          'desktop.html', 'impressum.html', 'datenschutz.html',
-         'styles.css', 'landing.css', 'site.webmanifest']
+         'styles.css', 'landing.css', 'site.webmanifest',
+         'notes/web.md']  # Hilfe → „Was ist neu?“ (js/whatsnew.js)
 # Ordner, die komplett mitkommen
 DIRS = ['js', 'vendor', 'assets']
 # Nur für Suchmaschinen/Link-Vorschauen, offline nutzlos

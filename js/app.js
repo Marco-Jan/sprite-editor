@@ -16,6 +16,8 @@ import {
 import { initDock } from './dock.js';
 import { initLayout, isMobileLayout, refreshToolOpts } from './layout.js';
 import { initTabs } from './tabs.js';
+import { initWhatsNew } from './whatsnew.js';
+import { initToolWrap } from './toolwrap.js';
 import { draggedSize, clampSize, SIZED_TOOLS } from './sizedrag.js';
 import { calcInput } from './calc.js';
 import { snapDir, project, snapEnd } from './lock.js';
@@ -1825,6 +1827,8 @@ async function init() {
   initRotateSlider();
   initCleanupPanel();
   initTabs();
+  initWhatsNew();
+  initToolWrap();
   initLightPanel();
   initTilemap();
   initCalcFields();

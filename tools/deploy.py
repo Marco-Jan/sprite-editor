@@ -22,7 +22,9 @@
 #                 Desktop-Release (nur, wenn es die Version noch nicht gibt).
 #                 Jede Desktop-Version braucht ihre Notizen in
 #                 spritebit-rs/notes/<version>.md („Was ist neu?“ in der App) —
-#                 fehlen sie, bricht es gleich am Anfang ab.
+#                 fehlen sie, bricht es gleich am Anfang ab. Ebenso eine neue
+#                 Web-Version ohne ihren Abschnitt oben in notes/web.md
+#                 (Hilfe → „Was ist neu?“ im Editor).
 #
 # Bei jedem Fehler bricht es ab, bevor etwas gepusht wird.
 #
@@ -217,6 +219,16 @@ def require_rs_notes(root, v):
         fail(f'Desktop {v}: {os.path.relpath(path, root)} hat keinen Abschnitt „## Deutsch“.')
 
 
+def require_web_notes(v):
+    """Notizen der Web-Version oben in notes/web.md (Hilfe → „Was ist neu?“)."""
+    path = os.path.join(WEB, 'notes', 'web.md')
+    text = open(path, encoding='utf-8').read() if os.path.exists(path) else ''
+    m = re.search(r'(?m)^#\s+(\S+)', text)
+    if not m or m.group(1) != v:
+        fail(f'Web {v}: in notes/web.md steht oben nicht „# {v}“ — erst die Notizen schreiben '
+             '(neueste Version oben, Abschnitte „## Deutsch“ und „## English“).')
+
+
 def set_rs_version(root, v):
     sub_file(os.path.join(root, 'Cargo.toml'), r'^version = "[^"]+"', f'version = "{v}"')
     sub_file(os.path.join(root, APP_TOML), r'(spritebit-core = \{ version = ")[^"]+(")', rf'\g<1>{v}\g<2>')
@@ -254,6 +266,8 @@ def ask_versions(args):
         cur = web_version()
         v = ask('Web', cur, args.web_version, interactive)
         args.web_new = v if v != cur else None
+        if args.web_new:
+            require_web_notes(v)
     if args.only != 'web' and os.path.isdir(args.rs):
         cur = rs_version(args.rs)
         v = ask('Desktop', cur, args.rs_version, interactive)
