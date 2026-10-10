@@ -82,6 +82,10 @@
           <button type="button" class="mb-item" role="menuitem" id="save-file-btn"><span data-i18n="mb.save">Projekt sichern</span><kbd data-i18n="mb.kSave">Strg+S</kbd></button>
           <button type="button" class="mb-item" role="menuitem" id="save-dir-btn"><span data-i18n="mb.dir">Speicherort wählen …</span></button>
           <div class="mb-sep" role="separator"></div>
+          <!-- Einzelne Sprites statt des ganzen Projekts (js/storage.js) -->
+          <button type="button" class="mb-item" role="menuitem" id="save-sprite-btn"><span data-i18n="mb.saveSprite">Sprite sichern …</span></button>
+          <button type="button" class="mb-item" role="menuitem" id="add-sprite-btn"><span data-i18n="mb.addSprite">Sprite hinzufügen …</span></button>
+          <div class="mb-sep" role="separator"></div>
           <button type="button" class="mb-item" role="menuitem" data-open="output"><span data-i18n="mb.export">Exportieren …</span></button>
           <!-- Nur sichtbar, wenn der Browser die Installation anbietet (js/pwa.js). -->
           <button type="button" class="mb-item" role="menuitem" data-install hidden><span data-i18n="mb.install">App installieren</span></button>
@@ -132,6 +136,7 @@
       </div>
     </nav>
     <input type="file" id="load-file-input" accept=".json,application/json" hidden>
+    <input type="file" id="add-sprite-input" accept=".json,application/json" hidden>
     <span id="doc-title" class="doc-title"></span>
     <span id="save-indicator" class="save-indicator" data-i18n="tb.saved">gespeichert</span>
     <!-- Bitty, der Helfer (js/helper.js): Klick = Tipp -->

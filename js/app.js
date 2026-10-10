@@ -30,6 +30,7 @@ import {
 } from './render.js';
 import {
   saveState, loadState, clearStorage, forceSaveBeforeUnload, saveToFile, loadFromFile,
+  saveSpriteToFile, addSpritesFromFile,
   backupInfo, downloadBackup, restoreBackup,
 } from './storage.js';
 import { supportsFsAccess, pickSaveDirectory, getStoredDirName, saveBlob } from './filesystem.js';
@@ -1474,12 +1475,34 @@ function initTopbar() {
 
   $('save-file-btn').addEventListener('click', saveToFile);
 
+  // Hinzugefügte Sprites zeigen: den ersten wählen (öffnet seinen Reiter).
+  const showAdded = ids => {
+    renderCallbacks.onSelectSprite(ids[0]);
+    renderAll();
+    saveState();
+    showInfoToast(ids.length === 1
+      ? t('file.spriteAdded', { name: sprites[ids[0]].name })
+      : t('file.spritesAdded', { n: ids.length }));
+  };
+
   const loadInput = $('load-file-input');
   $('load-file-btn').addEventListener('click', () => loadInput.click());
   loadInput.addEventListener('change', e => {
     const file = e.target.files[0];
-    if (file) loadFromFile(file, msg => showInfoToast(msg));
+    // Eine Sprite-Datei ersetzt das Projekt nicht, sie kommt dazu.
+    if (file) loadFromFile(file, msg => showInfoToast(msg), showAdded);
     loadInput.value = '';
+  });
+
+  // Einzelne Sprites: nur den aktuellen sichern, oder Sprites aus einer
+  // Datei (Sprite- oder Projektdatei) zum Projekt hinzufügen.
+  $('save-sprite-btn').addEventListener('click', () => { commitFloat(); saveSpriteToFile(); });
+  const addInput = $('add-sprite-input');
+  $('add-sprite-btn').addEventListener('click', () => addInput.click());
+  addInput.addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (file) addSpritesFromFile(file, showAdded, msg => showInfoToast(msg));
+    addInput.value = '';
   });
 
   $('clear-storage-btn').addEventListener('click', () => {
