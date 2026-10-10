@@ -142,7 +142,8 @@ export function initDock() {
   // leiste, die auf dem Handy über deren Schublade schwebt (layout.js).
   document.addEventListener('pointerdown', e => {
     if (!openPanel || openPanel.contains(e.target)) return;
-    if (/** @type {HTMLElement} */ (e.target).closest('.dock-btn, .modal-overlay, #confirm-toast, #info-toast, #tool-opts')) return;
+    // Bittys Blase auch nicht: seine Tour zeigt gerade in dieses Panel (helper.js).
+    if (/** @type {HTMLElement} */ (e.target).closest('.dock-btn, .modal-overlay, #confirm-toast, #info-toast, #tool-opts, #bitty-bubble')) return;
     show(null);
   });
 

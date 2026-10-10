@@ -57,6 +57,26 @@ test('andere Sprache: findet über names, zeigt label', () => {
   assert.deepEqual(search('guides', entries).map(e => e.label), ['Hilfslinien']);
 });
 
+test('Synonyme: Alltagswörter finden die Funktion', () => {
+  assert.deepEqual(labels('radiergummi'), []); // gibt es in E nicht …
+  const tools = [
+    { label: 'Radierer', text: 'Radierer (E)' },
+    { label: 'Füllen', text: 'Flood-Fill (F)' },
+    { label: 'Ebenen', names: 'Layers', text: '' },
+  ];
+  assert.deepEqual(search('radiergummi', tools).map(e => e.label), ['Radierer']);
+  assert.deepEqual(search('farbeimer', tools).map(e => e.label), ['Füllen']);
+  assert.deepEqual(search('bucket', tools).map(e => e.label), ['Füllen']);
+});
+
+test('das Wort selbst schlägt das Synonym', () => {
+  const e = [
+    { label: 'Pipette', text: '' },
+    { label: 'Farbwahl', text: '' },
+  ];
+  assert.deepEqual(search('pipette', e).map(x => x.label), ['Pipette', 'Farbwahl']);
+});
+
 test('leer oder Unsinn findet nichts', () => {
   assert.deepEqual(labels(''), []);
   assert.deepEqual(labels('   '), []);

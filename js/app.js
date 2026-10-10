@@ -8,7 +8,7 @@ import {
   paletteExists, getPaletteByName,
 } from './state.js';
 import { parseStartHash } from './fromstart.js';
-import { initHelper, relabelHelper, hint, openHelpAt } from './helper.js';
+import { initHelper, relabelHelper, hint, openHelpAt, openSearch } from './helper.js';
 import { DEFAULT_PALETTE, MAX_COLORS } from './data.js';
 import {
   t, tn, colorLabelShort, applyStatic, initLangSwitch, onLangChange, getLang,
@@ -763,6 +763,8 @@ function initKeyboardEvents() {
       if (k === 'o' && !e.shiftKey) { e.preventDefault(); $('load-file-btn').click(); return; }
     }
     if (e.key === 'F1') { e.preventDefault(); $('help-btn').click(); return; }
+    // Strg+K: Bitty als Befehlszeile — suchen und ausführen.
+    if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'k' && !anyModalOpen()) { e.preventDefault(); openSearch(); return; }
 
     if (e.key === 'Enter' && isRotating() && !isTypingTarget(e.target)) {
       stopRotating(true);

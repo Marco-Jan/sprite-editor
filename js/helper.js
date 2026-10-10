@@ -3,8 +3,9 @@
 // ════════════════════════════════════════════════════════════════════
 // Bitty (js/bitty.js) sitzt rechts in der Kopfzeile.
 //
-//   Tour   Beim allerersten Start zeigt er in ein paar Sprechblasen, wo
-//          was ist. Jederzeit wieder über Hilfe → „Tour mit Bitty“.
+//   Touren Beim allerersten Start zeigt er in ein paar Sprechblasen, wo
+//          was ist. Dazu Themen-Touren (Animation, Ebenen, Kacheln,
+//          Foto → Sprite) über Hilfe → „Touren mit Bitty“ oder die Suche.
 //   Suche  Ein Klick auf ihn öffnet ein Suchfeld: findet Hilfe-Absätze,
 //          Werkzeuge, Panels und Menüpunkte (js/search.js) und führt hin —
 //          Hilfe aufschlagen, Panel aufklappen, aufs Werkzeug zeigen.
@@ -16,22 +17,68 @@
 // oder ein Klick daneben schließt sie (die Tour nur über ihre Knöpfe).
 import { t, i18nVariants } from './i18n.js';
 import { search } from './search.js';
+import { state, getSprite, createSprite } from './state.js';
+import { renderCallbacks } from './render.js';
 
 const KEY = 'spritebit_bitty';
-const TIP_COUNT = 10;
+// Tipps: abwechselnd zur Bedienung (bitty.tip.*) und zum Handwerk
+// Pixel-Art (bitty.art.*), damit nicht erst zehnmal Tastenkürzel kommen.
+const APP_TIPS = 11, ART_TIPS = 10;
+const TIPS = [];
+for (let i = 1; i <= Math.max(APP_TIPS, ART_TIPS); i++) {
+  if (i <= APP_TIPS) TIPS.push(`bitty.tip.${i}`);
+  if (i <= ART_TIPS) TIPS.push(`bitty.art.${i}`);
+}
+const TIP_COUNT = TIPS.length;
 
-// Tour: Ziel (erstes sichtbares gewinnt) und Text. Ohne Ziel zeigt die
-// Blase auf Bitty selbst.
-const TOUR = [
-  { sel: ['#toolbar'], key: 'bitty.tour.tools' },
-  { sel: ['#quick-palette', '[data-panel="palette"]'], key: 'bitty.tour.colors' },
-  { sel: ['#stage-body'], key: 'bitty.tour.canvas' },
-  { sel: ['#timeline'], key: 'bitty.tour.timeline' },
-  { sel: ['[data-panel="output"]', '.dock-btn[data-target="output"]'], key: 'bitty.tour.export' },
-  { sel: [], key: 'bitty.tour.end' },
-];
+// Touren: je Schritt ein Ziel (erstes sichtbares gewinnt) und ein Text.
+// `panel` klappt dieses Panel vorher auf; ist das Ziel darin gerade
+// versteckt (z. B. Knöpfe, die erst mit einem Bild erscheinen), zeigt die
+// Blase aufs Panel. Ohne Ziel zeigt sie auf Bitty selbst.
+// „start“ ist die Erste-Schritte-Tour, die anderen gibt es auf Wunsch.
+/** @type {Record<string, { sel: string[], key: string, panel?: string }[]>} */
+const TOURS = {
+  start: [
+    { sel: ['#toolbar'], key: 'bitty.tour.tools' },
+    { sel: ['#quick-palette', '[data-panel="palette"]'], key: 'bitty.tour.colors' },
+    { sel: ['#stage-body'], key: 'bitty.tour.canvas' },
+    { sel: ['#timeline'], key: 'bitty.tour.timeline' },
+    { sel: ['[data-panel="output"]', '.dock-btn[data-target="output"]'], key: 'bitty.tour.export' },
+    { sel: [], key: 'bitty.tour.end' },
+  ],
+  anim: [
+    { sel: ['#tl-frames', '#timeline'], key: 'bitty.t.anim.1' },
+    { sel: ['#tl-dup', '#tl-add'], key: 'bitty.t.anim.2' },
+    { sel: ['#tl-onion'], key: 'bitty.t.anim.3' },
+    { sel: ['#tl-play'], key: 'bitty.t.anim.4' },
+    { sel: ['#tl-fps-field'], key: 'bitty.t.anim.5' },
+    { sel: ['#tl-tag'], key: 'bitty.t.anim.6' },
+    { sel: ['#export-gif-btn'], panel: 'output', key: 'bitty.t.anim.7' },
+  ],
+  layers: [
+    { sel: ['#layer-list'], panel: 'layers', key: 'bitty.t.layers.1' },
+    { sel: ['#ly-add'], panel: 'layers', key: 'bitty.t.layers.2' },
+    { sel: ['#ly-opacity'], panel: 'layers', key: 'bitty.t.layers.3' },
+    { sel: ['#ly-mask-add', '#ly-mask-edit'], panel: 'layers', key: 'bitty.t.layers.4' },
+    { sel: ['#ly-merge'], panel: 'layers', key: 'bitty.t.layers.5' },
+  ],
+  tiles: [
+    { sel: ['#tile-new'], panel: 'tiles', key: 'bitty.t.tiles.1' },
+    { sel: ['#tile-convert'], panel: 'tiles', key: 'bitty.t.tiles.2' },
+    { sel: ['#tile-mode-tiles'], panel: 'tiles', key: 'bitty.t.tiles.3' },
+    { sel: ['#tile-godot'], panel: 'tiles', key: 'bitty.t.tiles.4' },
+  ],
+  photo: [
+    { sel: ['label[for="template-file"]'], panel: 'template', key: 'bitty.t.photo.1' },
+    { sel: ['#template-trace-quant', '#template-trace'], panel: 'template', key: 'bitty.t.photo.2' },
+    { sel: ['#palette-from-image-btn'], panel: 'palette', key: 'bitty.t.photo.3' },
+    { sel: ['#bg-remove-btn'], panel: 'cleanup', key: 'bitty.t.photo.4' },
+    { sel: ['#despeckle-btn', '#outline-btn'], panel: 'cleanup', key: 'bitty.t.photo.5' },
+  ],
+};
+const TOPICS = ['anim', 'layers', 'tiles', 'photo'];
 
-/** @type {{ tour: boolean, tip: number, quiet: boolean, hints?: boolean, off?: Record<string, boolean> }} */
+/** @type {{ tour: boolean, tip: number, quiet: boolean, hints?: boolean, off?: Record<string, boolean>, moments?: Record<string, boolean> }} */
 let prefs = { tour: false, tip: 0, quiet: false, hints: true, off: {} };
 function loadPrefs() {
   try { prefs = { ...prefs, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch { /* privates Fenster */ }
@@ -149,8 +196,13 @@ function showTip(auto = false, advance = true) {
   const actions = [{ label: t('bitty.next'), primary: true, onClick: () => showTip() }];
   if (auto) actions.push({ label: t('bitty.quiet'), onClick: () => { prefs.quiet = true; savePrefs(); hide(); } });
   else actions.push({ label: t('bitty.close'), onClick: hide });
-  // Ohne Zähler: wie viele Tipps es gibt, ist nicht das Thema.
-  say(t(`bitty.tip.${i + 1}`), actions, { autoClose: auto, search: true, focus: !auto });
+  // Ohne Zähler: wie viele Tipps es gibt, ist nicht das Thema. Pixel-Art-
+  // Tipps bekommen eine kleine Überschrift, sie sind eine andere Sorte.
+  const key = TIPS[i];
+  say(t(key), actions, {
+    autoClose: auto, search: true, focus: !auto,
+    step: key.startsWith('bitty.art.') ? t('bitty.artLabel') : '',
+  });
 }
 
 // ── Suche ──────────────────────────────────────────────────────────
@@ -163,7 +215,11 @@ function showTip(auto = false, advance = true) {
 // findet „layer“ die „Ebenen“ — angezeigt wird aber, was auf dem
 // Bildschirm steht.
 
-/** @typedef {{ kind: 'help'|'tool'|'panel'|'menu', label: string, names: string, sub: string, text: string, el: HTMLElement }} Entry */
+/** @typedef {{ kind: 'help'|'tool'|'panel'|'menu'|'action'|'tour'|'tip', label: string, names: string, sub: string, text: string, el: HTMLElement | null, danger?: boolean, tour?: string, tip?: number }} Entry */
+
+// Was Bitty nie selbst drückt, sondern nur zeigt: alles, was löscht oder
+// zurücksetzt. Lieber einmal zu vorsichtig.
+const DANGER = /del|clear|reset|remove|delete/i;
 
 let query = null, results = null, none = null;
 /** @type {Entry[]} */
@@ -195,6 +251,15 @@ function helpLabel(node) {
 function collect() {
   /** @type {Entry[]} */
   const out = [];
+  // Touren — Stichwörter stehen in beiden Sprachen im Text (bitty.tourWords.*)
+  for (const n of ['lesson', 'start', ...TOPICS]) {
+    out.push({ kind: 'tour', label: t(`bitty.tourName.${n}`), names: '', sub: '', text: t(`bitty.tourWords.${n}`), el: null, tour: n });
+  }
+  // Tipps — vor allem die zum Handwerk („schatten“, „kontur“)
+  TIPS.forEach((key, k) => {
+    const txt = t(key);
+    out.push({ kind: 'tip', label: txt.length > 60 ? txt.slice(0, 57) + ' …' : txt, names: '', sub: '', text: txt, el: null, tip: k + 1 });
+  });
   // Werkzeuge: Name und Tooltip (dort steht auch das Kürzel)
   document.querySelectorAll('#toolbar [data-tool]').forEach(el => {
     const nameEl = el.querySelector('.tool-name');
@@ -213,7 +278,22 @@ function collect() {
     const span = el.querySelector('span');
     const label = clean(span?.textContent);
     const titleEl = el.closest('.mb-menu')?.querySelector('.mb-title');
-    if (label) out.push({ kind: 'menu', label, names: allLangs(span), sub: clean(titleEl?.textContent), text: allLangs(titleEl), el });
+    if (label) out.push({ kind: 'menu', label, names: allLangs(span), sub: clean(titleEl?.textContent), text: allLangs(titleEl), el, danger: DANGER.test(el.id) });
+  });
+  // Knöpfe in Panels, Timeline, Werkzeugleiste und über der Fläche — als
+  // Befehle: Enter drückt sie (außer den gefährlichen).
+  document.querySelectorAll('.panel button[id], #timeline button[id], #stage-head button[id], #toolbar button[id]').forEach(el => {
+    if (el.dataset.tool || el.id === 'bitty-btn') return;
+    const label = clean(el.querySelector('.btn-label')?.textContent || el.textContent) || clean(el.title || el.getAttribute('aria-label'));
+    if (label.length < 2) return;
+    const where = el.closest('.panel')?.querySelector('.panel-title');
+    const names = [el, ...el.querySelectorAll('[data-i18n]')].map(n => allLangs(n)).join(' ');
+    out.push({
+      kind: 'action', label, el, danger: DANGER.test(el.id),
+      names: `${names} ${allLangs(el, 'title')} ${allLangs(el, 'aria-label')}`,
+      sub: clean(where?.textContent) || (label !== clean(el.title) ? clean(el.title) : ''),
+      text: el.title || '',
+    });
   });
   // Hilfe: jeder Absatz und jede Kürzel-Zeile, mit Abschnitt. Die anderen
   // Sprachen stehen je Block als HTML in STATIC — Absatz k dort gehört zu
@@ -250,7 +330,11 @@ function renderResults() {
   body.hidden = searching;
   if (!searching) { results.hidden = true; none.hidden = true; hits = []; return; }
   clearTimeout(closeTimer); // wer tippt, liest — nicht mehr von selbst schließen
-  hits = /** @type {Entry[]} */ (search(q, collect(), 8));
+  // Dasselbe gibt es oft zweimal (Menüpunkt und Knopf „Rückgängig“) — einmal reicht.
+  const seen = new Set();
+  hits = /** @type {Entry[]} */ (search(q, collect(), 20))
+    .filter(h => { const k = h.label.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; })
+    .slice(0, 8);
   sel = 0;
   none.hidden = hits.length > 0;
   none.textContent = t('bitty.noHits');
@@ -306,7 +390,19 @@ export function openHelpAt(target) {
 function go(h) {
   const back = query.value;
   if (h.kind === 'help') { openHelpAt(h.el); return; }
+  if (h.kind === 'tour') { if (h.tour === 'lesson') startLesson(); else startTour(h.tour); return; }
+  // Tipp: Suchfeld leeren, sonst stünden weiter die Treffer statt des Tipps da.
+  if (h.kind === 'tip') { prefs.tip = h.tip; query.value = ''; showTip(false, false); return; }
+  const disabled = /** @type {HTMLButtonElement} */ (h.el).disabled;
+  // Befehl ausführen: Werkzeug wählen, Knopf drücken, Menüpunkt auslösen.
+  if ((h.kind === 'tool' || h.kind === 'action' || h.kind === 'menu') && !h.danger && !disabled) {
+    hide();
+    h.el.click();
+    if (visible(h.el)) flash(h.el);
+    return;
+  }
   if (h.kind === 'menu') {
+    // Gefährlich (z. B. „Alles zurücksetzen“): nur das Menü aufklappen und zeigen.
     hide();
     const menu = h.el.closest('.mb-menu');
     const title = menu?.querySelector('.mb-title');
@@ -314,20 +410,29 @@ function go(h) {
     requestAnimationFrame(() => { h.el.focus(); flash(h.el); });
     return;
   }
-  // Werkzeug oder Panel: Bitty zeigt darauf, ein Knopf führt es aus.
-  /** @type {{ label: string, primary?: boolean, onClick: () => void }[]} */
-  const actions = [];
-  if (h.kind === 'panel' && !visible(h.el)) {
+  // Panel oder ein Knopf, den Bitty nicht drückt: hinführen und zeigen.
+  const panel = h.kind === 'panel' ? h.el : h.el.closest('.panel');
+  if (panel && !visible(panel)) {
     // Panel liegt im Dock: Schublade aufmachen
-    document.querySelector(`.dock-btn[data-target="${h.el.dataset.dock || h.el.dataset.panel}"]`)?.click();
+    document.querySelector(`.dock-btn[data-target="${panel.dataset.dock || panel.dataset.panel}"]`)?.click();
   }
-  if (h.kind === 'tool') actions.push({ label: t('bitty.use'), primary: true, onClick: () => { h.el.click(); hide(); } });
-  else actions.push({ label: t('bitty.ok'), primary: true, onClick: hide });
-  actions.push({ label: t('bitty.back'), onClick: () => { showTip(false, false); query.value = back; renderResults(); } });
+  const msg = h.kind === 'panel' ? t('bitty.foundPanel', { name: h.label })
+    : disabled ? t('bitty.disabled', { name: h.label })
+    : t('bitty.danger', { name: h.label });
   requestAnimationFrame(() => {
     setTarget(visible(h.el) ? h.el : null);
-    say(t(h.kind === 'tool' ? 'bitty.foundTool' : 'bitty.foundPanel', { name: h.label }), actions);
+    say(msg, [
+      { label: t('bitty.ok'), primary: true, onClick: hide },
+      { label: t('bitty.back'), onClick: () => { showTip(false, false); query.value = back; renderResults(); } },
+    ]);
   });
+}
+
+/** Strg+K: Bitty mit Suchfeld öffnen, von überall. */
+export function openSearch() {
+  if (!bubble || inTour()) return;
+  if (isOpen() && !bubble.querySelector('.bitty-search').hidden) { query.focus(); query.select(); return; }
+  showTip(false, false);
 }
 
 function onSearchKey(e) {
@@ -371,33 +476,187 @@ function syncHintsItem() {
   document.getElementById('bitty-hints-btn')?.setAttribute('aria-checked', String(prefs.hints !== false));
 }
 
+// ── Lektion zum Mitmachen ──────────────────────────────────────────
+// „Dein erster animierter Sprite“: Bitty gibt eine Aufgabe und schaut
+// selbst nach, ob sie erledigt ist (alle 300 ms, nur solange die Lektion
+// läuft). Kein Raten über Klicks — gezählt wird, was im Bild steht.
+// `start` merkt sich den Stand beim Beginn eines Schritts, `done` vergleicht.
+
+// Gemalte Pixel im Frame f (alle Ebenen)
+function pixels(f) {
+  const sp = getSprite();
+  let n = 0;
+  for (const g of sp?.frames[f]?.cels || []) for (const row of g) for (const v of row) if (v !== 0) n++;
+  return n;
+}
+const frameKey = f => JSON.stringify(getSprite()?.frames[f]?.cels || null);
+
+let gifClicked = false;
+
+/** @type {{ key: string, sel: string[], start?: () => any, done: (c: any) => boolean }[]} */
+const LESSON = [
+  { key: 'bitty.l.1', sel: ['[data-tool="pencil"]'], start: () => pixels(getSprite().frame), done: n => pixels(getSprite().frame) >= n + 8 },
+  { key: 'bitty.l.2', sel: ['[data-tool="fill"]'], start: () => pixels(getSprite().frame), done: n => state.tool === 'fill' && pixels(getSprite().frame) > n },
+  { key: 'bitty.l.3', sel: ['#tl-dup', '#tl-add'], start: () => getSprite().frames.length, done: n => getSprite().frames.length > n },
+  // Erst wenn sich im aktuellen Frame etwas getan hat UND er sich vom
+  // Nachbarn unterscheidet — ein leerer Frame per + zählt noch nicht.
+  { key: 'bitty.l.4', sel: ['#tl-frames', '#timeline'], start: () => frameKey(getSprite().frame), done: k => {
+    const sp = getSprite();
+    return sp.frames.length > 1 && frameKey(sp.frame) !== k && frameKey(sp.frame) !== frameKey(sp.frame === 0 ? 1 : 0);
+  } },
+  { key: 'bitty.l.5', sel: ['#tl-play'], done: () => !!state.playing },
+  { key: 'bitty.l.6', sel: ['#export-gif-btn'], start: () => { gifClicked = false; }, done: () => gifClicked },
+];
+
+let lessonTimer = 0;
+
+function stopLesson() { clearInterval(lessonTimer); lessonTimer = 0; }
+
+function lessonStep(i) {
+  stopLesson();
+  if (i >= LESSON.length) {
+    setTarget(null);
+    say(t('bitty.l.done'), [{ label: t('bitty.done'), primary: true, onClick: endTour }], { tour: true });
+    bitty?.hop();
+    return;
+  }
+  const s = LESSON[i];
+  const panel = openPanelFor(s);
+  const ctx = s.start ? s.start() : null;
+  const actions = [
+    { label: t('bitty.l.skip'), onClick: () => lessonStep(i + 1) },
+    { label: t('bitty.l.quit'), onClick: endTour },
+  ];
+  requestAnimationFrame(() => {
+    setTarget(findTarget(s.sel) || (panel && visible(panel) ? panel : null));
+    say(t(s.key), actions, { tour: true, step: t('bitty.l.stepOf', { n: i + 1, total: LESSON.length }) });
+  });
+  lessonTimer = window.setInterval(() => {
+    if (!getSprite() || !s.done(ctx)) return;
+    stopLesson();
+    // Geschafft: kurz loben, dann weiter.
+    setTarget(null);
+    say(t(`bitty.l.yay.${(i % 3) + 1}`), [], { tour: true, step: t('bitty.l.stepOf', { n: i + 1, total: LESSON.length }) });
+    window.setTimeout(() => { if (inTour()) lessonStep(i + 1); }, 1100);
+  }, 300);
+}
+
+export function startLesson() {
+  setTarget(null);
+  say(t('bitty.l.hello'), [
+    {
+      label: t('bitty.show'), primary: true, onClick: () => {
+        // Frischer, kleiner Sprite — das eigene Bild bleibt, wie es ist.
+        const id = createSprite({ name: t('bitty.l.name'), size: 16 });
+        renderCallbacks.onSelectSprite(id);
+        lessonStep(0);
+      },
+    },
+    { label: t('bitty.later'), onClick: endTour },
+  ], { tour: true });
+}
+
+// ── Persönlichkeit ─────────────────────────────────────────────────
+// Ein paar Momente, in denen Bitty sich freut — jeder genau einmal im
+// Leben dieses Browsers, damit es nett bleibt und nicht nervt. Wer Bitty
+// mit „Nicht von selbst“ ruhig gestellt hat, bekommt nur das Hüpfen.
+// Dazu: nach 5 Minuten ohne Eingabe döst er ein, bei der nächsten wacht er auf.
+const IDLE_MS = 5 * 60 * 1000;
+let lastInput = Date.now();
+
+function moment(id, key) {
+  bitty?.hop();
+  if (prefs.moments?.[id]) return;
+  prefs.moments = { ...prefs.moments, [id]: true };
+  savePrefs();
+  if (prefs.quiet || isOpen()) return; // nicht dazwischenreden
+  setTarget(null);
+  say(t(key), [{ label: t('bitty.ok'), primary: true, onClick: hide }], { autoClose: true });
+}
+
+function initMoments() {
+  // Erster Export — egal welcher Weg
+  for (const id of ['export-png-btn', 'export-pdf-btn', 'export-gif-btn', 'export-sheet-btn', 'save-code-btn', 'copy-btn']) {
+    document.getElementById(id)?.addEventListener('click', () => moment('export', 'bitty.m.export'));
+  }
+  // Erste abgespielte Animation: der Abspiel-Knopf wird gedrückt (auch per Enter)
+  const play = document.getElementById('tl-play');
+  if (play) {
+    new MutationObserver(() => {
+      if (play.getAttribute('aria-pressed') === 'true' && (getSprite()?.frames.length || 0) > 1) moment('anim', 'bitty.m.anim');
+    }).observe(play, { attributes: true, attributeFilter: ['aria-pressed'] });
+  }
+  // Dösen und Aufwachen
+  const wake = () => {
+    lastInput = Date.now();
+    if (bitty?.isAsleep()) bitty.sleep(false);
+  };
+  for (const ev of ['pointerdown', 'keydown', 'wheel']) document.addEventListener(ev, wake, { capture: true, passive: true });
+  window.setInterval(() => {
+    if (!bitty?.isAsleep() && !isOpen() && Date.now() - lastInput > IDLE_MS) bitty?.sleep(true);
+  }, 15000);
+}
+
 // ── Tour ───────────────────────────────────────────────────────────
 function endTour() {
+  stopLesson();
   prefs.tour = true;
   savePrefs();
   hide();
 }
 
-function tourStep(i) {
-  const s = TOUR[i];
-  setTarget(findTarget(s.sel));
-  const last = i === TOUR.length - 1;
+// Panel, in dem ein Tour-Ziel steckt, aufklappen (falls es im Dock liegt).
+function openPanelFor(s) {
+  const first = s.sel.map(q => document.querySelector(q)).find(Boolean);
+  const panel = s.panel ? document.querySelector(`.panel[data-panel="${s.panel}"]`) : first?.closest('.panel[data-panel]');
+  if (panel && !visible(panel)) {
+    document.querySelector(`.dock-btn[data-target="${panel.dataset.dock || panel.dataset.panel}"]`)?.click();
+  }
+  return panel;
+}
+
+function tourStep(name, i) {
+  const steps = TOURS[name];
+  const s = steps[i];
+  const panel = s.sel.length ? openPanelFor(s) : null;
+  // „start“ endet mit einem Schritt ohne Ziel (Verabschiedung); die
+  // Themen-Touren enden mit ihrem letzten echten Schritt.
+  const counted = name === 'start' ? steps.length - 1 : steps.length;
+  const last = i === steps.length - 1;
   /** @type {{ label: string, primary?: boolean, onClick: () => void }[]} */
   const actions = last
     ? [{ label: t('bitty.done'), primary: true, onClick: endTour }]
     : [
-        { label: t('bitty.next'), primary: true, onClick: () => tourStep(i + 1) },
+        { label: t('bitty.next'), primary: true, onClick: () => tourStep(name, i + 1) },
         { label: t('bitty.skip'), onClick: endTour },
       ];
-  if (i > 0 && !last) actions.splice(1, 0, { label: t('bitty.back'), onClick: () => tourStep(i - 1) });
-  say(t(s.key), actions, { tour: true, step: last ? '' : t('bitty.stepOf', { n: i + 1, total: TOUR.length - 1 }) });
+  if (i > 0 && !last) actions.splice(1, 0, { label: t('bitty.back'), onClick: () => tourStep(name, i - 1) });
+  // Am Ende der Erste-Schritte-Tour: die Themen-Touren anbieten.
+  if (name === 'start' && last) actions.push({ label: t('bitty.moreTours'), onClick: chooseTour });
+  // Das Panel klappt gerade erst auf — Ziel einen Frame später suchen.
+  requestAnimationFrame(() => {
+    setTarget(findTarget(s.sel) || (panel && visible(panel) ? panel : null));
+    say(t(s.key), actions, { tour: true, step: name === 'start' && last ? '' : t('bitty.stepOf', { n: Math.min(i + 1, counted), total: counted }) });
+  });
 }
 
-export function startTour() {
+export function startTour(name = 'start') {
   setTarget(null);
+  if (name !== 'start') { tourStep(name, 0); return; }
   say(t('bitty.hello'), [
-    { label: t('bitty.show'), primary: true, onClick: () => tourStep(0) },
+    { label: t('bitty.show'), primary: true, onClick: () => tourStep('start', 0) },
     { label: t('bitty.later'), onClick: endTour },
+  ], { tour: true });
+}
+
+/** Welche Tour? — Hilfe → „Touren mit Bitty“ und am Ende der ersten Tour. */
+function chooseTour() {
+  setTarget(null);
+  say(t('bitty.whichTour'), [
+    { label: t('bitty.tourName.lesson'), primary: true, onClick: startLesson },
+    { label: t('bitty.tourName.start'), onClick: () => tourStep('start', 0) },
+    ...TOPICS.map(n => ({ label: t(`bitty.tourName.${n}`), onClick: () => tourStep(n, 0) })),
+    { label: t('bitty.close'), onClick: endTour },
   ], { tour: true });
 }
 
@@ -444,7 +703,10 @@ export function initHelper() {
     if (inTour()) return;           // die Tour läuft über ihre Knöpfe
     if (isOpen()) hide(); else showTip();
   });
-  document.getElementById('bitty-tour-btn')?.addEventListener('click', startTour);
+  document.getElementById('bitty-tour-btn')?.addEventListener('click', chooseTour);
+  initMoments();
+  // Lektion, letzter Schritt: wurde ein GIF exportiert?
+  document.getElementById('export-gif-btn')?.addEventListener('click', () => { gifClicked = true; });
   document.getElementById('bitty-hints-btn')?.addEventListener('click', () => {
     prefs.hints = prefs.hints === false;
     if (prefs.hints) prefs.off = {}; // wieder an = alle wieder an
