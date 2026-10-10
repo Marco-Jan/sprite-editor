@@ -167,6 +167,7 @@ function buildPayload(withSprites = true) {
       onion:      state.onion,
       timeline:   state.tlOpts,
       showGuides: state.showGuides,
+      lockGuides: state.lockGuides,
       fullscreen: document.body.classList.contains('editor-fullscreen'),
       panels: collectPanelStates(),
     },
@@ -498,6 +499,7 @@ function applyPayload(payload) {
     if (typeof ui.onion === 'boolean') state.onion = ui.onion;
     if (ui.timeline) state.tlOpts = normalizeTlOpts(ui.timeline);
     if (typeof ui.showGuides === 'boolean') state.showGuides = ui.showGuides;
+    if (typeof ui.lockGuides === 'boolean') state.lockGuides = ui.lockGuides;
     applyPanelStates(ui.panels);
 
     return { loaded: true, migrated, note, fullscreen: !!ui.fullscreen };

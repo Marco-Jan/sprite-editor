@@ -69,7 +69,7 @@ import { initFullscreen, enterFullscreen, exitFullscreen } from './fullscreen.js
 import { normalizeTags } from './tags.js';
 import { initPreview, renderPreview } from './preview.js';
 import { initTilemap, tileModeOn, tilePointerDown } from './tilemap.js';
-import { initGuides, guidePointerDown, guideAt, toggleEdit as toggleGuideEdit, toggleShow as toggleGuides } from './guides.js';
+import { initGuides, guidePointerDown, guideAt, toggleShow as toggleGuides } from './guides.js';
 import { parseTsSprite } from './tsimport.js';
 import { CODE_FORMATS, getFormat, codeFilename } from './codegen.js';
 import {
@@ -482,8 +482,6 @@ function initCanvasEvents() {
     if (isPanMode() || e.button === 1) return;
     // Beim Abspielen wird nicht gemalt — der Tipp hält an.
     if (isPlaying()) { e.preventDefault(); stopPlayback(); return; }
-    // Hilfslinien verschieben: die Zeichenfläche gehört den Linien.
-    if (state.guideEdit) { guidePointerDown(e); return; }
     // Tilemap im Modus „Kacheln“: setzen, leeren, füllen, aufnehmen (tilemap.js).
     if (tileModeOn() && (e.button === 0 || e.button === 2)) {
       if (!e.altKey && layerBlocked()) return;
@@ -740,7 +738,6 @@ function initKeyboardEvents() {
     if (e.key === 'Escape') {
       if (closeTopModal()) return;
       if (isPlaying()) { stopPlayback(); return; }
-      if (state.guideEdit) { toggleGuideEdit(false); return; }
       if (isRotating()) { stopRotating(false); info(t('rot.discarded')); return; }
       if (shapeStart || state.shape.cells.length) {
         shapeStart = null;

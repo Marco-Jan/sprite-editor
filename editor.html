@@ -517,7 +517,7 @@
         <div class="panel-body">
           <div class="btn-row">
             <button class="btn" id="gd-show" aria-pressed="true" data-i18n-attr="title:gd.showTitle" title="Alle Hilfslinien ein- und ausblenden (G)">Ausblenden</button>
-            <button class="btn" id="gd-edit" aria-pressed="false" data-i18n="gd.edit" data-i18n-attr="title:gd.editTitle" title="Linien auf der Zeichenfläche ziehen — solange wird nicht gemalt (Tipp daneben oder Esc beendet)">Verschieben</button>
+            <button class="btn" id="gd-lock" aria-pressed="false" data-i18n-attr="title:gd.lockTitle" title="Gesperrt lassen sich die Linien nicht verschieben — auch nicht mit der Hand">Sperren</button>
           </div>
           <span class="field-label" data-i18n="gd.free">Freie Linien</span>
           <div class="btn-row">
@@ -544,7 +544,6 @@
               <option value="8" data-i18n="gd.h8">8 Köpfe — klassisch, heldenhaft</option>
             </select>
           </label>
-          <button class="btn" id="gd-fit" data-i18n="gd.fit" data-i18n-attr="title:gd.fitTitle" title="Ober- und Unterkante der Einteilung auf das Gezeichnete setzen">An Figur anpassen</button>
           <!-- Eigene Layouts: für alle Sprites, js/guidelayouts.js -->
           <span class="field-label" data-i18n="gd.layouts">Eigene Layouts</span>
           <div class="field-controls gd-layout-row">
@@ -556,7 +555,7 @@
             <input type="text" id="gd-layout-name" class="input input--sm" maxlength="40" autocomplete="off" data-i18n-attr="placeholder:gd.layoutName;title:gd.layoutName" placeholder="Name des Layouts" title="Name des Layouts">
             <button class="btn" id="gd-layout-save" data-i18n="gd.layoutSave" data-i18n-attr="title:gd.layoutSaveTitle" title="Die jetzigen Linien und die Einteilung als Layout speichern — gleicher Name ersetzt">Speichern</button>
           </div>
-          <p class="field-note" data-i18n="gd.note">Nur zum Zeichnen — die Linien erscheinen in keinem Export. Im Modus „Verschieben“ Linien ziehen, eine freie Linie aus dem Bild ziehen löscht sie, ein Tipp daneben beendet den Modus.</p>
+          <p class="field-note" data-i18n="gd.note">Nur zum Zeichnen — die Linien erscheinen in keinem Export. Linien mit der Hand (H) ziehen: eine Kopfhöhe zieht die ganze Figur, eine freie Linie aus dem Bild ziehen löscht sie. „Sperren“ hält alle fest.</p>
         </div>
       </section>
 
@@ -1167,8 +1166,8 @@
     <h3 class="help-h" data-i18n="help.h.guides">Hilfslinien</h3>
     <div class="help-list" data-i18n-html="help.guides">
       <div>Panel <b>Hilfslinien</b> im Dock — nur zum Zeichnen, sie erscheinen in keinem Export. <span class="kbd">G</span> blendet alle ein und aus.</div>
-      <div><b>Freie Linien</b>: „+ Waagerecht“ / „+ Senkrecht“ setzt eine Linie in die Mitte, <b>Gleichmäßig</b> verteilt eine eingetippte Anzahl Linien sofort gleichmäßig (4 Linien = 5 gleiche Teile). Im Modus <b>Verschieben</b> zieht man Linien auf der Zeichenfläche an ihren Platz (immer auf einer Pixelgrenze); aus dem Bild gezogen ist eine Linie gelöscht. Solange wird nicht gemalt — ein Tipp neben die Linien oder <span class="kbd">Esc</span> beendet den Modus. Mit dem <b>Hand</b>-Werkzeug lässt sich eine Linie auch ohne den Modus greifen.</div>
-      <div><b>Figur</b>: teilt eine Figur in 2 (Chibi), 3, 4, 6 oder 8 Kopfhöhen und markiert Kinn, Brust, Hüfte, Knie usw. samt Körperachse. „An Figur anpassen“ setzt Ober- und Unterkante auf das Gezeichnete; beide lassen sich im Modus Verschieben ziehen.</div>
+      <div><b>Freie Linien</b>: „+ Waagerecht“ / „+ Senkrecht“ setzt eine Linie in die Mitte, <b>Gleichmäßig</b> verteilt eine eingetippte Anzahl Linien sofort gleichmäßig (4 Linien = 5 gleiche Teile). Mit dem <b>Hand</b>-Werkzeug (<span class="kbd">H</span>) zieht man Linien auf der Zeichenfläche an ihren Platz (immer auf einer Pixelgrenze); aus dem Bild gezogen ist eine Linie gelöscht. <b>Sperren</b> hält alle Linien fest.</div>
+      <div><b>Figur</b>: teilt eine Figur in 2 (Chibi), 3, 4, 6 oder 8 Kopfhöhen und markiert Kinn, Brust, Hüfte, Knie usw. samt Körperachse. Ober- und Unterkante ändern mit der Hand die Größe, eine Kopfhöhe dazwischen zieht die ganze Figur.</div>
       <div><b>Eigene Layouts</b>: Linien und Einteilung unter einem Namen speichern und auf jeden Sprite anwenden — bei anderer Größe werden sie anteilig umgerechnet. Gleicher Name ersetzt, × löscht. Die Layouts gelten für alle Sprites.</div>
       <div>Die Linien gehören zum Sprite und werden mit dem Projekt gespeichert.</div>
     </div>

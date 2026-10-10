@@ -10,12 +10,12 @@
 //                   üblichen Marken (Kinn, Brust, Hüfte, Knie …) und der
 //                   Körperachse in der Mitte.
 //
-// Verschoben wird im Verschieben-Modus (state.guideEdit): dann gehört die
-// Zeichenfläche den Linien, gemalt wird nicht. Eine freie Linie, die man
-// aus dem Bild hinauszieht, ist gelöscht.
-import { state, getSprite, flatGrid, FIGURE_HEADS } from './state.js';
+// Gezogen wird mit dem Hand-Werkzeug (app.js): auf einer Linie zieht es die
+// Linie, daneben die Ansicht. Eine Kopfhöhe der Figur zieht die ganze Figur,
+// Ober- und Unterkante ändern ihre Größe. Eine freie Linie, die man aus dem
+// Bild hinauszieht, ist gelöscht. state.lockGuides hält alle fest.
+import { state, getSprite, FIGURE_HEADS } from './state.js';
 import { renderEditor, renderCallbacks } from './render.js';
-import { contentBounds } from './transform.js';
 import { saveState } from './storage.js';
 import { t, onLangChange } from './i18n.js';
 import { showInfoToast } from './toast.js';
@@ -37,6 +37,8 @@ const MARKS = {
 };
 
 const guides = () => getSprite()?.guides || null;
+/** Wird gerade eine Linie gezogen? (dann dicker gezeichnet) */
+let dragging = false;
 
 // ────────────────────────────────────────────────────────────────────
 // Zeichnen (über Gitter und Auswahl, unter nichts)
@@ -44,7 +46,7 @@ const guides = () => getSprite()?.guides || null;
 function drawOverlay(ctx, W, H, cs) {
   const g = guides();
   if (!g || !state.showGuides) return;
-  const wide = state.guideEdit ? 2 : 1;
+  const wide = dragging ? 2 : 1;
   ctx.save();
 
   // Figur
@@ -110,12 +112,14 @@ function drawOverlay(ctx, W, H, cs) {
 }
 
 // ────────────────────────────────────────────────────────────────────
-// Verschieben
+// Ziehen
 // ────────────────────────────────────────────────────────────────────
-// Welche Linie liegt unter dem Zeiger? → { kind: 'h'|'v'|'top'|'bottom', i }
+// Welche Linie liegt unter dem Zeiger? → { kind: 'h'|'v'|'top'|'bottom'|'fig', i, grab }
+// 'fig': eine Kopfhöhe oder Marke — zieht die ganze Figur; grab = Abstand
+// des Griffs zur Oberkante.
 function hitTest(e) {
   const g = guides();
-  if (!g || !state.showGuides) return null;
+  if (!g || !state.showGuides || state.lockGuides) return null;
   const cv = $('editor-canvas');
   const r = cv.getBoundingClientRect();
   const cs = state.cellSize;
@@ -128,6 +132,11 @@ function hitTest(e) {
   if (g.heads) {
     take(Math.abs(py - g.top * cs), { kind: 'top' });
     take(Math.abs(py - g.bottom * cs), { kind: 'bottom' });
+    const unit = (g.bottom - g.top) / g.heads;
+    const grab = Math.round(py / cs) - g.top;
+    const inner = [...Array(g.heads - 1).keys()].map(k => k + 1)
+      .concat(MARKS[g.heads].map(m => m[0]).filter(k => !Number.isInteger(k)));
+    for (const k of inner) take(Math.abs(py - (g.top + k * unit) * cs), { kind: 'fig', grab });
   }
   return best;
 }
@@ -135,13 +144,12 @@ function hitTest(e) {
 /** Liegt der Zeiger auf einer Hilfslinie? (Hand-Werkzeug: Linie ziehen statt verschieben) */
 export const guideAt = e => !!hitTest(e);
 
-// Vom Canvas aufgerufen (app.js), solange der Verschieben-Modus läuft.
-// Gibt immer true zurück: im Modus wird nicht gemalt. Ein Tipp neben die
-// Linien beendet den Modus — auf dem Handy gibt es kein Esc.
+// Vom Canvas aufgerufen (app.js), wenn das Hand-Werkzeug eine Linie trifft.
 export function guidePointerDown(e) {
   const hit = hitTest(e);
-  if (!hit) { e.preventDefault(); toggleEdit(false); return true; }
+  if (!hit) return false;
   e.preventDefault();
+  dragging = true;
   const sp = getSprite();
   const g = sp.guides;
   const cv = $('editor-canvas');
@@ -155,7 +163,12 @@ export function guidePointerDown(e) {
     if (hit.kind === 'h') g.h[hit.i] = y;
     else if (hit.kind === 'v') g.v[hit.i] = x;
     else if (hit.kind === 'top') g.top = Math.max(0, Math.min(g.bottom - 1, y));
-    else g.bottom = Math.max(g.top + 1, Math.min(H, y));
+    else if (hit.kind === 'bottom') g.bottom = Math.max(g.top + 1, Math.min(H, y));
+    else {
+      const size = g.bottom - g.top;
+      g.top = Math.max(0, Math.min(H - size, y - hit.grab));
+      g.bottom = g.top + size;
+    }
     renderEditor();
   };
   const up = ev => {
@@ -173,9 +186,9 @@ export function guidePointerDown(e) {
       list.length = 0;
       list.push(...uniq);
     }
+    dragging = false;
     renderEditor();
     saveState();
-    leaveIfEmpty();
   };
   window.addEventListener('pointermove', move);
   window.addEventListener('pointerup', up);
@@ -183,15 +196,12 @@ export function guidePointerDown(e) {
   return true;
 }
 
-// Zeiger-Form im Verschieben-Modus: zeigt, was sich ziehen lässt.
+// Zeiger-Form mit dem Hand-Werkzeug: zeigt, was sich ziehen lässt.
 function hoverCursor(e) {
   const wrap = $('editor-canvas-wrap');
-  // Mit dem Hand-Werkzeug lassen sich Linien auch ohne den Modus greifen.
-  const hand = state.tool === 'pan';
-  if (!state.guideEdit && !hand) { wrap.style.cursor = ''; return; }
+  if (state.tool !== 'pan') { wrap.style.cursor = ''; return; }
   const hit = hitTest(e);
-  if (!state.guideEdit) { wrap.style.cursor = hit ? (hit.kind === 'v' ? 'ew-resize' : 'ns-resize') : ''; return; }
-  wrap.style.cursor = !hit ? 'default' : (hit.kind === 'v' ? 'ew-resize' : 'ns-resize');
+  wrap.style.cursor = !hit ? '' : hit.kind === 'v' ? 'ew-resize' : hit.kind === 'fig' ? 'move' : 'ns-resize';
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -205,27 +215,17 @@ function changed() {
 
 export function toggleShow() {
   state.showGuides = !state.showGuides;
-  if (!state.showGuides && state.guideEdit) { toggleEdit(false); return; }
   changed();
 }
 
-// Beim Beenden wird die Statuszeile geleert — der Hinweis gilt nicht mehr.
-export function toggleEdit(on = !state.guideEdit) {
-  state.guideEdit = on;
-  if (on) state.showGuides = true;
-  $('editor-canvas-wrap').classList.toggle('is-guide-edit', on);
-  if (!on) $('editor-canvas-wrap').style.cursor = '';
-  renderCallbacks.onGuideInfo(on ? t('gd.editInfo') : '');
+// Sperren: keine Linie lässt sich mehr ziehen, auch nicht mit der Hand.
+function toggleLock() {
+  state.lockGuides = !state.lockGuides;
+  $('editor-canvas-wrap').style.cursor = '';
   changed();
 }
 
-// Nichts mehr zu verschieben → zurück zum Malen.
-function leaveIfEmpty() {
-  const g = guides();
-  if (state.guideEdit && g && !g.h.length && !g.v.length && !g.heads) toggleEdit(false);
-}
-
-// Neue Linie in der Mitte; danach gleich verschiebbar.
+// Neue Linie in der Mitte.
 function addLine(kind) {
   const sp = getSprite();
   if (!sp) return;
@@ -236,7 +236,7 @@ function addLine(kind) {
   list.push(pos);
   list.sort((a, b) => a - b);
   state.showGuides = true;
-  toggleEdit(true);
+  changed();
 }
 
 // Gleichmäßig verteilen: die Linien dieser Richtung werden ersetzt —
@@ -250,7 +250,6 @@ function setEven(kind, n) {
   list.push(...evenLines(n, size));
   if (list.length) state.showGuides = true;
   changed();
-  leaveIfEmpty();
 }
 
 function clearLines() {
@@ -259,7 +258,6 @@ function clearLines() {
   g.h.length = 0;
   g.v.length = 0;
   changed();
-  leaveIfEmpty();
 }
 
 function setHeads(n) {
@@ -267,20 +265,6 @@ function setHeads(n) {
   if (!g) return;
   g.heads = FIGURE_HEADS.includes(n) ? n : 0;
   if (g.heads) state.showGuides = true;
-  changed();
-  leaveIfEmpty();
-}
-
-// Ober- und Unterkante auf den gezeichneten Inhalt (was man sieht).
-function fitFigure() {
-  const sp = getSprite();
-  if (!sp) return;
-  const b = contentBounds(flatGrid(sp));
-  const g = sp.guides;
-  if (!b) { g.top = 0; g.bottom = sp.grid.length; }
-  else { g.top = b.y; g.bottom = b.y + b.h; }
-  if (!g.heads) g.heads = 6;
-  state.showGuides = true;
   changed();
 }
 
@@ -349,17 +333,17 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;'
 
 export function renderGuides() {
   const g = guides();
-  const show = $('gd-show'), edit = $('gd-edit');
+  const show = $('gd-show'), lock = $('gd-lock');
   if (!show) return;
   show.classList.toggle('is-active', state.showGuides);
   show.setAttribute('aria-pressed', String(state.showGuides));
   // Sagt, was ein Klick tut — „Anzeigen“ las sich, als wären sie gerade aus.
   show.textContent = t(state.showGuides ? 'gd.hideBtn' : 'gd.showBtn');
-  edit.classList.toggle('is-active', state.guideEdit);
-  edit.setAttribute('aria-pressed', String(state.guideEdit));
+  lock.classList.toggle('is-active', state.lockGuides);
+  lock.setAttribute('aria-pressed', String(state.lockGuides));
+  lock.textContent = t(state.lockGuides ? 'gd.unlockBtn' : 'gd.lockBtn');
   const sel = $('gd-heads');
   if (g && document.activeElement !== sel) sel.value = String(g.heads);
-  $('gd-fit').disabled = !g;
   $('gd-clear').disabled = !g || (!g.h.length && !g.v.length);
   // Die Felder zeigen, wie viele Linien es gerade gibt (außer beim Tippen).
   for (const k of ['h', 'v']) {
@@ -371,7 +355,7 @@ export function renderGuides() {
 
 export function initGuides() {
   $('gd-show').addEventListener('click', toggleShow);
-  $('gd-edit').addEventListener('click', () => toggleEdit());
+  $('gd-lock').addEventListener('click', toggleLock);
   $('gd-add-h').addEventListener('click', () => addLine('h'));
   $('gd-add-v').addEventListener('click', () => addLine('v'));
   for (const k of ['h', 'v']) {
@@ -382,7 +366,6 @@ export function initGuides() {
   }
   $('gd-clear').addEventListener('click', clearLines);
   $('gd-heads').addEventListener('change', e => setHeads(Number(e.target.value)));
-  $('gd-fit').addEventListener('click', fitFigure);
   loadLayouts();
   $('gd-layout-save').addEventListener('click', saveLayout);
   $('gd-layout-name').addEventListener('keydown', e => { if (e.key === 'Enter') saveLayout(); });

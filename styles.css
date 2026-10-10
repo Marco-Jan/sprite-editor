@@ -1173,15 +1173,13 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 .qp-swatch.is-drop-r, .qp-mini.is-drop-r { box-shadow: 3px 0 0 var(--accent); }
 #qp-sort { padding: 5px 8px; flex: none; }
 
-/* Hilfslinien: im Verschieben-Modus kein Pinsel-Umriss */
 /* Anfasser einer Auswahl (js/scale.js) */
 #editor-canvas-wrap[data-handle="nw"], #editor-canvas-wrap[data-handle="se"] { cursor: nwse-resize; }
 #editor-canvas-wrap[data-handle="ne"], #editor-canvas-wrap[data-handle="sw"] { cursor: nesw-resize; }
 #editor-canvas-wrap[data-handle="n"],  #editor-canvas-wrap[data-handle="s"]  { cursor: ns-resize; }
 #editor-canvas-wrap[data-handle="e"],  #editor-canvas-wrap[data-handle="w"]  { cursor: ew-resize; }
-#editor-canvas-wrap.is-guide-edit #brush-cursor,
 #editor-canvas-wrap.is-tile-mode #brush-cursor { display: none; }
-#gd-show.is-active, #gd-edit.is-active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent-line); }
+#gd-show.is-active, #gd-lock.is-active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent-line); }
 
 /* Vorschau-Panel (js/preview.js) — der ganze Sprite, ohne Gitter.
    Das Schachbrett liegt auf dem BILD, nicht auf der Box: es zeigt genau die

@@ -353,8 +353,7 @@ const STATIC = {
     // Hilfslinien-Panel (guides.js)
     'gd.title': 'Guides',
     'gd.showTitle': 'Show / hide all guides (G)',
-    'gd.edit': 'Move',
-    'gd.editTitle': 'Drag lines on the drawing area — no painting meanwhile (a tap next to the lines or Esc ends it)',
+    'gd.lockTitle': 'Locked, the lines cannot be moved — not even with the hand',
     'gd.free': 'Free lines',
     'gd.addH': '+ Horizontal',
     'gd.addHTitle': 'Put a horizontal line in the middle',
@@ -369,9 +368,7 @@ const STATIC = {
     'gd.h4': '4 heads — compact game character',
     'gd.h6': '6 heads — comic, teenager',
     'gd.h8': '8 heads — classic, heroic',
-    'gd.fit': 'Fit to figure',
-    'gd.fitTitle': 'Set the top and bottom of the division to what is drawn',
-    'gd.note': 'Drawing aid only — the lines never show up in an export. In “Move” mode drag the lines; dragging a free line out of the image deletes it, a tap next to the lines ends the mode.',
+    'gd.note': 'Drawing aid only — the lines never show up in an export. Drag lines with the hand (H): a head line moves the whole figure, dragging a free line out of the image deletes it. “Lock” holds them all in place.',
     // Ebenen-Panel (layers.js)
     'pv.title': 'Preview',
     'pv.scale': 'Pixel size',
@@ -764,8 +761,8 @@ const STATIC = {
     'help.h.guides': 'Guides',
     'help.guides': ''
       + '<div>The <b>Guides</b> panel in the dock — a drawing aid only, they never show up in an export. <span class="kbd">G</span> shows and hides them all.</div>'
-      + '<div><b>Free lines</b>: “+ Horizontal” / “+ Vertical” puts a line in the middle, <b>Evenly</b> spreads a typed number of lines evenly right away (4 lines = 5 equal parts). In <b>Move</b> mode you drag lines into place on the drawing area (always on a pixel edge); dragged out of the image, a line is deleted. No painting meanwhile — a tap next to the lines or <span class="kbd">Esc</span> ends the mode. With the <b>hand</b> tool you can grab a line without the mode, too.</div>'
-      + '<div><b>Figure</b>: divides a figure into 2 (chibi), 3, 4, 6 or 8 head heights and marks chin, chest, hip, knee etc. plus the body axis. “Fit to figure” sets the top and bottom to what is drawn; both can be dragged in Move mode.</div>'
+      + '<div><b>Free lines</b>: “+ Horizontal” / “+ Vertical” puts a line in the middle, <b>Evenly</b> spreads a typed number of lines evenly right away (4 lines = 5 equal parts). With the <b>hand</b> tool (<span class="kbd">H</span>) you drag lines into place on the drawing area (always on a pixel edge); dragged out of the image, a line is deleted. <b>Lock</b> holds all lines in place.</div>'
+      + '<div><b>Figure</b>: divides a figure into 2 (chibi), 3, 4, 6 or 8 head heights and marks chin, chest, hip, knee etc. plus the body axis. With the hand, top and bottom change its size, a head line in between moves the whole figure.</div>'
       + '<div><b>Own layouts</b>: save lines and division under a name and apply them to any sprite — for another size they are scaled proportionally. The same name replaces, × deletes. Layouts apply to all sprites.</div>'
       + '<div>The lines belong to the sprite and are saved with the project.</div>',
     'help.preview': ''
@@ -1059,7 +1056,8 @@ const MSG = {
     'gd.hip':      'Hüfte',
     'gd.crotch':   'Schritt',
     'gd.knee':     'Knie',
-    'gd.editInfo': 'Hilfslinien verschieben: Linie anfassen und ziehen, aus dem Bild ziehen löscht. Tipp daneben oder Esc beendet.',
+    'gd.lockBtn':          'Sperren',
+    'gd.unlockBtn':        'Entsperren',
     'gd.removed':  'Hilfslinie entfernt.',
 
     // Ebenen (js/layers.js) — die Panel-Texte stehen im HTML bzw. in STATIC
@@ -1693,7 +1691,8 @@ const MSG = {
     'gd.hip':      'hip',
     'gd.crotch':   'crotch',
     'gd.knee':     'knee',
-    'gd.editInfo': 'Moving guides: grab a line and drag it, dragging it out of the image deletes it. A tap next to it or Esc ends this.',
+    'gd.lockBtn':          'Lock',
+    'gd.unlockBtn':        'Unlock',
     'gd.removed':  'Guide removed.',
 
     'ly.name':        'Layer {n}',
