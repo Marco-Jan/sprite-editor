@@ -774,7 +774,6 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   .sprite-tab { height: 30px; padding-left: 12px; }
   .sprite-tab.is-active { height: 32px; }
   .tab-close { width: 24px; height: 24px; }
-  .tab-new { margin-bottom: 0; }
 }
 .stage-title {
   overflow: hidden;
@@ -2712,8 +2711,9 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
     #stage-head .icon-btn { min-width: 38px; min-height: 38px; }
   }
   .stage-head-right .btn-group .btn { padding-inline: 6px; }
-  /* Das + bei den Reitern bleibt so flach wie sie (sonst hielte es die Zeile hoch). */
-  #stage-head .icon-btn.tab-new { min-width: 32px; min-height: 30px; }
+  /* Das + bei den Reitern bleibt so klein wie am Rechner (22 px) — es soll
+     nicht größer wirken als die Reiter daneben. */
+  #stage-head .icon-btn.tab-new { min-width: 0; min-height: 0; }
   /* Die Timeline-Knoepfe duerfen etwas kleiner sein: sie stehen in zwei
      ruhigen Zeilen und nicht in einer scrollenden Reihe — dafuer passt die
      zweite Zeile am Stueck aufs Display. */
