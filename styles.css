@@ -393,6 +393,42 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   font-weight: 700;
   letter-spacing: -0.2px;
 }
+/* Projektname in der Kopfzeile (js/projectsui.js) — öffnet die Projektliste */
+.project-btn {
+  appearance: none;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 4px 10px;
+  margin-left: var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  color: var(--text);
+  font: 600 var(--fs-sm)/1.2 var(--font);
+  cursor: pointer;
+}
+.project-btn:hover { background: var(--surface-3); border-color: var(--line-strong); }
+/* Fenster „Projekte“ */
+.proj-new { display: flex; gap: var(--sp-2); margin-top: var(--sp-2); }
+.proj-new .input { flex: 1; }
+.proj-list { display: grid; gap: 4px; margin-top: var(--sp-3); }
+.proj-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+}
+.proj-row.is-current { border-color: var(--accent-line); background: var(--accent-bg); }
+.proj-info { display: grid; gap: 2px; flex: 1; min-width: 0; }
+.proj-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.proj-meta { font-size: var(--fs-sm); color: var(--text-muted); }
+.proj-acts { display: flex; align-items: center; gap: 4px; flex: none; }
+.proj-badge { font-size: var(--fs-sm); font-weight: 600; color: var(--accent); padding: 0 6px; }
 .doc-title {
   padding-left: var(--sp-3);
   border-left: 1px solid var(--line);
@@ -2525,7 +2561,7 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
      kein Speicher-Hinweis. Die Menüs werden fingerfreundlich hoch und
      bleiben im Bild. Nur wo selbst das nicht passt, fällt der Schriftzug
      weg (unten, schmaler als 360 px). */
-  .doc-title, .save-indicator { display: none; }
+  .doc-title, .save-indicator, .project-btn { display: none; }
   .menubar { margin-left: 0; gap: 0; }
   .mb-title { padding: 8px 9px; }
   .mb-item { padding-top: 11px; padding-bottom: 11px; }

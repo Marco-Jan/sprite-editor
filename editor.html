@@ -77,6 +77,7 @@
         <button type="button" class="mb-title" role="menuitem" aria-haspopup="menu" aria-expanded="false" data-i18n="mb.file">Datei</button>
         <div class="mb-drop" role="menu" hidden>
           <button type="button" class="mb-item" role="menuitem" id="new-project-btn"><span data-i18n="mb.newProject">Neues Projekt …</span></button>
+          <button type="button" class="mb-item" role="menuitem" id="projects-btn"><span data-i18n="mb.projects">Projekte …</span></button>
           <button type="button" class="mb-item" role="menuitem" data-click="#new-sprite-btn"><span data-i18n="mb.new">Neuer Sprite …</span></button>
           <button type="button" class="mb-item" role="menuitem" id="load-file-btn"><span data-i18n="mb.open">Öffnen …</span><kbd data-i18n="mb.kOpen">Strg+O</kbd></button>
           <button type="button" class="mb-item" role="menuitem" id="save-file-btn"><span data-i18n="mb.save">Projekt sichern</span><kbd data-i18n="mb.kSave">Strg+S</kbd></button>
@@ -138,6 +139,8 @@
     </nav>
     <input type="file" id="load-file-input" accept=".json,.bitty,application/json" hidden>
     <input type="file" id="add-sprite-input" accept=".bitty,.json,application/json" hidden>
+    <!-- Projektname (js/projectsui.js): Klick öffnet die Projektliste -->
+    <button type="button" id="project-btn" class="project-btn" data-i18n-attr="title:tb.projects" title="Projekte — öffnen, neu anlegen, umbenennen"></button>
     <span id="doc-title" class="doc-title"></span>
     <span id="save-indicator" class="save-indicator" data-i18n="tb.saved">gespeichert</span>
     <!-- Bitty, der Helfer (js/helper.js): Klick = Tipp -->
@@ -935,16 +938,19 @@
 </div>
 
 <!-- Sprite umbenennen -->
-<!-- Datei → Neues Projekt (js/storage.js startNewProject) -->
-<div id="new-project-modal-overlay" class="modal-overlay">
-  <div class="modal modal--sm" role="dialog" aria-modal="true" aria-labelledby="new-project-title">
-    <h2 class="modal-title" id="new-project-title" data-i18n="np.title">Neues Projekt</h2>
-    <p class="modal-intro" data-i18n="np.text">Alle Sprites dieses Projekts werden durch einen leeren ersetzt. Eigene Paletten und Einstellungen bleiben. Der jetzige Stand landet zur Sicherheit unter Hilfe → Sicherung.</p>
-    <div class="modal-actions">
-      <button class="btn" id="new-project-cancel" data-i18n="mod.cancel">Abbrechen</button>
-      <button class="btn" id="new-project-save" data-i18n="np.save">Erst sichern</button>
-      <button class="btn btn--primary" id="new-project-ok" data-i18n="np.ok">Neu anfangen</button>
+<!-- Datei → Projekte (js/projectsui.js) -->
+<div id="projects-modal-overlay" class="modal-overlay">
+  <div class="modal modal--scroll" role="dialog" aria-modal="true" aria-labelledby="projects-title">
+    <div class="modal-head">
+      <h2 class="modal-title" id="projects-title" data-i18n="proj.title">Projekte</h2>
+      <button class="icon-btn" id="projects-close" data-i18n-attr="title:help.close" title="Schließen"><span class="ico" data-icon="close"></span></button>
     </div>
+    <div class="proj-new">
+      <input type="text" id="proj-new-name" class="input" maxlength="60" autocomplete="off" data-i18n-attr="placeholder:proj.newName;aria-label:proj.newName" placeholder="Name des neuen Projekts" aria-label="Name des neuen Projekts">
+      <button class="btn btn--primary" id="proj-new-btn" data-i18n="proj.create">Neues Projekt</button>
+    </div>
+    <p class="field-note" data-i18n="proj.newNote">Ein neues Projekt beginnt mit einem leeren Sprite; deine eigenen Paletten und Einstellungen kommen mit. „Öffnen …“ im Menü legt eine Projektdatei ebenfalls als eigenes Projekt an.</p>
+    <div id="proj-list" class="proj-list" role="list"></div>
   </div>
 </div>
 

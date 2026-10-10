@@ -46,11 +46,8 @@ export const STATIC_AT = {
   // ── Menüleiste (js/menubar.js) — nur, was im Dialekt anders klingt ──
   'mb.file':      'Datei',
   'mb.newProject': 'A neichs Projekt …',
+  'mb.projects':  'Projekte …',
   'mb.new':       'A neicher Sprite …',
-  'np.title':     'A neichs Projekt',
-  'np.text':      'Olle Sprites von dem Projekt wern durch an laarn ersetzt. Eigene Palettn und Einstellungen bleibn. Da jetzige Stand liegt zur Sicherheit unter Hüfe → Sicherung.',
-  'np.save':      'Zerscht sichern',
-  'np.ok':        'Nei ofangen',
   'mb.open':      'Aufmochn …',
   'mb.dir':       'Speicherort aussuachn …',
   'mb.export':    'Exportiern …',
@@ -334,6 +331,8 @@ export const STATIC_AT = {
 // ── Laufzeit-Texte ──────────────────────────────────────────────────
 export const MSG_AT = {
   'gd.hideBtn':   'Wegtuan',
+  'proj.unnamed': 'Projekt ohne Nam',
+  'proj.opened':  'offn',
   'gd.showBtn':   'Herzagn',
   // Palette-Beschriftungen
   'color.label.0': 'Durchsichtig',

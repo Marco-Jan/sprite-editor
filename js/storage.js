@@ -19,12 +19,17 @@ import { DEFAULT_PALETTE, completePalette } from './data.js';
 import { saveBlob } from './filesystem.js';
 import { showInfoToast } from './toast.js';
 import { migrateV1 } from './migrate.js';
-import { openDb, readAll, writeBatch } from './idb.js';
+import { openDb, readAll, writeBatch, useDb, deleteDb, copyDb, seedDb } from './idb.js';
+import { MAIN, readRegistry, writeRegistry, newProjectId, freeName, dbNameOf, storageKeyOf, emergencyKeyOf } from './projects.js';
 import { packSprite, unpackSprite, packSum } from './pack.js';
 import { t } from './i18n.js';
 import { MATERIALS } from './gamejson.js';
 
-const STORAGE_KEY = 'wb_sprite_tester_v1'; // Key bleibt — Migration passiert im Payload
+// Welches Projekt gerade dran ist (js/projects.js) — steht für die ganze
+// Sitzung fest; gewechselt wird per Neustart (switchProject).
+const PROJECT_ID = readRegistry().current;
+// Das erste Projekt behält den alten Schlüssel — Migration passiert im Payload.
+const STORAGE_KEY = storageKeyOf(PROJECT_ID);
 const SCHEMA_VERSION = 2;
 
 // Sicherheitsnetz. Beide Schlüssel schreibt das normale Speichern NIE.
@@ -42,7 +47,7 @@ const BACKUP_EVERY = 12 * 60 * 60 * 1000;
 // etwas ungespeichert ist, kann IndexedDB nicht mehr sicher fertig schreiben.
 // Dann kommt der Stand zusätzlich synchron hierher; beim nächsten Start
 // gewinnt der neuere von beiden.
-const EMERGENCY_KEY = 'spritebit_emergency';
+const EMERGENCY_KEY = emergencyKeyOf(PROJECT_ID);
 
 /** 'idb' oder 'ls' (localStorage) — steht nach loadState() fest. */
 let backend = 'ls';
@@ -147,6 +152,7 @@ function buildProject() {
 function buildPayload(withSprites = true) {
   return {
     version: SCHEMA_VERSION,
+    name: projectName(),
     sprites: withSprites ? serializeSprites() : {},
     customPalettes,
     paletteMaterials,
@@ -189,6 +195,7 @@ function writeNow() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(buildPayload()));
     savedSeq = changeSeq;
+    touchRegistry();
     flashSaved();
   } catch (e) {
     console.warn('spritebit: Speichern fehlgeschlagen', e);
@@ -218,6 +225,7 @@ async function writeIdb() {
     for (const [id, sum] of sums) savedSums.set(id, sum);
     savedSeq = seq;
     try { localStorage.removeItem(EMERGENCY_KEY); } catch {}
+    touchRegistry();
     flashSaved();
   } catch (e) {
     console.warn('spritebit: Speichern fehlgeschlagen', e);
@@ -255,6 +263,7 @@ export function forceSaveBeforeUnload() {
 // Migration mit alten Hund/Katze-Daten gemacht hat.
 export async function loadState() {
   try {
+    useDb(dbNameOf(PROJECT_ID));
     await openDb();
     backend = 'idb';
     return await loadIdb();
@@ -281,7 +290,9 @@ async function loadIdb() {
   let raw = null, why = '';
   if (typeof kv.get('import') === 'string') { raw = kv.get('import'); why = 'import'; }
   else if (emergency?.raw && (!project || emergency.at > (project.savedAt || 0))) { raw = emergency.raw; why = 'emergency'; }
-  else if (!project && !kv.get('migrated')) {
+  // Der Umzug aus dem alten localStorage-Stand gilt nur fürs erste Projekt —
+  // ein neues bringt seinen Startinhalt als Import mit.
+  else if (!project && !kv.get('migrated') && PROJECT_ID === MAIN) {
     try { raw = localStorage.getItem(STORAGE_KEY); } catch {}
     why = 'migrate';
   }
@@ -426,30 +437,133 @@ export async function restoreBackup(which) {
   location.reload();
 }
 
-// Datei → Neues Projekt: die Sprites weg, eigene Paletten, Materialien und
-// Einstellungen bleiben. Der jetzige Stand wird zur Rettung (Hilfe →
-// Sicherung) — ein Fehlklick kostet so nichts. Danach Neustart; ohne Sprites
-// legt der Start einen leeren an (app.js).
-export async function startNewProject() {
-  const cur = JSON.stringify(buildPayload());
-  const fresh = buildPayload(false);
-  fresh.ui = { ...fresh.ui, curSprite: null, openTabs: null };
-  const text = JSON.stringify(fresh);
-  const keep = { at: new Date().toISOString(), raw: cur };
+// ────────────────────────────────────────────────────────────────────
+// Projekte (js/projects.js): anlegen, wechseln, umbenennen, duplizieren, löschen
+// ────────────────────────────────────────────────────────────────────
+/** Name des geöffneten Projekts (oder „Unbenanntes Projekt“). */
+export function projectName() {
+  return readRegistry().list.find(e => e.id === PROJECT_ID)?.name || t('proj.unnamed');
+}
+export const currentProjectId = () => PROJECT_ID;
+
+/** Anzahl Sprites des geöffneten Projekts in der Liste nachtragen — beim
+ *  Start und vor einem Wechsel (auch wenn nichts geändert wurde). */
+export function syncCount() {
+  const reg = readRegistry();
+  const e = reg.list.find(x => x.id === PROJECT_ID);
+  if (!e || e.count === Object.keys(sprites).length) return;
+  e.count = Object.keys(sprites).length;
+  writeRegistry(reg);
+}
+
+// Nach jedem Speichern: „zuletzt geändert“ und Anzahl Sprites in der Liste.
+function touchRegistry() {
+  const reg = readRegistry();
+  const e = reg.list.find(x => x.id === PROJECT_ID);
+  if (!e) return;
+  e.updated = Date.now();
+  e.count = Object.keys(sprites).length;
+  writeRegistry(reg);
+}
+
+// Was noch nicht gespeichert ist, jetzt schreiben — vor einem Wechsel.
+async function flushSave() {
+  if (_saveDisabled) return;
+  clearTimeout(_saveTimer);
+  if (backend !== 'idb') { writeNow(); return; }
+  while (writing) await writing;
+  if (changeSeq !== savedSeq) await writeIdb();
+  while (writing) await writing;
+}
+
+/** Ein anderes Projekt öffnen: speichern, umschalten, neu starten. */
+export async function switchProject(id) {
+  await flushSave();
+  syncCount();
   disableSaving();
-  if (backend === 'idb') {
-    try { await writeBatch({ kv: { import: text, [RESCUE_KEY]: keep } }); }
-    catch (e) { console.warn('spritebit: Neues Projekt fehlgeschlagen', e); }
-    location.reload();
+  const reg = readRegistry();
+  if (!reg.list.some(e => e.id === id)) return;
+  reg.current = id;
+  writeRegistry(reg);
+  location.reload();
+}
+
+/** Neues Projekt `name`. Ohne `seedText`: ein leerer Sprite, eigene
+ *  Paletten und Einstellungen kommen mit. Mit `seedText` (eine geöffnete
+ *  Projektdatei): deren Inhalt. Danach wird es geöffnet. */
+export async function createProject(name, seedText = null) {
+  const reg = readRegistry();
+  const id = newProjectId(reg);
+  let seed;
+  if (seedText) {
+    seed = JSON.parse(seedText);
+  } else {
+    seed = buildPayload(false);
+    seed.ui = { ...seed.ui, curSprite: null, openTabs: null };
+  }
+  const entry = { id, name: freeName(reg, name || t('proj.unnamed')), updated: Date.now(), count: 0 };
+  seed.name = entry.name;
+  const text = JSON.stringify(seed);
+  try {
+    if (backend === 'idb') await seedDb(dbNameOf(id), { import: text, migrated: true });
+    else localStorage.setItem(storageKeyOf(id), text);
+  } catch (e) {
+    console.warn('spritebit: Projekt nicht angelegt', e);
+    showInfoToast(t('proj.failed'));
     return;
   }
+  reg.list.push(entry);
+  writeRegistry(reg);
+  await switchProject(id);
+}
+
+export function renameProject(id, name) {
+  const reg = readRegistry();
+  const e = reg.list.find(x => x.id === id);
+  const n = name.trim().slice(0, 60);
+  if (!e || !n) return;
+  e.name = n;
+  writeRegistry(reg);
+  if (id === PROJECT_ID) saveState(); // der Name steht auch in der Datei
+}
+
+/** Kopie eines Projekts — bleibt geschlossen, erscheint in der Liste. */
+export async function duplicateProject(id) {
+  const reg = readRegistry();
+  const src = reg.list.find(x => x.id === id);
+  if (!src) return;
+  const nid = newProjectId(reg);
+  const name = freeName(reg, t('proj.copyOf', { name: src.name || t('proj.unnamed') }));
   try {
-    localStorage.setItem(RESCUE_KEY, JSON.stringify(keep));
-    localStorage.setItem(STORAGE_KEY, text);
+    if (id === PROJECT_ID) await flushSave();
+    if (backend === 'idb') await copyDb(dbNameOf(id), dbNameOf(nid));
+    else {
+      const v = localStorage.getItem(storageKeyOf(id));
+      if (v) localStorage.setItem(storageKeyOf(nid), v);
+    }
   } catch (e) {
-    console.warn('spritebit: Neues Projekt fehlgeschlagen', e);
+    console.warn('spritebit: Duplizieren fehlgeschlagen', e);
+    showInfoToast(t('proj.failed'));
+    return;
   }
-  location.reload();
+  const fresh = readRegistry();
+  fresh.list.push({ id: nid, name, updated: Date.now(), count: src.count });
+  writeRegistry(fresh);
+}
+
+/** Ein Projekt löschen — nie das geöffnete. */
+export async function deleteProject(id) {
+  if (id === PROJECT_ID) return;
+  try {
+    if (backend === 'idb') await deleteDb(dbNameOf(id));
+    const k = storageKeyOf(id);
+    for (const key of [k, k + '_rescue', k + '_backup', emergencyKeyOf(id)]) localStorage.removeItem(key);
+  } catch (e) {
+    console.warn('spritebit: Löschen fehlgeschlagen', e);
+  }
+  const reg = readRegistry();
+  reg.list = reg.list.filter(e => e.id !== id);
+  writeRegistry(reg);
 }
 
 // Payload (v1 ODER v2) in den State übernehmen.
@@ -575,7 +689,7 @@ export function flashSaved() {
 // ────────────────────────────────────────────────────────────────────
 export async function saveToFile() {
   const payload = buildPayload();
-  const base = (sprites[state.curSprite]?.name || 'sprites').replace(/[^a-zA-Z0-9_-]/g, '_');
+  const base = projectName().replace(/[^a-zA-Z0-9_-]/g, '_') || 'spritebit';
   const filename = `${base}.json`;
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
   const result = await saveBlob(blob, filename);
@@ -703,16 +817,10 @@ export function loadFromFile(file, onError, onAdded = null) {
         onAdded(ids);
         return;
       }
-      disableSaving(); // sonst überschreibt beforeunload die frisch geladene Datei
-      // IndexedDB: als wartender Import ablegen, der Start übernimmt ihn
-      // (loadIdb). Große Projekte passten nicht in localStorage.
-      if (backend === 'idb') {
-        writeBatch({ kv: { import: text } }).then(() => location.reload(),
-          () => { if (onError) onError(t('file.readFailed')); });
-        return;
-      }
-      localStorage.setItem(STORAGE_KEY, text);
-      location.reload();
+      // Ein Projekt aus einer Datei wird ein eigenes Projekt in der Liste —
+      // das geöffnete bleibt, wie es ist (vorher wurde es überschrieben).
+      const fromFile = file.name.replace(/\.[^.]+$/, '');
+      createProject(typeof p.name === 'string' && p.name ? p.name : fromFile, text);
     } catch {
       if (onError) onError(t('file.badProject'));
     }

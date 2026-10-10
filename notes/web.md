@@ -2,12 +2,12 @@
 
 ## Deutsch
 
-- Datei → „Neues Projekt …“: fängt mit einem leeren Sprite neu an. Eigene Paletten und Einstellungen bleiben, auf Wunsch wird das alte Projekt vorher gesichert, und es liegt zusätzlich unter Hilfe → Sicherung.
+- Projekte: Der Browser hebt jetzt mehrere Projekte mit Namen auf. Datei → „Projekte …“ (oder ein Klick auf den Projektnamen oben) zeigt alle — öffnen, umbenennen, duplizieren, löschen. „Neues Projekt“ fragt nach dem Namen, und „Öffnen …“ legt eine Projektdatei als eigenes Projekt an, statt das offene zu ersetzen. Dein bisheriger Stand ist das erste Projekt in der Liste.
 - Hilfslinien: Mit der Hand lässt sich jetzt die ganze Figur verschieben — einfach eine Kopfhöhe greifen. Neu ist „Sperren“, damit nichts versehentlich verrutscht. Der Modus „Verschieben“ und „An Figur anpassen“ sind weggefallen.
 
 ## English
 
-- File → “New project …”: starts afresh with an empty sprite. Your own palettes and settings stay, the old project can be saved first, and it is also kept under Help → Backup.
+- Projects: the browser now keeps several named projects. File → “Projects …” (or a click on the project name at the top) lists them all — open, rename, duplicate, delete. “New project” asks for a name, and “Open …” adds a project file as a project of its own instead of replacing the open one. Your existing work is the first project in the list.
 - Guides: with the hand you can now move the whole figure — just grab a head line. New is “Lock”, so nothing slips by accident. The “Move” mode and “Fit to figure” are gone.
 
 # 3.2.18

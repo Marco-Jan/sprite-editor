@@ -18,6 +18,7 @@ import { initLayout, isMobileLayout, refreshToolOpts } from './layout.js';
 import { initTabs } from './tabs.js';
 import { initWhatsNew } from './whatsnew.js';
 import { initToolWrap } from './toolwrap.js';
+import { initProjectsUi } from './projectsui.js';
 import { draggedSize, clampSize, SIZED_TOOLS } from './sizedrag.js';
 import { calcInput } from './calc.js';
 import { snapDir, project, snapEnd } from './lock.js';
@@ -31,7 +32,7 @@ import {
   renderCallbacks, shapeCells, commitShape,
 } from './render.js';
 import {
-  saveState, loadState, clearStorage, forceSaveBeforeUnload, saveToFile, loadFromFile, startNewProject,
+  saveState, loadState, clearStorage, forceSaveBeforeUnload, saveToFile, loadFromFile,
   saveSpriteToFile, addSpritesFromFile,
   backupInfo, downloadBackup, restoreBackup,
 } from './storage.js';
@@ -1473,16 +1474,6 @@ function initTopbar() {
   }
 
   $('save-file-btn').addEventListener('click', saveToFile);
-  // Datei → Neues Projekt: nachfragen, auf Wunsch erst als Datei sichern.
-  const np = $('new-project-modal-overlay');
-  $('new-project-btn').addEventListener('click', () => np.classList.add('open'));
-  $('new-project-cancel').addEventListener('click', () => np.classList.remove('open'));
-  $('new-project-ok').addEventListener('click', () => { commitFloat(); startNewProject(); });
-  $('new-project-save').addEventListener('click', async () => {
-    commitFloat();
-    await saveToFile();
-    startNewProject();
-  });
 
   // Hinzugefügte Sprites zeigen: den ersten wählen (öffnet seinen Reiter).
   const showAdded = ids => {
@@ -1836,6 +1827,7 @@ async function init() {
   initTabs();
   initWhatsNew();
   initToolWrap();
+  initProjectsUi();
   initLightPanel();
   initTilemap();
   initCalcFields();
