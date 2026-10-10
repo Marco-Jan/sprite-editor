@@ -45,7 +45,12 @@ export const STATIC_AT = {
 
   // ── Menüleiste (js/menubar.js) — nur, was im Dialekt anders klingt ──
   'mb.file':      'Datei',
+  'mb.newProject': 'A neichs Projekt …',
   'mb.new':       'A neicher Sprite …',
+  'np.title':     'A neichs Projekt',
+  'np.text':      'Olle Sprites von dem Projekt wern durch an laarn ersetzt. Eigene Palettn und Einstellungen bleibn. Da jetzige Stand liegt zur Sicherheit unter Hüfe → Sicherung.',
+  'np.save':      'Zerscht sichern',
+  'np.ok':        'Nei ofangen',
   'mb.open':      'Aufmochn …',
   'mb.dir':       'Speicherort aussuachn …',
   'mb.export':    'Exportiern …',

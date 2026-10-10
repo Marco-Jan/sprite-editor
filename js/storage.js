@@ -426,6 +426,32 @@ export async function restoreBackup(which) {
   location.reload();
 }
 
+// Datei → Neues Projekt: die Sprites weg, eigene Paletten, Materialien und
+// Einstellungen bleiben. Der jetzige Stand wird zur Rettung (Hilfe →
+// Sicherung) — ein Fehlklick kostet so nichts. Danach Neustart; ohne Sprites
+// legt der Start einen leeren an (app.js).
+export async function startNewProject() {
+  const cur = JSON.stringify(buildPayload());
+  const fresh = buildPayload(false);
+  fresh.ui = { ...fresh.ui, curSprite: null, openTabs: null };
+  const text = JSON.stringify(fresh);
+  const keep = { at: new Date().toISOString(), raw: cur };
+  disableSaving();
+  if (backend === 'idb') {
+    try { await writeBatch({ kv: { import: text, [RESCUE_KEY]: keep } }); }
+    catch (e) { console.warn('spritebit: Neues Projekt fehlgeschlagen', e); }
+    location.reload();
+    return;
+  }
+  try {
+    localStorage.setItem(RESCUE_KEY, JSON.stringify(keep));
+    localStorage.setItem(STORAGE_KEY, text);
+  } catch (e) {
+    console.warn('spritebit: Neues Projekt fehlgeschlagen', e);
+  }
+  location.reload();
+}
+
 // Payload (v1 ODER v2) in den State übernehmen.
 function applyPayload(payload) {
   let note = null;

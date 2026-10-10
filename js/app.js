@@ -31,7 +31,7 @@ import {
   renderCallbacks, shapeCells, commitShape,
 } from './render.js';
 import {
-  saveState, loadState, clearStorage, forceSaveBeforeUnload, saveToFile, loadFromFile,
+  saveState, loadState, clearStorage, forceSaveBeforeUnload, saveToFile, loadFromFile, startNewProject,
   saveSpriteToFile, addSpritesFromFile,
   backupInfo, downloadBackup, restoreBackup,
 } from './storage.js';
@@ -1473,6 +1473,16 @@ function initTopbar() {
   }
 
   $('save-file-btn').addEventListener('click', saveToFile);
+  // Datei → Neues Projekt: nachfragen, auf Wunsch erst als Datei sichern.
+  const np = $('new-project-modal-overlay');
+  $('new-project-btn').addEventListener('click', () => np.classList.add('open'));
+  $('new-project-cancel').addEventListener('click', () => np.classList.remove('open'));
+  $('new-project-ok').addEventListener('click', () => { commitFloat(); startNewProject(); });
+  $('new-project-save').addEventListener('click', async () => {
+    commitFloat();
+    await saveToFile();
+    startNewProject();
+  });
 
   // Hinzugefügte Sprites zeigen: den ersten wählen (öffnet seinen Reiter).
   const showAdded = ids => {

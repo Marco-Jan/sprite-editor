@@ -76,6 +76,7 @@
       <div class="mb-menu">
         <button type="button" class="mb-title" role="menuitem" aria-haspopup="menu" aria-expanded="false" data-i18n="mb.file">Datei</button>
         <div class="mb-drop" role="menu" hidden>
+          <button type="button" class="mb-item" role="menuitem" id="new-project-btn"><span data-i18n="mb.newProject">Neues Projekt …</span></button>
           <button type="button" class="mb-item" role="menuitem" data-click="#new-sprite-btn"><span data-i18n="mb.new">Neuer Sprite …</span></button>
           <button type="button" class="mb-item" role="menuitem" id="load-file-btn"><span data-i18n="mb.open">Öffnen …</span><kbd data-i18n="mb.kOpen">Strg+O</kbd></button>
           <button type="button" class="mb-item" role="menuitem" id="save-file-btn"><span data-i18n="mb.save">Projekt sichern</span><kbd data-i18n="mb.kSave">Strg+S</kbd></button>
@@ -934,6 +935,19 @@
 </div>
 
 <!-- Sprite umbenennen -->
+<!-- Datei → Neues Projekt (js/storage.js startNewProject) -->
+<div id="new-project-modal-overlay" class="modal-overlay">
+  <div class="modal modal--sm" role="dialog" aria-modal="true" aria-labelledby="new-project-title">
+    <h2 class="modal-title" id="new-project-title" data-i18n="np.title">Neues Projekt</h2>
+    <p class="modal-intro" data-i18n="np.text">Alle Sprites dieses Projekts werden durch einen leeren ersetzt. Eigene Paletten und Einstellungen bleiben. Der jetzige Stand landet zur Sicherheit unter Hilfe → Sicherung.</p>
+    <div class="modal-actions">
+      <button class="btn" id="new-project-cancel" data-i18n="mod.cancel">Abbrechen</button>
+      <button class="btn" id="new-project-save" data-i18n="np.save">Erst sichern</button>
+      <button class="btn btn--primary" id="new-project-ok" data-i18n="np.ok">Neu anfangen</button>
+    </div>
+  </div>
+</div>
+
 <div id="rename-modal-overlay" class="modal-overlay">
   <div class="modal modal--sm" role="dialog" aria-modal="true" aria-labelledby="rename-modal-title">
     <h2 class="modal-title" id="rename-modal-title" data-i18n="mod.renameTitle">Sprite umbenennen</h2>
