@@ -1,3 +1,13 @@
+# 3.2.20
+
+## Deutsch
+
+- Neue Tastenkürzel: Strg+D hebt die Auswahl auf, Strg+Alt+N legt einen neuen Sprite an.
+
+## English
+
+- New shortcuts: Ctrl+D drops the selection, Ctrl+Alt+N creates a new sprite.
+
 # 3.2.19
 
 ## Deutsch

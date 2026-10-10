@@ -147,7 +147,7 @@ export const STATIC_AT = {
   'tool.selDelete':      'Ausleern',
   'tool.selDeleteTitle': 'D’Auswoi ausleern (Entf)',
   'tool.selNone':        'Aufhebn',
-  'tool.selNoneTitle':   'D’Auswoi auslassn (Esc)',
+  'tool.selNoneTitle':   'D’Auswoi auslassn (Strg+D oder Esc)',
   'tool.quickPal':       'Schnöll-Farbwoi',
 
   // ── Sprite-Panel ──

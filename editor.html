@@ -78,7 +78,7 @@
         <div class="mb-drop" role="menu" hidden>
           <button type="button" class="mb-item" role="menuitem" id="new-project-btn"><span data-i18n="mb.newProject">Neues Projekt …</span></button>
           <button type="button" class="mb-item" role="menuitem" id="projects-btn"><span data-i18n="mb.projects">Projekte …</span></button>
-          <button type="button" class="mb-item" role="menuitem" data-click="#new-sprite-btn"><span data-i18n="mb.new">Neuer Sprite …</span></button>
+          <button type="button" class="mb-item" role="menuitem" data-click="#new-sprite-btn"><span data-i18n="mb.new">Neuer Sprite …</span><kbd data-i18n="mb.kNew">Strg+Alt+N</kbd></button>
           <button type="button" class="mb-item" role="menuitem" id="load-file-btn"><span data-i18n="mb.open">Öffnen …</span><kbd data-i18n="mb.kOpen">Strg+O</kbd></button>
           <button type="button" class="mb-item" role="menuitem" id="save-file-btn"><span data-i18n="mb.save">Projekt sichern</span><kbd data-i18n="mb.kSave">Strg+S</kbd></button>
           <button type="button" class="mb-item" role="menuitem" id="save-dir-btn"><span data-i18n="mb.dir">Speicherort wählen …</span></button>
@@ -101,7 +101,7 @@
           <button type="button" class="mb-item" role="menuitem" data-click="#redo-btn"><span data-i18n="mb.redo">Wiederholen</span><kbd data-i18n="mb.kRedo">Strg+Y</kbd></button>
           <div class="mb-sep" role="separator"></div>
           <button type="button" class="mb-item" role="menuitem" data-click="#sel-all-btn"><span data-i18n="mb.selAll">Alles auswählen</span><kbd data-i18n="mb.kSelAll">Strg+A</kbd></button>
-          <button type="button" class="mb-item" role="menuitem" data-click="#sel-none-btn"><span data-i18n="mb.selNone">Auswahl aufheben</span><kbd>Esc</kbd></button>
+          <button type="button" class="mb-item" role="menuitem" data-click="#sel-none-btn"><span data-i18n="mb.selNone">Auswahl aufheben</span><kbd data-i18n="mb.kSelNone">Strg+D</kbd></button>
         </div>
       </div>
       <div class="mb-menu">
@@ -360,7 +360,7 @@
             <button class="btn" id="sel-paste-btn"  data-i18n-attr="title:tool.selPasteTitle"  title="Einfügen (Strg+V)"><span class="ico" data-icon="paste"></span><span class="btn-label" data-i18n="tool.selPaste">Einfügen</span></button>
             <button class="btn" id="sel-fill-btn"   data-i18n-attr="title:tool.selFillTitle"   title="Auswahl mit der aktuellen Farbe füllen"><span class="ico" data-icon="fill"></span><span class="btn-label" data-i18n="tool.selFill">Füllen</span></button>
             <button class="btn btn--danger-soft" id="sel-delete-btn" data-i18n-attr="title:tool.selDeleteTitle" title="Auswahl leeren (Entf)"><span class="ico" data-icon="trash"></span><span class="btn-label" data-i18n="tool.selDelete">Leeren</span></button>
-            <button class="btn" id="sel-none-btn"   data-i18n-attr="title:tool.selNoneTitle"   title="Auswahl aufheben (Esc)"><span class="ico" data-icon="deselect"></span><span class="btn-label" data-i18n="tool.selNone">Aufheben</span></button>
+            <button class="btn" id="sel-none-btn"   data-i18n-attr="title:tool.selNoneTitle"   title="Auswahl aufheben (Strg+D oder Esc)"><span class="ico" data-icon="deselect"></span><span class="btn-label" data-i18n="tool.selNone">Aufheben</span></button>
           </div>
         </div>
       </div>
@@ -1304,7 +1304,7 @@
       <div class="sc-row"><b>Alt + Ziehen</b><span>Kopie verschieben (Original bleibt)</span></div>
       <div class="sc-row"><b>Anfasser ziehen</b><span>Auswahl skalieren (Umschalt: Seitenverhältnis halten)</span></div>
       <div class="sc-row"><b>Pfeiltasten</b><span>Auswahl pixelweise verschieben</span></div>
-      <div class="sc-row"><b>Strg + A / C / X / V</b><span>Alles · Kopieren · Ausschneiden · Einfügen</span></div>
+      <div class="sc-row"><b>Strg + A / C / X / V / D</b><span>Alles · Kopieren · Ausschneiden · Einfügen · Auswahl aufheben</span></div>
       <div class="sc-row"><b>Strg + Umschalt + V</b><span>Einfügen mit den Nummern statt den Farben (andere Palette)</span></div>
       <div class="sc-row"><b>Entf</b><span>Auswahl leeren</span></div>
       <div class="sc-row"><b>Enter</b><span>Drehung übernehmen · sonst Animation abspielen / anhalten</span></div>
@@ -1316,6 +1316,7 @@
       <div class="sc-row"><b>Strg + Y</b><span>Wiederholen</span></div>
       <div class="sc-row"><b>Strg + S</b><span>Projekt sichern</span></div>
       <div class="sc-row"><b>Strg + O</b><span>Projekt öffnen</span></div>
+      <div class="sc-row"><b>Strg + Alt + N</b><span>Neuer Sprite</span></div>
       <div class="sc-row"><b>F1</b><span>Hilfe</span></div>
       <div class="sc-row"><b>Esc</b><span>Auswahl aufheben, Dialog oder Vollbild schließen</span></div>
     </div>

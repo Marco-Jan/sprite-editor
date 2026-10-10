@@ -335,6 +335,8 @@ const STATIC = {
     'mb.kUndo': 'Ctrl+Z',
     'mb.kRedo': 'Ctrl+Y',
     'mb.kSelAll': 'Ctrl+A',
+    'mb.kSelNone': 'Ctrl+D',
+    'mb.kNew': 'Ctrl+Alt+N',
 
     // ── Sprite-Panel ──
     'sp.title':       'Sprites',
@@ -520,7 +522,7 @@ const STATIC = {
     'tool.selDelete':   'Erase',
     'tool.selDeleteTitle': 'Erase the selection (Del)',
     'tool.selNone':     'Deselect',
-    'tool.selNoneTitle': 'Drop the selection (Esc)',
+    'tool.selNoneTitle': 'Drop the selection (Ctrl+D or Esc)',
     'tool.quickPal':    'Quick color picker',
 
     // ── Farb-Panel ──
@@ -857,7 +859,7 @@ const STATIC = {
       + '<div class="sc-row"><b>Alt + drag</b><span>Move a copy (the original stays)</span></div>'
       + '<div class="sc-row"><b>Drag a handle</b><span>Scale the selection (Shift: keep aspect ratio)</span></div>'
       + '<div class="sc-row"><b>Arrow keys</b><span>Nudge the selection pixel by pixel</span></div>'
-      + '<div class="sc-row"><b>Ctrl + A / C / X / V</b><span>All · Copy · Cut · Paste</span></div>'
+      + '<div class="sc-row"><b>Ctrl + A / C / X / V / D</b><span>All · Copy · Cut · Paste · Deselect</span></div>'
       + '<div class="sc-row"><b>Ctrl + Shift + V</b><span>Paste with the numbers instead of the colours (other palette)</span></div>'
       + '<div class="sc-row"><b>Del</b><span>Erase the selection</span></div>'
       + '<div class="sc-row"><b>Enter</b><span>Apply the rotation · otherwise play / pause the animation</span></div>'
@@ -869,6 +871,7 @@ const STATIC = {
       + '<div class="sc-row"><b>Ctrl + Y</b><span>Redo</span></div>'
       + '<div class="sc-row"><b>Ctrl + S</b><span>Save project</span></div>'
       + '<div class="sc-row"><b>Ctrl + O</b><span>Open project</span></div>'
+      + '<div class="sc-row"><b>Ctrl + Alt + N</b><span>New sprite</span></div>'
       + '<div class="sc-row"><b>F1</b><span>Help</span></div>'
       + '<div class="sc-row"><b>Esc</b><span>Deselect, close a dialog or leave full screen</span></div>',
   },
