@@ -983,6 +983,21 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   background: var(--surface-1);
 }
 #timeline .btn { padding: 5px 8px; }
+#timeline { position: relative; }
+/* Griff am Rand (js/frames.js initThumbGrip): Höhe = Größe der Vorschaubilder.
+   Oben, wenn die Timeline unten liegt — unten, wenn sie oben liegt. */
+.tl-grip {
+  position: absolute;
+  left: 0; right: 0; top: -3px;
+  height: 7px;
+  z-index: 6;
+  cursor: row-resize;
+}
+.bar-zone[data-zone="top"] .tl-grip { top: auto; bottom: -3px; }
+.tl-grip:hover, .is-resizing-ui .tl-grip { background: var(--accent-line); }
+#timeline.is-vertical .tl-grip,
+#timeline:has(.tl-frames.no-thumbs) .tl-grip { display: none; }
+@media (max-width: 1100px) { .tl-grip { display: none; } }
 /* Das Raster (js/frames.js): links je Ebene eine Beschriftung, oben je
    Frame ein Bildchen, darunter je Ebene und Frame eine Zelle. Es steht in
    einer eigenen Zeile unter den Knöpfen und nimmt die ganze Breite.

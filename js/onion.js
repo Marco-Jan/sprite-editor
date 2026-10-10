@@ -7,6 +7,8 @@
 //
 //   firstFrame  Zählung in der Timeline ab 0 oder 1
 //   thumbs      Vorschaubilder in der Kopfzeile — aus spart Höhe
+//   thumbSize   Kantenlänge der Vorschaubilder in px, per Griff am Rand der
+//               Timeline gezogen; 0 = passend zur Breite (js/frames.js)
 //   onion:
 //     mode      'tint' rot/blau gefärbt | 'color' in echten Farben
 //     opacity   Deckkraft des nächsten Nachbarn (0.1–0.9)
@@ -20,12 +22,17 @@ import { tagAt } from './tags.js';
 
 export const ONION_MAX = 3;
 
+// Grenzen für die gezogene Größe der Vorschaubilder (thumbSize).
+export const THUMB_SIZE_MIN = 30;
+export const THUMB_SIZE_MAX = 128;
+
 /** @typedef {{mode: 'tint'|'color', opacity: number, step: number, before: number, after: number, loopTag: boolean, layerOnly: boolean, front: boolean}} OnionOpts */
-/** @typedef {{firstFrame: number, thumbs: boolean, onion: OnionOpts}} TlOpts */
+/** @typedef {{firstFrame: number, thumbs: boolean, thumbSize: number, onion: OnionOpts}} TlOpts */
 
 export const TL_DEFAULTS = Object.freeze({
   firstFrame: 1,
   thumbs: true,
+  thumbSize: 0,
   onion: Object.freeze({
     mode: 'tint', opacity: 0.3, step: 0.3, before: 1, after: 1,
     loopTag: false, layerOnly: false, front: false,
@@ -51,6 +58,7 @@ export function normalizeTlOpts(raw) {
   return {
     firstFrame: raw?.firstFrame === 0 ? 0 : 1,
     thumbs: raw?.thumbs !== false,
+    thumbSize: raw?.thumbSize ? Math.round(num(raw.thumbSize, THUMB_SIZE_MIN, THUMB_SIZE_MAX, 0)) : 0,
     onion: {
       mode: o.mode === 'color' ? /** @type {const} */ ('color') : /** @type {const} */ ('tint'),
       opacity: num(o.opacity, 0.1, 0.9, d.onion.opacity),

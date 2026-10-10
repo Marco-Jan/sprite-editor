@@ -1,3 +1,13 @@
+# 3.2.26
+
+## Deutsch
+
+- Größere Vorschaubilder in der Timeline: Am oberen Rand der Timeline sitzt jetzt ein Griff. Zieh ihn nach oben, wird die Timeline höher und die Vorschaubilder wachsen mit (bis 128 px). Ein Doppelklick auf den Griff stellt wieder „passend zur Breite“ ein. Die Größe wird mit der Oberfläche gespeichert.
+
+## English
+
+- Larger thumbnails in the timeline: there is now a grip at the top edge of the timeline. Drag it up and the timeline gets taller while the thumbnails grow with it (up to 128 px). Double-clicking the grip goes back to “fit to width”. The size is saved with the interface.
+
 # 3.2.25
 
 ## Deutsch
