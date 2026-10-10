@@ -296,8 +296,8 @@ export const STATIC_AT = {
   'mod.impCurrentTitle': 'Ersetzt den aktivn Sprite mit olle Frames und Ebenen — Strg+Z hoit’n zruck',
 
   // ── Timeline ──
-  'tl.prev':      'Da Frame davor (,)',
-  'tl.next':      'Da nächste Frame (.)',
+  'tl.prev':      'Da Frame davor (, oder ←)',
+  'tl.next':      'Da nächste Frame (. oder →)',
   'tl.play':      'Obspün / Anhoitn (Enter)',
   'tl.add':       'An laarn Frame dahinter einischiabn',
   'tl.dup':       'Frame verdoppln',

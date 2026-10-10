@@ -451,8 +451,8 @@ const STATIC = {
     'tl.cunlink': 'Unlink — every cel gets its own image',
     // Timeline (frames.js) und GIF-Export
     'tl.first': 'First frame (Home)',
-    'tl.prev': 'Previous frame (,)',
-    'tl.next': 'Next frame (.)',
+    'tl.prev': 'Previous frame (, or ←)',
+    'tl.next': 'Next frame (. or →)',
     'tl.last': 'Last frame (End)',
     'tl.multi': 'Select several frames — tapping marks instead of switching',
     'tl.play': 'Play / pause (Enter)',
@@ -873,13 +873,13 @@ const STATIC = {
       + '<div class="sc-row"><b>Drag inside the selection</b><span>Cut the area out and move it</span></div>'
       + '<div class="sc-row"><b>Alt + drag</b><span>Move a copy (the original stays)</span></div>'
       + '<div class="sc-row"><b>Drag a handle</b><span>Scale the selection (Shift: keep aspect ratio)</span></div>'
-      + '<div class="sc-row"><b>Arrow keys</b><span>Nudge the selection pixel by pixel</span></div>'
+      + '<div class="sc-row"><b>Arrow keys</b><span>With a selection: nudge it pixel by pixel · without: ← → frame, ↑ ↓ layer</span></div>'
       + '<div class="sc-row"><b>Ctrl + A / C / X / V / D</b><span>All · Copy · Cut · Paste · Deselect</span></div>'
       + '<div class="sc-row"><b>Ctrl + Shift + V</b><span>Paste with the numbers instead of the colours (other palette)</span></div>'
       + '<div class="sc-row"><b>Del</b><span>Erase the selection</span></div>'
       + '<div class="sc-row"><b>Enter</b><span>Apply the rotation · otherwise play / pause the animation</span></div>'
       + '<div class="sc-row"><b>Home / End</b><span>First / last frame</span></div>'
-      + '<div class="sc-row"><b>, / .</b><span>Previous / next frame</span></div>'
+      + '<div class="sc-row"><b>, / . or ← / →</b><span>Previous / next frame</span></div>'
       + '<div class="sc-row"><b>G</b><span>Guides on / off</span></div>'
       + '<div class="sc-row"><b>Two fingers</b><span>Zoom and pan (touch)</span></div>'
       + '<div class="sc-row"><b>Ctrl + Z</b><span>Undo</span></div>'

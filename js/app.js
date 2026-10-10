@@ -61,7 +61,7 @@ import { initExport } from './export.js';
 import { openReduceModal, initReduceModal } from './reduce.js';
 import { zoomAt, fitZoomToArea, isPanMode, setPanTool, initPan, initPinch } from './view.js';
 import { initFrames, togglePlay, nextFrame, prevFrame, firstFrame, lastFrame, isPlaying, stop as stopPlayback } from './frames.js';
-import { initLayers, toggleLocked, toggleVisible, toggleMaskEdit, toggleMaskOn, setOpacity } from './layers.js';
+import { initLayers, toggleLocked, toggleVisible, toggleMaskEdit, toggleMaskOn, setOpacity, setActiveLayer } from './layers.js';
 import { celKeyDown } from './frames.js';
 import { initTlMenu } from './tlmenu.js';
 import { initQuickPaletteDrag } from './qpdrag.js';
@@ -849,6 +849,18 @@ function initKeyboardEvents() {
     // ── Frames: , und . blättern, Pos1/Ende springen, Enter spielt ab ──
     if (e.key === ',') { prevFrame(); return; }
     if (e.key === '.') { nextFrame(); return; }
+    // Pfeiltasten (ohne Auswahl — die verschieben sie oben): ← → Frame,
+    // ↑ ↓ Ebene. Menüs, Reiter und Listen behalten ihre eigenen Pfeile.
+    if (/^Arrow/.test(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey
+        && !/** @type {HTMLElement} */ (e.target).closest?.('[role="menubar"], [role="menu"], [role="tablist"], [role="listbox"], [role="dialog"]')) {
+      const sp = getSprite();
+      if (!sp) return;
+      e.preventDefault();
+      if (e.key === 'ArrowLeft') prevFrame();
+      else if (e.key === 'ArrowRight') nextFrame();
+      else setActiveLayer(sp.layer + (e.key === 'ArrowUp' ? 1 : -1));
+      return;
+    }
     if (e.key === 'Home') { e.preventDefault(); firstFrame(); return; }
     if (e.key === 'End')  { e.preventDefault(); lastFrame(); return; }
     if (e.key === 'Enter' && !/** @type {HTMLElement} */ (e.target).closest?.('button, a, select, [role="option"]')) {
