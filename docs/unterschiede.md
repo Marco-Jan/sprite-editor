@@ -52,6 +52,7 @@ Bleibt so — der Grund steht dabei.
 | Bereich | Web | Desktop | Warum |
 |---|---|---|---|
 | Größe | Sprites bis **1024 × 1024** | bis **8192 × 8192**, Bilder in Kacheln | Arbeitsspeicher im Browser (siehe Handbuch, Eigenheiten) |
+| Pinsel | Pinsel, Radierer, Spray bis **300 px** | bis **1000 px** | passt zur größeren Fläche; im Browser kostet jeder Tupfer mehr |
 | Speichern | automatisch im Browser (IndexedDB), **Projektliste** im Browser, „Projekt sichern“ als Datei | Projektdateien auf der Platte, **zuletzt geöffnet**, Startfenster, Rückfrage bei ungespeicherten Änderungen | Browser hat kein Dateisystem, der Desktop schon |
 | Kürzel | `Strg+N`, `Strg+W`, `Strg+Tab`, `F11` gehören dem Browser | `Strg+N` / `Strg+Alt+N` neu, `Strg+W` Reiter zu, `Strg+Tab` Reiter weiter, `Strg+E` Export, `F11` Vollbild | Browser fängt diese Tasten ab |
 | Mehrere Dateien | PNG/PDF je Frame und Godot-Export als **ZIP** (oder Ordner, wo der Browser es kann) | direkt in einen **gewählten Ordner** | Browser darf pro Klick nur eine Datei herunterladen |

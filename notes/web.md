@@ -1,3 +1,15 @@
+# 3.2.27
+
+## Deutsch
+
+- Größere Pinsel: Pinsel, Radierer und Spray gehen jetzt bis 300 px. Der Regler läuft logarithmisch, kleine Größen bleiben gut zu treffen; mit Alt + rechter Maustaste wachsen große Größen schneller.
+- Kleinere Verbesserungen und Fehlerbehebungen.
+
+## English
+
+- Bigger brushes: brush, eraser and spray now go up to 300 px. The slider is logarithmic so small sizes stay easy to hit; with Alt + right-drag large sizes grow faster.
+- Small improvements and fixes.
+
 # 3.2.26
 
 ## Deutsch

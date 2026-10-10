@@ -93,10 +93,11 @@ Reiterzeile erst ab zwei offenen Sprites, damit sie keine Höhe kostet.
 | Formen | Linie `I` · Rechteck `R` · Ellipse `O` — mit Live-Vorschau, *Gefüllt* schaltet Kontur/Fläche |
 | Auswahl | Rechteck `A` · Lasso `L` · Farbwahl `K` |
 
-- **Größe** (1–64, per Regler oder Zahlenfeld) und **Stärke** gelten für Pinsel, Spray und
+- **Größe** (1–300, in der Desktop-App bis 1000; per Regler oder Zahlenfeld) und **Stärke** gelten für Pinsel, Spray und
   Radierer. Die Stärke ist beim Pinsel die Dichte, beim Spray die Menge. `Alt` + rechte
-  Maustaste ziehen verstellt die Größe direkt auf der Zeichenfläche (nach rechts größer, 6 px
-  Mausweg je Stufe); ein Umriss zeigt, was der Pinsel gleich trifft.
+  Maustaste ziehen verstellt die Größe direkt auf der Zeichenfläche (nach rechts größer; kleine
+  Größen in Einerschritten, große verdoppeln sich alle 160 px Mausweg); ein Umriss zeigt, was der
+  Pinsel gleich trifft. Der Regler läuft logarithmisch — kleine Größen bleiben gut zu treffen.
 - **Umschalt beim Malen**: der Strich geht nur waagerecht, senkrecht oder im 45°-Winkel
   (wie in Photoshop). Die Richtung rastet ein, sobald der Strich 3 Pixel weit ist, und bleibt
   bis zum Loslassen; drückt man Umschalt erst mitten im Strich, beginnt die gerade Linie dort.
