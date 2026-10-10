@@ -748,7 +748,7 @@
 
       <section class="panel collapsed" data-panel="cleanup">
         <div class="panel-head">
-          <h2 class="panel-title" data-i18n="cln.title">Aufräumen</h2>
+          <h2 class="panel-title" data-i18n="cln.title">Feinschliff</h2>
           <button class="panel-toggle" type="button" aria-expanded="false"></button>
         </div>
         <div class="panel-body">
@@ -770,6 +770,11 @@
               <option value="1">1 px</option>
               <option value="2">2 px</option>
               <option value="3">3 px</option>
+            </select>
+            <select id="outline-mode" class="input input--sm" data-i18n-attr="title:cln.outlineMode" title="Wo die Kante entsteht">
+              <option value="outside" data-i18n="cln.outside">außen</option>
+              <option value="inside" data-i18n="cln.inside">innen</option>
+              <option value="both" data-i18n="cln.both">beides</option>
             </select>
             <button class="btn" id="outline-btn" data-i18n="cln.outlineApply">Anwenden</button>
           </div>

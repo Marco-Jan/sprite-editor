@@ -234,14 +234,18 @@ export const STATIC_AT = {
   'img.scaleUpTitle':   'Doppelt so groß (d’Pixel bleibn hart)',
   'img.scaleDownTitle': 'Auf d’Hälfte owe — Details san dann weg',
 
-  // ── Aufräumen ──
-  'cln.title':        'Zammraman',
+  // ── Feinschliff ──
+  'cln.title':        'Feinschliff',
   'cln.bg':           'Hintagrund',
   'cln.bgRemove':     'Hintagrund weghaun',
   'cln.despeckle':    'Glattmochn',
   'cln.outline':      'Umrandung',
   'cln.outlineColor': 'Farb vo da Umrandung',
   'cln.outlineThick': 'Wia dick d’Kantn is',
+  'cln.outlineMode':  'Wo d’Kantn hinkummt: rundumadum, auf de Randpixel oder beides',
+  'cln.outside':      'aussn',
+  'cln.inside':       'innen',
+  'cln.both':         'beides',
   'cln.outlineApply': 'Anwendn',
 
   // ── Reiter ──

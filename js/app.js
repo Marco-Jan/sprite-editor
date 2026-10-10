@@ -1217,7 +1217,7 @@ function initImagePanel() {
 }
 
 // ────────────────────────────────────────────────────────────────────
-// Aufräumen-Panel
+// Feinschliff-Panel (data-panel="cleanup")
 // ────────────────────────────────────────────────────────────────────
 function initCleanupPanel() {
   $('bg-remove-btn').addEventListener('click', () => {
@@ -1241,8 +1241,9 @@ function initCleanupPanel() {
     if (layerBlocked(true)) return;
     const col = $('outline-color').value;
     const th  = Number($('outline-thickness').value) || 1;
+    const mode = $('outline-mode').value;
     let n = 0;
-    recordOp(() => { n = outlineGrid(getGrid(), col, th); });
+    recordOp(() => { n = outlineGrid(getGrid(), col, th, mode); });
     if (n) renderAll();
     showInfoToast(n ? t('cln.outlined', { n }) : t('cln.outlineNone'));
   });

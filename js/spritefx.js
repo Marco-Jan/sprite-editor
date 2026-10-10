@@ -110,9 +110,19 @@ export function despeckleGrid(grid) {
 }
 
 // ── Outline um nicht-transparente Pixel ──────────────────────────────
-// Setzt transparente Zellen, die an gefüllte grenzen (4er-Nachbarschaft), auf
-// colorVal. `thickness` Durchläufe = dickere Kante. Gibt Anzahl neuer Pixel.
-export function outlineGrid(grid, colorVal, thickness) {
+// mode 'outside': transparente Zellen, die an gefüllte grenzen (4er-Nachbar-
+// schaft), werden colorVal. 'inside': die gefüllten Randzellen selbst werden
+// umgefärbt (Bildrand zählt nicht als Kante). 'both': beides. `thickness`
+// Durchläufe = dickere Kante. Gibt die Anzahl geänderter Pixel.
+export function outlineGrid(grid, colorVal, thickness, mode = 'outside') {
+  let changed = 0;
+  // Innen zuerst — färbt nur Gefülltes um, die Außenkante bleibt gleich.
+  if (mode !== 'outside') changed += innerOutline(grid, colorVal, thickness);
+  if (mode !== 'inside')  changed += outerOutline(grid, colorVal, thickness);
+  return changed;
+}
+
+function outerOutline(grid, colorVal, thickness) {
   const H = grid.length, W = grid[0].length;
   let added = 0;
   for (let t = 0; t < thickness; t++) {
@@ -130,6 +140,31 @@ export function outlineGrid(grid, colorVal, thickness) {
     for (const [x, y] of toFill) { grid[y][x] = colorVal; added++; }
   }
   return added;
+}
+
+function innerOutline(grid, colorVal, thickness) {
+  const H = grid.length, W = grid[0].length;
+  const edge = Array.from({ length: H }, () => new Array(W).fill(false));
+  // Außen = transparent oder schon als Kante markiert (für Dicke > 1).
+  const out = (x, y) => x >= 0 && y >= 0 && x < W && y < H && (grid[y][x] === 0 || edge[y][x]);
+  for (let t = 0; t < thickness; t++) {
+    const mark = [];
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        if (grid[y][x] === 0 || edge[y][x]) continue;
+        if (out(x - 1, y) || out(x + 1, y) || out(x, y - 1) || out(x, y + 1)) mark.push([x, y]);
+      }
+    }
+    if (!mark.length) break;
+    for (const [x, y] of mark) edge[y][x] = true;
+  }
+  let changed = 0;
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      if (edge[y][x] && String(grid[y][x]) !== String(colorVal)) { grid[y][x] = colorVal; changed++; }
+    }
+  }
+  return changed;
 }
 
 // ── Zauberstab: zusammenhängende ähnliche Farbe löschen ──────────────

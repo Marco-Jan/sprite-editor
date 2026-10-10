@@ -600,8 +600,8 @@ const STATIC = {
     'img.scaleUpTitle': 'Double the size (pixels stay hard)',
     'img.scaleDownTitle': 'Halve the size — detail is lost',
 
-    // ── Aufräumen ──
-    'cln.title':        'Cleanup',
+    // ── Feinschliff ──
+    'cln.title':        'Finishing',
     'cln.bg':           'Background',
     'cln.bgRemove':     'Remove background',
     'cln.bgRemoveTitle': 'Erase connected, similarly colored areas starting from the image border',
@@ -610,6 +610,10 @@ const STATIC = {
     'cln.outline':      'Outline',
     'cln.outlineColor': 'Outline color',
     'cln.outlineThick': 'Edge thickness',
+    'cln.outlineMode':  'Where the edge goes: around the shape, on its border pixels, or both',
+    'cln.outside':      'outside',
+    'cln.inside':       'inside',
+    'cln.both':         'both',
     'cln.outlineApply': 'Apply',
 
     // ── Reiter ──
@@ -1256,7 +1260,7 @@ const MSG = {
     'reason.tooSmall':  'zu klein',
     'reason.tooBig':    'über 1024 Pixel',
 
-    // Aufräumen
+    // Feinschliff
     'cln.bgRemoved':   'Hintergrund entfernt — {n} Pixel.',
     'cln.bgNone':      'Nichts entfernt — Toleranz erhöhen?',
     'cln.despeckled':  'Geglättet — {n} Pixel angepasst.',
