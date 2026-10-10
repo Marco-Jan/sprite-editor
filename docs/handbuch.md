@@ -3,7 +3,7 @@
 Alles, was der Editor kann, Abschnitt für Abschnitt. Der schnelle Überblick steht in der
 [README](../README.md), technische Details zum Mitarbeiten in [CONTRIBUTING.md](../CONTRIBUTING.md).
 
-**Inhalt:** [Aufbau der Oberfläche](#aufbau-der-oberfläche) · [Reiter](#reiter) · [Werkzeuge](#werkzeuge) · [Auswahl](#auswahl--ausschneiden-und-verschieben) · [Palettensystem](#palettensystem) · [Licht](#licht) · [Aufräumen](#aufräumen) · [Bild](#bild) · [Schablone](#schablone-foto-vorlage) · [Hilfslinien](#hilfslinien) · [Vorschau](#vorschau) · [Ebenen](#ebenen) · [Animation — Timeline](#animation--timeline) · [Import / Export](#import--export) · [Tastenkürzel](#tastenkürzel) · [Speichern](#speichern) · [Offline und als App](#offline-und-als-app) · [Eigenheiten](#eigenheiten) · [Migration von der alten Version](#migration-von-der-alten-version)
+**Inhalt:** [Aufbau der Oberfläche](#aufbau-der-oberfläche) · [Reiter](#reiter) · [Werkzeuge](#werkzeuge) · [Auswahl](#auswahl--ausschneiden-und-verschieben) · [Palettensystem](#palettensystem) · [Licht](#licht) · [Feinschliff](#feinschliff) · [Bild](#bild) · [Schablone](#schablone-foto-vorlage) · [Hilfslinien](#hilfslinien) · [Vorschau](#vorschau) · [Ebenen](#ebenen) · [Animation — Timeline](#animation--timeline) · [Import / Export](#import--export) · [Tastenkürzel](#tastenkürzel) · [Speichern](#speichern) · [Offline und als App](#offline-und-als-app) · [Eigenheiten](#eigenheiten) · [Migration von der alten Version](#migration-von-der-alten-version)
 
 ---
 
@@ -22,7 +22,7 @@ Alles, was der Editor kann, Abschnitt für Abschnitt. Der schnelle Überblick st
 ```
 
 Links und rechts sitzen die **Docks**: ein Icon je Panel (Sprites, Code & Export, Ebenen,
-Vorschau, Hilfslinien, Palette, Schablone, Bild, Aufräumen, Licht). Ein Klick öffnet das
+Vorschau, Hilfslinien, Palette, Schablone, Bild, Feinschliff, Licht). Ein Klick öffnet das
 Panel als Schublade über der Zeichenfläche, ein zweiter Klick, das × oder `Esc` schließt sie.
 
 **Anordnung anpassen.** Im Panel-Kopf:
@@ -292,14 +292,15 @@ dabei; das Original war ja nie verändert. Jede Änderung ist ein Undo-Schritt.
 
 ---
 
-## Aufräumen
+## Feinschliff
 
-Das Panel **Aufräumen** wirkt auf die aktive Ebene:
+Das Panel **Feinschliff** wirkt auf die aktive Ebene:
 
 - **Hintergrund entfernen** — löscht vom Bildrand her zusammenhängende, ähnlich gefärbte
   Flächen; die *Toleranz* steuert, wie weit es geht.
 - **Glätten** — setzt einzelne Streupixel auf die Mehrheitsfarbe ihrer Nachbarn.
-- **Outline** — zieht eine Kante (1–3 px) in der gewählten Farbe um alles Gefüllte.
+- **Outline** — zieht eine Kante (1–3 px) in der gewählten Farbe: *außen* um alles Gefüllte
+  herum, *innen* auf dessen Randpixeln (die Figur wird nicht größer) oder *beides*.
 
 ---
 
@@ -341,7 +342,7 @@ ganzen Sprite bleibt die Fläche gleich und Ecken außerhalb fallen weg.
    Palette), **Originalfarben** (exakt aus dem Bild) oder **Reduzieren auf N Farben**
    (Median-Cut, gibt flache Flächen statt Foto-Rauschen)
 3. **Bild → Palette …** — macht aus den Bildfarben eine Palette, mit Wahl der Farbanzahl
-4. **Hintergrund entfernen**, **Glätten**, **Outline** (siehe [Aufräumen](#aufräumen)),
+4. **Hintergrund entfernen**, **Glätten**, **Outline** (siehe [Feinschliff](#feinschliff)),
    danach **Licht** für Volumen (siehe [Licht](#licht))
 5. Reste von Hand säubern
 
@@ -396,7 +397,7 @@ Jeder Sprite hat eine oder mehrere **Ebenen** — im Panel „Ebenen“ im Dock 
 der [Timeline](#animation--timeline). Die Liste zeigt die oberste Ebene oben, mit
 Vorschaubild des aktuellen Frames.
 
-- Gemalt wird immer in die **aktive** Ebene — alle Werkzeuge, Auswahl, Aufräumen und die
+- Gemalt wird immer in die **aktive** Ebene — alle Werkzeuge, Auswahl, Feinschliff und die
   Schablone arbeiten dort. Die Pipette greift, was man sieht.
 - **Auge** blendet aus, **Schloss** sperrt. In eine gesperrte oder ausgeblendete Ebene
   wird nicht gemalt; die Statuszeile sagt, warum.
