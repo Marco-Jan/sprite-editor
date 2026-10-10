@@ -1842,11 +1842,20 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 
 /* Tour und Suche: Markierung und Blase im Blau von Bitty */
 .bitty-bubble.is-tour { border-color: var(--accent); }
-.bitty-flash,
-.bitty-spot {
+.bitty-flash {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
+/* Rahmen um das, was die Tour gerade zeigt: eigene Ebene über der Seite,
+   damit kein Rand ihn abschneidet (helper.js, placeRing). Unter der Blase. */
+.bitty-ring {
+  position: fixed;
+  z-index: 89;
+  border: 2px solid var(--accent);
+  border-radius: var(--r-md);
+  pointer-events: none;
+}
+.bitty-ring[hidden] { display: none; }
 @keyframes bittyIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) {
   .bitty-bubble { animation: none; }

@@ -107,6 +107,7 @@ function findTarget(sels) {
 
 // Blase unter (oder über) das Ziel setzen, waagerecht ins Bild geklemmt.
 function place() {
+  placeRing();
   if (!bubble || bubble.hidden) return;
   const anchor = target || btn;
   const a = anchor.getBoundingClientRect();
@@ -129,10 +130,33 @@ function place() {
   bubble.classList.toggle('no-tail', big);
 }
 
+// Die blaue Umrandung ist ein eigener Rahmen über der Seite, kein outline am
+// Ziel: der würde an Rändern mit overflow abgeschnitten (die Zeichenfläche
+// zeigte nur noch einen Strich oben) oder von Kindern überdeckt.
+let ring = null;
+
+function placeRing() {
+  if (!ring) return;
+  if (!target || !visible(target)) { ring.hidden = true; return; }
+  const r = target.getBoundingClientRect();
+  // Große Ziele füllen ihren Platz bis zum Rand — dort innen umranden.
+  const big = r.height > innerHeight * 0.4 || r.width > innerWidth * 0.6;
+  const pad = big ? -3 : 3;
+  const vw = document.documentElement.clientWidth;
+  const left = Math.max(2, r.left - pad), top = Math.max(2, r.top - pad);
+  const right = Math.min(vw - 2, r.right + pad), bottom = Math.min(innerHeight - 2, r.bottom + pad);
+  ring.style.left = `${left}px`;
+  ring.style.top = `${top}px`;
+  ring.style.width = `${Math.max(0, right - left)}px`;
+  ring.style.height = `${Math.max(0, bottom - top)}px`;
+  ring.hidden = false;
+}
+
 function setTarget(el) {
-  document.querySelectorAll('.bitty-spot').forEach(e => e.classList.remove('bitty-spot'));
   target = el;
-  if (el) el.classList.add('bitty-spot');
+  placeRing();
+  // Schubladen gleiten erst herein — danach Rahmen und Blase nachrücken.
+  if (el) window.setTimeout(place, 260);
 }
 
 /**
@@ -605,10 +629,12 @@ function endTour() {
   hide();
 }
 
-// Panel, in dem ein Tour-Ziel steckt, aufklappen (falls es im Dock liegt).
+// Was ein Tour-Ziel umgibt und im Dock liegen kann — ein Panel oder eine
+// Leiste (Timeline, Werkzeugleiste, Farbzeile: alle tragen data-dock,
+// js/dock.js) — aufklappen, falls es gerade zu ist.
 function openPanelFor(s) {
   const first = s.sel.map(q => document.querySelector(q)).find(Boolean);
-  const panel = s.panel ? document.querySelector(`.panel[data-panel="${s.panel}"]`) : first?.closest('.panel[data-panel]');
+  const panel = s.panel ? document.querySelector(`.panel[data-panel="${s.panel}"]`) : first?.closest('[data-dock]');
   if (panel && !visible(panel)) {
     document.querySelector(`.dock-btn[data-target="${panel.dataset.dock || panel.dataset.panel}"]`)?.click();
   }
@@ -690,6 +716,13 @@ export function initHelper() {
     '<div class="bitty-body"><p class="bitty-step"></p><p class="bitty-text"></p><div class="bitty-actions"></div></div>';
   document.body.appendChild(bubble);
   btn.setAttribute('aria-controls', bubble.id);
+  ring = document.createElement('div');
+  ring.className = 'bitty-ring';
+  ring.hidden = true;
+  ring.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(ring);
+  // Panels scrollen in sich — der Rahmen soll mitwandern.
+  document.addEventListener('scroll', placeRing, { capture: true, passive: true });
 
   query = /** @type {HTMLInputElement} */ (bubble.querySelector('.bitty-q'));
   results = bubble.querySelector('.bitty-results');
