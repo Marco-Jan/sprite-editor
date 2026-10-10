@@ -20,6 +20,9 @@
 #              (tools/deploy-hook.txt) → die Website wird gebaut.
 #   6. --release  Tag v<Version aus Cargo.toml> pushen → GitHub baut die
 #                 Desktop-Release (nur, wenn es die Version noch nicht gibt).
+#                 Jede Desktop-Version braucht ihre Notizen in
+#                 spritebit-rs/notes/<version>.md („Was ist neu?“ in der App) —
+#                 fehlen sie, bricht es gleich am Anfang ab.
 #
 # Bei jedem Fehler bricht es ab, bevor etwas gepusht wird.
 #
@@ -204,6 +207,16 @@ def set_web_version(v):
     sub_file(os.path.join(WEB, 'package.json'), r'"version":\s*"[^"]+"', f'"version": "{v}"')
 
 
+def require_rs_notes(root, v):
+    """Notizen der Desktop-Version (Text der Release, „Was ist neu?“ in der App)."""
+    path = os.path.join(root, 'notes', f'{v}.md')
+    if not os.path.exists(path):
+        fail(f'Desktop {v}: {os.path.relpath(path, root)} fehlt — erst die Notizen schreiben '
+             '(Abschnitte „## Deutsch“ und „## English“ mit kurzen Punkten „- …“).')
+    if not re.search(r'(?m)^## Deutsch', open(path, encoding='utf-8').read()):
+        fail(f'Desktop {v}: {os.path.relpath(path, root)} hat keinen Abschnitt „## Deutsch“.')
+
+
 def set_rs_version(root, v):
     sub_file(os.path.join(root, 'Cargo.toml'), r'^version = "[^"]+"', f'version = "{v}"')
     sub_file(os.path.join(root, APP_TOML), r'(spritebit-core = \{ version = ")[^"]+(")', rf'\g<1>{v}\g<2>')
@@ -248,6 +261,10 @@ def ask_versions(args):
         if args.rs_new and not args.release and interactive:
             a = input(f'  Desktop-Release v{v} gleich starten? [J/n]: ').strip().lower()
             args.release = a in ('', 'j', 'ja', 'y', 'yes')
+        # Vor allem anderen: sonst steht schon der Versions-Commit da, wenn
+        # die Tests (diese_version_hat_notizen) über die fehlende Datei stolpern.
+        if args.rs_new or args.release:
+            require_rs_notes(args.rs, v)
 
 
 # ── Versionen an den Knöpfen der Startseite (js/site-links.js) ───────
