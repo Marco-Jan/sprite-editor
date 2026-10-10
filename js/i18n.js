@@ -352,7 +352,6 @@ const STATIC = {
     'stage.undo':       'Undo (Ctrl+Z)',
     // Hilfslinien-Panel (guides.js)
     'gd.title': 'Guides',
-    'gd.show': 'Show',
     'gd.showTitle': 'Show / hide all guides (G)',
     'gd.edit': 'Move',
     'gd.editTitle': 'Drag lines on the drawing area — no painting meanwhile (a tap next to the lines or Esc ends it)',
@@ -1087,6 +1086,8 @@ const MSG = {
     // Werden zur Laufzeit ueber t() geholt — sie muessen hier stehen, nicht
     // nur in STATIC (tests/i18n.test.js wacht darueber).
     'help.close':          'Schließen',
+    'gd.hideBtn':          'Ausblenden',
+    'gd.showBtn':          'Einblenden',
     'news.version':        'Version {v}',
     'news.loading':        'Wird geladen …',
     'news.empty':          'Zu den letzten Versionen gibt es noch keine Notizen.',
@@ -1716,6 +1717,8 @@ const MSG = {
     'tpl.restored':        'From your last visit — stays saved in this browser until you remove it.',
     'tpl.kept':            'Stays saved in this browser until you remove it.',
     'help.close':          'Close',
+    'gd.hideBtn':          'Hide',
+    'gd.showBtn':          'Show',
     'news.version':        'Version {v}',
     'news.loading':        'Loading …',
     'news.empty':          'There are no notes for the latest versions yet.',
