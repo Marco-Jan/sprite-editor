@@ -745,146 +745,144 @@ function closeTopModal() {
   return false;
 }
 
+// ── Tastenbelegung ──────────────────────────────────────────────────
+// Der Reihe nach geprüft — die erste Regel, deren `when` passt, bekommt die
+// Taste. Gibt `run` ausdrücklich `false` zurück, nimmt sie die Taste doch
+// nicht, und die Suche geht weiter. `prevent`: vorher preventDefault().
+// Alles oberhalb von KEY_BARRIER gilt auch in Eingabefeldern und offenen
+// Dialogen, alles darunter nur, wenn keins von beiden den Fokus hat.
+// Die Reihenfolge ist Absicht — z. B. verschieben die Pfeile eine Auswahl,
+// bevor sie Frames und Ebenen blättern.
+const KEY_BARRIER = { barrier: true };
+const withMod = e => (e.ctrlKey || e.metaKey) && !e.altKey;
+const isKey = (/** @type {string} */ k) => e => e.key.toLowerCase() === k;
+// Pfeile und Enter gehören in Menüs, Reitern, Listen und auf Knöpfen diesen selbst.
+const ownArrows = e => !!/** @type {HTMLElement} */ (e.target).closest?.('[role="menubar"], [role="menu"], [role="tablist"], [role="listbox"], [role="dialog"]');
+const ownEnter = e => !!/** @type {HTMLElement} */ (e.target).closest?.('button, a, select, [role="option"]');
+const NUDGE = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+
+const KEYMAP = [
+  // ── überall ──
+  { when: e => e.key === 'Escape', run: escapeKey },
+  // Alt allein = Pipette; Shift+Alt gehört der Schablone. Nur Anzeige.
+  { when: e => e.key === 'Alt' || e.key === 'Shift', run: e => { eyedropHint(e); return false; } },
+  { when: e => withMod(e) && isKey('z')(e) && !e.shiftKey, prevent: true, run: () => { stopRotating(false); commitFloat(); undo(); } },
+  { when: e => withMod(e) && (isKey('y')(e) || (isKey('z')(e) && e.shiftKey)), prevent: true, run: () => { stopRotating(false); commitFloat(); redo(); } },
+  // Datei-Menü: sichern und öffnen — statt „Seite speichern“ des Browsers.
+  { when: e => withMod(e) && isKey('s')(e) && !e.shiftKey, prevent: true, run: () => { commitFloat(); saveToFile(); } },
+  { when: e => withMod(e) && isKey('o')(e) && !e.shiftKey, prevent: true, run: () => $('load-file-btn').click() },
+  { when: e => e.key === 'F1', prevent: true, run: () => $('help-btn').click() },
+  // Strg+K: Bitty als Befehlszeile — suchen und ausführen.
+  { when: e => withMod(e) && !e.shiftKey && isKey('k')(e) && !anyModalOpen(), prevent: true, run: openSearch },
+  { when: e => e.key === 'Enter' && isRotating() && !isTypingTarget(e.target), run: () => { stopRotating(true); info(t('rot.applied')); } },
+
+  KEY_BARRIER,
+
+  // ── Timeline: Zellen kopieren, einfügen, leeren ──
+  // Nur nach einem Klick in die Timeline, sonst gehören die Tasten der
+  // Auswahl auf der Zeichenfläche (js/frames.js).
+  { when: () => true, run: e => celKeyDown(e) },
+  // Strg+Alt+N: neuer Sprite (Strg+N gehört dem Browser — und in der
+  // Desktop-App dem neuen Projekt). e.code: auch bei AltGr und anderem Layout.
+  { when: e => (e.ctrlKey || e.metaKey) && e.altKey && !e.shiftKey && e.code === 'KeyN', prevent: true, run: () => $('new-sprite-btn').click() },
+  // Strg + A / D / C / X / V; andere Strg-Kombis gehören dem Browser.
+  { when: withMod, run: clipboardKey },
+  // ── Auswahl: verschieben / leeren ──
+  { when: e => !!selection.rect && !!NUDGE[e.key], prevent: true, run: e => { nudgeSelection(...NUDGE[e.key]); info(selectionInfo(t('info.moved'))); } },
+  { when: e => !!selection.rect && (e.key === 'Delete' || e.key === 'Backspace'), prevent: true,
+    run: () => { if (!layerBlocked()) info(t('sel.erased', { n: deleteSelection() })); } },
+  { when: isKey('g'), run: toggleGuides },
+  // ── Frames und Ebenen ──
+  { when: e => e.key === ',', run: prevFrame },
+  { when: e => e.key === '.', run: nextFrame },
+  // Pfeiltasten ohne Auswahl: ← → Frame, ↑ ↓ Ebene.
+  { when: e => /^Arrow/.test(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey && !ownArrows(e), run: arrowKey },
+  { when: e => e.key === 'Home', prevent: true, run: firstFrame },
+  { when: e => e.key === 'End', prevent: true, run: lastFrame },
+  { when: e => e.key === 'Enter' && !ownEnter(e), prevent: true, run: togglePlay },
+  // ── Farbe und Werkzeug ──
+  { when: e => e.key >= '0' && e.key <= '9', run: e => { const idx = Number(e.key); if (idx <= getMaxIdx()) { state.curColor = idx; syncColorActive(); } } },
+  { when: e => !!TOOL_KEYS[e.key.toLowerCase()], run: e => setTool(TOOL_KEYS[e.key.toLowerCase()]) },
+];
+
+function handleKey(e) {
+  for (const rule of KEYMAP) {
+    if (rule === KEY_BARRIER) {
+      if (isTypingTarget(e.target) || anyModalOpen()) return;
+      continue;
+    }
+    if (!rule.when(e)) continue;
+    if (rule.prevent) e.preventDefault();
+    if (rule.run(e) !== false) return;
+  }
+}
+
+// Esc schließt bzw. bricht ab, was gerade offen ist — eins nach dem anderen.
+function escapeKey() {
+  if (closeTopModal()) return;
+  if (isPlaying()) { stopPlayback(); return; }
+  if (isRotating()) { stopRotating(false); info(t('rot.discarded')); return; }
+  if (shapeStart || state.shape.cells.length) {
+    shapeStart = null;
+    state.shape.cells = [];
+    renderEditor();
+    info(t('rot.shapeDrop'));
+    return;
+  }
+  if (deselect()) { updateSelectionUI(); info(t('sel.dropped')); return; }
+  if (document.body.classList.contains('editor-fullscreen')) { exitFullscreen(); return; }
+  return false;
+}
+
+function eyedropHint(e) {
+  if (e.key === 'Alt' && !e.shiftKey) $('editor-canvas-wrap').classList.add('is-eyedrop');
+  if (e.key === 'Shift' && e.altKey) $('editor-canvas-wrap').classList.remove('is-eyedrop');
+}
+
+function clipboardKey(e) {
+  const k = e.key.toLowerCase();
+  if (k === 'a') {
+    e.preventDefault();
+    setTool('select'); selectAll(); updateSelectionUI();
+    info(selectionInfo(t('sel.all')));
+  } else if (k === 'd' && !e.shiftKey) {
+    // Strg+D: Auswahl aufheben (wie in Grafikprogrammen) — nicht das
+    // Lesezeichen des Browsers.
+    e.preventDefault();
+    if (deselect()) { updateSelectionUI(); info(t('sel.dropped')); }
+  } else if (k === 'c' && selection.rect) {
+    e.preventDefault();
+    info(t('sel.copied', { n: copySelection() }));
+    updateSelectionUI();
+  } else if (k === 'x' && selection.rect) {
+    e.preventDefault();
+    if (layerBlocked()) return;
+    info(t('sel.cut', { n: cutSelection() }));
+    updateSelectionUI();
+  } else if (k === 'v') {
+    e.preventDefault();
+    if (layerBlocked()) return;
+    if (!hasClipboard()) info(t('sel.clipEmpty'));
+    else {
+      setTool('select');
+      // Strg+Umschalt+V: die Nummern unverändert (sonst nach der Farbe, remap.js).
+      info(t('sel.pasted', { n: pasteClipboard(e.shiftKey) }));
+      updateSelectionUI();
+    }
+  }
+}
+
+function arrowKey(e) {
+  const sp = getSprite();
+  if (!sp) return;
+  e.preventDefault();
+  if (e.key === 'ArrowLeft') prevFrame();
+  else if (e.key === 'ArrowRight') nextFrame();
+  else setActiveLayer(sp.layer + (e.key === 'ArrowUp' ? 1 : -1));
+}
+
 function initKeyboardEvents() {
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') {
-      if (closeTopModal()) return;
-      if (isPlaying()) { stopPlayback(); return; }
-      if (isRotating()) { stopRotating(false); info(t('rot.discarded')); return; }
-      if (shapeStart || state.shape.cells.length) {
-        shapeStart = null;
-        state.shape.cells = [];
-        renderEditor();
-        info(t('rot.shapeDrop'));
-        return;
-      }
-      if (deselect()) { updateSelectionUI(); info(t('sel.dropped')); return; }
-      if (document.body.classList.contains('editor-fullscreen')) { exitFullscreen(); return; }
-    }
-    // Alt allein = Pipette; Shift+Alt gehört der Schablone.
-    if (e.key === 'Alt' && !e.shiftKey) $('editor-canvas-wrap').classList.add('is-eyedrop');
-    if (e.key === 'Shift' && e.altKey) $('editor-canvas-wrap').classList.remove('is-eyedrop');
-
-    // Undo/Redo — auch bei Fokus außerhalb von Formularfeldern.
-    if ((e.ctrlKey || e.metaKey) && !e.altKey) {
-      const k = e.key.toLowerCase();
-      if (k === 'z' && !e.shiftKey) { e.preventDefault(); stopRotating(false); commitFloat(); undo(); return; }
-      if (k === 'y' || (k === 'z' && e.shiftKey)) { e.preventDefault(); stopRotating(false); commitFloat(); redo(); return; }
-      // Datei-Menü: sichern und öffnen — statt „Seite speichern" des Browsers.
-      if (k === 's' && !e.shiftKey) { e.preventDefault(); commitFloat(); saveToFile(); return; }
-      if (k === 'o' && !e.shiftKey) { e.preventDefault(); $('load-file-btn').click(); return; }
-    }
-    if (e.key === 'F1') { e.preventDefault(); $('help-btn').click(); return; }
-    // Strg+K: Bitty als Befehlszeile — suchen und ausführen.
-    if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'k' && !anyModalOpen()) { e.preventDefault(); openSearch(); return; }
-
-    if (e.key === 'Enter' && isRotating() && !isTypingTarget(e.target)) {
-      stopRotating(true);
-      info(t('rot.applied'));
-      return;
-    }
-
-    if (isTypingTarget(e.target) || anyModalOpen()) return;
-
-    // ── Timeline: Zellen kopieren, einfügen, leeren ──
-    // Nur nach einem Klick in die Timeline, sonst gehören die Tasten der
-    // Auswahl auf der Zeichenfläche (js/frames.js).
-    if (celKeyDown(e)) return;
-
-    // Strg+Alt+N: neuer Sprite (Strg+N gehört dem Browser — und in der
-    // Desktop-App dem neuen Projekt). e.code: auch bei AltGr und anderem Layout.
-    if ((e.ctrlKey || e.metaKey) && e.altKey && !e.shiftKey && e.code === 'KeyN') {
-      e.preventDefault();
-      $('new-sprite-btn').click();
-      return;
-    }
-
-    // ── Auswahl: Zwischenablage ──
-    if ((e.ctrlKey || e.metaKey) && !e.altKey) {
-      const k = e.key.toLowerCase();
-      if (k === 'a') {
-        e.preventDefault();
-        setTool('select'); selectAll(); updateSelectionUI();
-        info(selectionInfo(t('sel.all')));
-      } else if (k === 'd' && !e.shiftKey) {
-        // Strg+D: Auswahl aufheben (wie in Grafikprogrammen) — nicht das
-        // Lesezeichen des Browsers.
-        e.preventDefault();
-        if (deselect()) { updateSelectionUI(); info(t('sel.dropped')); }
-      } else if (k === 'c' && selection.rect) {
-        e.preventDefault();
-        info(t('sel.copied', { n: copySelection() }));
-        updateSelectionUI();
-      } else if (k === 'x' && selection.rect) {
-        e.preventDefault();
-        if (layerBlocked()) return;
-        info(t('sel.cut', { n: cutSelection() }));
-        updateSelectionUI();
-      } else if (k === 'v') {
-        e.preventDefault();
-        if (layerBlocked()) return;
-        if (!hasClipboard()) info(t('sel.clipEmpty'));
-        else {
-          setTool('select');
-          // Strg+Umschalt+V: die Nummern unverändert (sonst nach der Farbe, remap.js).
-          info(t('sel.pasted', { n: pasteClipboard(e.shiftKey) }));
-          updateSelectionUI();
-        }
-      }
-      return; // andere Strg-Kombis gehören dem Browser
-    }
-
-    // ── Auswahl: verschieben / leeren ──
-    if (selection.rect) {
-      const step = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
-      if (step) {
-        e.preventDefault();
-        nudgeSelection(step[0], step[1]);
-        info(selectionInfo(t('info.moved')));
-        return;
-      }
-      if (e.key === 'Delete' || e.key === 'Backspace') {
-        e.preventDefault();
-        if (layerBlocked()) return;
-        info(t('sel.erased', { n: deleteSelection() }));
-        return;
-      }
-    }
-
-    // ── G: Hilfslinien ein/aus ──
-    if (e.key === 'g' || e.key === 'G') { toggleGuides(); return; }
-
-    // ── Frames: , und . blättern, Pos1/Ende springen, Enter spielt ab ──
-    if (e.key === ',') { prevFrame(); return; }
-    if (e.key === '.') { nextFrame(); return; }
-    // Pfeiltasten (ohne Auswahl — die verschieben sie oben): ← → Frame,
-    // ↑ ↓ Ebene. Menüs, Reiter und Listen behalten ihre eigenen Pfeile.
-    if (/^Arrow/.test(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey
-        && !/** @type {HTMLElement} */ (e.target).closest?.('[role="menubar"], [role="menu"], [role="tablist"], [role="listbox"], [role="dialog"]')) {
-      const sp = getSprite();
-      if (!sp) return;
-      e.preventDefault();
-      if (e.key === 'ArrowLeft') prevFrame();
-      else if (e.key === 'ArrowRight') nextFrame();
-      else setActiveLayer(sp.layer + (e.key === 'ArrowUp' ? 1 : -1));
-      return;
-    }
-    if (e.key === 'Home') { e.preventDefault(); firstFrame(); return; }
-    if (e.key === 'End')  { e.preventDefault(); lastFrame(); return; }
-    if (e.key === 'Enter' && !/** @type {HTMLElement} */ (e.target).closest?.('button, a, select, [role="option"]')) {
-      e.preventDefault();
-      togglePlay();
-      return;
-    }
-
-    if (e.key >= '0' && e.key <= '9') {
-      const idx = Number(e.key);
-      if (idx <= getMaxIdx()) { state.curColor = idx; syncColorActive(); }
-      return;
-    }
-    const tool = TOOL_KEYS[e.key.toLowerCase()];
-    if (tool) setTool(tool);
-  });
+  document.addEventListener('keydown', handleKey);
 
   document.addEventListener('keyup', e => {
     if (e.key === 'Alt') $('editor-canvas-wrap').classList.remove('is-eyedrop');
