@@ -4,7 +4,7 @@
 // Abschnitt 01: Farbe wählen, klicken oder ziehen (Rechtsklick radiert).
 // Abschnitt 02: aus einer Skizze (Beispiel oder eigenes Bild) wird
 // Pixel-Art — Striche werden Kontur, geschlossene Flächen füllen sich.
-// Die Paletten-Knöpfe dort färben beide Abschnitte (und Bitty) um.
+// Die Paletten-Knöpfe dort gelten nur für die Skizze — oben bleibt es blau.
 // Klassisches Skript ohne Module, wie landing-i18n.js. Speichert nichts und
 // lädt nichts hoch — „Im Editor weitermalen“ trägt das Bild im Link mit
 // (siehe linkFor).
@@ -21,7 +21,8 @@
     eis:   ['#14213d', '#2d4870', '#6ea8fe', '#a9d1ff', '#f2f8ff'],
     grau:  ['#141414', '#4a4a4a', '#8a8a8a', '#c4c4c4', '#ffffff'],
   };
-  var pal = 'eis';
+  var pal = 'eis';          // Abschnitt 01 und Bitty — bleibt blau
+  var sketchPal = 'eis';    // Abschnitt 02, per Knopf wählbar
 
   // Beispiel: Bitty, das Maskottchen (js/bitty.js) — Kontur, Schatten, Licht, Augen.
   var SAMPLE = window.Bitty ? window.Bitty.FRAMES.idle : [];
@@ -133,7 +134,7 @@
   board.addEventListener('pointercancel', up);
   board.addEventListener('contextmenu', function (e) { e.preventDefault(); });
 
-  // ── Paletten (Abschnitt 02, gelten für beide) ──
+  // ── Paletten (nur Abschnitt 02 — das Raster oben und Bitty bleiben blau) ──
   var palBtns = document.querySelectorAll('.pal-btn');
   for (var p = 0; p < palBtns.length; p++) {
     var btn = /** @type {HTMLElement} */ (palBtns[p]);
@@ -145,16 +146,14 @@
       chips.appendChild(c);
     }
     btn.addEventListener('click', function (e) {
-      pal = /** @type {HTMLElement} */ (e.currentTarget).dataset.pal || pal;
+      sketchPal = /** @type {HTMLElement} */ (e.currentTarget).dataset.pal || sketchPal;
       syncPal();
-      render();
       drawSketchOut();
-      if (bitty) { bitty.setPalette(PALETTES[pal]); bitty.hop(); }
     });
   }
   function syncPal() {
     for (var i = 0; i < palBtns.length; i++) {
-      palBtns[i].setAttribute('aria-pressed', String(/** @type {HTMLElement} */ (palBtns[i]).dataset.pal === pal));
+      palBtns[i].setAttribute('aria-pressed', String(/** @type {HTMLElement} */ (palBtns[i]).dataset.pal === sketchPal));
     }
   }
 
@@ -162,15 +161,15 @@
   // Im Hash, nicht im Speicher: editor.html#start=eis.14213d,…,f2f8ff.0011…
   // (Palettenname, ihre 5 Farben, dann N×N Ziffern 0–5 Zeile für Zeile).
   // Der Editor legt daraus einen Sprite an (app.js, takeStartDrawing).
-  function linkFor(px, tag) {
+  function linkFor(px, name, tag) {
     for (var i = 0; i < px.length; i++) {
-      if (px[i]) return 'editor.html#start=' + pal + '.' + PALETTES[pal].join(',').replace(/#/g, '') + '.' + Array.prototype.join.call(px, '') + (tag || '');
+      if (px[i]) return 'editor.html#start=' + name + '.' + PALETTES[name].join(',').replace(/#/g, '') + '.' + Array.prototype.join.call(px, '') + (tag || '');
     }
     return 'editor.html';
   }
   var cta = /** @type {HTMLAnchorElement|null} */ (document.querySelector('#malen a[href^="editor.html"]'));
   function syncCta() {
-    if (cta) cta.href = linkFor(cells);
+    if (cta) cta.href = linkFor(cells, pal);
   }
 
   // ── Skizze → Pixel-Art (Abschnitt 02) ──
@@ -417,10 +416,10 @@
     ctx.clearRect(0, 0, N, N);
     for (var i = 0; i < N * N; i++) {
       if (!result[i]) continue;
-      ctx.fillStyle = PALETTES[pal][result[i] - 1];
+      ctx.fillStyle = PALETTES[sketchPal][result[i] - 1];
       ctx.fillRect(i % N, (i / N) | 0, 1, 1);
     }
-    if (sketchCta) sketchCta.href = linkFor(result, '.skizze');
+    if (sketchCta) sketchCta.href = linkFor(result, sketchPal, '.skizze');
   }
 
   function loadSketchSample() {
