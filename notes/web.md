@@ -1,3 +1,15 @@
+# 3.2.21
+
+## Deutsch
+
+- Aseprite-Dateien: „Öffnen …“ und „Sprite hinzufügen …“ nehmen jetzt .aseprite und .ase an — mit Ebenen, Frames samt Dauer, verknüpften Zellen, Tags, Palette und Tilemaps. Datei → „Als Aseprite speichern …“ schreibt den aktuellen Sprite als .aseprite-Datei (Masken werden eingerechnet).
+- Kleinere Verbesserungen an der Oberfläche.
+
+## English
+
+- Aseprite files: “Open …” and “Add sprite …” now take .aseprite and .ase — with layers, frames and their durations, linked cels, tags, palette and tilemaps. File → “Save as Aseprite …” writes the current sprite as an .aseprite file (masks are baked in).
+- Small improvements to the interface.
+
 # 3.2.20
 
 ## Deutsch

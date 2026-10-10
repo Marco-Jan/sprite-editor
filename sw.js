@@ -48,6 +48,7 @@ const PRECACHE = [
   'impressum.html',
   'index.html',
   'js/app.js',
+  'js/aseprite.js',
   'js/bitty.js',
   'js/calc.js',
   'js/cels.js',

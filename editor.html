@@ -86,6 +86,7 @@
           <!-- Einzelne Sprites statt des ganzen Projekts (js/storage.js) -->
           <button type="button" class="mb-item" role="menuitem" id="save-sprite-btn"><span data-i18n="mb.saveSprite">Sprite sichern …</span></button>
           <button type="button" class="mb-item" role="menuitem" id="add-sprite-btn"><span data-i18n="mb.addSprite">Sprite hinzufügen …</span></button>
+          <button type="button" class="mb-item" role="menuitem" id="save-ase-btn" data-i18n-attr="title:mb.saveAseTitle" title="Den aktuellen Sprite als .aseprite-Datei — Ebenen, Frames, Tags, Palette und Tilemaps bleiben; Masken werden eingerechnet"><span data-i18n="mb.saveAse">Als Aseprite speichern …</span></button>
           <div class="mb-sep" role="separator"></div>
           <button type="button" class="mb-item" role="menuitem" data-open="output"><span data-i18n="mb.export">Exportieren …</span></button>
           <!-- Nur sichtbar, wenn der Browser die Installation anbietet (js/pwa.js). -->
@@ -137,11 +138,10 @@
         </div>
       </div>
     </nav>
-    <input type="file" id="load-file-input" accept=".json,.bitty,application/json" hidden>
-    <input type="file" id="add-sprite-input" accept=".bitty,.json,application/json" hidden>
+    <input type="file" id="load-file-input" accept=".json,.bitty,.aseprite,.ase,application/json" hidden>
+    <input type="file" id="add-sprite-input" accept=".bitty,.json,.aseprite,.ase,application/json" hidden>
     <!-- Projektname (js/projectsui.js): Klick öffnet die Projektliste -->
     <button type="button" id="project-btn" class="project-btn" data-i18n-attr="title:tb.projects" title="Projekte — öffnen, neu anlegen, umbenennen"></button>
-    <span id="doc-title" class="doc-title"></span>
     <span id="save-indicator" class="save-indicator" data-i18n="tb.saved">gespeichert</span>
     <!-- Bitty, der Helfer (js/helper.js): Klick = Tipp -->
     <button type="button" class="bitty-btn" id="bitty-btn" aria-expanded="false"

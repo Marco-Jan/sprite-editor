@@ -33,7 +33,7 @@ import {
 } from './render.js';
 import {
   saveState, loadState, clearStorage, forceSaveBeforeUnload, saveToFile, loadFromFile,
-  saveSpriteToFile, addSpritesFromFile,
+  saveSpriteToFile, addSpritesFromFile, saveAseToFile,
   backupInfo, downloadBackup, restoreBackup,
 } from './storage.js';
 import { supportsFsAccess, pickSaveDirectory, getStoredDirName, saveBlob } from './filesystem.js';
@@ -1510,6 +1510,7 @@ function initTopbar() {
   // Einzelne Sprites: nur den aktuellen sichern, oder Sprites aus einer
   // Datei (Sprite- oder Projektdatei) zum Projekt hinzufügen.
   $('save-sprite-btn').addEventListener('click', () => { commitFloat(); saveSpriteToFile(); });
+  $('save-ase-btn').addEventListener('click', () => { commitFloat(); saveAseToFile(); });
   const addInput = $('add-sprite-input');
   $('add-sprite-btn').addEventListener('click', () => addInput.click());
   addInput.addEventListener('change', e => {

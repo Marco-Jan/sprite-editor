@@ -433,8 +433,6 @@ export function updateStageTitle() {
         + ` · ${sp.palette}`
       : '';
   }
-  const docTitle = document.getElementById('doc-title');
-  if (docTitle) docTitle.textContent = sp ? sp.name : '';
 }
 
 // Maus-/Touch-Event → Grid-Zelle (oder null wenn außerhalb)
