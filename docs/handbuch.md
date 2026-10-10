@@ -225,13 +225,6 @@ fast aus wie vorher; 16 oder 32 geben den typischen Pixel-Art-Look.
 **Farbzeile**: 0–9 groß (Tasten), danach bis zu 32 weitere Palettenfarben als kleine
 Felder; bei mehr öffnet `+N` das ganze Raster im Paletten-Panel.
 
-| Index | Konvention (kein Zwang) |
-|---|---|
-| 0 | Transparent |
-| 1–4 | Tonleiter hell → dunkel |
-| 5 | Outline / Kontur |
-| 6–9 | Akzent A · Highlight · Akzent B · Akzent C |
-
 **Eingebaut, neutral**: `graustufen`, `golden`, `braun`, `kohle`, `creme`, `schiefer`,
 `orange`, `tinte`, `schnee` — reine Farbschemata, schreibgeschützt.
 
@@ -242,9 +235,12 @@ geliehen. Alle neun Slots sind belegt, und jede Kontur hebt sich vom mittleren T
 mindestens 3:1 ab — sonst verschwindet sie beim Zeichnen.
 
 **Eigene Paletten**: über `+ Palette` neu anlegen (mit `+ Farbe` / `− Letzte` auf jede
-Größe bis 255) oder mit `Kopie bearbeiten` aus einer eingebauten ableiten. Ein
-**Doppelklick** auf ein Feld im Raster ändert die Farbe — alle Pixel mit diesem Index
-färben sich mit.
+Größe bis 255) oder mit `Kopie bearbeiten` aus einer eingebauten ableiten. Direkt im
+Raster geht es auch ohne Fenster: das leere **+**-Feld am Ende hängt eine Farbe an und
+öffnet gleich den Farbwähler, ein **Doppelklick** auf ein Feld ändert die Farbe — alle
+Pixel mit diesem Index färben sich mit —, und der **Rechtsklick** dupliziert ein Feld
+(die Kopie kommt ans Ende), kopiert seine Farbe oder fügt eine kopierte ein. Bei einer
+eingebauten Palette legt das automatisch eine eigene Kopie an.
 
 Jeder Sprite merkt sich seine eigene Palette.
 

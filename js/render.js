@@ -41,6 +41,9 @@ export const renderCallbacks = {
   onDeletePalette:   (_name) => {},
   onImageToPalette:  () => {},
   onPreviewPalette:  (_name) => {},
+  // Farben direkt im Paletten-Raster (palettes.js) — „+“, Duplizieren, Einfügen.
+  onAppendColor:     (_hex) => /** @type {{name: string, idx: number} | null} */ (null),
+  onSetColor:        (_idx, _hex) => {},
   // Felder im Bild-Panel an die Maße des aktiven Sprites angleichen.
   onSyncImagePanel:  () => {},
   // Timeline (frames.js): ganz neu zeichnen bzw. nur den aktuellen Frame.
@@ -963,8 +966,7 @@ export function renderPalette() {
     sw.dataset.idx = String(i);
     if (i !== 0) sw.style.background = color || 'var(--surface-3)';
     sw.title = i === 0 ? colorLabel(0)
-      : t('pal.swInfo', { i, label: colorLabel(i), hex: color || '—' })
-        + '\n' + t(custom ? 'pal.swEdit' : 'pal.swPick');
+      : t('pal.swInfo', { i, hex: color || '—' }) + '\n' + t('pal.swEdit');
     if (i === PALETTE_GROUP_SPLIT + 1 && size > PALETTE_GROUP_SPLIT) sw.classList.add('is-group');
 
     // Klick: damit malen. Aus der Sprite-Palette als Index, aus einer
@@ -973,16 +975,99 @@ export function renderPalette() {
       state.curColor = i === 0 ? 0 : isSprite ? i : (color || '#888888');
       syncColorActive();
     });
-    // Doppelklick: Farbe ändern (nur eigene Paletten).
+    // Doppelklick: Farbe ändern. Eine eingebaute Palette wird dafür kopiert.
     sw.addEventListener('dblclick', () => {
       if (i === 0) return;
-      if (!custom) { showInfoToast(t('pal.hint.builtin')); return; }
-      editPaletteColor(name, i);
+      editAnyPaletteColor(i);
+    });
+    // Rechtsklick: Duplizieren, Kopieren, Einfügen, Ändern.
+    sw.addEventListener('contextmenu', e => {
+      e.preventDefault();
+      if (i === 0) return;
+      openSwatchMenu(e.clientX, e.clientY, i, color);
     });
     items.appendChild(sw);
   }
+
+  // Leeres Feld mit „+“ am Ende: neue Farbe anhängen und gleich wählen.
+  if (size < MAX_COLORS) {
+    const add = document.createElement('button');
+    add.type = 'button';
+    add.className = 'pal-sw pal-add';
+    add.textContent = '+';
+    add.title = t('pal.addColorTitle');
+    add.addEventListener('click', () => {
+      const cur = state.curColor;
+      const hex = typeof cur === 'string' ? cur : (cur && getPal()[cur]) || '#888888';
+      addPaletteColor(hex, true);
+    });
+    items.appendChild(add);
+  }
   syncPaletteGridActive();
 }
+
+// Farbe ans Ende der angezeigten Palette; mit `pick` öffnet danach der
+// Farbwähler. Gehört sie dem Sprite, malt man gleich damit.
+function addPaletteColor(hex, pick) {
+  const res = renderCallbacks.onAppendColor(hex);
+  if (!res) return;
+  if (res.name === getPaletteName()) { state.curColor = res.idx; syncColorActive(); syncPaletteGridActive(); }
+  if (pick) editPaletteColor(res.name, res.idx);
+}
+
+// Farbe ändern — auch in einer eingebauten Palette (die wird dann kopiert).
+function editAnyPaletteColor(i) {
+  const name = getPreviewName();
+  if (isCustomPalette(name)) { editPaletteColor(name, i); return; }
+  renderCallbacks.onSetColor(i, getPaletteByName(name)[i] || '#888888');
+  editPaletteColor(getPreviewName(), i);
+}
+
+// ── Rechtsklick-Menü eines Farbfelds ──
+let _swatchMenu = null;
+let _copiedColor = null;
+function openSwatchMenu(x, y, i, color) {
+  closeSwatchMenu();
+  const menu = document.createElement('div');
+  menu.className = 'mb-drop pal-menu';
+  menu.setAttribute('role', 'menu');
+  const item = (label, fn, disabled = false) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'mb-item';
+    b.setAttribute('role', 'menuitem');
+    b.textContent = label;
+    b.disabled = disabled;
+    b.addEventListener('click', () => { closeSwatchMenu(); fn(); });
+    menu.appendChild(b);
+  };
+  const hex = color || '#888888';
+  item(t('pal.menu.duplicate'), () => addPaletteColor(hex, false));
+  item(t('pal.menu.copy'), () => {
+    _copiedColor = hex;
+    navigator.clipboard?.writeText(hex).catch(() => {});
+  });
+  item(_copiedColor ? t('pal.menu.pasteHex', { hex: _copiedColor }) : t('pal.menu.paste'),
+    () => renderCallbacks.onSetColor(i, _copiedColor), !_copiedColor);
+  item(t('pal.menu.edit'), () => editAnyPaletteColor(i));
+  document.body.appendChild(menu);
+  // Im Fenster halten.
+  const r = menu.getBoundingClientRect();
+  menu.style.left = Math.max(4, Math.min(x, innerWidth - r.width - 4)) + 'px';
+  menu.style.top  = Math.max(4, Math.min(y, innerHeight - r.height - 4)) + 'px';
+  _swatchMenu = menu;
+  document.addEventListener('pointerdown', onSwatchMenuOutside, true);
+  document.addEventListener('keydown', onSwatchMenuKey, true);
+  menu.querySelector('button')?.focus();
+}
+function closeSwatchMenu() {
+  _swatchMenu?.remove();
+  _swatchMenu = null;
+  document.removeEventListener('pointerdown', onSwatchMenuOutside, true);
+  document.removeEventListener('keydown', onSwatchMenuKey, true);
+}
+function onSwatchMenuOutside(e) { if (!_swatchMenu?.contains(e.target)) closeSwatchMenu(); }
+function onSwatchMenuKey(e) { if (e.key === 'Escape') { e.stopPropagation(); closeSwatchMenu(); } }
 
 // Ein unsichtbarer Farbwähler für alle Felder des Rasters.
 let _palPicker = null;
@@ -1010,7 +1095,20 @@ function editPaletteColor(name, i) {
   _palPicker.dataset.name = name;
   _palPicker.dataset.idx = i;
   _palPicker.value = customPalettes[name]?.[i] || '#888888';
+  // Der Browser öffnet den Farbwähler am Eingabefeld — darum das unsichtbare
+  // Feld erst unter das Farbfeld schieben, sonst klebt er in einer Ecke.
+  const sw = document.querySelector(`#palette-items[data-palette="${name}"] .pal-sw[data-idx="${i}"]`);
+  placeHiddenPicker(_palPicker, sw);
   _palPicker.click();
+}
+
+// Unsichtbares <input type="color"> an die Unterkante von `anchor` setzen.
+export function placeHiddenPicker(input, anchor) {
+  let r = anchor?.getBoundingClientRect();
+  if (r && !r.width && !r.height) r = undefined;   // Panel zu — dann mittig
+  input.style.position = 'fixed';
+  input.style.left = (r ? r.left : innerWidth / 2) + 'px';
+  input.style.top  = (r ? r.bottom : innerHeight / 3) + 'px';
 }
 
 // Markierung im Raster + Zeile darunter, welche Farbe gerade gewählt ist.
@@ -1033,7 +1131,7 @@ function syncPaletteGridActive() {
   const info = document.getElementById('palette-pick-info');
   if (!info) return;
   if (hit === null || hit === 0) { info.textContent = hit === 0 ? colorLabel(0) : ''; return; }
-  info.textContent = t('pal.swInfo', { i: hit, label: colorLabel(hit), hex: pal[hit] || '—' });
+  info.textContent = t('pal.swInfo', { i: hit, hex: pal[hit] || '—' });
 }
 
 // ────────────────────────────────────────────────────────────────────

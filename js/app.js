@@ -29,7 +29,7 @@ import {
   renderFreeColorsList, countCurrentColor,
   cellFromEvent, cellFromEventClamped, cellToColor, paintCell, paintBrush, paintSpray, floodFill,
   ppActive, ppBegin, ppEnd, paintPixelPerfect,
-  renderCallbacks, shapeCells, commitShape,
+  renderCallbacks, shapeCells, commitShape, placeHiddenPicker,
 } from './render.js';
 import {
   saveState, loadState, clearStorage, forceSaveBeforeUnload, saveToFile, loadFromFile,
@@ -44,7 +44,7 @@ import {
 import {
   openPaletteModal, initPaletteModal, deleteCustomPalette,
   previewPalette, assignPalette, forkPreviewPalette, addFreeColorsToPalette,
-  createPaletteFromImport,
+  createPaletteFromImport, appendPaletteColor, setPaletteColor,
 } from './palettes.js';
 import {
   initTemplate, tplLoaded, tplHasOffscreen,
@@ -109,6 +109,8 @@ renderCallbacks.onDuplicateSprite  = duplicateSprite;
 renderCallbacks.onOpenPaletteModal = openPaletteModal;
 renderCallbacks.onEditPalette      = openPaletteModal;
 renderCallbacks.onImageToPalette   = openReduceModal;
+renderCallbacks.onAppendColor      = appendPaletteColor;
+renderCallbacks.onSetColor         = setPaletteColor;
 renderCallbacks.onSyncImagePanel   = () => syncImagePanel();
 
 renderCallbacks.onDeleteSprite = id => {
@@ -1062,6 +1064,7 @@ function initPalettePanel() {
     } else if (state.curColor !== 0) {
       picker.value = getPal()[state.curColor] || '#888888';
     }
+    placeHiddenPicker(picker, $('current-color'));
     picker.click();
   });
   picker.addEventListener('input', () => {

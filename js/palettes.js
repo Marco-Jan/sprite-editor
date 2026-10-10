@@ -90,6 +90,13 @@ export function assignPalette(name, { keepLook }) {
 // Kopiert die angezeigte Palette. War es die des Sprites, nutzt der Sprite
 // danach die Kopie — die Farben sind identisch, das Bild ändert sich nicht.
 export function forkPreviewPalette() {
+  const name = forkSilently();
+  renderAll();
+  saveState();
+  showInfoToast(t('pal.forked', { name }));
+}
+
+function forkSilently() {
   const src = getPreviewName();
   const name = uniquePaletteName(src + '_kopie');
   customPalettes[name] = { ...getPaletteByName(src) };
@@ -97,9 +104,44 @@ export function forkPreviewPalette() {
   const sp = getSprite();
   if (sp && sp.palette === src) { sp.palette = name; state.palPreview = null; }
   else state.palPreview = name;
+  return name;
+}
+
+// Die angezeigte Palette, änderbar: eine eingebaute wird dafür still kopiert
+// (mit Hinweis), damit „+“, Duplizieren und Einfügen dort auch gehen.
+function editablePreviewPalette() {
+  const src = getPreviewName();
+  if (isCustomPalette(src)) return src;
+  const name = forkSilently();
+  showInfoToast(t('pal.forkedAuto', { name }));
+  return name;
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Einzelne Farben direkt im Raster (Panel): anhängen, überschreiben
+// ────────────────────────────────────────────────────────────────────
+// Neue Farben kommen immer ans Ende — so verschiebt sich kein Index und
+// keine Zeichnung ändert ihr Aussehen.
+// Rückgabe: { name, idx } der neuen Farbe, oder null, wenn die Palette voll ist.
+export function appendPaletteColor(hex) {
+  if (paletteSize(getPaletteByName(getPreviewName())) >= MAX_COLORS) {
+    showInfoToast(t('pal.full', { max: MAX_COLORS }));
+    return null;
+  }
+  const name = editablePreviewPalette();
+  const pal = customPalettes[name];
+  const idx = paletteSize(pal) + 1;
+  pal[idx] = hex;
   renderAll();
   saveState();
-  showInfoToast(t('pal.forked', { name }));
+  return { name, idx };
+}
+
+export function setPaletteColor(idx, hex) {
+  const name = editablePreviewPalette();
+  customPalettes[name][idx] = hex;
+  renderAll();
+  saveState();
 }
 
 // ────────────────────────────────────────────────────────────────────

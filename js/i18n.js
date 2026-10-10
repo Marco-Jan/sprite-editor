@@ -84,11 +84,11 @@ export function tn(key, n, params) {
 }
 
 // Palette-Index → Beschriftung (lang, für die Farbliste im Panel).
-// Namen gibt es nur für 0–9 (Tonleiter, Kontur, Akzente); darüber "Farbe 12".
-export function colorLabel(i) { return i > 9 ? t('color.labelN', { i }) : t(`color.label.${i}`); }
+// Index 0 heißt „Transparent“, alle anderen schlicht „Farbe 12“.
+export function colorLabel(i) { return i > 0 ? t('color.labelN', { i }) : t('color.label.0'); }
 
 // Kurzform für enge Stellen (Quick-Palette, Statuszeile).
-export function colorLabelShort(i) { return i > 9 ? t('color.labelN', { i }) : t(`color.short.${i}`); }
+export function colorLabelShort(i) { return i > 0 ? t('color.labelN', { i }) : t('color.short.0'); }
 
 // ────────────────────────────────────────────────────────────────────
 // Statisches DOM
@@ -933,25 +933,7 @@ const MSG = {
 
     // Palette-Beschriftungen
     'color.label.0': 'Transparent',
-    'color.label.1': 'Ton 1 — hellster',
-    'color.label.2': 'Ton 2',
-    'color.label.3': 'Ton 3',
-    'color.label.4': 'Ton 4 — dunkelster',
-    'color.label.5': 'Outline / Kontur',
-    'color.label.6': 'Akzent A',
-    'color.label.7': 'Highlight',
-    'color.label.8': 'Akzent B',
-    'color.label.9': 'Akzent C',
     'color.short.0': 'Transparent',
-    'color.short.1': 'Ton 1',
-    'color.short.2': 'Ton 2',
-    'color.short.3': 'Ton 3',
-    'color.short.4': 'Ton 4',
-    'color.short.5': 'Outline',
-    'color.short.6': 'Akzent A',
-    'color.short.7': 'Highlight',
-    'color.short.8': 'Akzent B',
-    'color.short.9': 'Akzent C',
     'color.labelN':  'Farbe {i}',
 
     // Wirkungsbereich
@@ -983,14 +965,21 @@ const MSG = {
     // Farb-Panel
     'pal.origin.custom':   'eigene',
     'pal.origin.builtin':  'eingebaut',
-    'pal.hint.custom':     'Doppelklick auf eine Farbe ändert sie — Bilder mit dieser Palette färben sich mit.',
+    'pal.hint.custom':     '„+“ fügt eine Farbe hinzu, Doppelklick ändert sie, Rechtsklick dupliziert oder kopiert. Bilder mit dieser Palette färben sich mit.',
     'pal.statusActive_one':    'Dein Sprite nutzt diese Palette · {n} Farbe',
     'pal.statusActive_other':  'Dein Sprite nutzt diese Palette · {n} Farben',
     'pal.statusPreview_one':   'Vorschau · {n} Farbe — dein Sprite nutzt „{name}“',
     'pal.statusPreview_other': 'Vorschau · {n} Farben — dein Sprite nutzt „{name}“',
-    'pal.swInfo':          '{i} · {label} · {hex}',
-    'pal.swEdit':          'Klick: damit malen · Doppelklick: Farbe ändern',
-    'pal.swPick':          'Klick: damit malen',
+    'pal.swInfo':          '{i} · {hex}',
+    'pal.swEdit':          'Klick: damit malen · Doppelklick: ändern · Rechtsklick: duplizieren, kopieren …',
+    'pal.addColorTitle':   'Neue Farbe hinzufügen',
+    'pal.menu.duplicate':  'Duplizieren',
+    'pal.menu.copy':       'Farbe kopieren',
+    'pal.menu.paste':      'Farbe einfügen',
+    'pal.menu.pasteHex':   '{hex} einfügen',
+    'pal.menu.edit':       'Farbe ändern …',
+    'pal.full':            'Die Palette ist voll — mehr als {max} Farben gehen nicht.',
+    'pal.forkedAuto':      'Eingebaute Paletten bleiben unverändert — die Änderung steht in der Kopie „{name}“.',
     'pal.miniTitle':       '{i} · {hex}',
     'pal.moreCount':       '+{n}',
     'pal.moreTitle':       'Alle {n} Farben im Paletten-Panel zeigen',
@@ -1014,7 +1003,7 @@ const MSG = {
     'red.intro_other':     'Das Bild hat {n} verschiedene Farben. Eine Palette fasst bis zu {max} — weniger Farben ergeben mehr Pixel-Art-Look.',
     'red.after_one':       'Nachher · {n} Farbe',
     'red.after_other':     'Nachher · {n} Farben',
-    'pal.hint.builtin':    'Eingebaute Paletten sind schreibgeschützt. „Kopie bearbeiten“ macht sie änderbar.',
+    'pal.hint.builtin':    'Eingebaute Paletten bleiben unverändert — wer hier eine Farbe hinzufügt oder ändert, bekommt automatisch eine eigene Kopie.',
     'pal.swatchTitle':     'Farbe ändern',
     'pal.groupBuiltin':    'Eingebaut',
     'pal.groupCustom':     'Eigene',
@@ -1591,25 +1580,7 @@ const MSG = {
     'tile.blocked':     'Manual: empty cells are not painted (choose “Auto” for that).',
 
     'color.label.0': 'Transparent',
-    'color.label.1': 'Tone 1 — lightest',
-    'color.label.2': 'Tone 2',
-    'color.label.3': 'Tone 3',
-    'color.label.4': 'Tone 4 — darkest',
-    'color.label.5': 'Outline',
-    'color.label.6': 'Accent A',
-    'color.label.7': 'Highlight',
-    'color.label.8': 'Accent B',
-    'color.label.9': 'Accent C',
     'color.short.0': 'Transparent',
-    'color.short.1': 'Tone 1',
-    'color.short.2': 'Tone 2',
-    'color.short.3': 'Tone 3',
-    'color.short.4': 'Tone 4',
-    'color.short.5': 'Outline',
-    'color.short.6': 'Accent A',
-    'color.short.7': 'Highlight',
-    'color.short.8': 'Accent B',
-    'color.short.9': 'Accent C',
     'color.labelN':  'Color {i}',
 
     'scope.sprite':    'Sprite',
@@ -1636,14 +1607,21 @@ const MSG = {
 
     'pal.origin.custom':   'custom',
     'pal.origin.builtin':  'built-in',
-    'pal.hint.custom':     'Double-click a color to change it — images using this palette recolor with it.',
+    'pal.hint.custom':     '“+” adds a color, double-click changes it, right-click duplicates or copies it. Images using this palette recolor with it.',
     'pal.statusActive_one':    'Your sprite uses this palette · {n} color',
     'pal.statusActive_other':  'Your sprite uses this palette · {n} colors',
     'pal.statusPreview_one':   'Preview · {n} color — your sprite uses “{name}”',
     'pal.statusPreview_other': 'Preview · {n} colors — your sprite uses “{name}”',
-    'pal.swInfo':          '{i} · {label} · {hex}',
-    'pal.swEdit':          'Click: paint with it · Double-click: change the color',
-    'pal.swPick':          'Click: paint with it',
+    'pal.swInfo':          '{i} · {hex}',
+    'pal.swEdit':          'Click: paint with it · Double-click: change · Right-click: duplicate, copy …',
+    'pal.addColorTitle':   'Add a new color',
+    'pal.menu.duplicate':  'Duplicate',
+    'pal.menu.copy':       'Copy color',
+    'pal.menu.paste':      'Paste color',
+    'pal.menu.pasteHex':   'Paste {hex}',
+    'pal.menu.edit':       'Change color …',
+    'pal.full':            'The palette is full — it can’t hold more than {max} colors.',
+    'pal.forkedAuto':      'Built-in palettes stay as they are — the change went into the copy “{name}”.',
     'pal.miniTitle':       '{i} · {hex}',
     'pal.moreCount':       '+{n}',
     'pal.moreTitle':       'Show all {n} colors in the palette panel',
@@ -1667,7 +1645,7 @@ const MSG = {
     'red.intro_other':     'The image has {n} different colors. A palette holds up to {max} — fewer colors give more of a pixel-art look.',
     'red.after_one':       'After · {n} color',
     'red.after_other':     'After · {n} colors',
-    'pal.hint.builtin':    'Built-in palettes are read-only. “Edit a copy” makes an editable one.',
+    'pal.hint.builtin':    'Built-in palettes stay as they are — adding or changing a color here gives you your own copy automatically.',
     'pal.swatchTitle':     'Change the color',
     'pal.groupBuiltin':    'Built-in',
     'pal.groupCustom':     'Custom',

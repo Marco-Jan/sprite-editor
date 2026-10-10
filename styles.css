@@ -1596,6 +1596,22 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
 }
 .pal-sw:hover { border-color: var(--text-muted); transform: scale(1.12); position: relative; z-index: 1; }
 .pal-sw.is-active { border-color: var(--text); box-shadow: 0 0 0 2px var(--bg), 0 0 0 3px var(--accent); position: relative; z-index: 2; }
+/* Leeres Feld am Ende: neue Farbe hinzufügen. */
+.pal-add {
+  display: grid;
+  place-items: center;
+  border-style: dashed;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--fs-md);
+  line-height: 1;
+}
+.pal-add:hover { color: var(--text); background: var(--surface-3); }
+/* Rechtsklick-Menü eines Farbfelds (render.js) — sieht aus wie die Menüleiste. */
+.pal-menu { position: fixed; top: 0; left: 0; min-width: 11rem; }
+.pal-menu .mb-item { padding-left: 10px; }
+.pal-menu .mb-item:disabled { color: var(--text-dim); cursor: default; background: transparent; }
 .pal-pick { min-height: 1.2em; margin: 0; font-family: var(--mono); font-size: var(--fs-xs); color: var(--text-dim); }
 
 /* ── 8 · Modale + Toast ─────────────────────────────────────────── */
