@@ -2,10 +2,12 @@
 
 ## Deutsch
 
+- Ebenen lassen sich jetzt auch direkt in der Timeline bedienen: neu, nach oben und unten, verdoppeln, zusammenführen, löschen, Maske und Deckkraft — wie in der Desktop-App. Das Panel „Ebenen“ bleibt.
 - Neue Tastenkürzel: Strg+D hebt die Auswahl auf, Strg+Alt+N legt einen neuen Sprite an.
 
 ## English
 
+- Layers can now be handled right in the timeline too: new, up and down, duplicate, merge, delete, mask and opacity — like in the desktop app. The “Layers” panel stays.
 - New shortcuts: Ctrl+D drops the selection, Ctrl+Alt+N creates a new sprite.
 
 # 3.2.19

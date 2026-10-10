@@ -427,6 +427,28 @@
         </div>
         <button class="btn" id="tl-onion" aria-pressed="false" data-i18n-attr="title:tl.onion" title="Onion Skin — vorigen und nächsten Frame durchscheinen lassen"><span class="ico" data-icon="onion"></span></button>
         <button class="btn" id="tl-tag" data-i18n-attr="title:tl.tag" title="Tag anlegen — benennt die markierten Frames, z. B. „Laufen“"><span class="ico" data-icon="tag"></span></button>
+        <!-- Ebenen: dieselben Knöpfe wie im Panel „Ebenen“, hier bei den Zeilen (js/layers.js) -->
+        <div class="btn-group tl-lyops" role="group" data-i18n-attr="aria-label:ly.title" aria-label="Ebenen">
+          <button class="btn" id="tl-ly-add" data-i18n-attr="title:ly.add" title="Neue Ebene über der aktiven"><span class="ico" data-icon="plus"></span></button>
+          <button class="btn" id="tl-ly-up" data-i18n-attr="title:ly.up" title="Ebene nach oben"><span class="ico" data-icon="up"></span></button>
+          <button class="btn" id="tl-ly-down" data-i18n-attr="title:ly.down" title="Ebene nach unten"><span class="ico" data-icon="down"></span></button>
+          <button class="btn" id="tl-ly-dup" data-i18n-attr="title:ly.dup" title="Ebene duplizieren"><span class="ico" data-icon="copy"></span></button>
+          <button class="btn" id="tl-ly-merge" data-i18n-attr="title:ly.merge" title="Nach unten zusammenführen — in jedem Frame"><span class="ico" data-icon="mergeDown"></span></button>
+          <button class="btn" id="tl-ly-merge-all" data-i18n-attr="title:ly.mergeAll" title="Alle sichtbaren Ebenen zusammenführen — in jedem Frame, auch Licht und Schatten; ausgeblendete bleiben"><span class="ico" data-icon="mergeAll"></span></button>
+          <button class="btn" id="tl-ly-del" data-i18n-attr="title:ly.del" title="Ebene löschen"><span class="ico" data-icon="trash"></span></button>
+        </div>
+        <div class="btn-group tl-lymask" role="group" data-i18n-attr="aria-label:mask.label" aria-label="Maske">
+          <button class="btn" id="tl-mask-add" data-i18n-attr="title:mask.addTitle" title="Maske hinzufügen — damit blendest du Teile der Ebene aus, ohne sie zu löschen"><span class="ico" data-icon="mask"></span></button>
+          <button class="btn" id="tl-mask-edit" aria-pressed="false" hidden data-i18n-attr="title:mask.editTitle" title="Maske bearbeiten: Malen blendet aus, Radieren blendet wieder ein"><span class="ico" data-icon="brush"></span></button>
+          <button class="btn" id="tl-mask-on" hidden data-i18n-attr="title:mask.off" title="Maske ausschalten (alles sichtbar)"><span class="ico" data-icon="eye"></span></button>
+          <button class="btn" id="tl-mask-apply" hidden data-i18n-attr="title:mask.applyTitle" title="Maske anwenden: ausgeblendete Pixel werden gelöscht, die Maske verschwindet"><span class="ico" data-icon="check"></span></button>
+          <button class="btn" id="tl-mask-del" hidden data-i18n-attr="title:mask.delTitle" title="Maske löschen — alles wieder sichtbar"><span class="ico" data-icon="trash"></span></button>
+        </div>
+        <label class="field field--inline tl-num" id="tl-op-field" data-i18n-attr="title:ly.opacityTitle" title="Deckkraft der aktiven Ebene">
+          <span class="field-label" data-i18n="ly.opacity">Deckkraft</span>
+          <input type="number" id="tl-ly-opacity" class="input input--sm" min="0" max="100" step="5" value="100">
+          <span class="field-value">%</span>
+        </label>
         <!-- Zellen: wirken auf den Bereich im Raster oder die aktive Zelle (js/frames.js, js/cels.js) -->
         <div class="btn-group tl-celops" role="group" data-i18n-attr="aria-label:tl.cels" aria-label="Zellen">
           <button class="btn" id="tl-ccopy" data-i18n-attr="title:tl.ccopy" title="Zellen kopieren (Strg+C, nach einem Klick in die Timeline)"><span class="ico" data-icon="copy"></span></button>

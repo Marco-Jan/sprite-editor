@@ -383,14 +383,28 @@ export function renderLayers() {
   $('ly-merge').disabled = sp.layer === 0;
   $('ly-merge-all').disabled = sp.layers.filter(L => L.visible && L.opacity > 0).length < 2;
   const m = L.mask;
-  $('ly-mask-add').hidden = !!m;
-  for (const id of ['ly-mask-edit', 'ly-mask-on', 'ly-mask-apply', 'ly-mask-del']) $(id).hidden = !m;
-  if (m) {
-    const editing = !!state.maskEdit;
-    $('ly-mask-edit').classList.toggle('is-active', editing);
-    $('ly-mask-edit').setAttribute('aria-pressed', String(editing));
-    $('ly-mask-on').innerHTML = iconSvg(m.on ? 'eye' : 'eyeOff');
-    $('ly-mask-on').title = t(m.on ? 'mask.off' : 'mask.on');
+  // Panel (ly-…) und Timeline-Leiste (tl-…) zeigen denselben Stand.
+  for (const pre of ['ly-', 'tl-']) {
+    const mk = id => $(pre + id);
+    if (!mk('mask-add')) continue;
+    mk('mask-add').hidden = !!m;
+    for (const id of ['mask-edit', 'mask-on', 'mask-apply', 'mask-del']) mk(id).hidden = !m;
+    if (m) {
+      const editing = !!state.maskEdit;
+      mk('mask-edit').classList.toggle('is-active', editing);
+      mk('mask-edit').setAttribute('aria-pressed', String(editing));
+      mk('mask-on').innerHTML = iconSvg(m.on ? 'eye' : 'eyeOff');
+      mk('mask-on').title = t(m.on ? 'mask.off' : 'mask.on');
+    }
+  }
+  const tlOp = $('tl-ly-opacity');
+  if (tlOp) {
+    if (document.activeElement !== tlOp) tlOp.value = String(Math.round(L.opacity * 100));
+    $('tl-ly-del').disabled = n < 2;
+    $('tl-ly-merge').disabled = sp.layer === 0;
+    $('tl-ly-merge-all').disabled = $('ly-merge-all').disabled;
+    $('tl-ly-up').disabled = sp.layer >= n - 1;
+    $('tl-ly-down').disabled = sp.layer === 0;
   }
 }
 
@@ -451,6 +465,25 @@ function initRowDrag(row) {
 
 export function initLayers() {
   $('ly-add').addEventListener('click', addLayer);
+  // Dieselben Knöpfe in der Timeline-Leiste (editor.html, Gruppe tl-lyops).
+  const on = (id, fn) => $(id)?.addEventListener('click', fn);
+  on('tl-ly-add', addLayer);
+  on('tl-ly-dup', duplicateLayer);
+  on('tl-ly-del', deleteLayer);
+  on('tl-ly-merge', mergeDown);
+  on('tl-ly-merge-all', mergeVisible);
+  on('tl-ly-up', () => { const sp = getSprite(); if (sp) moveLayer(sp.layer, sp.layer + 1); });
+  on('tl-ly-down', () => { const sp = getSprite(); if (sp) moveLayer(sp.layer, sp.layer - 1); });
+  on('tl-mask-add', addMask);
+  on('tl-mask-edit', () => toggleMaskEdit());
+  on('tl-mask-on', toggleMaskOn);
+  on('tl-mask-apply', applyMask);
+  on('tl-mask-del', deleteMask);
+  $('tl-ly-opacity')?.addEventListener('change', e => {
+    const sp = getSprite();
+    const v = Number(/** @type {HTMLInputElement} */ (e.target).value);
+    if (sp && Number.isFinite(v)) setOpacity(sp.layer, v / 100);
+  });
   $('ly-dup').addEventListener('click', duplicateLayer);
   $('ly-del').addEventListener('click', deleteLayer);
   $('ly-merge').addEventListener('click', mergeDown);
