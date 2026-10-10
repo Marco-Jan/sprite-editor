@@ -70,6 +70,8 @@ const homeSide = {};
 //   mobileSide  je Icon 'left' | 'right' (fehlt = wie am Desktop)
 let layout = {
   pinW: { left: 280, right: 300 },
+  // Breite der seitlichen Zonen für Werkzeugleiste, Farbzeile und Timeline
+  zoneW: { left: 272, right: 272 },
   places: {}, origins: {}, geom: {}, lastSide: {},
   order: [], barOrder: [...BARS],
   mobilePins: {}, mobileOrder: [], mobileSide: {},
@@ -133,6 +135,7 @@ function load() {
   const obj = v => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});
 
   layout.pinW = { ...layout.pinW, ...obj(raw.pinW) };
+  layout.zoneW = { ...layout.zoneW, ...obj(raw.zoneW) };
   layout.order = mergeOrder(raw.order, layout.order);
   layout.barOrder = mergeOrder(raw.barOrder, BARS);
   layout.mobilePins = obj(raw.mobilePins);
@@ -783,6 +786,43 @@ function initPinResizer(side) {
   });
 }
 
+// ── Breite der seitlichen Zonen (Werkzeugleiste, Farbzeile, Timeline) ──
+// Wie bei der Panel-Spalte: ein Griff am inneren Rand. Er steht als
+// schmaler Streifen direkt neben der Zone und verschwindet mit ihr, wenn
+// sie leer ist (styles.css .zone-resizer).
+function syncZone(side) {
+  zoneOf(side)?.style.setProperty('width', layout.zoneW[side] + 'px');
+}
+
+function initZoneResizer(side) {
+  const zoneEl = zoneOf(side);
+  if (!zoneEl) return;
+  const grip = document.createElement('div');
+  grip.className = 'zone-resizer';
+  grip.setAttribute('role', 'separator');
+  grip.setAttribute('aria-orientation', 'vertical');
+  if (side === 'left') zoneEl.after(grip); else zoneEl.before(grip);
+  syncZone(side);
+  grip.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    const sx = e.clientX, w0 = layout.zoneW[side];
+    document.body.classList.add('is-dragging-ui', 'is-resizing-ui');
+    const move = ev => {
+      const dx = ev.clientX - sx;
+      layout.zoneW[side] = Math.round(Math.min(PIN_MAX, Math.max(PIN_MIN, w0 + (side === 'left' ? dx : -dx))));
+      syncZone(side);
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      document.body.classList.remove('is-dragging-ui', 'is-resizing-ui');
+      save();
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  });
+}
+
 // ── Handy: Rand ausblenden, wo die Leiste weitergeht ────────────────
 // Die Leisten scrollen waagerecht, ihre Scrollbalken sind versteckt. Ohne
 // Hinweis sieht eine abgeschnittene Reihe aus wie eine volle — darum wird
@@ -964,6 +1004,7 @@ export function initLayout() {
     pins.className = 'rail-pins';
     railOf(side).append(pins);
     initPinResizer(side);
+    initZoneResizer(side);
   }
 
   layout.order = [...document.querySelectorAll('[data-panel]')].map(p => /** @type {any} */ (p).dataset.panel).concat(BARS);
