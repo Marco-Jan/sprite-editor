@@ -70,7 +70,35 @@ export function renderTabs() {
     }
     list.append(tab);
   }
-  list.querySelector('.is-active')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  showActive(list);
+}
+
+/** Breite des weichen Rands (styles.css, .tab-list.is-cut-*). */
+const FADE = 28;
+
+/** Den aktiven Reiter ganz in den sichtbaren Teil der Reihe holen — nur
+ *  seitlich, die Seite selbst scrollt dabei nicht mit (anders als
+ *  scrollIntoView). @param {HTMLElement} list */
+function showActive(list) {
+  const a = list.querySelector('.is-active');
+  if (a) {
+    // Abstand zum weichen Rand, wo daneben noch Reiter kommen.
+    const l = list.getBoundingClientRect(), r = a.getBoundingClientRect();
+    const left = l.left + (a.previousElementSibling ? FADE : 0);
+    const right = l.right - (a.nextElementSibling ? FADE : 0);
+    if (r.left < left) list.scrollLeft -= left - r.left;
+    else if (r.right > right) list.scrollLeft += Math.min(r.right - right, r.left - left);
+  }
+  markOverflow(list);
+}
+
+/** Passen nicht alle Reiter hin, laufen sie am Rand weich aus, statt hart
+ *  abgeschnitten zu sein (styles.css: .tab-list.is-cut-start/-end).
+ *  @param {HTMLElement} list */
+function markOverflow(list) {
+  const max = list.scrollWidth - list.clientWidth;
+  list.classList.toggle('is-cut-start', list.scrollLeft > 1);
+  list.classList.toggle('is-cut-end', list.scrollLeft < max - 1);
 }
 
 export function initTabs() {
@@ -150,6 +178,11 @@ export function initTabs() {
     e.preventDefault();
     list.scrollLeft += e.deltaY;
   }, { passive: false });
+
+  list.addEventListener('scroll', () => markOverflow(list), { passive: true });
+  // Wird die Reihe schmaler (Fenster zusammenschieben, Panel aufziehen),
+  // bleibt der aktive Reiter sichtbar.
+  if (typeof ResizeObserver !== 'undefined') new ResizeObserver(() => showActive(list)).observe(list);
 
   $('tab-new-btn').addEventListener('click', () => $('new-sprite-btn').click());
   renderCallbacks.onRenderTabs = renderTabs;

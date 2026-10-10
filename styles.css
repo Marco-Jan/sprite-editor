@@ -714,6 +714,11 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
   scrollbar-width: none;
 }
 .tab-list::-webkit-scrollbar { display: none; }
+/* Passen nicht alle Reiter hin (js/tabs.js), laufen sie am Rand aus — so
+   sieht man, dass die Reihe weitergeht, und kein Reiter endet hart am +. */
+.tab-list.is-cut-end { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); }
+.tab-list.is-cut-start { -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to left, #000 calc(100% - 28px), transparent); }
+.tab-list.is-cut-start.is-cut-end { -webkit-mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent); }
 .sprite-tab {
   display: inline-flex;
   align-items: center;
