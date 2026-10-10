@@ -3,10 +3,12 @@
 ## Deutsch
 
 - Größere Vorschaubilder in der Timeline: Am oberen Rand der Timeline sitzt jetzt ein Griff. Zieh ihn nach oben, wird die Timeline höher und die Vorschaubilder wachsen mit (bis 128 px). Ein Doppelklick auf den Griff stellt wieder „passend zur Breite“ ein. Die Größe wird mit der Oberfläche gespeichert.
+- Neu auf der Startseite: Aus einer Skizze wird Pixel-Art. Lade ein Foto deiner Zeichnung (oder nimm die Beispiel-Skizze) — die Striche werden zur Kontur, geschlossene Flächen füllen sich mit Licht und Schatten. Größe (16, 24, 32) und Palette wählst du, „Im Editor weitermalen“ nimmt das Ergebnis mit. Das Bild bleibt in deinem Browser.
 
 ## English
 
 - Larger thumbnails in the timeline: there is now a grip at the top edge of the timeline. Drag it up and the timeline gets taller while the thumbnails grow with it (up to 128 px). Double-clicking the grip goes back to “fit to width”. The size is saved with the interface.
+- New on the start page: a sketch turns into pixel art. Load a photo of your drawing (or take the example sketch) — the strokes become the outline, closed shapes fill in with light and shadow. Pick the size (16, 24, 32) and palette; “Keep painting in the editor” takes the result along. The picture stays in your browser.
 
 # 3.2.25
 
