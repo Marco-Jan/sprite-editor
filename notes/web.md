@@ -1,3 +1,13 @@
+# 3.2.16
+
+## Deutsch
+
+- Kleinere Verbesserungen an der Oberfläche.
+
+## English
+
+- Small improvements to the interface.
+
 # 3.2.15
 
 ## Deutsch
