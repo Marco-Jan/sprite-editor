@@ -561,9 +561,10 @@ export async function saveToFile() {
 // ────────────────────────────────────────────────────────────────────
 // Einzelne Sprites speichern / zum Projekt hinzufügen
 // ────────────────────────────────────────────────────────────────────
-// Eine Sprite-Datei ist eine Projektdatei mit genau einem Sprite und
-// `kind: 'sprite'` — dazu seine eigene Palette (falls er keine eingebaute
-// hat) samt Materialien. Ältere Editoren können sie also trotzdem öffnen.
+// Eine Sprite-Datei (.bitty) ist eine Projektdatei mit genau einem Sprite
+// und `kind: 'sprite'` — dazu seine eigene Palette (falls er keine
+// eingebaute hat) samt Materialien. Die Desktop-App schreibt und liest
+// dasselbe (spritebit-rs, io.rs export_sprite).
 
 /** Nur den aktuellen Sprite als Datei sichern. */
 export async function saveSpriteToFile() {
@@ -577,7 +578,8 @@ export async function saveSpriteToFile() {
     paletteMaterials: paletteMaterials[sp.palette] ? { [sp.palette]: paletteMaterials[sp.palette] } : {},
     ui: { curSprite: state.curSprite },
   };
-  const filename = `${(sp.name || 'sprite').replace(/[^a-zA-Z0-9_-]/g, '_')}.sprite.json`;
+  // .bitty: innen JSON wie eine Projektdatei — die Desktop-App liest sie genauso.
+  const filename = `${(sp.name || 'sprite').replace(/[^a-zA-Z0-9_-]/g, '_')}.bitty`;
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
   const result = await saveBlob(blob, filename);
   showInfoToast(result.fallback
