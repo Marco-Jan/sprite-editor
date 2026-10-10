@@ -84,11 +84,12 @@ export function tn(key, n, params) {
 }
 
 // Palette-Index → Beschriftung (lang, für die Farbliste im Panel).
-// Index 0 heißt „Transparent“, alle anderen schlicht „Farbe 12“.
-export function colorLabel(i) { return i > 0 ? t('color.labelN', { i }) : t('color.label.0'); }
+// Index 0 heißt „Transparent“, alle anderen schlicht „Farbe 12“ — oder so,
+// wie die Farbe in ihrer Palette benannt ist (`name`, state.colorName).
+export function colorLabel(i, name = '') { return name || (i > 0 ? t('color.labelN', { i }) : t('color.label.0')); }
 
 // Kurzform für enge Stellen (Quick-Palette, Statuszeile).
-export function colorLabelShort(i) { return i > 0 ? t('color.labelN', { i }) : t('color.short.0'); }
+export function colorLabelShort(i, name = '') { return name || (i > 0 ? t('color.labelN', { i }) : t('color.short.0')); }
 
 // ────────────────────────────────────────────────────────────────────
 // Statisches DOM
@@ -978,6 +979,11 @@ const MSG = {
     'pal.menu.paste':      'Farbe einfügen',
     'pal.menu.pasteHex':   '{hex} einfügen',
     'pal.menu.edit':       'Farbe ändern …',
+    'pal.menu.remove':     'Entfernen',
+    'pal.removed':         'Farbe {i} entfernt — die Nummern dahinter sind aufgerückt.',
+    'pal.removedFree_one': 'Farbe {i} entfernt — {n} Pixel bleibt als freie Farbe.',
+    'pal.removedFree_other': 'Farbe {i} entfernt — {n} Pixel bleiben als freie Farbe.',
+    'pal.swInfoNamed':     '{i} · {name} · {hex}',
     'pal.full':            'Die Palette ist voll — mehr als {max} Farben gehen nicht.',
     'pal.forkedAuto':      'Eingebaute Paletten bleiben unverändert — die Änderung steht in der Kopie „{name}“.',
     'pal.miniTitle':       '{i} · {hex}',
@@ -1138,6 +1144,8 @@ const MSG = {
     'pal.optCurrent':      '— aktuelle Palette —',
     'pal.optCustomSuffix': '{name} (eigene)',
     'pal.colorAria':       'Farbe {i}',
+    'pal.nameAria':        'Name von Farbe {i}',
+    'pal.nameTitle':       'Name der Farbe — leer lassen für „Farbe 3“',
     'pal.modalEdit':       'Palette „{name}“ bearbeiten',
     'pal.modalNew':        'Neue Palette',
     'pal.modalSave':       'Speichern',
@@ -1620,6 +1628,11 @@ const MSG = {
     'pal.menu.paste':      'Paste color',
     'pal.menu.pasteHex':   'Paste {hex}',
     'pal.menu.edit':       'Change color …',
+    'pal.menu.remove':     'Remove',
+    'pal.removed':         'Color {i} removed — the numbers after it moved up.',
+    'pal.removedFree_one': 'Color {i} removed — {n} pixel stays as a free color.',
+    'pal.removedFree_other': 'Color {i} removed — {n} pixels stay as a free color.',
+    'pal.swInfoNamed':     '{i} · {name} · {hex}',
     'pal.full':            'The palette is full — it can’t hold more than {max} colors.',
     'pal.forkedAuto':      'Built-in palettes stay as they are — the change went into the copy “{name}”.',
     'pal.miniTitle':       '{i} · {hex}',
@@ -1775,6 +1788,8 @@ const MSG = {
     'pal.optCurrent':      '— current palette —',
     'pal.optCustomSuffix': '{name} (custom)',
     'pal.colorAria':       'Color {i}',
+    'pal.nameAria':        'Name of color {i}',
+    'pal.nameTitle':       'Name of the color — leave empty for “Color 3”',
     'pal.modalEdit':       'Edit palette “{name}”',
     'pal.modalNew':        'New palette',
     'pal.modalSave':       'Save',

@@ -13,7 +13,7 @@
 // Payload (buildPayload). `version` darin erlaubt Migrationen, ohne alte
 // Saves zu zerschießen; geladen wird alles über applyPayload.
 import { layerForSave } from './mask.js';
-import { state, sprites, customPalettes, paletteMaterials, selectFirstSprite, paletteExists, makeSprite, flatGrid, framesForSave, makeSpriteId, getPaletteByName } from './state.js';
+import { state, sprites, customPalettes, paletteMaterials, paletteColorNames, selectFirstSprite, paletteExists, makeSprite, flatGrid, framesForSave, makeSpriteId, getPaletteByName } from './state.js';
 import { normalizeTlOpts } from './onion.js';
 import { DEFAULT_PALETTE, completePalette } from './data.js';
 import { saveBlob } from './filesystem.js';
@@ -157,6 +157,7 @@ function buildPayload(withSprites = true) {
     sprites: withSprites ? serializeSprites() : {},
     customPalettes,
     paletteMaterials,
+    paletteColorNames,
     ui: {
       curSprite: state.curSprite,
       openTabs:  state.openTabs,
@@ -567,6 +568,17 @@ export async function deleteProject(id) {
   writeRegistry(reg);
 }
 
+// Farbnamen aus einer Datei: nur Nummer → kurzer Text. null, wenn keiner bleibt.
+function cleanColorNames(names) {
+  if (!names || typeof names !== 'object') return null;
+  const clean = {};
+  for (const [k, v] of Object.entries(names)) {
+    const i = Number(k);
+    if (Number.isInteger(i) && i >= 1 && typeof v === 'string' && v.trim()) clean[i] = v.trim().slice(0, 40);
+  }
+  return Object.keys(clean).length ? clean : null;
+}
+
 // Payload (v1 ODER v2) in den State übernehmen.
 function applyPayload(payload) {
   let note = null;
@@ -612,6 +624,12 @@ function applyPayload(payload) {
         const clean = {};
         for (const [i, m] of Object.entries(mats)) if (MATERIALS.includes(m)) clean[i] = m;
         if (Object.keys(clean).length) paletteMaterials[name] = clean;
+      }
+    }
+    if (payload.paletteColorNames && typeof payload.paletteColorNames === 'object') {
+      for (const [name, names] of Object.entries(payload.paletteColorNames)) {
+        const clean = cleanColorNames(names);
+        if (clean) paletteColorNames[name] = clean;
       }
     }
 
@@ -719,6 +737,7 @@ export async function saveSpriteToFile() {
     sprites: { [state.curSprite]: serializeSprite(sp) },
     customPalettes: customPalettes[sp.palette] ? { [sp.palette]: customPalettes[sp.palette] } : {},
     paletteMaterials: paletteMaterials[sp.palette] ? { [sp.palette]: paletteMaterials[sp.palette] } : {},
+    paletteColorNames: paletteColorNames[sp.palette] ? { [sp.palette]: paletteColorNames[sp.palette] } : {},
     ui: { curSprite: state.curSprite },
   };
   // .bitty: innen JSON wie eine Projektdatei — die Desktop-App liest sie genauso.
@@ -792,6 +811,8 @@ export function addSpritesFromPayload(p) {
       for (const [i, m] of Object.entries(mats)) if (MATERIALS.includes(m)) clean[i] = m;
       if (Object.keys(clean).length) paletteMaterials[target] = clean;
     }
+    const names = cleanColorNames(p.paletteColorNames?.[name]);
+    if (names && !paletteColorNames[target]) paletteColorNames[target] = names;
   }
   const ids = [];
   for (const [key, sp] of Object.entries(p.sprites)) {

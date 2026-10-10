@@ -8,7 +8,7 @@
 //   assignPalette(name, { keepLook: false }) — Sprite umfärben
 // Beides ist ein normaler Undo-Schritt (history.js merkt sich die Palette).
 import {
-  state, sprites, customPalettes, paletteMaterials, allGrids,
+  state, sprites, customPalettes, paletteMaterials, paletteColorNames, allGrids,
   getSprite, getPal, getPaletteName, getPaletteByName, getAllPaletteOptions,
   getPreviewName, paletteExists, isCustomPalette, uniquePaletteName,
 } from './state.js';
@@ -101,6 +101,7 @@ function forkSilently() {
   const name = uniquePaletteName(src + '_kopie');
   customPalettes[name] = { ...getPaletteByName(src) };
   if (paletteMaterials[src]) paletteMaterials[name] = { ...paletteMaterials[src] };
+  if (paletteColorNames[src]) paletteColorNames[name] = { ...paletteColorNames[src] };
   const sp = getSprite();
   if (sp && sp.palette === src) { sp.palette = name; state.palPreview = null; }
   else state.palPreview = name;
@@ -135,6 +136,105 @@ export function appendPaletteColor(hex) {
   renderAll();
   saveState();
   return { name, idx };
+}
+
+// Farbe `idx` aus der angezeigten Palette entfernen. Die Nummern dahinter
+// rücken auf, und alle Sprites mit dieser Palette werden mit umgeschrieben —
+// das Bild sieht danach gleich aus: Pixel der entfernten Farbe zeigen auf
+// dieselbe Farbe an anderer Stelle (nach „Duplizieren“) oder werden zur
+// freien Farbe. Ein Undo-Schritt (history.js recordCustom).
+export function removePaletteColor(idx) {
+  const size = paletteSize(getPaletteByName(getPreviewName()));
+  if (size <= 1 || idx < 1 || idx > size) return;
+  commitFloat();
+  const name = editablePreviewPalette();
+  const pal = customPalettes[name];
+  const hex = pal[idx];
+  let twin = 0;
+  for (let i = 1; i <= size; i++) {
+    if (i !== idx && pal[i]?.toLowerCase() === hex.toLowerCase()) { twin = i; break; }
+  }
+  const newTwin = twin > idx ? twin - 1 : twin;
+  const mat = paletteMaterials[name]?.[idx];
+  const label = paletteColorNames[name]?.[idx];
+  const targets = Object.keys(sprites).filter(k => sprites[k].palette === name);
+  /** @type {[string, number, number, number][]} */
+  let cells = [];
+
+  // Nummer → Wert-Maps (Materialien, Namen): ab `from` um `d` verschieben.
+  const shiftMap = (m, from, d) => {
+    if (!m) return m;
+    const out = {};
+    for (const [k, v] of Object.entries(m)) {
+      const i = Number(k);
+      if (d < 0 && i === from) continue;
+      out[i >= from ? i + d : i] = v;
+    }
+    return out;
+  };
+  const setMap = (store, m) => { if (m && Object.keys(m).length) store[name] = m; else delete store[name]; };
+
+  const forward = () => {
+    const p = customPalettes[name];
+    if (!p) return false;
+    const n = paletteSize(p);
+    for (let i = idx; i < n; i++) p[i] = p[i + 1];
+    delete p[n];
+    setMap(paletteMaterials, shiftMap(paletteMaterials[name], idx, -1));
+    setMap(paletteColorNames, shiftMap(paletteColorNames[name], idx, -1));
+    cells = [];
+    for (const k of targets) {
+      if (!sprites[k]) continue;
+      allGrids(sprites[k]).forEach((g, gi) => {
+        for (let y = 0; y < g.length; y++) {
+          const row = g[y];
+          for (let x = 0; x < row.length; x++) {
+            const v = row[x];
+            if (typeof v !== 'number') continue;
+            if (v === idx) { row[x] = newTwin || hex; cells.push([k, gi, y, x]); }
+            else if (v > idx) row[x] = v - 1;
+          }
+        }
+      });
+    }
+    const c = state.curColor;
+    if (typeof c === 'number') state.curColor = c === idx ? (newTwin || hex) : c > idx ? c - 1 : c;
+    return true;
+  };
+  const backward = () => {
+    const p = customPalettes[name];
+    if (!p) return false;
+    for (let i = paletteSize(p); i >= idx; i--) p[i + 1] = p[i];
+    p[idx] = hex;
+    const mats = shiftMap(paletteMaterials[name] || {}, idx, 1);
+    if (mat) mats[idx] = mat;
+    setMap(paletteMaterials, mats);
+    const names = shiftMap(paletteColorNames[name] || {}, idx, 1);
+    if (label) names[idx] = label;
+    setMap(paletteColorNames, names);
+    for (const k of targets) {
+      if (!sprites[k]) continue;
+      for (const g of allGrids(sprites[k])) for (const row of g) {
+        for (let x = 0; x < row.length; x++) {
+          const v = row[x];
+          if (typeof v === 'number' && v >= idx) row[x] = v + 1;
+        }
+      }
+    }
+    for (const [k, gi, y, x] of cells) {
+      const g = sprites[k] && allGrids(sprites[k])[gi];
+      if (g?.[y]) g[y][x] = idx;
+    }
+    if (typeof state.curColor === 'number' && state.curColor >= idx) state.curColor++;
+    return true;
+  };
+
+  forward();
+  const free = twin ? 0 : cells.length;
+  recordCustom({ undo: backward, redo: forward });
+  renderAll();
+  saveState();
+  showInfoToast(free ? tn('pal.removedFree', free, { i: idx }) : t('pal.removed', { i: idx }));
 }
 
 export function setPaletteColor(idx, hex) {
@@ -175,6 +275,7 @@ export function addFreeColorsToPalette() {
     const copy = uniquePaletteName(name + '_kopie');
     customPalettes[copy] = { ...base };
     if (paletteMaterials[name]) paletteMaterials[copy] = { ...paletteMaterials[name] };
+    if (paletteColorNames[name]) paletteColorNames[copy] = { ...paletteColorNames[name] };
     name = copy;
   }
   const pal = customPalettes[name];
@@ -203,6 +304,7 @@ export function deleteCustomPalette(name) {
   if (!customPalettes[name]) return;
   delete customPalettes[name];
   delete paletteMaterials[name];
+  delete paletteColorNames[name];
   if (state.palPreview === name) state.palPreview = null;
 
   // Sprites, die auf die gelöschte Palette zeigten, auf den Default setzen.
@@ -233,7 +335,7 @@ export function openPaletteModal(editName) {
     nameInp.value = editName;
     srcRow.hidden = true;
     createBtn.textContent = t('pal.modalSave');
-    buildPaletteColorRows(customPalettes[editName]);
+    buildPaletteColorRows(customPalettes[editName], paletteColorNames[editName]);
   } else {
     _editName = null;
     heading.textContent = t('pal.modalNew');
@@ -241,7 +343,7 @@ export function openPaletteModal(editName) {
     srcRow.hidden = false;
     createBtn.textContent = t('pal.modalCreate');
     refreshPaletteSourceSelect();
-    buildPaletteColorRows(getPaletteByName(getPreviewName()));
+    buildPaletteColorRows(getPaletteByName(getPreviewName()), paletteColorNames[getPreviewName()]);
   }
 
   overlay.classList.add('open');
@@ -265,14 +367,19 @@ function refreshPaletteSourceSelect() {
   });
 }
 
-function colorRow(i, hexValue) {
+// Eine Zeile: Nummer, Farbwähler, Name (frei, leer = „Farbe 3“), Hex.
+function colorRow(i, hexValue, name = '') {
   const row = document.createElement('div');
   row.className = 'pal-color-row';
   row.innerHTML =
     `<span class="pal-idx">${i}</span>` +
     `<input type="color" data-idx="${i}" value="${hexValue}" aria-label="${t('pal.colorAria', { i })}">` +
-    `<span class="pal-name">${colorLabel(i) || '—'}</span>` +
+    `<input type="text" class="pal-name" data-idx="${i}" maxlength="40" spellcheck="false"` +
+    ` aria-label="${t('pal.nameAria', { i })}" title="${t('pal.nameTitle')}">` +
     `<span class="pal-hex">${hexValue}</span>`;
+  const nameInp = /** @type {HTMLInputElement} */ (row.querySelector('.pal-name'));
+  nameInp.placeholder = colorLabel(i);
+  nameInp.value = name;
   const input = row.querySelector('input');
   const hex = row.querySelector('.pal-hex');
   input.addEventListener('input', () => { hex.textContent = /** @type {HTMLInputElement} */ (input).value; });
@@ -280,12 +387,12 @@ function colorRow(i, hexValue) {
 }
 
 // Eine Color-Picker-Zeile pro Farbe; so viele, wie die Vorlage hat.
-function buildPaletteColorRows(sourcePalette) {
+function buildPaletteColorRows(sourcePalette, names) {
   const container = document.getElementById('pal-color-rows');
   container.innerHTML = '';
   const n = Math.max(1, paletteSize(sourcePalette || NEW_PALETTE_DEFAULTS));
   for (let i = 1; i <= n; i++) {
-    container.appendChild(colorRow(i, sourcePalette?.[i] || NEW_PALETTE_DEFAULTS[i] || '#888888'));
+    container.appendChild(colorRow(i, sourcePalette?.[i] || NEW_PALETTE_DEFAULTS[i] || '#888888', names?.[i] || ''));
   }
   syncSizeButtons();
 }
@@ -307,7 +414,8 @@ export function initPaletteModal() {
 
   /** @type {HTMLSelectElement} */ (document.getElementById('pal-source')).addEventListener('change', e => {
     const chosen = /** @type {HTMLSelectElement} */ (e.target).value;
-    buildPaletteColorRows(chosen ? getPaletteByName(chosen) : getPaletteByName(getPreviewName()));
+    const src = chosen || getPreviewName();
+    buildPaletteColorRows(getPaletteByName(src), paletteColorNames[src]);
   });
 
   // Farben hinzufügen/entfernen — neue Farbe übernimmt die letzte.
@@ -345,6 +453,11 @@ export function initPaletteModal() {
     document.querySelectorAll('#pal-color-rows input[type="color"]').forEach(inp => {
       pal[Number(inp.dataset.idx)] = /** @type {HTMLInputElement} */ (inp).value;
     });
+    const names = {};
+    document.querySelectorAll('#pal-color-rows input.pal-name').forEach(inp => {
+      const v = /** @type {HTMLInputElement} */ (inp).value.trim();
+      if (v) names[Number(/** @type {HTMLInputElement} */ (inp).dataset.idx)] = v;
+    });
 
     const commit = (finalName, oldName) => {
       if (oldName && oldName !== finalName) {
@@ -353,6 +466,7 @@ export function initPaletteModal() {
           paletteMaterials[finalName] = paletteMaterials[oldName];
           delete paletteMaterials[oldName];
         }
+        delete paletteColorNames[oldName];
         // Sprites mitziehen, die auf den alten Namen zeigten.
         for (const sp of Object.values(sprites)) {
           if (sp.palette === oldName) sp.palette = finalName;
@@ -360,6 +474,8 @@ export function initPaletteModal() {
         if (state.palPreview === oldName) state.palPreview = finalName;
       }
       customPalettes[finalName] = pal;
+      if (Object.keys(names).length) paletteColorNames[finalName] = names;
+      else delete paletteColorNames[finalName];
       // Neue Palette: nur anzeigen, nicht zuweisen — die Zeichnung bleibt.
       if (!oldName) state.palPreview = finalName === getPaletteName() ? null : finalName;
       close();
@@ -421,6 +537,7 @@ export function reorderPalette(order) {
     name = uniquePaletteName(oldName + '_kopie');
     customPalettes[name] = permutePalette({ ...getPal() }, perm);
     if (paletteMaterials[oldName]) paletteMaterials[name] = permuteMaterials(paletteMaterials[oldName], perm);
+    if (paletteColorNames[oldName]) paletteColorNames[name] = permuteMaterials(paletteColorNames[oldName], perm);
     forked = true;
   }
   const targets = forked ? [id] : Object.keys(sprites).filter(k => sprites[k].palette === name);
@@ -439,6 +556,7 @@ export function reorderPalette(order) {
       if (!customPalettes[name]) return false;
       customPalettes[name] = permutePalette(customPalettes[name], p);
       if (paletteMaterials[name]) paletteMaterials[name] = permuteMaterials(paletteMaterials[name], p);
+      if (paletteColorNames[name]) paletteColorNames[name] = permuteMaterials(paletteColorNames[name], p);
     }
     remapAll(p);
     return true;

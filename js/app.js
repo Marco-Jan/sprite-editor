@@ -2,7 +2,7 @@
 // APP — Haupt-Entry: Init + Event-Bindings + Wiring zwischen Modulen
 // ════════════════════════════════════════════════════════════════════
 import {
-  state, sprites, paletteMaterials, selection, flatGrid, defaultLayer,
+  state, sprites, paletteMaterials, selection, flatGrid, defaultLayer, colorName,
   getGrid, getSprite, getPal, getMaxIdx, getPaletteName, getPreviewName, listSprites,
   createSprite, clearSelection, isInSelection, blankLike, editingMask,
   paletteExists, getPaletteByName,
@@ -44,7 +44,7 @@ import {
 import {
   openPaletteModal, initPaletteModal, deleteCustomPalette,
   previewPalette, assignPalette, forkPreviewPalette, addFreeColorsToPalette,
-  createPaletteFromImport, appendPaletteColor, setPaletteColor,
+  createPaletteFromImport, appendPaletteColor, setPaletteColor, removePaletteColor,
 } from './palettes.js';
 import {
   initTemplate, tplLoaded, tplHasOffscreen,
@@ -111,6 +111,7 @@ renderCallbacks.onEditPalette      = openPaletteModal;
 renderCallbacks.onImageToPalette   = openReduceModal;
 renderCallbacks.onAppendColor      = appendPaletteColor;
 renderCallbacks.onSetColor         = setPaletteColor;
+renderCallbacks.onRemoveColor      = removePaletteColor;
 renderCallbacks.onSyncImagePanel   = () => syncImagePanel();
 
 renderCallbacks.onDeleteSprite = id => {
@@ -556,7 +557,7 @@ function initCanvasEvents() {
         const v = state.curColor;
         info(typeof v === 'string'
           ? t('info.pickFree', { hex: v })
-          : t('info.pickIndex', { i: v, label: colorLabelShort(v) }));
+          : t('info.pickIndex', { i: v, label: colorLabelShort(v, colorName(v)) }));
       }
       return;
     }

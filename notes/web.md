@@ -1,3 +1,15 @@
+# 3.2.25
+
+## Deutsch
+
+- Farben eigene Namen geben: Im Fenster „Bearbeiten“ einer Palette steht neben jeder Farbe ein Namensfeld („Haut“, „Kontur“ …). Leer heißt sie einfach „Farbe 3“. Der Name erscheint im Tooltip, in der Farbzeile und bei der Pipette und wird mit dem Projekt gespeichert — die Desktop-App liest ihn mit.
+- Per Rechtsklick auf ein Farbfeld lässt sich jede Farbe jetzt auch **entfernen**. Die Nummern dahinter rücken auf, das Bild sieht danach gleich aus (Pixel der entfernten Farbe werden zur gleichen Farbe an anderer Nummer oder zur freien Farbe), und Strg+Z holt sie zurück.
+
+## English
+
+- Give colors their own names: in a palette's “Edit” window every color has a name field (“Skin”, “Outline” …). Left empty it is simply “Color 3”. The name shows in the tooltip, the color row and the eyedropper, and it is saved with the project — the desktop app reads it too.
+- Right-clicking a swatch now also lets you **remove** any color. The numbers after it move up, the image looks the same afterwards (pixels of the removed color become the same color at another number, or a free color), and Ctrl+Z brings it back.
+
 # 3.2.24
 
 ## Deutsch
