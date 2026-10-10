@@ -2603,7 +2603,6 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
   .stage-head-right .field-label,
   #cell-size-val { display: none; }
   .stage-head-right input[type="range"] { width: 64px; }
-  .stage-head-right .btn-group .btn { padding-inline: 8px; }
 
   /* Werkzeugleiste und Farbzeile: je eine Zeile, waagerecht scrollbar. */
   #toolbar, #color-bar, #timeline {
@@ -2693,10 +2692,18 @@ body.is-resizing-ui, body.is-resizing-ui * { cursor: col-resize !important; }
   #color-bar .btn,
   #color-bar .icon-btn,
   #color-bar .qp-swatch,
-  #stage-head .btn,
-  #stage-head .icon-btn,
   .rail-dock .dock-btn,
   #color-bar .current-color { min-width: 44px; min-height: 44px; }
+  /* Die Kopfzeile der Bühne (Rückgängig, Dunkel/Hell, Zoom, Vollbild) steht
+     über allem und scrollt nicht — mit 44 px nahm sie viel Platz weg. Mit
+     der Maus reichen 32 px, am Finger 38 px. */
+  #stage-head .btn,
+  #stage-head .icon-btn { min-width: 32px; min-height: 32px; }
+  @media (pointer: coarse) {
+    #stage-head .btn,
+    #stage-head .icon-btn { min-width: 38px; min-height: 38px; }
+  }
+  .stage-head-right .btn-group .btn { padding-inline: 6px; }
   /* Das + bei den Reitern bleibt so flach wie sie (sonst hielte es die Zeile hoch). */
   #stage-head .icon-btn.tab-new { min-width: 32px; min-height: 30px; }
   /* Die Timeline-Knoepfe duerfen etwas kleiner sein: sie stehen in zwei
